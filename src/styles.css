@@ -62,3 +62,9 @@
 .ps-toast-title { font-weight: bold; font-size: 16px; }
 .ps-toast-msg { margin: 4px 0 8px; color: #dfe7ee; }
 .ps-toast-actions .ps-btn { margin-right: 8px; }
+
+.ps-headbtn { float: right; padding: 8px 14px; font-size: 14px; background: #7a5a14; border: 1px solid #f0a830; border-radius: 8px; color: #fff; }
+.ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; }
+.ps-overlay-bar { margin-bottom: 8px; }
+.ps-overlay-bar .ps-btn { margin-left: 10px; }
+.ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: #0b1116; color: #cfd9e2; border: 1px solid #3a4d5c; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; }

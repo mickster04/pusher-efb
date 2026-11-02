@@ -82,6 +82,15 @@ PS.pages.push({
       var lines = Object.keys(m).sort().map(function (n) { return n + ' : ' + m[n]; });
       probeOut.textContent = 'notificationManager members:\n' + lines.join('\n');
       log('notificationManager has ' + lines.length + ' members');
+      lines.forEach(function (l) { log('  member ' + l); });
+      Object.keys(m).sort().forEach(function (n) {
+        if (m[n] !== 'function' || !/^(add|show|create|push|send)/i.test(n)) return;
+        try {
+          var src = String(nm[n]);
+          log(n + '.length = ' + nm[n].length + ' (declared argument count)');
+          log(n + ' source: ' + src.replace(/\s+/g, ' ').substring(0, 700));
+        } catch (e) { log(n + ' source unavailable: ' + PS.errText(e)); }
+      });
       Object.keys(m).sort().forEach(function (n) {
         if (m[n] !== 'function' || !/notif|show|push|add|send|create|post|alert/i.test(n)) return;
         probeButtons.appendChild(ui.button('Try ' + n + '()', function () { tryCall(nm, n); }, 'ps-warn'));

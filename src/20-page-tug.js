@@ -1,7 +1,6 @@
-// Spike 2: can the tug be driven from JS? Two modes behind a toggle:
-//  - Direct: per-tick writes of PUSHBACK WAIT / VELOCITY BODY Z / ROTATION VELOCITY BODY Y (what the original app does).
-//  - Native: the sim's own tug events (TOGGLE_PUSHBACK, KEY_TUG_HEADING, PUSHBACK WAIT) - the fallback.
-// Direct mode moves the aircraft. It has a hard run-time limit and stops on hide, pause and close.
+// Spike 2: can the tug be driven from JS? Per-tick writes of PUSHBACK WAIT / VELOCITY BODY Z / ROTATION VELOCITY BODY Y
+// (what the original app does). Moves the aircraft: hard run-time limit, stops on hide, pause and close.
+// A native-events mode (KEY_TUG_HEADING) was tried and dropped: the direct writes worked.
 
 PS.TUG = {
   HEADING_UNITS_PER_DEG: 11930465,   // KEY_TUG_HEADING value = this * degrees, as 32-bit unsigned
@@ -18,7 +17,6 @@ PS.pages.push({
   title: '2 Tug',
   create: function (ctx) {
     var ui = PS.ui, h = PS.h;
-    var mode = 'direct';
     var drive = null;      // { timer, startedAt, maxMs, writes, failures, dts[], lastTick, lastError }
     var readTimer = null;
 
@@ -58,7 +56,7 @@ PS.pages.push({
       say('PUSHBACK WAIT=' + (on ? 1 : 0) + ': ' + (r.ok ? 'sent' : 'FAILED ' + r.error));
       return r;
     }
-    var shared = ui.panel('Tug (both modes)',
+    var shared = ui.panel('Tug',
       h('div', { class: 'ps-row' },
         ui.button('Call / toggle tug (TOGGLE_PUSHBACK)', function () { key('TOGGLE_PUSHBACK', 1); }),
         ui.button('Hold tug (WAIT on)', function () { setWait(true); }),
@@ -159,7 +157,7 @@ PS.pages.push({
       }, intervalMs);
     }
 
-    var directPanel = ui.panel('Direct mode: per-tick velocity writes',
+    var directPanel = ui.panel('Per-tick velocity writes',
       ui.note('Moves the aircraft. Only use parked on the ground with the tug attached and the brake released. Stops by itself at the time limit, and when this page is hidden or the app is paused or closed.', 'warn'),
       h('div', { class: 'ps-row' },
         ui.field('Speed (ft/s, + forward, - reverse)', speedIn), ui.field('Rotation (original units)', rotIn),
@@ -173,64 +171,23 @@ PS.pages.push({
       stats
     );
 
-    // ---- native mode ----
-    var hdgIn = ui.input('0', { type: 'number', min: '0', max: '360', step: '1' });
-    var evtName = ui.input('', { placeholder: 'Key event name (unverified names only)' });
-    var evtVal = ui.input('0', { placeholder: 'Value' });
-    function curHeading() {
-      var r = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
-      return r.ok && typeof r.value === 'number' ? r.value : null;
-    }
-    function sendHeading(deg) {
-      var v = PS.tugHeadingValue(deg);
-      key('KEY_TUG_HEADING', v);
-      say('tug heading target ' + PS.fmt.num(PS.geo.normDeg(deg), 1) + ' deg (event value ' + v + ')');
-    }
-    function nudge(delta) {
-      var cur = curHeading();
-      if (cur === null) { say('cannot read PLANE HEADING DEGREES TRUE', true); return; }
-      sendHeading(cur + delta);
-    }
-    var nativePanel = ui.panel('Native mode: the sim\'s own tug events',
-      ui.note('Fallback for steering without per-tick velocity writes: KEY_TUG_HEADING gives a left/right target. Whether speed can be shaped in this mode is unproven; try the custom event row.'),
-      h('div', { class: 'ps-row' },
-        ui.button('\u25C0 Left 15\u00B0', function () { nudge(-15); }),
-        ui.button('\u25C0 Left 5\u00B0', function () { nudge(-5); }),
-        ui.button('Right 5\u00B0 \u25B6', function () { nudge(5); }),
-        ui.button('Right 15\u00B0 \u25B6', function () { nudge(15); })),
-      h('div', { class: 'ps-row' },
-        ui.field('Absolute heading (true)', hdgIn),
-        ui.button('Send heading', function () { sendHeading(Number(hdgIn.value) || 0); }),
-        ui.button('Use current', function () { var c = curHeading(); if (c !== null) hdgIn.value = Math.round(c); })),
-      h('div', { class: 'ps-row' },
-        ui.field('Custom key event', evtName), ui.field('Value', evtVal),
-        ui.button('Send', function () { key(evtName.value.replace(/^K:/, ''), Number(evtVal.value) || 0); }, 'ps-warn'))
-    );
-
-    var toggle = ui.toggle([{ value: 'direct', label: 'Direct (velocity writes)' }, { value: 'native', label: 'Native (tug events)' }], 'direct', function (m) {
-      mode = m; paintMode();
-    });
-    function paintMode() {
-      directPanel.style.display = mode === 'direct' ? '' : 'none';
-      nativePanel.style.display = mode === 'native' ? '' : 'none';
-      if (mode === 'native' && drive) stopDrive('mode switched');
-    }
-
     var el = h('div', { class: 'ps-page' },
-      ui.panel('Mode', toggle.el),
       shared,
       directPanel,
-      nativePanel,
       ui.panel('Live readouts', readTable.el),
       ui.panel('Log', ui.logBox(['tug', 'key', 'set']))
     );
-    paintMode();
 
     // Safety: stop the drive whenever the app is paused or closed.
     PS.closeHooks.push(function () { stopDrive('app paused or closed'); });
 
     return {
       el: el,
+      snapshot: function () {
+        var lines = readVars.map(function (v) { return v[0] + ' = ' + readCells[v[0]].textContent; });
+        lines.push('', 'Last drive stats:', stats.textContent);
+        return lines.join('\n');
+      },
       onShow: function () { refreshReadouts(); readTimer = setInterval(refreshReadouts, 250); },
       onHide: function () { if (readTimer !== null) { clearInterval(readTimer); readTimer = null; } stopDrive('page hidden'); }
     };

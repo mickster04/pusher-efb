@@ -66,12 +66,9 @@ PS.ui = {
       box,
       PS.ui.button('Copy log', function () {
         var text = box.textContent;
-        try {
-          var ta = PS.h('textarea', { style: 'position:fixed;left:-1000px;top:0' });
-          ta.value = text; document.body.appendChild(ta); ta.select();
-          document.execCommand('copy'); document.body.removeChild(ta);
-          PS.log('ui', 'log copied to clipboard');
-        } catch (e) { PS.log('ui', 'copy failed: ' + PS.errText(e)); }
+        var ok = PS.ui.copyText(text);
+        PS.log('ui', ok ? 'log copied to clipboard' : 'clipboard copy not available; showing text to select');
+        if (!ok) PS.ui.showText(text, 'Log (select all and copy)');
       }, 'ps-small')
     );
     return wrap;
@@ -82,4 +79,33 @@ PS.ui = {
     var table = PS.h('table', { class: 'ps-table' }, thead, tbody);
     return { el: PS.h('div', { class: 'ps-tablewrap' }, table), body: tbody };
   }
+};
+
+// Copies text to the clipboard. Returns true only if the browser says it worked.
+PS.ui.copyText = function (text) {
+  try {
+    var ta = PS.h('textarea', { style: 'position:fixed;left:-1000px;top:0' });
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return !!ok;
+  } catch (e) {
+    return false;
+  }
+};
+
+// Fallback when the clipboard is blocked: a full-screen overlay with the text selected, ready for manual copy.
+PS.ui.showText = function (text, title) {
+  var host = PS.rootEl || document.body;
+  var ta = PS.h('textarea', { class: 'ps-overlay-text', readonly: true });
+  ta.value = text;
+  var overlay = PS.h('div', { class: 'ps-overlay' },
+    PS.h('div', { class: 'ps-overlay-bar' }, PS.h('span', { class: 'ps-panel-title', text: title || 'Text' }),
+      PS.ui.button('Select all', function () { ta.focus(); ta.select(); }, 'ps-small'),
+      PS.ui.button('Close', function () { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 'ps-small ps-ghost')),
+    ta);
+  host.appendChild(overlay);
+  ta.focus(); ta.select();
 };

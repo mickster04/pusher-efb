@@ -149,6 +149,11 @@ PS.pages.push({
       ui.panel('Raw data returned', rawBox),
       ui.panel('Log', ui.logBox(['taxi']))
     );
-    return { el: el, onShow: function () { repaint(); }, onHide: function () {} };
+    return {
+      el: el,
+      snapshot: function () { return status.textContent + '\n\nRaw data returned:\n' + rawBox.textContent; },
+      onShow: function () { repaint(); },
+      onHide: function () {}
+    };
   }
 });

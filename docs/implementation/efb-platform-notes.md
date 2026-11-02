@@ -74,6 +74,8 @@ The SDK has an "EFB Notifications" page; its body did not load. `props.notificat
 
 ## Gotchas
 
+- **Glyphs:** the sim's font lacks some symbols. Arrow triangles (U+25C0, U+25B6) rendered as squares in buttons. Use plain ASCII for button labels; the degree sign and em dash were not reported as problems.
+
 - Do not name the app `TemplateApp`.
 - A name mismatch fails silently; check the four-name rule first when the app does not appear.
 - Scoped CSS: the TS template prefixes selectors with `.efb-view.<folder name>`. The plain-JS sample injects a `<style>` element with its own class prefixes. Prefix all our classes with `ps-`.

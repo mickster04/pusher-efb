@@ -37,10 +37,11 @@ Each page has a results log (timestamped lines, copyable). After a sim session, 
 
 | Spike | Result | Date | Notes |
 |---|---|---|---|
-| 1 Telemetry | not run | | |
-| 2 Tug, direct | not run | | |
-| 2 Tug, native | not run | | |
-| 3 Taxiways | not run | | |
-| 4 Traffic | not run | | |
-| 5 Notifications | not run | | |
-| 6 Map | not run | | |
+| 0 App loads in EFB | Works | 2026-11-02 | Plain-JS pattern with `window.EFB_API` / `window.msfssdk` registers and renders. |
+| 1 Telemetry | Pass | 2026-11-02 | All 24 default variables read with no errors. 24 vars per cycle in about 0.1 ms. Timers keep running while the app is hidden (11 ticks in 6 s against 12 expected). `onUpdate` count stayed 0: likely not called for a view built on `DisplayComponent` rather than the EFB `AppView`; not needed. Hook counts and an animation-frame counter were added to confirm. |
+| 2 Tug, direct | Pass | 2026-11-02 | `TOGGLE_PUSHBACK` works. 161 ticks, 0 failed writes. Commanded VEL Z 1.0 ft/s, read back 0.73 (fits non-sticky velocity decaying between writes). Requested 50 ms, actual mean 61.7 ms, worst 80 ms (about 16 Hz). Rotation not yet tested. |
+| 2 Tug, native | Dropped | 2026-11-02 | Owner dropped it: direct mode works. Its buttons also showed squares (the sim font lacks the arrow glyphs). Mode removed from the app. |
+| 3 Taxiways | Airport data yes, taxi paths no | 2026-11-02 | `msfssdk.FacilityLoader` works from the EFB with the ICAO spelled `"A      " + ident` (the bare ident was rejected first). For NZCH it returned 3 runways and no taxiway or parking data. Taxi paths need another route (WASM module or bundled data). |
+| 4 Traffic | Fail | 2026-11-02 | "No traffic source available from JS". Candidate API list could not be copied (the list was not in the log). Fixed: it now goes into the copyable log. |
+| 5 Notifications | Pass for in-tablet toasts; EFB manager unknown | 2026-11-02 | Toasts and their action buttons work. `notificationManager` has 21 members, including `addNotification`, `clearNotifications`, `deletePermanentNotification`, `onNotificationAppOpen/Closed`, `onShownNotifsUpdate`, `onStoredNotifsUpdate`. `addNotification({title,message,description,body})` did not throw; whether anything appeared on the tablet is not yet reported, and the argument shape is unknown. The probe now logs the method source. |
+| 6 Map | `<bing-map>` exists; mounted map was black | 2026-11-02 | `<bing-map>` custom element is registered, `msfssdk.BingComponent` exists (107 map-related names in `msfssdk`). First mount rendered black: it was never given a position or woken. The mount now sets position and radius each second and logs the instance methods. |

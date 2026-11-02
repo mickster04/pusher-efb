@@ -27,14 +27,17 @@ PS.pages.push({
       var up = (Date.now() - hb.startedAt) / 1000;
       var parts = [
         'own timer ticks: ' + hb.ticks + ' (expected about ' + Math.floor(up / 0.5) + ')',
-        'onUpdate frames: ' + hb.frames,
+        'EFB onUpdate frames: ' + hb.frames,
+        'browser animation frames: ' + hb.raf,
         'largest timer gap: ' + hb.maxGapMs + ' ms',
         'app state: ' + (hb.paused ? 'PAUSED (hidden)' : 'visible')
       ];
       if (hb.lastPause) {
         parts.push('last hidden period: ' + Math.round(hb.lastPause.ms / 1000) + ' s, ' + hb.lastPause.ticks +
-          ' timer ticks and ' + hb.lastPause.frames + ' onUpdate frames while hidden');
+          ' timer ticks, ' + hb.lastPause.frames + ' onUpdate frames and ' + hb.lastPause.raf + ' animation frames while hidden');
       }
+      var hookNames = Object.keys(hb.hooks);
+      parts.push('EFB hooks called: ' + (hookNames.length ? hookNames.map(function (n) { return n + ' x' + hb.hooks[n]; }).join(', ') : 'none yet'));
       hbLine.textContent = parts.join('   |   ');
       cycleLine.textContent = 'read cycles: ' + cycles + '   |   last cycle: ' + vars.length + ' vars in ' + PS.fmt.num(lastCycleMs, 1) + ' ms   |   poll every ' + rateMs + ' ms';
     }
@@ -46,7 +49,7 @@ PS.pages.push({
       cells = [];
       vars.forEach(function (v, i) {
         var valueCell = h('td', { class: 'ps-val' });
-        var del = v.custom ? ui.button('\u2715', function () { vars.splice(i, 1); buildRows(); }, 'ps-small') : null;
+        var del = v.custom ? ui.button('x', function () { vars.splice(i, 1); buildRows(); }, 'ps-small') : null;
         tbl.body.appendChild(h('tr', null,
           h('td', { text: v.group }), h('td', { class: 'ps-mono', text: v.name }), h('td', { text: v.unit }), valueCell, h('td', null, del)));
         cells.push(valueCell);
@@ -133,6 +136,9 @@ PS.pages.push({
     paintStatus();
     return {
       el: el,
+      snapshot: function () {
+        return vars.map(function (v, i) { return v.name + ' [' + v.unit + '] = ' + (cells[i] ? cells[i].textContent : ''); }).join('\n');
+      },
       onShow: function () { cycle(); start(); },
       onHide: function () { stop(); }
     };

@@ -39,7 +39,7 @@ PS.logListeners = [];
 PS.log = function (channel, msg) {
   var entry = { t: Date.now(), ch: channel, msg: String(msg) };
   PS.logs.push(entry);
-  if (PS.logs.length > 400) PS.logs.shift();
+  if (PS.logs.length > 3000) PS.logs.shift();
   for (var i = 0; i < PS.logListeners.length; i++) {
     try { PS.logListeners[i](entry); } catch (e) { /* listener errors must not break the app */ }
   }
@@ -167,8 +167,25 @@ PS.fmt = {
 // ---- heartbeat: does anything keep ticking while the app is hidden? ----
 PS.hb = {
   timer: null, ticks: 0, frames: 0, paused: false,
+  raf: 0, rafOn: false, rafAtPause: 0, hooks: {},
   startedAt: 0, last: 0, maxGapMs: 0,
   pausedAt: 0, ticksAtPause: 0, framesAtPause: 0, lastPause: null
+};
+// Counts every EFB lifecycle hook call (logs the first of each) to see which ones the EFB really calls.
+PS.hook = function (name) {
+  var hooks = PS.hb.hooks;
+  if (!hooks[name]) PS.log('hook', name + ' called for the first time');
+  hooks[name] = (hooks[name] || 0) + 1;
+};
+// Independent of the EFB's own onUpdate: counts the browser's animation frames (these normally stop when hidden).
+PS.rafStart = function () {
+  if (PS.hb.rafOn || typeof requestAnimationFrame !== 'function') return;
+  PS.hb.rafOn = true;
+  (function loop() {
+    if (!PS.hb.rafOn) return;
+    PS.hb.raf++;
+    requestAnimationFrame(loop);
+  })();
 };
 PS.hbStart = function () {
   var hb = PS.hb;
@@ -184,20 +201,21 @@ PS.hbStart = function () {
 };
 PS.hbStop = function () {
   if (PS.hb.timer !== null) { clearInterval(PS.hb.timer); PS.hb.timer = null; }
+  PS.hb.rafOn = false;
 };
 PS.hbFrame = function () { PS.hb.frames++; };
 PS.hbPause = function () {
   var hb = PS.hb;
   if (hb.paused) return;
-  hb.paused = true; hb.pausedAt = Date.now(); hb.ticksAtPause = hb.ticks; hb.framesAtPause = hb.frames;
+  hb.paused = true; hb.pausedAt = Date.now(); hb.ticksAtPause = hb.ticks; hb.framesAtPause = hb.frames; hb.rafAtPause = hb.raf;
 };
 PS.hbResume = function () {
   var hb = PS.hb;
   if (!hb.paused) return;
-  hb.lastPause = { ms: Date.now() - hb.pausedAt, ticks: hb.ticks - hb.ticksAtPause, frames: hb.frames - hb.framesAtPause };
+  hb.lastPause = { ms: Date.now() - hb.pausedAt, ticks: hb.ticks - hb.ticksAtPause, frames: hb.frames - hb.framesAtPause, raf: hb.raf - hb.rafAtPause };
   hb.paused = false;
   PS.log('heartbeat', 'resumed after ' + Math.round(hb.lastPause.ms / 1000) + ' s hidden: ' + hb.lastPause.ticks +
-    ' timer ticks, ' + hb.lastPause.frames + ' onUpdate frames while hidden');
+    ' timer ticks, ' + hb.lastPause.frames + ' onUpdate frames, ' + hb.lastPause.raf + ' animation frames while hidden');
 };
 
 // ---- toasts (in-tablet popups with action buttons) ----

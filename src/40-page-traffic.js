@@ -44,6 +44,7 @@ PS.pages.push({
       var found = PS.discoverTrafficApis();
       apiBox.textContent = found.length ? found.join('\n') : 'No names matching traffic / tcas / ai / simobject found on window, msfssdk, SimVar or Coherent.';
       PS.log('traffic', 'discovery: ' + found.length + ' candidate name(s)');
+      found.forEach(function (n) { PS.log('traffic', '  candidate ' + n); });
     }
 
     function fetchContacts() {

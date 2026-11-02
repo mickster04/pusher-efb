@@ -2,7 +2,7 @@
 (function () {
 'use strict';
 var PS = {};
-PS.CSS = ".ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: #131c24; color: #dfe7ee; font: 15px/1.35 Arial, sans-serif; } .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; } .ps-header { padding: 10px 16px 6px; background: #0e151b; } .ps-title { font-size: 20px; font-weight: bold; color: #f0a830; margin-right: 12px; } .ps-sub { color: #8aa0b2; font-size: 13px; } .ps-nav { display: flex; flex-wrap: wrap; background: #0e151b; padding: 0 10px 8px; } .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid #2a3a47; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-navbtn.on { background: #f0a830; color: #131c24; border-color: #f0a830; font-weight: bold; } .ps-body { position: relative; flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 14px 24px; } .ps-footer { padding: 5px 14px; background: #0b1116; color: #7f93a4; font-size: 12px; white-space: nowrap; overflow: hidden; } .ps-panel { background: #1b2630; border: 1px solid #2a3a47; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; } .ps-panel-title { font-weight: bold; margin-bottom: 8px; color: #f0a830; } .ps-note { color: #93a7b8; font-size: 13px; margin-top: 8px; } .ps-note.warn { color: #ffd37a; } .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; } .ps-row > * { margin: 0 10px 8px 0; } .ps-field { display: block; } .ps-field-label { display: block; font-size: 12px; color: #8aa0b2; margin-bottom: 3px; } .ps-input { padding: 9px 10px; border: 1px solid #3a4d5c; border-radius: 6px; background: #0f171e; color: #e8f0f6; font-size: 15px; min-width: 120px; box-sizing: border-box; } .ps-check { display: block; padding: 8px 0; font-size: 14px; color: #cfd9e2; } .ps-btn { padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #2a3a47; color: #eef4f8; font-size: 15px; } .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; } .ps-btn.ps-warn { background: #7a5a14; border-color: #f0a830; } .ps-btn.ps-danger { background: #8a2230; border-color: #ff5c6c; font-weight: bold; } .ps-btn.ps-ghost { background: transparent; } .ps-toggle { display: inline-block; border: 1px solid #3a4d5c; border-radius: 8px; overflow: hidden; } .ps-toggle-btn { padding: 12px 20px; border: 0; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-toggle-btn.on { background: #f0a830; color: #131c24; font-weight: bold; } .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; } .ps-pill.ok { background: #1d5a3a; color: #bff0d4; } .ps-pill.bad { background: #5a2a2a; color: #ffc9c9; } .ps-kv { font-size: 13px; color: #b9c8d4; margin-bottom: 6px; white-space: pre-wrap; } .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: #0f171e; font-size: 14px; word-wrap: break-word; } .ps-result.ok { border-left: 4px solid #4cd18a; } .ps-result.bad { border-left: 4px solid #ff6b6b; color: #ffd0d0; } .ps-mono { font-family: Consolas, monospace; font-size: 13px; } .ps-tablewrap { overflow-x: auto; } .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; } .ps-table th { text-align: left; color: #8aa0b2; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid #2a3a47; } .ps-table td { padding: 5px 8px; border-bottom: 1px solid #222f3a; } .ps-val { font-family: Consolas, monospace; color: #9fe3bd; word-break: break-all; } .ps-val.bad { color: #ff9d9d; } .ps-table tr.ps-hot td { background: #4a2a1a; } .ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: #0b1116; border-radius: 6px; color: #b9c8d4; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; } .ps-raw { max-height: 260px; } .ps-logwrap .ps-btn { margin-top: 6px; } .ps-canvas { display: block; max-width: 100%; border-radius: 8px; background: #0f171e; } .ps-mount { margin-top: 8px; min-height: 0; } .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; } .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: #243442; border: 2px solid #f0a830; box-shadow: 0 4px 14px rgba(0,0,0,.5); } .ps-toast-brake { border-color: #ff6b6b; } .ps-toast-warn { border-color: #ffd37a; } .ps-toast-info { border-color: #5aa8e0; } .ps-toast-title { font-weight: bold; font-size: 16px; } .ps-toast-msg { margin: 4px 0 8px; color: #dfe7ee; } .ps-toast-actions .ps-btn { margin-right: 8px; }";
+PS.CSS = ".ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: #131c24; color: #dfe7ee; font: 15px/1.35 Arial, sans-serif; } .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; } .ps-header { padding: 10px 16px 6px; background: #0e151b; } .ps-title { font-size: 20px; font-weight: bold; color: #f0a830; margin-right: 12px; } .ps-sub { color: #8aa0b2; font-size: 13px; } .ps-nav { display: flex; flex-wrap: wrap; background: #0e151b; padding: 0 10px 8px; } .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid #2a3a47; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-navbtn.on { background: #f0a830; color: #131c24; border-color: #f0a830; font-weight: bold; } .ps-body { position: relative; flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 14px 24px; } .ps-footer { padding: 5px 14px; background: #0b1116; color: #7f93a4; font-size: 12px; white-space: nowrap; overflow: hidden; } .ps-panel { background: #1b2630; border: 1px solid #2a3a47; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; } .ps-panel-title { font-weight: bold; margin-bottom: 8px; color: #f0a830; } .ps-note { color: #93a7b8; font-size: 13px; margin-top: 8px; } .ps-note.warn { color: #ffd37a; } .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; } .ps-row > * { margin: 0 10px 8px 0; } .ps-field { display: block; } .ps-field-label { display: block; font-size: 12px; color: #8aa0b2; margin-bottom: 3px; } .ps-input { padding: 9px 10px; border: 1px solid #3a4d5c; border-radius: 6px; background: #0f171e; color: #e8f0f6; font-size: 15px; min-width: 120px; box-sizing: border-box; } .ps-check { display: block; padding: 8px 0; font-size: 14px; color: #cfd9e2; } .ps-btn { padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #2a3a47; color: #eef4f8; font-size: 15px; } .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; } .ps-btn.ps-warn { background: #7a5a14; border-color: #f0a830; } .ps-btn.ps-danger { background: #8a2230; border-color: #ff5c6c; font-weight: bold; } .ps-btn.ps-ghost { background: transparent; } .ps-toggle { display: inline-block; border: 1px solid #3a4d5c; border-radius: 8px; overflow: hidden; } .ps-toggle-btn { padding: 12px 20px; border: 0; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-toggle-btn.on { background: #f0a830; color: #131c24; font-weight: bold; } .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; } .ps-pill.ok { background: #1d5a3a; color: #bff0d4; } .ps-pill.bad { background: #5a2a2a; color: #ffc9c9; } .ps-kv { font-size: 13px; color: #b9c8d4; margin-bottom: 6px; white-space: pre-wrap; } .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: #0f171e; font-size: 14px; word-wrap: break-word; } .ps-result.ok { border-left: 4px solid #4cd18a; } .ps-result.bad { border-left: 4px solid #ff6b6b; color: #ffd0d0; } .ps-mono { font-family: Consolas, monospace; font-size: 13px; } .ps-tablewrap { overflow-x: auto; } .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; } .ps-table th { text-align: left; color: #8aa0b2; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid #2a3a47; } .ps-table td { padding: 5px 8px; border-bottom: 1px solid #222f3a; } .ps-val { font-family: Consolas, monospace; color: #9fe3bd; word-break: break-all; } .ps-val.bad { color: #ff9d9d; } .ps-table tr.ps-hot td { background: #4a2a1a; } .ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: #0b1116; border-radius: 6px; color: #b9c8d4; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; } .ps-raw { max-height: 260px; } .ps-logwrap .ps-btn { margin-top: 6px; } .ps-canvas { display: block; max-width: 100%; border-radius: 8px; background: #0f171e; } .ps-mount { margin-top: 8px; min-height: 0; } .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; } .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: #243442; border: 2px solid #f0a830; box-shadow: 0 4px 14px rgba(0,0,0,.5); } .ps-toast-brake { border-color: #ff6b6b; } .ps-toast-warn { border-color: #ffd37a; } .ps-toast-info { border-color: #5aa8e0; } .ps-toast-title { font-weight: bold; font-size: 16px; } .ps-toast-msg { margin: 4px 0 8px; color: #dfe7ee; } .ps-toast-actions .ps-btn { margin-right: 8px; } .ps-headbtn { float: right; padding: 8px 14px; font-size: 14px; background: #7a5a14; border: 1px solid #f0a830; border-radius: 8px; color: #fff; } .ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; } .ps-overlay-bar { margin-bottom: 8px; } .ps-overlay-bar .ps-btn { margin-left: 10px; } .ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: #0b1116; color: #cfd9e2; border: 1px solid #3a4d5c; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; }";
 /* ---- 00-core.js ---- */
 // Core: constants, sim access wrappers, logging, DOM helper, heartbeat, toasts.
 // Nothing here touches the DOM or starts timers at load time (so node tests can load the bundle).
@@ -45,7 +45,7 @@ PS.logListeners = [];
 PS.log = function (channel, msg) {
   var entry = { t: Date.now(), ch: channel, msg: String(msg) };
   PS.logs.push(entry);
-  if (PS.logs.length > 400) PS.logs.shift();
+  if (PS.logs.length > 3000) PS.logs.shift();
   for (var i = 0; i < PS.logListeners.length; i++) {
     try { PS.logListeners[i](entry); } catch (e) { /* listener errors must not break the app */ }
   }
@@ -173,8 +173,25 @@ PS.fmt = {
 // ---- heartbeat: does anything keep ticking while the app is hidden? ----
 PS.hb = {
   timer: null, ticks: 0, frames: 0, paused: false,
+  raf: 0, rafOn: false, rafAtPause: 0, hooks: {},
   startedAt: 0, last: 0, maxGapMs: 0,
   pausedAt: 0, ticksAtPause: 0, framesAtPause: 0, lastPause: null
+};
+// Counts every EFB lifecycle hook call (logs the first of each) to see which ones the EFB really calls.
+PS.hook = function (name) {
+  var hooks = PS.hb.hooks;
+  if (!hooks[name]) PS.log('hook', name + ' called for the first time');
+  hooks[name] = (hooks[name] || 0) + 1;
+};
+// Independent of the EFB's own onUpdate: counts the browser's animation frames (these normally stop when hidden).
+PS.rafStart = function () {
+  if (PS.hb.rafOn || typeof requestAnimationFrame !== 'function') return;
+  PS.hb.rafOn = true;
+  (function loop() {
+    if (!PS.hb.rafOn) return;
+    PS.hb.raf++;
+    requestAnimationFrame(loop);
+  })();
 };
 PS.hbStart = function () {
   var hb = PS.hb;
@@ -190,20 +207,21 @@ PS.hbStart = function () {
 };
 PS.hbStop = function () {
   if (PS.hb.timer !== null) { clearInterval(PS.hb.timer); PS.hb.timer = null; }
+  PS.hb.rafOn = false;
 };
 PS.hbFrame = function () { PS.hb.frames++; };
 PS.hbPause = function () {
   var hb = PS.hb;
   if (hb.paused) return;
-  hb.paused = true; hb.pausedAt = Date.now(); hb.ticksAtPause = hb.ticks; hb.framesAtPause = hb.frames;
+  hb.paused = true; hb.pausedAt = Date.now(); hb.ticksAtPause = hb.ticks; hb.framesAtPause = hb.frames; hb.rafAtPause = hb.raf;
 };
 PS.hbResume = function () {
   var hb = PS.hb;
   if (!hb.paused) return;
-  hb.lastPause = { ms: Date.now() - hb.pausedAt, ticks: hb.ticks - hb.ticksAtPause, frames: hb.frames - hb.framesAtPause };
+  hb.lastPause = { ms: Date.now() - hb.pausedAt, ticks: hb.ticks - hb.ticksAtPause, frames: hb.frames - hb.framesAtPause, raf: hb.raf - hb.rafAtPause };
   hb.paused = false;
   PS.log('heartbeat', 'resumed after ' + Math.round(hb.lastPause.ms / 1000) + ' s hidden: ' + hb.lastPause.ticks +
-    ' timer ticks, ' + hb.lastPause.frames + ' onUpdate frames while hidden');
+    ' timer ticks, ' + hb.lastPause.frames + ' onUpdate frames, ' + hb.lastPause.raf + ' animation frames while hidden');
 };
 
 // ---- toasts (in-tablet popups with action buttons) ----
@@ -662,12 +680,9 @@ PS.ui = {
       box,
       PS.ui.button('Copy log', function () {
         var text = box.textContent;
-        try {
-          var ta = PS.h('textarea', { style: 'position:fixed;left:-1000px;top:0' });
-          ta.value = text; document.body.appendChild(ta); ta.select();
-          document.execCommand('copy'); document.body.removeChild(ta);
-          PS.log('ui', 'log copied to clipboard');
-        } catch (e) { PS.log('ui', 'copy failed: ' + PS.errText(e)); }
+        var ok = PS.ui.copyText(text);
+        PS.log('ui', ok ? 'log copied to clipboard' : 'clipboard copy not available; showing text to select');
+        if (!ok) PS.ui.showText(text, 'Log (select all and copy)');
       }, 'ps-small')
     );
     return wrap;
@@ -678,6 +693,35 @@ PS.ui = {
     var table = PS.h('table', { class: 'ps-table' }, thead, tbody);
     return { el: PS.h('div', { class: 'ps-tablewrap' }, table), body: tbody };
   }
+};
+
+// Copies text to the clipboard. Returns true only if the browser says it worked.
+PS.ui.copyText = function (text) {
+  try {
+    var ta = PS.h('textarea', { style: 'position:fixed;left:-1000px;top:0' });
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return !!ok;
+  } catch (e) {
+    return false;
+  }
+};
+
+// Fallback when the clipboard is blocked: a full-screen overlay with the text selected, ready for manual copy.
+PS.ui.showText = function (text, title) {
+  var host = PS.rootEl || document.body;
+  var ta = PS.h('textarea', { class: 'ps-overlay-text', readonly: true });
+  ta.value = text;
+  var overlay = PS.h('div', { class: 'ps-overlay' },
+    PS.h('div', { class: 'ps-overlay-bar' }, PS.h('span', { class: 'ps-panel-title', text: title || 'Text' }),
+      PS.ui.button('Select all', function () { ta.focus(); ta.select(); }, 'ps-small'),
+      PS.ui.button('Close', function () { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 'ps-small ps-ghost')),
+    ta);
+  host.appendChild(overlay);
+  ta.focus(); ta.select();
 };
 
 /* ---- 10-page-telemetry.js ---- */
@@ -710,14 +754,17 @@ PS.pages.push({
       var up = (Date.now() - hb.startedAt) / 1000;
       var parts = [
         'own timer ticks: ' + hb.ticks + ' (expected about ' + Math.floor(up / 0.5) + ')',
-        'onUpdate frames: ' + hb.frames,
+        'EFB onUpdate frames: ' + hb.frames,
+        'browser animation frames: ' + hb.raf,
         'largest timer gap: ' + hb.maxGapMs + ' ms',
         'app state: ' + (hb.paused ? 'PAUSED (hidden)' : 'visible')
       ];
       if (hb.lastPause) {
         parts.push('last hidden period: ' + Math.round(hb.lastPause.ms / 1000) + ' s, ' + hb.lastPause.ticks +
-          ' timer ticks and ' + hb.lastPause.frames + ' onUpdate frames while hidden');
+          ' timer ticks, ' + hb.lastPause.frames + ' onUpdate frames and ' + hb.lastPause.raf + ' animation frames while hidden');
       }
+      var hookNames = Object.keys(hb.hooks);
+      parts.push('EFB hooks called: ' + (hookNames.length ? hookNames.map(function (n) { return n + ' x' + hb.hooks[n]; }).join(', ') : 'none yet'));
       hbLine.textContent = parts.join('   |   ');
       cycleLine.textContent = 'read cycles: ' + cycles + '   |   last cycle: ' + vars.length + ' vars in ' + PS.fmt.num(lastCycleMs, 1) + ' ms   |   poll every ' + rateMs + ' ms';
     }
@@ -729,7 +776,7 @@ PS.pages.push({
       cells = [];
       vars.forEach(function (v, i) {
         var valueCell = h('td', { class: 'ps-val' });
-        var del = v.custom ? ui.button('\u2715', function () { vars.splice(i, 1); buildRows(); }, 'ps-small') : null;
+        var del = v.custom ? ui.button('x', function () { vars.splice(i, 1); buildRows(); }, 'ps-small') : null;
         tbl.body.appendChild(h('tr', null,
           h('td', { text: v.group }), h('td', { class: 'ps-mono', text: v.name }), h('td', { text: v.unit }), valueCell, h('td', null, del)));
         cells.push(valueCell);
@@ -816,6 +863,9 @@ PS.pages.push({
     paintStatus();
     return {
       el: el,
+      snapshot: function () {
+        return vars.map(function (v, i) { return v.name + ' [' + v.unit + '] = ' + (cells[i] ? cells[i].textContent : ''); }).join('\n');
+      },
       onShow: function () { cycle(); start(); },
       onHide: function () { stop(); }
     };
@@ -823,10 +873,9 @@ PS.pages.push({
 });
 
 /* ---- 20-page-tug.js ---- */
-// Spike 2: can the tug be driven from JS? Two modes behind a toggle:
-//  - Direct: per-tick writes of PUSHBACK WAIT / VELOCITY BODY Z / ROTATION VELOCITY BODY Y (what the original app does).
-//  - Native: the sim's own tug events (TOGGLE_PUSHBACK, KEY_TUG_HEADING, PUSHBACK WAIT) - the fallback.
-// Direct mode moves the aircraft. It has a hard run-time limit and stops on hide, pause and close.
+// Spike 2: can the tug be driven from JS? Per-tick writes of PUSHBACK WAIT / VELOCITY BODY Z / ROTATION VELOCITY BODY Y
+// (what the original app does). Moves the aircraft: hard run-time limit, stops on hide, pause and close.
+// A native-events mode (KEY_TUG_HEADING) was tried and dropped: the direct writes worked.
 
 PS.TUG = {
   HEADING_UNITS_PER_DEG: 11930465,   // KEY_TUG_HEADING value = this * degrees, as 32-bit unsigned
@@ -843,7 +892,6 @@ PS.pages.push({
   title: '2 Tug',
   create: function (ctx) {
     var ui = PS.ui, h = PS.h;
-    var mode = 'direct';
     var drive = null;      // { timer, startedAt, maxMs, writes, failures, dts[], lastTick, lastError }
     var readTimer = null;
 
@@ -883,7 +931,7 @@ PS.pages.push({
       say('PUSHBACK WAIT=' + (on ? 1 : 0) + ': ' + (r.ok ? 'sent' : 'FAILED ' + r.error));
       return r;
     }
-    var shared = ui.panel('Tug (both modes)',
+    var shared = ui.panel('Tug',
       h('div', { class: 'ps-row' },
         ui.button('Call / toggle tug (TOGGLE_PUSHBACK)', function () { key('TOGGLE_PUSHBACK', 1); }),
         ui.button('Hold tug (WAIT on)', function () { setWait(true); }),
@@ -984,7 +1032,7 @@ PS.pages.push({
       }, intervalMs);
     }
 
-    var directPanel = ui.panel('Direct mode: per-tick velocity writes',
+    var directPanel = ui.panel('Per-tick velocity writes',
       ui.note('Moves the aircraft. Only use parked on the ground with the tug attached and the brake released. Stops by itself at the time limit, and when this page is hidden or the app is paused or closed.', 'warn'),
       h('div', { class: 'ps-row' },
         ui.field('Speed (ft/s, + forward, - reverse)', speedIn), ui.field('Rotation (original units)', rotIn),
@@ -998,64 +1046,23 @@ PS.pages.push({
       stats
     );
 
-    // ---- native mode ----
-    var hdgIn = ui.input('0', { type: 'number', min: '0', max: '360', step: '1' });
-    var evtName = ui.input('', { placeholder: 'Key event name (unverified names only)' });
-    var evtVal = ui.input('0', { placeholder: 'Value' });
-    function curHeading() {
-      var r = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
-      return r.ok && typeof r.value === 'number' ? r.value : null;
-    }
-    function sendHeading(deg) {
-      var v = PS.tugHeadingValue(deg);
-      key('KEY_TUG_HEADING', v);
-      say('tug heading target ' + PS.fmt.num(PS.geo.normDeg(deg), 1) + ' deg (event value ' + v + ')');
-    }
-    function nudge(delta) {
-      var cur = curHeading();
-      if (cur === null) { say('cannot read PLANE HEADING DEGREES TRUE', true); return; }
-      sendHeading(cur + delta);
-    }
-    var nativePanel = ui.panel('Native mode: the sim\'s own tug events',
-      ui.note('Fallback for steering without per-tick velocity writes: KEY_TUG_HEADING gives a left/right target. Whether speed can be shaped in this mode is unproven; try the custom event row.'),
-      h('div', { class: 'ps-row' },
-        ui.button('\u25C0 Left 15\u00B0', function () { nudge(-15); }),
-        ui.button('\u25C0 Left 5\u00B0', function () { nudge(-5); }),
-        ui.button('Right 5\u00B0 \u25B6', function () { nudge(5); }),
-        ui.button('Right 15\u00B0 \u25B6', function () { nudge(15); })),
-      h('div', { class: 'ps-row' },
-        ui.field('Absolute heading (true)', hdgIn),
-        ui.button('Send heading', function () { sendHeading(Number(hdgIn.value) || 0); }),
-        ui.button('Use current', function () { var c = curHeading(); if (c !== null) hdgIn.value = Math.round(c); })),
-      h('div', { class: 'ps-row' },
-        ui.field('Custom key event', evtName), ui.field('Value', evtVal),
-        ui.button('Send', function () { key(evtName.value.replace(/^K:/, ''), Number(evtVal.value) || 0); }, 'ps-warn'))
-    );
-
-    var toggle = ui.toggle([{ value: 'direct', label: 'Direct (velocity writes)' }, { value: 'native', label: 'Native (tug events)' }], 'direct', function (m) {
-      mode = m; paintMode();
-    });
-    function paintMode() {
-      directPanel.style.display = mode === 'direct' ? '' : 'none';
-      nativePanel.style.display = mode === 'native' ? '' : 'none';
-      if (mode === 'native' && drive) stopDrive('mode switched');
-    }
-
     var el = h('div', { class: 'ps-page' },
-      ui.panel('Mode', toggle.el),
       shared,
       directPanel,
-      nativePanel,
       ui.panel('Live readouts', readTable.el),
       ui.panel('Log', ui.logBox(['tug', 'key', 'set']))
     );
-    paintMode();
 
     // Safety: stop the drive whenever the app is paused or closed.
     PS.closeHooks.push(function () { stopDrive('app paused or closed'); });
 
     return {
       el: el,
+      snapshot: function () {
+        var lines = readVars.map(function (v) { return v[0] + ' = ' + readCells[v[0]].textContent; });
+        lines.push('', 'Last drive stats:', stats.textContent);
+        return lines.join('\n');
+      },
       onShow: function () { refreshReadouts(); readTimer = setInterval(refreshReadouts, 250); },
       onHide: function () { if (readTimer !== null) { clearInterval(readTimer); readTimer = null; } stopDrive('page hidden'); }
     };
@@ -1214,7 +1221,12 @@ PS.pages.push({
       ui.panel('Raw data returned', rawBox),
       ui.panel('Log', ui.logBox(['taxi']))
     );
-    return { el: el, onShow: function () { repaint(); }, onHide: function () {} };
+    return {
+      el: el,
+      snapshot: function () { return status.textContent + '\n\nRaw data returned:\n' + rawBox.textContent; },
+      onShow: function () { repaint(); },
+      onHide: function () {}
+    };
   }
 });
 
@@ -1265,6 +1277,7 @@ PS.pages.push({
       var found = PS.discoverTrafficApis();
       apiBox.textContent = found.length ? found.join('\n') : 'No names matching traffic / tcas / ai / simobject found on window, msfssdk, SimVar or Coherent.';
       PS.log('traffic', 'discovery: ' + found.length + ' candidate name(s)');
+      found.forEach(function (n) { PS.log('traffic', '  candidate ' + n); });
     }
 
     function fetchContacts() {
@@ -1432,6 +1445,15 @@ PS.pages.push({
       var lines = Object.keys(m).sort().map(function (n) { return n + ' : ' + m[n]; });
       probeOut.textContent = 'notificationManager members:\n' + lines.join('\n');
       log('notificationManager has ' + lines.length + ' members');
+      lines.forEach(function (l) { log('  member ' + l); });
+      Object.keys(m).sort().forEach(function (n) {
+        if (m[n] !== 'function' || !/^(add|show|create|push|send)/i.test(n)) return;
+        try {
+          var src = String(nm[n]);
+          log(n + '.length = ' + nm[n].length + ' (declared argument count)');
+          log(n + ' source: ' + src.replace(/\s+/g, ' ').substring(0, 700));
+        } catch (e) { log(n + ' source unavailable: ' + PS.errText(e)); }
+      });
       Object.keys(m).sort().forEach(function (n) {
         if (m[n] !== 'function' || !/notif|show|push|add|send|create|post|alert/i.test(n)) return;
         probeButtons.appendChild(ui.button('Try ' + n + '()', function () { tryCall(nm, n); }, 'ps-warn'));
@@ -1518,24 +1540,64 @@ PS.pages.push({
       lines.forEach(function (l) { log(l); });
     }
 
+    var bing = null;
+    var bingTimer = null;
+    var bingErrors = 0;
+
+    function followOwn() {
+      if (!bing) return;
+      var own = PS.readOwn();
+      if (!own) return;
+      var radius = Number(rangeSel.value);
+      try {
+        if (typeof bing.setPositionRadius === 'function') bing.setPositionRadius({ lat: own.lat, long: own.lon }, radius);
+      } catch (e) {
+        if (bingErrors++ < 3) log('setPositionRadius failed: ' + PS.errText(e));
+      }
+    }
+
+    // Mounts msfs-sdk BingComponent in a sized holder, wakes it, and keeps it centred on the aircraft.
+    // A black result usually means the map was never given a position or never woken; this tries both and logs what exists.
+    function mountBing(sdk) {
+      var holder = h('div', { style: 'position:relative;width:640px;height:360px;background:#000;overflow:hidden;' });
+      mountBox.appendChild(holder);
+      var ref = sdk.FSComponent.createRef();
+      var props = { ref: ref, id: 'ps-bing-' + (Date.now() % 100000), mode: sdk.EBingMode ? sdk.EBingMode.PLANE : 0 };
+      if (sdk.EBingResolution) props.resolution = sdk.EBingResolution.Normal;
+      var vnode = sdk.FSComponent.buildComponent(sdk.BingComponent, props);
+      sdk.FSComponent.render(vnode, holder);
+      bing = ref.instance;
+      if (!bing) { log('BingComponent rendered but no instance reference came back.'); return; }
+      var methods = [];
+      try {
+        var proto = Object.getPrototypeOf(bing);
+        methods = Object.getOwnPropertyNames(proto).filter(function (n) { return typeof bing[n] === 'function' && n !== 'constructor'; });
+      } catch (e) { methods = []; }
+      log('BingComponent instance methods: ' + (methods.join(', ') || 'none found'));
+      ['wake', 'setVisible'].forEach(function (n) {
+        if (typeof bing[n] === 'function') {
+          try { bing[n](n === 'setVisible' ? true : undefined); log('called ' + n + '()'); } catch (e) { log(n + '() failed: ' + PS.errText(e)); }
+        }
+      });
+      followOwn();
+      if (bingTimer !== null) clearInterval(bingTimer);
+      bingTimer = setInterval(followOwn, 1000);
+      log('BingComponent mounted and following own position every 1 s. If the area is still black, report the method list above.');
+    }
+
     // Best-effort mount of a built-in map. Which of these (if any) works inside an EFB app is exactly what we want to learn.
     function tryMount() {
       PS.clear(mountBox);
+      bing = null;
       var sdk = PS.global.msfssdk;
       try {
+        if (sdk && sdk.BingComponent && sdk.FSComponent) { mountBing(sdk); return; }
         var def = typeof customElements !== 'undefined' && customElements.get ? customElements.get('map-instrument') : null;
         if (def) {
           var mi = document.createElement('map-instrument');
           mi.style.width = '100%'; mi.style.height = '320px';
           mountBox.appendChild(mi);
-          log('created <map-instrument>; it needs configuration (bing id, flight plan, etc.) that we have not added. Check whether it renders anything.');
-          return;
-        }
-        if (sdk && sdk.BingComponent && sdk.FSComponent) {
-          var mode = sdk.EBingMode ? sdk.EBingMode.PLANE : 0;
-          var vnode = sdk.FSComponent.buildComponent(sdk.BingComponent, { id: 'ps-bing', mode: mode, resolution: sdk.EBingResolution ? sdk.EBingResolution.Normal : undefined });
-          sdk.FSComponent.render(vnode, mountBox);
-          log('rendered msfssdk BingComponent; check below for a map image.');
+          log('created <map-instrument>; it needs configuration we have not added. Check whether it renders anything.');
           return;
         }
         log('no known built-in map element or msfssdk BingComponent found; cannot mount.');
@@ -1604,7 +1666,7 @@ PS.pages.push({
     return {
       el: el,
       onShow: function () { draw(); timer = setInterval(draw, 500); },
-      onHide: function () { if (timer !== null) { clearInterval(timer); timer = null; } }
+      onHide: function () { if (timer !== null) { clearInterval(timer); timer = null; } if (bingTimer !== null) { clearInterval(bingTimer); bingTimer = null; } }
     };
   }
 });
@@ -1627,6 +1689,7 @@ PS.injectStyle = function () {
 // Builds the whole UI into `root` using plain DOM. Returns { showPage }.
 PS.buildShell = function (root) {
   var h = PS.h;
+  PS.rootEl = root;
   var instances = {};
   var current = null;
   var navButtons = {};
@@ -1657,6 +1720,35 @@ PS.buildShell = function (root) {
     try { if (instances[id].onShow) instances[id].onShow(); } catch (e2) { PS.log('app', 'page ' + id + ' onShow failed: ' + PS.errText(e2)); }
   }
 
+  function buildReport() {
+    var env = PS.env(), hb = PS.hb;
+    var lines = [
+      PS.APP_NAME + ' ' + PS.VERSION + ' report, ' + new Date().toISOString(),
+      'env: ' + Object.keys(env).map(function (k) { return k + '=' + env[k]; }).join(' '),
+      'heartbeat: timer ticks ' + hb.ticks + ', onUpdate frames ' + hb.frames + ', animation frames ' + hb.raf + ', max timer gap ' + hb.maxGapMs + ' ms, ' + (hb.paused ? 'PAUSED' : 'visible'),
+      'hooks called: ' + (Object.keys(hb.hooks).map(function (n) { return n + ' x' + hb.hooks[n]; }).join(', ') || 'none'),
+      hb.lastPause ? 'last hidden period: ' + Math.round(hb.lastPause.ms / 1000) + ' s, ' + hb.lastPause.ticks + ' timer ticks, ' + hb.lastPause.frames + ' onUpdate frames, ' + hb.lastPause.raf + ' animation frames' : 'no hidden period recorded',
+      '', '=== LOG (' + PS.logs.length + ' lines) ==='
+    ];
+    PS.logs.forEach(function (e) { lines.push(PS.fmtLog(e)); });
+    PS.pages.forEach(function (p) {
+      var inst = instances[p.id];
+      if (inst && typeof inst.snapshot === 'function') {
+        var snap = '';
+        try { snap = inst.snapshot(); } catch (e) { snap = 'snapshot failed: ' + PS.errText(e); }
+        if (snap) { lines.push('', '=== ' + p.title + ' snapshot ==='); lines.push(snap); }
+      }
+    });
+    return lines.join('\n');
+  }
+  function copyAll() {
+    var text = buildReport();
+    var ok = PS.ui.copyText(text);
+    PS.log('app', ok ? 'copied all logs (' + text.length + ' characters)' : 'clipboard copy not available; showing text');
+    if (ok) PS.toasts.show({ kind: 'info', title: 'All logs copied', message: PS.logs.length + ' log lines and page snapshots are on the clipboard.', ttlMs: 3000 });
+    else PS.ui.showText(text, 'All logs (select all and copy)');
+  }
+
   PS.pages.forEach(function (p) {
     navButtons[p.id] = h('button', { type: 'button', class: 'ps-navbtn', text: p.title, onclick: function () { showPage(p.id); } });
     nav.appendChild(navButtons[p.id]);
@@ -1669,7 +1761,7 @@ PS.buildShell = function (root) {
       var actions = h('div', { class: 'ps-toast-actions' });
       (t.actions || []).forEach(function (a) { actions.appendChild(PS.ui.button(a.label, a.onClick, 'ps-small')); });
       if (!t.persistent || !(t.actions && t.actions.length)) {
-        actions.appendChild(PS.ui.button('✕', function () { PS.toasts.dismiss(t.id); }, 'ps-small ps-ghost'));
+        actions.appendChild(PS.ui.button('x', function () { PS.toasts.dismiss(t.id); }, 'ps-small ps-ghost'));
       }
       toastHost.appendChild(h('div', { class: 'ps-toast ps-toast-' + t.kind },
         h('div', { class: 'ps-toast-title', text: t.title }),
@@ -1689,7 +1781,9 @@ PS.buildShell = function (root) {
   var footTimer = setInterval(paintFooter, 1000);
 
   root.appendChild(h('div', { class: 'ps-app' },
-    h('div', { class: 'ps-header' }, h('span', { class: 'ps-title', text: PS.APP_NAME }), h('span', { class: 'ps-sub', text: 'feasibility spikes for the Pusher EFB port' })),
+    h('div', { class: 'ps-header' },
+      PS.ui.button('Copy all logs', copyAll, 'ps-headbtn'),
+      h('span', { class: 'ps-title', text: PS.APP_NAME }), h('span', { class: 'ps-sub', text: 'feasibility spikes for the Pusher EFB port' })),
     nav, toastHost, body, footer));
 
   showPage(PS.pages[0].id);
@@ -1713,6 +1807,7 @@ PS.createViewClass = function (sdk) {
       try {
         PS.injectStyle();
         PS.hbStart();
+        PS.rafStart();
         this.shell = PS.buildShell(root);
         PS.log('app', PS.APP_NAME + ' ' + PS.VERSION + ' view rendered');
       } catch (e) {
@@ -1721,13 +1816,13 @@ PS.createViewClass = function (sdk) {
       }
     }
     // EFB lifecycle hooks (names per the open-source sample; unverified against the SDK docs).
-    onOpen() { PS.hbStart(); }
-    onResume() { PS.hbResume(); }
-    onPause() { PS.hbPause(); PS.runCloseHooks('app paused'); }
-    onClose() { PS.runCloseHooks('app closed'); PS.hbStop(); }
-    onUpdate() { PS.hbFrame(); }
-    routeGamepadInteractionEvent() {}
-    handlePageKeyAction() {}
+    onOpen() { PS.hook('onOpen'); PS.hbStart(); PS.rafStart(); }
+    onResume() { PS.hook('onResume'); PS.hbResume(); }
+    onPause() { PS.hook('onPause'); PS.hbPause(); PS.runCloseHooks('app paused'); }
+    onClose() { PS.hook('onClose'); PS.runCloseHooks('app closed'); PS.hbStop(); }
+    onUpdate() { PS.hook('onUpdate'); PS.hbFrame(); }
+    routeGamepadInteractionEvent() { PS.hook('routeGamepadInteractionEvent'); }
+    handlePageKeyAction() { PS.hook('handlePageKeyAction'); }
     destroy() {
       PS.runCloseHooks('view destroyed');
       if (this.shell && this.shell.dispose) this.shell.dispose();

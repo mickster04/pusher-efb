@@ -1,1 +1,5 @@
 node_modules/
+Packages/
+PackagesMetadata/
+_PackageInt/
+*.xml.user

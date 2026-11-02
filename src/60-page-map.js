@@ -46,24 +46,64 @@ PS.pages.push({
       lines.forEach(function (l) { log(l); });
     }
 
+    var bing = null;
+    var bingTimer = null;
+    var bingErrors = 0;
+
+    function followOwn() {
+      if (!bing) return;
+      var own = PS.readOwn();
+      if (!own) return;
+      var radius = Number(rangeSel.value);
+      try {
+        if (typeof bing.setPositionRadius === 'function') bing.setPositionRadius({ lat: own.lat, long: own.lon }, radius);
+      } catch (e) {
+        if (bingErrors++ < 3) log('setPositionRadius failed: ' + PS.errText(e));
+      }
+    }
+
+    // Mounts msfs-sdk BingComponent in a sized holder, wakes it, and keeps it centred on the aircraft.
+    // A black result usually means the map was never given a position or never woken; this tries both and logs what exists.
+    function mountBing(sdk) {
+      var holder = h('div', { style: 'position:relative;width:640px;height:360px;background:#000;overflow:hidden;' });
+      mountBox.appendChild(holder);
+      var ref = sdk.FSComponent.createRef();
+      var props = { ref: ref, id: 'ps-bing-' + (Date.now() % 100000), mode: sdk.EBingMode ? sdk.EBingMode.PLANE : 0 };
+      if (sdk.EBingResolution) props.resolution = sdk.EBingResolution.Normal;
+      var vnode = sdk.FSComponent.buildComponent(sdk.BingComponent, props);
+      sdk.FSComponent.render(vnode, holder);
+      bing = ref.instance;
+      if (!bing) { log('BingComponent rendered but no instance reference came back.'); return; }
+      var methods = [];
+      try {
+        var proto = Object.getPrototypeOf(bing);
+        methods = Object.getOwnPropertyNames(proto).filter(function (n) { return typeof bing[n] === 'function' && n !== 'constructor'; });
+      } catch (e) { methods = []; }
+      log('BingComponent instance methods: ' + (methods.join(', ') || 'none found'));
+      ['wake', 'setVisible'].forEach(function (n) {
+        if (typeof bing[n] === 'function') {
+          try { bing[n](n === 'setVisible' ? true : undefined); log('called ' + n + '()'); } catch (e) { log(n + '() failed: ' + PS.errText(e)); }
+        }
+      });
+      followOwn();
+      if (bingTimer !== null) clearInterval(bingTimer);
+      bingTimer = setInterval(followOwn, 1000);
+      log('BingComponent mounted and following own position every 1 s. If the area is still black, report the method list above.');
+    }
+
     // Best-effort mount of a built-in map. Which of these (if any) works inside an EFB app is exactly what we want to learn.
     function tryMount() {
       PS.clear(mountBox);
+      bing = null;
       var sdk = PS.global.msfssdk;
       try {
+        if (sdk && sdk.BingComponent && sdk.FSComponent) { mountBing(sdk); return; }
         var def = typeof customElements !== 'undefined' && customElements.get ? customElements.get('map-instrument') : null;
         if (def) {
           var mi = document.createElement('map-instrument');
           mi.style.width = '100%'; mi.style.height = '320px';
           mountBox.appendChild(mi);
-          log('created <map-instrument>; it needs configuration (bing id, flight plan, etc.) that we have not added. Check whether it renders anything.');
-          return;
-        }
-        if (sdk && sdk.BingComponent && sdk.FSComponent) {
-          var mode = sdk.EBingMode ? sdk.EBingMode.PLANE : 0;
-          var vnode = sdk.FSComponent.buildComponent(sdk.BingComponent, { id: 'ps-bing', mode: mode, resolution: sdk.EBingResolution ? sdk.EBingResolution.Normal : undefined });
-          sdk.FSComponent.render(vnode, mountBox);
-          log('rendered msfssdk BingComponent; check below for a map image.');
+          log('created <map-instrument>; it needs configuration we have not added. Check whether it renders anything.');
           return;
         }
         log('no known built-in map element or msfssdk BingComponent found; cannot mount.');
@@ -132,7 +172,7 @@ PS.pages.push({
     return {
       el: el,
       onShow: function () { draw(); timer = setInterval(draw, 500); },
-      onHide: function () { if (timer !== null) { clearInterval(timer); timer = null; } }
+      onHide: function () { if (timer !== null) { clearInterval(timer); timer = null; } if (bingTimer !== null) { clearInterval(bingTimer); bingTimer = null; } }
     };
   }
 });

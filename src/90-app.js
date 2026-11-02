@@ -15,6 +15,7 @@ PS.injectStyle = function () {
 // Builds the whole UI into `root` using plain DOM. Returns { showPage }.
 PS.buildShell = function (root) {
   var h = PS.h;
+  PS.rootEl = root;
   var instances = {};
   var current = null;
   var navButtons = {};
@@ -45,6 +46,35 @@ PS.buildShell = function (root) {
     try { if (instances[id].onShow) instances[id].onShow(); } catch (e2) { PS.log('app', 'page ' + id + ' onShow failed: ' + PS.errText(e2)); }
   }
 
+  function buildReport() {
+    var env = PS.env(), hb = PS.hb;
+    var lines = [
+      PS.APP_NAME + ' ' + PS.VERSION + ' report, ' + new Date().toISOString(),
+      'env: ' + Object.keys(env).map(function (k) { return k + '=' + env[k]; }).join(' '),
+      'heartbeat: timer ticks ' + hb.ticks + ', onUpdate frames ' + hb.frames + ', animation frames ' + hb.raf + ', max timer gap ' + hb.maxGapMs + ' ms, ' + (hb.paused ? 'PAUSED' : 'visible'),
+      'hooks called: ' + (Object.keys(hb.hooks).map(function (n) { return n + ' x' + hb.hooks[n]; }).join(', ') || 'none'),
+      hb.lastPause ? 'last hidden period: ' + Math.round(hb.lastPause.ms / 1000) + ' s, ' + hb.lastPause.ticks + ' timer ticks, ' + hb.lastPause.frames + ' onUpdate frames, ' + hb.lastPause.raf + ' animation frames' : 'no hidden period recorded',
+      '', '=== LOG (' + PS.logs.length + ' lines) ==='
+    ];
+    PS.logs.forEach(function (e) { lines.push(PS.fmtLog(e)); });
+    PS.pages.forEach(function (p) {
+      var inst = instances[p.id];
+      if (inst && typeof inst.snapshot === 'function') {
+        var snap = '';
+        try { snap = inst.snapshot(); } catch (e) { snap = 'snapshot failed: ' + PS.errText(e); }
+        if (snap) { lines.push('', '=== ' + p.title + ' snapshot ==='); lines.push(snap); }
+      }
+    });
+    return lines.join('\n');
+  }
+  function copyAll() {
+    var text = buildReport();
+    var ok = PS.ui.copyText(text);
+    PS.log('app', ok ? 'copied all logs (' + text.length + ' characters)' : 'clipboard copy not available; showing text');
+    if (ok) PS.toasts.show({ kind: 'info', title: 'All logs copied', message: PS.logs.length + ' log lines and page snapshots are on the clipboard.', ttlMs: 3000 });
+    else PS.ui.showText(text, 'All logs (select all and copy)');
+  }
+
   PS.pages.forEach(function (p) {
     navButtons[p.id] = h('button', { type: 'button', class: 'ps-navbtn', text: p.title, onclick: function () { showPage(p.id); } });
     nav.appendChild(navButtons[p.id]);
@@ -57,7 +87,7 @@ PS.buildShell = function (root) {
       var actions = h('div', { class: 'ps-toast-actions' });
       (t.actions || []).forEach(function (a) { actions.appendChild(PS.ui.button(a.label, a.onClick, 'ps-small')); });
       if (!t.persistent || !(t.actions && t.actions.length)) {
-        actions.appendChild(PS.ui.button('✕', function () { PS.toasts.dismiss(t.id); }, 'ps-small ps-ghost'));
+        actions.appendChild(PS.ui.button('x', function () { PS.toasts.dismiss(t.id); }, 'ps-small ps-ghost'));
       }
       toastHost.appendChild(h('div', { class: 'ps-toast ps-toast-' + t.kind },
         h('div', { class: 'ps-toast-title', text: t.title }),
@@ -77,7 +107,9 @@ PS.buildShell = function (root) {
   var footTimer = setInterval(paintFooter, 1000);
 
   root.appendChild(h('div', { class: 'ps-app' },
-    h('div', { class: 'ps-header' }, h('span', { class: 'ps-title', text: PS.APP_NAME }), h('span', { class: 'ps-sub', text: 'feasibility spikes for the Pusher EFB port' })),
+    h('div', { class: 'ps-header' },
+      PS.ui.button('Copy all logs', copyAll, 'ps-headbtn'),
+      h('span', { class: 'ps-title', text: PS.APP_NAME }), h('span', { class: 'ps-sub', text: 'feasibility spikes for the Pusher EFB port' })),
     nav, toastHost, body, footer));
 
   showPage(PS.pages[0].id);
@@ -101,6 +133,7 @@ PS.createViewClass = function (sdk) {
       try {
         PS.injectStyle();
         PS.hbStart();
+        PS.rafStart();
         this.shell = PS.buildShell(root);
         PS.log('app', PS.APP_NAME + ' ' + PS.VERSION + ' view rendered');
       } catch (e) {
@@ -109,13 +142,13 @@ PS.createViewClass = function (sdk) {
       }
     }
     // EFB lifecycle hooks (names per the open-source sample; unverified against the SDK docs).
-    onOpen() { PS.hbStart(); }
-    onResume() { PS.hbResume(); }
-    onPause() { PS.hbPause(); PS.runCloseHooks('app paused'); }
-    onClose() { PS.runCloseHooks('app closed'); PS.hbStop(); }
-    onUpdate() { PS.hbFrame(); }
-    routeGamepadInteractionEvent() {}
-    handlePageKeyAction() {}
+    onOpen() { PS.hook('onOpen'); PS.hbStart(); PS.rafStart(); }
+    onResume() { PS.hook('onResume'); PS.hbResume(); }
+    onPause() { PS.hook('onPause'); PS.hbPause(); PS.runCloseHooks('app paused'); }
+    onClose() { PS.hook('onClose'); PS.runCloseHooks('app closed'); PS.hbStop(); }
+    onUpdate() { PS.hook('onUpdate'); PS.hbFrame(); }
+    routeGamepadInteractionEvent() { PS.hook('routeGamepadInteractionEvent'); }
+    handlePageKeyAction() { PS.hook('handlePageKeyAction'); }
     destroy() {
       PS.runCloseHooks('view destroyed');
       if (this.shell && this.shell.dispose) this.shell.dispose();
