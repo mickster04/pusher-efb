@@ -9,3 +9,5 @@ wasm/vs/*/MSFS/
 *.wasm.bak
 wasm/build/
 wasm/build.log
+PackageSources/modules/*.wasm
+logs.txt
