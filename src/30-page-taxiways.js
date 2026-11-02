@@ -4,9 +4,42 @@
 
 PS.facility = {
   // Candidate ICAO spellings the facility APIs might expect for an airport.
+  rawByIdent: {},   // ident -> the exact ICAO string the sim's nearest search returned
   icaoCandidates: function (icao) {
     var id = icao.toUpperCase();
-    return [id, 'A      ' + id, 'A  ' + id + '     ', 'A' + id];
+    var list = [];
+    if (PS.facility.rawByIdent[id]) list.push(PS.facility.rawByIdent[id]);
+    return list.concat(['A      ' + id, id, 'A  ' + id + '     ', 'A' + id]);
+  },
+
+  // Finds the airport nearest to (lat, lon) with the sdk's nearest search, then picks the closest by real distance.
+  // Resolves { ident, raw, distM, candidates: [{ident, distM}] }.
+  nearestAirport: function (lat, lon) {
+    var sdk = PS.global.msfssdk;
+    if (!sdk || !sdk.FacilityLoader || !sdk.FacilityRepository || !sdk.FacilitySearchType) return Promise.reject(new Error('msfssdk has no FacilityLoader / FacilitySearchType'));
+    if (!PS.state.bus) return Promise.reject(new Error('no EFB bus handed to the app'));
+    var loader = new sdk.FacilityLoader(sdk.FacilityRepository.getRepository(PS.state.bus));
+    // A fresh session each time: a session only reports changes since its previous search.
+    return PS.facility.withTimeout(loader.startNearestSearchSession(sdk.FacilitySearchType.Airport), 4000, 'start nearest search')
+      .then(function (session) { return PS.facility.withTimeout(session.searchNearest(lat, lon, 30000, 6), 4000, 'searchNearest'); })
+      .then(function (res) {
+        var added = (res && res.added) || [];
+        PS.log('taxi', 'nearest search returned ' + added.length + ' airport(s): ' + JSON.stringify(added));
+        if (!added.length) throw new Error('no airport within 30 km');
+        return Promise.all(added.map(function (raw) {
+          return PS.facility.withTimeout(loader.getFacility(sdk.FacilityType.Airport, raw), 3000, 'getFacility ' + raw).then(function (f) {
+            var flat = f.lat !== undefined ? f.lat : (f.latitude !== undefined ? f.latitude : null);
+            var flon = f.lon !== undefined ? f.lon : (f.lng !== undefined ? f.lng : (f.longitude !== undefined ? f.longitude : null));
+            var ident = String(raw).replace(/^A\s*/, '').trim();
+            return { ident: ident, raw: raw, distM: flat === null ? 1e12 : PS.geo.distanceM(lat, lon, flat, flon) };
+          }, function () { return { ident: String(raw).replace(/^A\s*/, '').trim(), raw: raw, distM: 1e12 }; });
+        }));
+      })
+      .then(function (list) {
+        list.sort(function (a, b) { return a.distM - b.distM; });
+        list.forEach(function (c) { PS.facility.rawByIdent[c.ident.toUpperCase()] = c.raw; PS.log('taxi', '  candidate ' + c.ident + ' ' + (c.distM < 1e11 ? PS.fmt.dist(c.distM) : 'distance unknown')); });
+        return { ident: list[0].ident, raw: list[0].raw, distM: list[0].distM, candidates: list };
+      });
   },
 
   withTimeout: function (promise, ms, label) {
@@ -117,6 +150,18 @@ PS.pages.push({
       repaint();
     }
 
+    var detected = false;
+    function detectAirport(thenLoad) {
+      var own = PS.readOwn();
+      if (!own) { say('Cannot detect the airport: the aircraft position is not readable.', true); return; }
+      say('Finding the nearest airport...');
+      PS.facility.nearestAirport(own.lat, own.lon).then(function (r) {
+        icaoIn.value = r.ident;
+        say('Nearest airport: ' + r.ident + (r.distM < 1e11 ? ' (' + PS.fmt.dist(r.distM) + ' away)' : '') + '.');
+        if (thenLoad) loadFromSim();
+      }, function (e) { say('Could not detect the airport: ' + PS.errText(e), true); });
+    }
+
     function loadFromSim() {
       var icao = icaoIn.value.trim().toUpperCase();
       if (icao.length < 3) { say('Enter an ICAO code first.', true); return; }
@@ -139,7 +184,9 @@ PS.pages.push({
     var el = h('div', { class: 'ps-page' },
       ui.panel('Load taxiway data',
         h('div', { class: 'ps-row' }, ui.field('Airport ICAO', icaoIn),
-          ui.button('Load from sim', loadFromSim), ui.button('Use offline sample', useSample, 'ps-ghost')),
+          ui.button('Detect nearest airport and load', function () { detectAirport(true); }),
+          ui.button('Detect only', function () { detectAirport(false); }, 'ps-ghost'),
+          ui.button('Load typed ICAO', loadFromSim), ui.button('Use offline sample', useSample, 'ps-ghost')),
         status,
         ui.note('Needs a result the original app got through SimConnect facility data. If nothing comes back here, taxiways need a WASM module or a bundled dataset. The sample button only exercises the table.')),
       ui.panel('Named taxiways, runways and connectors',
@@ -152,7 +199,7 @@ PS.pages.push({
     return {
       el: el,
       snapshot: function () { return status.textContent + '\n\nRaw data returned:\n' + rawBox.textContent; },
-      onShow: function () { repaint(); },
+      onShow: function () { repaint(); if (!detected) { detected = true; detectAirport(false); } },
       onHide: function () {}
     };
   }

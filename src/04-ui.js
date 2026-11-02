@@ -21,14 +21,17 @@ PS.ui = {
     el.value = value;
     return el;
   },
+  // A choice control. Rendered as buttons, not a <select>: the sim's dropdown could not be changed in the EFB.
+  // Behaves like a select for callers: read and write `.value`, and `onchange` fires when the choice changes.
   select: function (options, value, onchange) {
-    var sel = PS.h('select', { class: 'ps-input', onchange: onchange });
-    options.forEach(function (o) {
-      var opt = PS.h('option', { value: o.value, text: o.label });
-      sel.appendChild(opt);
+    var t = PS.ui.toggle(options.map(function (o) { return { value: String(o.value), label: o.label }; }), String(value), function () {
+      if (onchange) onchange();
     });
-    sel.value = value;
-    return sel;
+    Object.defineProperty(t.el, 'value', {
+      get: function () { return t.get(); },
+      set: function (v) { t.set(String(v)); }
+    });
+    return t.el;
   },
   // Segmented toggle. options: [{value,label}], returns { el, get(), set(v) }
   toggle: function (options, value, onchange) {

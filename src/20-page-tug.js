@@ -35,6 +35,7 @@ PS.pages.push({
       readTable.body.appendChild(h('tr', null, h('td', { class: 'ps-mono', text: v[0] }), c));
     });
     function refreshReadouts() {
+      if (typeof paintAttached === 'function') paintAttached();
       readVars.forEach(function (v) {
         var r = PS.getVar(v[0], v[1]);
         var c = readCells[v[0]];
@@ -44,11 +45,13 @@ PS.pages.push({
     }
 
     // ---- shared controls ----
-    var methodSel = ui.select([{ value: 'simvar', label: 'K: via SimVar' }, { value: 'coherent', label: 'TRIGGER_KEY_EVENT' }], 'simvar');
+    // Toggle buttons rather than <select>: the sim's dropdown could not be changed in the EFB.
+    var methodTog = ui.toggle([{ value: 'simvar', label: 'K: via SimVar' }, { value: 'coherent', label: 'TRIGGER_KEY_EVENT' }], 'simvar');
+    var attachedPill = h('span', { class: 'ps-pill bad', text: 'TUG NOT ATTACHED' });
     function say(text, bad) { PS.log('tug', text); return bad; }
     function key(name, value) {
-      var r = PS.keyEvent(name, value, methodSel.value);
-      say('key ' + name + '=' + value + ' via ' + methodSel.value + ': ' + (r.ok ? 'sent' : 'FAILED ' + r.error));
+      var r = PS.keyEvent(name, value, methodTog.get());
+      say('key ' + name + '=' + value + ' via ' + methodTog.get() + ': ' + (r.ok ? 'sent' : 'FAILED ' + r.error));
       return r;
     }
     function setWait(on) {
@@ -56,14 +59,51 @@ PS.pages.push({
       say('PUSHBACK WAIT=' + (on ? 1 : 0) + ': ' + (r.ok ? 'sent' : 'FAILED ' + r.error));
       return r;
     }
+    function isAttached() {
+      var r = PS.getVar('PUSHBACK ATTACHED', 'bool');
+      return r.ok && Number(r.value) > 0;
+    }
+    function paintAttached() {
+      var a = isAttached();
+      attachedPill.className = 'ps-pill ' + (a ? 'ok' : 'bad');
+      attachedPill.textContent = a ? 'TUG ATTACHED' : 'TUG NOT ATTACHED';
+      return a;
+    }
+    // The original app's sequence: hold the tug (WAIT on), send TOGGLE_PUSHBACK, then wait for PUSHBACK ATTACHED.
+    var attachTimer = null;
+    function attachTug() {
+      if (attachTimer !== null) { clearInterval(attachTimer); attachTimer = null; }
+      if (isAttached()) { say('tug is already attached'); paintAttached(); return; }
+      setWait(true);
+      key('TOGGLE_PUSHBACK', 1);
+      var t0 = Date.now();
+      say('waiting for PUSHBACK ATTACHED (up to 15 s)...');
+      attachTimer = setInterval(function () {
+        if (paintAttached()) {
+          say('tug attached after ' + (Date.now() - t0) + ' ms');
+          clearInterval(attachTimer); attachTimer = null;
+        } else if (Date.now() - t0 > 15000) {
+          say('PUSHBACK ATTACHED never became true in 15 s (the aircraft may use its own pushback system)', true);
+          clearInterval(attachTimer); attachTimer = null;
+        }
+      }, 250);
+    }
+    function detachTug() {
+      if (!isAttached()) { say('no tug attached to detach'); return; }
+      if (drive) stopDrive('detach');
+      key('TOGGLE_PUSHBACK', 1);
+      say('detach requested');
+    }
     var shared = ui.panel('Tug',
+      h('div', { class: 'ps-row' }, attachedPill),
       h('div', { class: 'ps-row' },
-        ui.button('Call / toggle tug (TOGGLE_PUSHBACK)', function () { key('TOGGLE_PUSHBACK', 1); }),
+        ui.button('Attach tug (original sequence)', attachTug),
+        ui.button('Detach tug', detachTug, 'ps-ghost'),
         ui.button('Hold tug (WAIT on)', function () { setWait(true); }),
         ui.button('Go (WAIT off)', function () { setWait(false); }),
-        ui.field('Key event method', methodSel)
+        ui.field('Key event method', methodTog.el)
       ),
-      ui.note('The original app sets PUSHBACK WAIT to 1 before TOGGLE_PUSHBACK, otherwise the sim tug starts reversing on its own.')
+      ui.note('Attach the tug first. Without a tug, writing velocity just shoves a free aircraft around (it can lift or skid), so Start drive refuses unless a tug is attached. The original app sets PUSHBACK WAIT to 1 before TOGGLE_PUSHBACK, then waits for PUSHBACK ATTACHED.')
     );
 
     // ---- direct mode ----
@@ -71,12 +111,18 @@ PS.pages.push({
     var rotIn = ui.input('0', { type: 'number', step: '0.1', min: '-3', max: '3' });
     var scaleChk = h('input', { type: 'checkbox', checked: true });
     scaleChk.checked = true;
-    var rotUnitSel = ui.select([
-      { value: 'feet per second', label: 'feet per second (original hack)' },
-      { value: 'radians per second', label: 'radians per second' },
-      { value: 'degrees per second', label: 'degrees per second' }
+    var rotUnitTog = ui.toggle([
+      { value: 'feet per second', label: 'ft/s (original hack)' },
+      { value: 'radians per second', label: 'rad/s' },
+      { value: 'degrees per second', label: 'deg/s' }
     ], 'feet per second');
-    var intervalSel = ui.select([{ value: '20', label: '20 ms' }, { value: '50', label: '50 ms' }, { value: '100', label: '100 ms' }], '50');
+    var intervalTog = ui.toggle([{ value: '20', label: '20 ms' }, { value: '50', label: '50 ms' }, { value: '100', label: '100 ms' }], '50');
+    var allowFreeChk = h('input', { type: 'checkbox' });
+    function presets(input, values) {
+      var row = h('div', { class: 'ps-row' });
+      values.forEach(function (v) { row.appendChild(ui.button(String(v), function () { input.value = String(v); }, 'ps-small')); });
+      return row;
+    }
     var maxSecIn = ui.input('10', { type: 'number', min: '1', max: '30', step: '1' });
     var armed = h('span', { class: 'ps-pill bad', text: 'NOT RUNNING' });
     var stats = h('div', { class: 'ps-kv', text: 'No run yet.' });
@@ -87,7 +133,7 @@ PS.pages.push({
       var d = drive;
       drive = null;
       PS.setVar('VELOCITY BODY Z', 'feet per second', 0);
-      PS.setVar('ROTATION VELOCITY BODY Y', rotUnitSel.value, 0);
+      PS.setVar('ROTATION VELOCITY BODY Y', rotUnitTog.get(), 0);
       PS.setVar('PUSHBACK WAIT', 'bool', 1);
       armed.className = 'ps-pill bad';
       armed.textContent = 'NOT RUNNING';
@@ -116,11 +162,16 @@ PS.pages.push({
 
     function startDrive() {
       if (drive) return;
+      if (!paintAttached() && !allowFreeChk.checked) {
+        say('refusing to drive: no tug is attached. Press Attach tug first, or tick "drive without a tug" to test raw velocity writes.', true);
+        stats.textContent = 'Not started: no tug attached. Press "Attach tug (original sequence)" and wait for TUG ATTACHED.';
+        return;
+      }
       var speed = Number(speedIn.value) || 0;
       var rot = Number(rotIn.value) || 0;
       var scale = scaleChk.checked ? PS.TUG.ROT_SCALE : 1;
-      var rotUnit = rotUnitSel.value;
-      var intervalMs = Number(intervalSel.value);
+      var rotUnit = rotUnitTog.get();
+      var intervalMs = Number(intervalTog.get());
       var maxMs = Math.max(1, Math.min(30, Number(maxSecIn.value) || 10)) * 1000;
       drive = { startedAt: Date.now(), maxMs: maxMs, writes: 0, failures: 0, dts: [], lastTick: Date.now(), lastError: '',
         intervalMs: intervalMs, cmdSpeed: speed, lastReadback: null };
@@ -159,11 +210,14 @@ PS.pages.push({
 
     var directPanel = ui.panel('Per-tick velocity writes',
       ui.note('Moves the aircraft. Only use parked on the ground with the tug attached and the brake released. Stops by itself at the time limit, and when this page is hidden or the app is paused or closed.', 'warn'),
-      h('div', { class: 'ps-row' },
-        ui.field('Speed (ft/s, + forward, - reverse)', speedIn), ui.field('Rotation (original units)', rotIn),
-        ui.field('Rotation unit', rotUnitSel), ui.field('Update interval', intervalSel), ui.field('Max run (s)', maxSecIn)),
+      h('div', { class: 'ps-row' }, ui.field('Speed (ft/s, + forward, - reverse)', speedIn), ui.field('Max run (s)', maxSecIn)),
+      presets(speedIn, [-5, -2, -1, 0, 1, 2, 5]),
+      h('div', { class: 'ps-row' }, ui.field('Rotation (original units)', rotIn)),
+      presets(rotIn, [-2, -1, -0.5, 0, 0.5, 1, 2]),
+      h('div', { class: 'ps-row' }, ui.field('Rotation unit', rotUnitTog.el), ui.field('Update interval', intervalTog.el)),
       h('div', { class: 'ps-row' },
         h('label', { class: 'ps-check' }, scaleChk, ' scale rotation by 0.002 (original app)'),
+        h('label', { class: 'ps-check' }, allowFreeChk, ' drive without a tug (raw velocity test, can misbehave)'),
         armed),
       h('div', { class: 'ps-row' },
         ui.button('Start drive', startDrive, 'ps-warn'),

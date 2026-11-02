@@ -2,7 +2,7 @@
 (function () {
 'use strict';
 var PS = {};
-PS.CSS = ".ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: #131c24; color: #dfe7ee; font: 15px/1.35 Arial, sans-serif; } .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; } .ps-header { padding: 10px 16px 6px; background: #0e151b; } .ps-title { font-size: 20px; font-weight: bold; color: #f0a830; margin-right: 12px; } .ps-sub { color: #8aa0b2; font-size: 13px; } .ps-nav { display: flex; flex-wrap: wrap; background: #0e151b; padding: 0 10px 8px; } .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid #2a3a47; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-navbtn.on { background: #f0a830; color: #131c24; border-color: #f0a830; font-weight: bold; } .ps-body { position: relative; flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 14px 24px; } .ps-footer { padding: 5px 14px; background: #0b1116; color: #7f93a4; font-size: 12px; white-space: nowrap; overflow: hidden; } .ps-panel { background: #1b2630; border: 1px solid #2a3a47; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; } .ps-panel-title { font-weight: bold; margin-bottom: 8px; color: #f0a830; } .ps-note { color: #93a7b8; font-size: 13px; margin-top: 8px; } .ps-note.warn { color: #ffd37a; } .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; } .ps-row > * { margin: 0 10px 8px 0; } .ps-field { display: block; } .ps-field-label { display: block; font-size: 12px; color: #8aa0b2; margin-bottom: 3px; } .ps-input { padding: 9px 10px; border: 1px solid #3a4d5c; border-radius: 6px; background: #0f171e; color: #e8f0f6; font-size: 15px; min-width: 120px; box-sizing: border-box; } .ps-check { display: block; padding: 8px 0; font-size: 14px; color: #cfd9e2; } .ps-btn { padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #2a3a47; color: #eef4f8; font-size: 15px; } .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; } .ps-btn.ps-warn { background: #7a5a14; border-color: #f0a830; } .ps-btn.ps-danger { background: #8a2230; border-color: #ff5c6c; font-weight: bold; } .ps-btn.ps-ghost { background: transparent; } .ps-toggle { display: inline-block; border: 1px solid #3a4d5c; border-radius: 8px; overflow: hidden; } .ps-toggle-btn { padding: 12px 20px; border: 0; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-toggle-btn.on { background: #f0a830; color: #131c24; font-weight: bold; } .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; } .ps-pill.ok { background: #1d5a3a; color: #bff0d4; } .ps-pill.bad { background: #5a2a2a; color: #ffc9c9; } .ps-kv { font-size: 13px; color: #b9c8d4; margin-bottom: 6px; white-space: pre-wrap; } .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: #0f171e; font-size: 14px; word-wrap: break-word; } .ps-result.ok { border-left: 4px solid #4cd18a; } .ps-result.bad { border-left: 4px solid #ff6b6b; color: #ffd0d0; } .ps-mono { font-family: Consolas, monospace; font-size: 13px; } .ps-tablewrap { overflow-x: auto; } .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; } .ps-table th { text-align: left; color: #8aa0b2; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid #2a3a47; } .ps-table td { padding: 5px 8px; border-bottom: 1px solid #222f3a; } .ps-val { font-family: Consolas, monospace; color: #9fe3bd; word-break: break-all; } .ps-val.bad { color: #ff9d9d; } .ps-table tr.ps-hot td { background: #4a2a1a; } .ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: #0b1116; border-radius: 6px; color: #b9c8d4; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; } .ps-raw { max-height: 260px; } .ps-logwrap .ps-btn { margin-top: 6px; } .ps-canvas { display: block; max-width: 100%; border-radius: 8px; background: #0f171e; } .ps-mount { margin-top: 8px; min-height: 0; } .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; } .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: #243442; border: 2px solid #f0a830; box-shadow: 0 4px 14px rgba(0,0,0,.5); } .ps-toast-brake { border-color: #ff6b6b; } .ps-toast-warn { border-color: #ffd37a; } .ps-toast-info { border-color: #5aa8e0; } .ps-toast-title { font-weight: bold; font-size: 16px; } .ps-toast-msg { margin: 4px 0 8px; color: #dfe7ee; } .ps-toast-actions .ps-btn { margin-right: 8px; } .ps-headbtn { float: right; padding: 8px 14px; font-size: 14px; background: #7a5a14; border: 1px solid #f0a830; border-radius: 8px; color: #fff; } .ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; } .ps-overlay-bar { margin-bottom: 8px; } .ps-overlay-bar .ps-btn { margin-left: 10px; } .ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: #0b1116; color: #cfd9e2; border: 1px solid #3a4d5c; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; }";
+PS.CSS = ".ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: #131c24; color: #dfe7ee; font: 15px/1.35 Arial, sans-serif; } .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; } .ps-header { padding: 10px 16px 6px; background: #0e151b; } .ps-title { font-size: 20px; font-weight: bold; color: #f0a830; margin-right: 12px; } .ps-sub { color: #8aa0b2; font-size: 13px; } .ps-nav { display: flex; flex-wrap: wrap; background: #0e151b; padding: 0 10px 8px; } .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid #2a3a47; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-navbtn.on { background: #f0a830; color: #131c24; border-color: #f0a830; font-weight: bold; } .ps-body { position: relative; flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 14px 24px; } .ps-footer { padding: 5px 14px; background: #0b1116; color: #7f93a4; font-size: 12px; white-space: nowrap; overflow: hidden; } .ps-panel { background: #1b2630; border: 1px solid #2a3a47; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; } .ps-panel-title { font-weight: bold; margin-bottom: 8px; color: #f0a830; } .ps-note { color: #93a7b8; font-size: 13px; margin-top: 8px; } .ps-note.warn { color: #ffd37a; } .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; } .ps-row > * { margin: 0 10px 8px 0; } .ps-field { display: block; } .ps-field-label { display: block; font-size: 12px; color: #8aa0b2; margin-bottom: 3px; } .ps-input { padding: 9px 10px; border: 1px solid #3a4d5c; border-radius: 6px; background: #0f171e; color: #e8f0f6; font-size: 15px; min-width: 120px; box-sizing: border-box; } .ps-check { display: block; padding: 8px 0; font-size: 14px; color: #cfd9e2; } .ps-btn { padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #2a3a47; color: #eef4f8; font-size: 15px; } .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; } .ps-btn.ps-warn { background: #7a5a14; border-color: #f0a830; } .ps-btn.ps-danger { background: #8a2230; border-color: #ff5c6c; font-weight: bold; } .ps-btn.ps-ghost { background: transparent; } .ps-toggle { display: flex; flex-wrap: wrap; } .ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-toggle-btn.on { background: #f0a830; color: #131c24; font-weight: bold; } .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; } .ps-pill.ok { background: #1d5a3a; color: #bff0d4; } .ps-pill.bad { background: #5a2a2a; color: #ffc9c9; } .ps-kv { font-size: 13px; color: #b9c8d4; margin-bottom: 6px; white-space: pre-wrap; } .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: #0f171e; font-size: 14px; word-wrap: break-word; } .ps-result.ok { border-left: 4px solid #4cd18a; } .ps-result.bad { border-left: 4px solid #ff6b6b; color: #ffd0d0; } .ps-mono { font-family: Consolas, monospace; font-size: 13px; } .ps-tablewrap { overflow-x: auto; } .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; } .ps-table th { text-align: left; color: #8aa0b2; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid #2a3a47; } .ps-table td { padding: 5px 8px; border-bottom: 1px solid #222f3a; } .ps-val { font-family: Consolas, monospace; color: #9fe3bd; word-break: break-all; } .ps-val.bad { color: #ff9d9d; } .ps-table tr.ps-hot td { background: #4a2a1a; } .ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: #0b1116; border-radius: 6px; color: #b9c8d4; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; } .ps-raw { max-height: 260px; } .ps-logwrap .ps-btn { margin-top: 6px; } .ps-canvas { display: block; max-width: 100%; border-radius: 8px; background: #0f171e; } .ps-mount { margin-top: 8px; min-height: 0; } .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; } .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: #243442; border: 2px solid #f0a830; box-shadow: 0 4px 14px rgba(0,0,0,.5); } .ps-toast-brake { border-color: #ff6b6b; } .ps-toast-warn { border-color: #ffd37a; } .ps-toast-info { border-color: #5aa8e0; } .ps-toast-title { font-weight: bold; font-size: 16px; } .ps-toast-msg { margin: 4px 0 8px; color: #dfe7ee; } .ps-toast-actions .ps-btn { margin-right: 8px; } .ps-headbtn { float: right; padding: 8px 14px; font-size: 14px; background: #7a5a14; border: 1px solid #f0a830; border-radius: 8px; color: #fff; } .ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; } .ps-overlay-bar { margin-bottom: 8px; } .ps-overlay-bar .ps-btn { margin-left: 10px; } .ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: #0b1116; color: #cfd9e2; border: 1px solid #3a4d5c; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; }";
 /* ---- 00-core.js ---- */
 // Core: constants, sim access wrappers, logging, DOM helper, heartbeat, toasts.
 // Nothing here touches the DOM or starts timers at load time (so node tests can load the bundle).
@@ -557,7 +557,7 @@ PS.traffic = (function () {
     var rel = G.angleDiff(own.hdgDeg || 0, brg);
 
     var ownV = velocity(own.gsKt, own.hdgDeg);
-    var cV = velocity(c.gsKt, c.hdgDeg);
+    var cV = velocity(c.gsKt, c.trackDeg !== undefined ? c.trackDeg : c.hdgDeg);
     var v = { x: cV.x - ownV.x, y: cV.y - ownV.y };
     var v2 = v.x * v.x + v.y * v.y;
     var dot = p.x * v.x + p.y * v.y;
@@ -635,14 +635,17 @@ PS.ui = {
     el.value = value;
     return el;
   },
+  // A choice control. Rendered as buttons, not a <select>: the sim's dropdown could not be changed in the EFB.
+  // Behaves like a select for callers: read and write `.value`, and `onchange` fires when the choice changes.
   select: function (options, value, onchange) {
-    var sel = PS.h('select', { class: 'ps-input', onchange: onchange });
-    options.forEach(function (o) {
-      var opt = PS.h('option', { value: o.value, text: o.label });
-      sel.appendChild(opt);
+    var t = PS.ui.toggle(options.map(function (o) { return { value: String(o.value), label: o.label }; }), String(value), function () {
+      if (onchange) onchange();
     });
-    sel.value = value;
-    return sel;
+    Object.defineProperty(t.el, 'value', {
+      get: function () { return t.get(); },
+      set: function (v) { t.set(String(v)); }
+    });
+    return t.el;
   },
   // Segmented toggle. options: [{value,label}], returns { el, get(), set(v) }
   toggle: function (options, value, onchange) {
@@ -910,6 +913,7 @@ PS.pages.push({
       readTable.body.appendChild(h('tr', null, h('td', { class: 'ps-mono', text: v[0] }), c));
     });
     function refreshReadouts() {
+      if (typeof paintAttached === 'function') paintAttached();
       readVars.forEach(function (v) {
         var r = PS.getVar(v[0], v[1]);
         var c = readCells[v[0]];
@@ -919,11 +923,13 @@ PS.pages.push({
     }
 
     // ---- shared controls ----
-    var methodSel = ui.select([{ value: 'simvar', label: 'K: via SimVar' }, { value: 'coherent', label: 'TRIGGER_KEY_EVENT' }], 'simvar');
+    // Toggle buttons rather than <select>: the sim's dropdown could not be changed in the EFB.
+    var methodTog = ui.toggle([{ value: 'simvar', label: 'K: via SimVar' }, { value: 'coherent', label: 'TRIGGER_KEY_EVENT' }], 'simvar');
+    var attachedPill = h('span', { class: 'ps-pill bad', text: 'TUG NOT ATTACHED' });
     function say(text, bad) { PS.log('tug', text); return bad; }
     function key(name, value) {
-      var r = PS.keyEvent(name, value, methodSel.value);
-      say('key ' + name + '=' + value + ' via ' + methodSel.value + ': ' + (r.ok ? 'sent' : 'FAILED ' + r.error));
+      var r = PS.keyEvent(name, value, methodTog.get());
+      say('key ' + name + '=' + value + ' via ' + methodTog.get() + ': ' + (r.ok ? 'sent' : 'FAILED ' + r.error));
       return r;
     }
     function setWait(on) {
@@ -931,14 +937,51 @@ PS.pages.push({
       say('PUSHBACK WAIT=' + (on ? 1 : 0) + ': ' + (r.ok ? 'sent' : 'FAILED ' + r.error));
       return r;
     }
+    function isAttached() {
+      var r = PS.getVar('PUSHBACK ATTACHED', 'bool');
+      return r.ok && Number(r.value) > 0;
+    }
+    function paintAttached() {
+      var a = isAttached();
+      attachedPill.className = 'ps-pill ' + (a ? 'ok' : 'bad');
+      attachedPill.textContent = a ? 'TUG ATTACHED' : 'TUG NOT ATTACHED';
+      return a;
+    }
+    // The original app's sequence: hold the tug (WAIT on), send TOGGLE_PUSHBACK, then wait for PUSHBACK ATTACHED.
+    var attachTimer = null;
+    function attachTug() {
+      if (attachTimer !== null) { clearInterval(attachTimer); attachTimer = null; }
+      if (isAttached()) { say('tug is already attached'); paintAttached(); return; }
+      setWait(true);
+      key('TOGGLE_PUSHBACK', 1);
+      var t0 = Date.now();
+      say('waiting for PUSHBACK ATTACHED (up to 15 s)...');
+      attachTimer = setInterval(function () {
+        if (paintAttached()) {
+          say('tug attached after ' + (Date.now() - t0) + ' ms');
+          clearInterval(attachTimer); attachTimer = null;
+        } else if (Date.now() - t0 > 15000) {
+          say('PUSHBACK ATTACHED never became true in 15 s (the aircraft may use its own pushback system)', true);
+          clearInterval(attachTimer); attachTimer = null;
+        }
+      }, 250);
+    }
+    function detachTug() {
+      if (!isAttached()) { say('no tug attached to detach'); return; }
+      if (drive) stopDrive('detach');
+      key('TOGGLE_PUSHBACK', 1);
+      say('detach requested');
+    }
     var shared = ui.panel('Tug',
+      h('div', { class: 'ps-row' }, attachedPill),
       h('div', { class: 'ps-row' },
-        ui.button('Call / toggle tug (TOGGLE_PUSHBACK)', function () { key('TOGGLE_PUSHBACK', 1); }),
+        ui.button('Attach tug (original sequence)', attachTug),
+        ui.button('Detach tug', detachTug, 'ps-ghost'),
         ui.button('Hold tug (WAIT on)', function () { setWait(true); }),
         ui.button('Go (WAIT off)', function () { setWait(false); }),
-        ui.field('Key event method', methodSel)
+        ui.field('Key event method', methodTog.el)
       ),
-      ui.note('The original app sets PUSHBACK WAIT to 1 before TOGGLE_PUSHBACK, otherwise the sim tug starts reversing on its own.')
+      ui.note('Attach the tug first. Without a tug, writing velocity just shoves a free aircraft around (it can lift or skid), so Start drive refuses unless a tug is attached. The original app sets PUSHBACK WAIT to 1 before TOGGLE_PUSHBACK, then waits for PUSHBACK ATTACHED.')
     );
 
     // ---- direct mode ----
@@ -946,12 +989,18 @@ PS.pages.push({
     var rotIn = ui.input('0', { type: 'number', step: '0.1', min: '-3', max: '3' });
     var scaleChk = h('input', { type: 'checkbox', checked: true });
     scaleChk.checked = true;
-    var rotUnitSel = ui.select([
-      { value: 'feet per second', label: 'feet per second (original hack)' },
-      { value: 'radians per second', label: 'radians per second' },
-      { value: 'degrees per second', label: 'degrees per second' }
+    var rotUnitTog = ui.toggle([
+      { value: 'feet per second', label: 'ft/s (original hack)' },
+      { value: 'radians per second', label: 'rad/s' },
+      { value: 'degrees per second', label: 'deg/s' }
     ], 'feet per second');
-    var intervalSel = ui.select([{ value: '20', label: '20 ms' }, { value: '50', label: '50 ms' }, { value: '100', label: '100 ms' }], '50');
+    var intervalTog = ui.toggle([{ value: '20', label: '20 ms' }, { value: '50', label: '50 ms' }, { value: '100', label: '100 ms' }], '50');
+    var allowFreeChk = h('input', { type: 'checkbox' });
+    function presets(input, values) {
+      var row = h('div', { class: 'ps-row' });
+      values.forEach(function (v) { row.appendChild(ui.button(String(v), function () { input.value = String(v); }, 'ps-small')); });
+      return row;
+    }
     var maxSecIn = ui.input('10', { type: 'number', min: '1', max: '30', step: '1' });
     var armed = h('span', { class: 'ps-pill bad', text: 'NOT RUNNING' });
     var stats = h('div', { class: 'ps-kv', text: 'No run yet.' });
@@ -962,7 +1011,7 @@ PS.pages.push({
       var d = drive;
       drive = null;
       PS.setVar('VELOCITY BODY Z', 'feet per second', 0);
-      PS.setVar('ROTATION VELOCITY BODY Y', rotUnitSel.value, 0);
+      PS.setVar('ROTATION VELOCITY BODY Y', rotUnitTog.get(), 0);
       PS.setVar('PUSHBACK WAIT', 'bool', 1);
       armed.className = 'ps-pill bad';
       armed.textContent = 'NOT RUNNING';
@@ -991,11 +1040,16 @@ PS.pages.push({
 
     function startDrive() {
       if (drive) return;
+      if (!paintAttached() && !allowFreeChk.checked) {
+        say('refusing to drive: no tug is attached. Press Attach tug first, or tick "drive without a tug" to test raw velocity writes.', true);
+        stats.textContent = 'Not started: no tug attached. Press "Attach tug (original sequence)" and wait for TUG ATTACHED.';
+        return;
+      }
       var speed = Number(speedIn.value) || 0;
       var rot = Number(rotIn.value) || 0;
       var scale = scaleChk.checked ? PS.TUG.ROT_SCALE : 1;
-      var rotUnit = rotUnitSel.value;
-      var intervalMs = Number(intervalSel.value);
+      var rotUnit = rotUnitTog.get();
+      var intervalMs = Number(intervalTog.get());
       var maxMs = Math.max(1, Math.min(30, Number(maxSecIn.value) || 10)) * 1000;
       drive = { startedAt: Date.now(), maxMs: maxMs, writes: 0, failures: 0, dts: [], lastTick: Date.now(), lastError: '',
         intervalMs: intervalMs, cmdSpeed: speed, lastReadback: null };
@@ -1034,11 +1088,14 @@ PS.pages.push({
 
     var directPanel = ui.panel('Per-tick velocity writes',
       ui.note('Moves the aircraft. Only use parked on the ground with the tug attached and the brake released. Stops by itself at the time limit, and when this page is hidden or the app is paused or closed.', 'warn'),
-      h('div', { class: 'ps-row' },
-        ui.field('Speed (ft/s, + forward, - reverse)', speedIn), ui.field('Rotation (original units)', rotIn),
-        ui.field('Rotation unit', rotUnitSel), ui.field('Update interval', intervalSel), ui.field('Max run (s)', maxSecIn)),
+      h('div', { class: 'ps-row' }, ui.field('Speed (ft/s, + forward, - reverse)', speedIn), ui.field('Max run (s)', maxSecIn)),
+      presets(speedIn, [-5, -2, -1, 0, 1, 2, 5]),
+      h('div', { class: 'ps-row' }, ui.field('Rotation (original units)', rotIn)),
+      presets(rotIn, [-2, -1, -0.5, 0, 0.5, 1, 2]),
+      h('div', { class: 'ps-row' }, ui.field('Rotation unit', rotUnitTog.el), ui.field('Update interval', intervalTog.el)),
       h('div', { class: 'ps-row' },
         h('label', { class: 'ps-check' }, scaleChk, ' scale rotation by 0.002 (original app)'),
+        h('label', { class: 'ps-check' }, allowFreeChk, ' drive without a tug (raw velocity test, can misbehave)'),
         armed),
       h('div', { class: 'ps-row' },
         ui.button('Start drive', startDrive, 'ps-warn'),
@@ -1076,9 +1133,42 @@ PS.pages.push({
 
 PS.facility = {
   // Candidate ICAO spellings the facility APIs might expect for an airport.
+  rawByIdent: {},   // ident -> the exact ICAO string the sim's nearest search returned
   icaoCandidates: function (icao) {
     var id = icao.toUpperCase();
-    return [id, 'A      ' + id, 'A  ' + id + '     ', 'A' + id];
+    var list = [];
+    if (PS.facility.rawByIdent[id]) list.push(PS.facility.rawByIdent[id]);
+    return list.concat(['A      ' + id, id, 'A  ' + id + '     ', 'A' + id]);
+  },
+
+  // Finds the airport nearest to (lat, lon) with the sdk's nearest search, then picks the closest by real distance.
+  // Resolves { ident, raw, distM, candidates: [{ident, distM}] }.
+  nearestAirport: function (lat, lon) {
+    var sdk = PS.global.msfssdk;
+    if (!sdk || !sdk.FacilityLoader || !sdk.FacilityRepository || !sdk.FacilitySearchType) return Promise.reject(new Error('msfssdk has no FacilityLoader / FacilitySearchType'));
+    if (!PS.state.bus) return Promise.reject(new Error('no EFB bus handed to the app'));
+    var loader = new sdk.FacilityLoader(sdk.FacilityRepository.getRepository(PS.state.bus));
+    // A fresh session each time: a session only reports changes since its previous search.
+    return PS.facility.withTimeout(loader.startNearestSearchSession(sdk.FacilitySearchType.Airport), 4000, 'start nearest search')
+      .then(function (session) { return PS.facility.withTimeout(session.searchNearest(lat, lon, 30000, 6), 4000, 'searchNearest'); })
+      .then(function (res) {
+        var added = (res && res.added) || [];
+        PS.log('taxi', 'nearest search returned ' + added.length + ' airport(s): ' + JSON.stringify(added));
+        if (!added.length) throw new Error('no airport within 30 km');
+        return Promise.all(added.map(function (raw) {
+          return PS.facility.withTimeout(loader.getFacility(sdk.FacilityType.Airport, raw), 3000, 'getFacility ' + raw).then(function (f) {
+            var flat = f.lat !== undefined ? f.lat : (f.latitude !== undefined ? f.latitude : null);
+            var flon = f.lon !== undefined ? f.lon : (f.lng !== undefined ? f.lng : (f.longitude !== undefined ? f.longitude : null));
+            var ident = String(raw).replace(/^A\s*/, '').trim();
+            return { ident: ident, raw: raw, distM: flat === null ? 1e12 : PS.geo.distanceM(lat, lon, flat, flon) };
+          }, function () { return { ident: String(raw).replace(/^A\s*/, '').trim(), raw: raw, distM: 1e12 }; });
+        }));
+      })
+      .then(function (list) {
+        list.sort(function (a, b) { return a.distM - b.distM; });
+        list.forEach(function (c) { PS.facility.rawByIdent[c.ident.toUpperCase()] = c.raw; PS.log('taxi', '  candidate ' + c.ident + ' ' + (c.distM < 1e11 ? PS.fmt.dist(c.distM) : 'distance unknown')); });
+        return { ident: list[0].ident, raw: list[0].raw, distM: list[0].distM, candidates: list };
+      });
   },
 
   withTimeout: function (promise, ms, label) {
@@ -1189,6 +1279,18 @@ PS.pages.push({
       repaint();
     }
 
+    var detected = false;
+    function detectAirport(thenLoad) {
+      var own = PS.readOwn();
+      if (!own) { say('Cannot detect the airport: the aircraft position is not readable.', true); return; }
+      say('Finding the nearest airport...');
+      PS.facility.nearestAirport(own.lat, own.lon).then(function (r) {
+        icaoIn.value = r.ident;
+        say('Nearest airport: ' + r.ident + (r.distM < 1e11 ? ' (' + PS.fmt.dist(r.distM) + ' away)' : '') + '.');
+        if (thenLoad) loadFromSim();
+      }, function (e) { say('Could not detect the airport: ' + PS.errText(e), true); });
+    }
+
     function loadFromSim() {
       var icao = icaoIn.value.trim().toUpperCase();
       if (icao.length < 3) { say('Enter an ICAO code first.', true); return; }
@@ -1211,7 +1313,9 @@ PS.pages.push({
     var el = h('div', { class: 'ps-page' },
       ui.panel('Load taxiway data',
         h('div', { class: 'ps-row' }, ui.field('Airport ICAO', icaoIn),
-          ui.button('Load from sim', loadFromSim), ui.button('Use offline sample', useSample, 'ps-ghost')),
+          ui.button('Detect nearest airport and load', function () { detectAirport(true); }),
+          ui.button('Detect only', function () { detectAirport(false); }, 'ps-ghost'),
+          ui.button('Load typed ICAO', loadFromSim), ui.button('Use offline sample', useSample, 'ps-ghost')),
         status,
         ui.note('Needs a result the original app got through SimConnect facility data. If nothing comes back here, taxiways need a WASM module or a bundled dataset. The sample button only exercises the table.')),
       ui.panel('Named taxiways, runways and connectors',
@@ -1224,7 +1328,7 @@ PS.pages.push({
     return {
       el: el,
       snapshot: function () { return status.textContent + '\n\nRaw data returned:\n' + rawBox.textContent; },
-      onShow: function () { repaint(); },
+      onShow: function () { repaint(); if (!detected) { detected = true; detectAirport(false); } },
       onHide: function () {}
     };
   }
@@ -1236,6 +1340,73 @@ PS.pages.push({
 // first source that returns any, and can show simulated contacts so the table and maths can be reviewed.
 
 PS.trafficSources = []; // functions returning an array of { id, title, lat, lon, hdgDeg, gsKt, altFt, onGround } or null
+
+// AI traffic as the msfs-sdk TrafficInstrument reads it: RegisterViewListener('JS_LISTENER_AIR_TRAFFIC') then
+// listener.call('GET_AIR_TRAFFIC'), which returns entries { uId, name, lat, lon, alt (metres), heading }.
+// Speed is not in the entry, so it is worked out from successive positions.
+PS.airTraffic = {
+  listener: null, ready: false, busy: false, started: false, error: '', calls: 0, entries: 0,
+  prev: {}, contacts: [], loggedShape: false,
+
+  start: function () {
+    var T = PS.airTraffic;
+    if (T.started) return;
+    T.started = true;
+    if (typeof RegisterViewListener !== 'function') { T.error = 'RegisterViewListener is not available'; PS.log('traffic', T.error); return; }
+    try {
+      var l = RegisterViewListener('JS_LISTENER_AIR_TRAFFIC', function () { T.ready = true; PS.log('traffic', 'JS_LISTENER_AIR_TRAFFIC ready'); });
+      T.listener = l;
+      PS.log('traffic', 'registered JS_LISTENER_AIR_TRAFFIC');
+    } catch (e) { T.error = 'register failed: ' + PS.errText(e); PS.log('traffic', T.error); }
+  },
+
+  poll: function () {
+    var T = PS.airTraffic;
+    if (!T.started) T.start();
+    if (!T.listener || !T.ready || T.busy) return;
+    T.busy = true;
+    var r;
+    try { r = T.listener.call('GET_AIR_TRAFFIC'); } catch (e) { T.busy = false; T.error = 'call failed: ' + PS.errText(e); PS.log('traffic', T.error); return; }
+    Promise.resolve(r).then(function (data) {
+      T.busy = false; T.calls++;
+      if (!data || typeof data.length !== 'number') { T.error = 'GET_AIR_TRAFFIC returned ' + typeof data; return; }
+      T.error = '';
+      T.entries = data.length;
+      if (!T.loggedShape && data.length) {
+        T.loggedShape = true;
+        try { PS.log('traffic', 'first GET_AIR_TRAFFIC entry: ' + JSON.stringify(data[0])); } catch (e) { /* ignore */ }
+      }
+      var now = Date.now(), out = [], seen = {};
+      for (var i = 0; i < data.length; i++) {
+        var d = data[i];
+        if (typeof d.lat !== 'number' || typeof d.lon !== 'number') continue;
+        var prev = T.prev[d.uId];
+        var gs = prev ? prev.gsKt : 0;
+        var track = prev ? prev.track : (d.heading || 0);
+        if (prev) {
+          var dt = (now - prev.t) / 1000;
+          if (dt >= 0.4) {
+            var dm = PS.geo.distanceM(prev.lat, prev.lon, d.lat, d.lon);
+            gs = dm / dt / PS.geo.KT_TO_MS;
+            if (dm > 0.5) track = PS.geo.bearingDeg(prev.lat, prev.lon, d.lat, d.lon);
+            T.prev[d.uId] = { t: now, lat: d.lat, lon: d.lon, gsKt: gs, track: track };
+          }
+        } else {
+          T.prev[d.uId] = { t: now, lat: d.lat, lon: d.lon, gsKt: 0, track: d.heading || 0 };
+        }
+        seen[d.uId] = true;
+        out.push({ id: d.uId, title: d.name || String(d.uId), lat: d.lat, lon: d.lon, hdgDeg: d.heading || 0,
+          gsKt: gs, trackDeg: track, altFt: (d.alt || 0) * 3.28084, onGround: null });
+      }
+      for (var k in T.prev) { if (!seen[k]) delete T.prev[k]; }
+      T.contacts = out;
+    }, function (e) { T.busy = false; T.error = 'GET_AIR_TRAFFIC failed: ' + PS.errText(e); PS.log('traffic', T.error); });
+  }
+};
+PS.trafficSources.push(function () {
+  var c = PS.airTraffic.contacts;
+  return c && c.length ? c : null;
+});
 
 PS.discoverTrafficApis = function () {
   var found = [];
@@ -1291,10 +1462,11 @@ PS.pages.push({
     }
 
     function tick() {
+      PS.airTraffic.poll();
       var ctxo = ownOrReference();
       var res = fetchContacts();
       var contacts = null, label;
-      if (res) { contacts = res.contacts; label = res.source; }
+      if (res) { contacts = res.contacts; label = 'sim AI traffic (JS_LISTENER_AIR_TRAFFIC)'; }
       else if (simulate) {
         var now = Date.now();
         if (!simContacts) { simContacts = PS.traffic.sample(ctxo.own); lastTs = now; }
@@ -1304,7 +1476,7 @@ PS.pages.push({
       }
       PS.clear(tbl.body);
       if (!contacts) {
-        sourceLine.textContent = 'No traffic source available from JS. Own position: ' + (ctxo.live ? 'live from sim' : 'reference point (sim not readable)') + '.';
+        sourceLine.textContent = 'No traffic returned. Listener ready: ' + PS.airTraffic.ready + ', calls: ' + PS.airTraffic.calls + ', entries in last reply: ' + PS.airTraffic.entries + (PS.airTraffic.error ? ', error: ' + PS.airTraffic.error : '') + '. Own position: ' + (ctxo.live ? 'live from sim' : 'reference point (sim not readable)') + '.';
         sourceLine.className = 'ps-result bad';
         PS.state.contacts = [];
         return;
@@ -1517,6 +1689,21 @@ PS.mapProbe = function () {
   }
   var co = PS.coherent();
   lines.push('Coherent: ' + (co ? 'available' : 'not available') + '; RegisterViewListener: ' + typeof PS.global.RegisterViewListener);
+  lines.push('global EBingMode: ' + (typeof EBingMode === 'undefined' ? 'undefined' : Object.keys(EBingMode).join(', ')));
+  if (sdk) {
+    var all = [];
+    try { all = Object.getOwnPropertyNames(sdk).filter(function (k) { return re.test(k); }); } catch (e) { all = []; }
+    lines.push('ALL msfssdk map/bing/vfr names: ' + all.join(', '));
+  }
+  var efb = PS.global.EFB_API;
+  if (efb) {
+    var members = [];
+    try { members = Object.getOwnPropertyNames(efb).concat(Object.getOwnPropertyNames(Object.getPrototypeOf(efb) || {})); } catch (e) { members = []; }
+    lines.push('EFB_API members: ' + members.join(', '));
+  }
+  var efbGlobals = [];
+  try { efbGlobals = Object.getOwnPropertyNames(PS.global).filter(function (k) { return /efb|flightplan|vfrmap|navmap/i.test(k); }); } catch (e) { efbGlobals = []; }
+  lines.push('window names matching efb/flightplan/vfrmap/navmap: ' + (efbGlobals.join(', ') || 'none'));
   return lines;
 };
 
@@ -1556,33 +1743,51 @@ PS.pages.push({
       }
     }
 
-    // Mounts msfs-sdk BingComponent in a sized holder, wakes it, and keeps it centred on the aircraft.
-    // A black result usually means the map was never given a position or never woken; this tries both and logs what exists.
+    // Earth colours: the sdk's BingComponent paints water and every terrain height black unless it is given colours.
+    // That is why the first mount was a black square.
+    function earthColorsFor(sdk) {
+      var terrain = [
+        { elev: 0, color: '#4f8a4b' }, { elev: 1500, color: '#8aa35a' }, { elev: 5000, color: '#a68d5e' },
+        { elev: 10000, color: '#cfc7b8' }, { elev: 30000, color: '#ffffff' }
+      ];
+      try {
+        if (typeof sdk.BingComponent.createEarthColorsArray === 'function') return sdk.BingComponent.createEarthColorsArray('#2b6a9c', terrain);
+      } catch (e) { log('createEarthColorsArray failed: ' + PS.errText(e)); }
+      // Fallback: a flat array. R + G*256 + B*256^2.
+      var water = 0x2b + 0x6a * 256 + 0x9c * 65536, land = 0x4f + 0x8a * 256 + 0x4b * 65536, arr = [water];
+      for (var i = 0; i < 61; i++) arr.push(land);
+      return arr;
+    }
+
+    function bingState(holder) {
+      var img = holder ? holder.querySelector('img') : null;
+      return 'isBound=' + (bing && bing.isBound ? bing.isBound() : '?') + ' isAwake=' + (bing && bing.isAwake ? bing.isAwake() : '?') +
+        ' img.src=' + (img ? String(img.src).substring(0, 80) : 'none') + ' img size=' + (img ? img.clientWidth + 'x' + img.clientHeight : 'n/a');
+    }
+
+    // Mounts msfs-sdk BingComponent in a sized holder, gives it earth colours, and keeps it centred on the aircraft.
     function mountBing(sdk) {
       var holder = h('div', { style: 'position:relative;width:640px;height:360px;background:#000;overflow:hidden;' });
       mountBox.appendChild(holder);
       var ref = sdk.FSComponent.createRef();
-      var props = { ref: ref, id: 'ps-bing-' + (Date.now() % 100000), mode: sdk.EBingMode ? sdk.EBingMode.PLANE : 0 };
-      if (sdk.EBingResolution) props.resolution = sdk.EBingResolution.Normal;
+      var modeEnum = typeof EBingMode !== 'undefined' ? EBingMode : (sdk.EBingMode || null);
+      if (modeEnum) log('EBingMode values: ' + Object.keys(modeEnum).join(', '));
+      var props = { ref: ref, id: 'ps-bing-' + (Date.now() % 100000), mode: modeEnum ? modeEnum.PLANE : 0 };
+      if (sdk.ArraySubject) props.earthColors = sdk.ArraySubject.create(earthColorsFor(sdk));
+      else log('msfssdk.ArraySubject missing; map will keep its default black colours');
+      if (sdk.Subject) props.skyColor = sdk.Subject.create(0);
       var vnode = sdk.FSComponent.buildComponent(sdk.BingComponent, props);
       sdk.FSComponent.render(vnode, holder);
       bing = ref.instance;
       if (!bing) { log('BingComponent rendered but no instance reference came back.'); return; }
-      var methods = [];
-      try {
-        var proto = Object.getPrototypeOf(bing);
-        methods = Object.getOwnPropertyNames(proto).filter(function (n) { return typeof bing[n] === 'function' && n !== 'constructor'; });
-      } catch (e) { methods = []; }
-      log('BingComponent instance methods: ' + (methods.join(', ') || 'none found'));
-      ['wake', 'setVisible'].forEach(function (n) {
-        if (typeof bing[n] === 'function') {
-          try { bing[n](n === 'setVisible' ? true : undefined); log('called ' + n + '()'); } catch (e) { log(n + '() failed: ' + PS.errText(e)); }
-        }
-      });
       followOwn();
       if (bingTimer !== null) clearInterval(bingTimer);
-      bingTimer = setInterval(followOwn, 1000);
-      log('BingComponent mounted and following own position every 1 s. If the area is still black, report the method list above.');
+      var checks = 0;
+      bingTimer = setInterval(function () {
+        followOwn();
+        if (checks++ < 4) log('bing state: ' + bingState(holder));
+      }, 1000);
+      log('BingComponent mounted with earth colours; following own position every 1 s.');
     }
 
     // Best-effort mount of a built-in map. Which of these (if any) works inside an EFB app is exactly what we want to learn.

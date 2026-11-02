@@ -72,6 +72,15 @@ If JS cannot reach taxi paths, AI traffic, or a steady tick, the fallback is a W
 
 The SDK has an "EFB Notifications" page; its body did not load. `props.notificationManager` is handed to the app at install. Its method names and whether notifications carry action buttons are unknown. The notifications spike lists the manager's methods at runtime and offers buttons to try candidate calls.
 
+## Findings from sim testing and the sdk source (2026-11-02)
+
+- **Ticking while hidden:** `setInterval` keeps running when the app is paused (130 ticks in 67 s). `onUpdate` stops while hidden. Browser animation frames continue at a reduced rate.
+- **Dropdowns:** a `<select>` could not be changed in the EFB. Use buttons (the app's `ui.select` renders a button group).
+- **Facility data:** `msfssdk.FacilityLoader` works from an EFB app; the ICAO must be in the sim's string form `"A      " + ident`. Nearest airport: `loader.startNearestSearchSession(FacilitySearchType.Airport)`, then `session.searchNearest(lat, lon, radiusMetres, max)`; results are those ICAO strings. A session only reports changes since its last search, so start a new one per query. Airport data included runways but not taxi paths.
+- **AI traffic:** `RegisterViewListener('JS_LISTENER_AIR_TRAFFIC', cb)`, then `listener.call('GET_AIR_TRAFFIC')` returns entries `{uId, name, lat, lon, alt (metres), heading}` (per the sdk `TrafficInstrument`; unverified in the sim).
+- **Bing map:** `BingComponent` (props `id`, `mode`, optional `earthColors`) draws black unless `earthColors` is supplied (`BingComponent.createEarthColorsArray(water, terrain)`). Position is set with `setPositionRadius({lat, long}, radiusMetres)`. Source: msfs-avionics-mirror `src/sdk/components/bing/BingComponent.tsx`.
+- **Pushback needs the tug attached:** with `PUSHBACK ATTACHED` at 0, velocity writes act on a free aircraft.
+
 ## Gotchas
 
 - **Glyphs:** the sim's font lacks some symbols. Arrow triangles (U+25C0, U+25B6) rendered as squares in buttons. Use plain ASCII for button labels; the degree sign and em dash were not reported as problems.

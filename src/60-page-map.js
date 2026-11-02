@@ -23,6 +23,21 @@ PS.mapProbe = function () {
   }
   var co = PS.coherent();
   lines.push('Coherent: ' + (co ? 'available' : 'not available') + '; RegisterViewListener: ' + typeof PS.global.RegisterViewListener);
+  lines.push('global EBingMode: ' + (typeof EBingMode === 'undefined' ? 'undefined' : Object.keys(EBingMode).join(', ')));
+  if (sdk) {
+    var all = [];
+    try { all = Object.getOwnPropertyNames(sdk).filter(function (k) { return re.test(k); }); } catch (e) { all = []; }
+    lines.push('ALL msfssdk map/bing/vfr names: ' + all.join(', '));
+  }
+  var efb = PS.global.EFB_API;
+  if (efb) {
+    var members = [];
+    try { members = Object.getOwnPropertyNames(efb).concat(Object.getOwnPropertyNames(Object.getPrototypeOf(efb) || {})); } catch (e) { members = []; }
+    lines.push('EFB_API members: ' + members.join(', '));
+  }
+  var efbGlobals = [];
+  try { efbGlobals = Object.getOwnPropertyNames(PS.global).filter(function (k) { return /efb|flightplan|vfrmap|navmap/i.test(k); }); } catch (e) { efbGlobals = []; }
+  lines.push('window names matching efb/flightplan/vfrmap/navmap: ' + (efbGlobals.join(', ') || 'none'));
   return lines;
 };
 
@@ -62,33 +77,51 @@ PS.pages.push({
       }
     }
 
-    // Mounts msfs-sdk BingComponent in a sized holder, wakes it, and keeps it centred on the aircraft.
-    // A black result usually means the map was never given a position or never woken; this tries both and logs what exists.
+    // Earth colours: the sdk's BingComponent paints water and every terrain height black unless it is given colours.
+    // That is why the first mount was a black square.
+    function earthColorsFor(sdk) {
+      var terrain = [
+        { elev: 0, color: '#4f8a4b' }, { elev: 1500, color: '#8aa35a' }, { elev: 5000, color: '#a68d5e' },
+        { elev: 10000, color: '#cfc7b8' }, { elev: 30000, color: '#ffffff' }
+      ];
+      try {
+        if (typeof sdk.BingComponent.createEarthColorsArray === 'function') return sdk.BingComponent.createEarthColorsArray('#2b6a9c', terrain);
+      } catch (e) { log('createEarthColorsArray failed: ' + PS.errText(e)); }
+      // Fallback: a flat array. R + G*256 + B*256^2.
+      var water = 0x2b + 0x6a * 256 + 0x9c * 65536, land = 0x4f + 0x8a * 256 + 0x4b * 65536, arr = [water];
+      for (var i = 0; i < 61; i++) arr.push(land);
+      return arr;
+    }
+
+    function bingState(holder) {
+      var img = holder ? holder.querySelector('img') : null;
+      return 'isBound=' + (bing && bing.isBound ? bing.isBound() : '?') + ' isAwake=' + (bing && bing.isAwake ? bing.isAwake() : '?') +
+        ' img.src=' + (img ? String(img.src).substring(0, 80) : 'none') + ' img size=' + (img ? img.clientWidth + 'x' + img.clientHeight : 'n/a');
+    }
+
+    // Mounts msfs-sdk BingComponent in a sized holder, gives it earth colours, and keeps it centred on the aircraft.
     function mountBing(sdk) {
       var holder = h('div', { style: 'position:relative;width:640px;height:360px;background:#000;overflow:hidden;' });
       mountBox.appendChild(holder);
       var ref = sdk.FSComponent.createRef();
-      var props = { ref: ref, id: 'ps-bing-' + (Date.now() % 100000), mode: sdk.EBingMode ? sdk.EBingMode.PLANE : 0 };
-      if (sdk.EBingResolution) props.resolution = sdk.EBingResolution.Normal;
+      var modeEnum = typeof EBingMode !== 'undefined' ? EBingMode : (sdk.EBingMode || null);
+      if (modeEnum) log('EBingMode values: ' + Object.keys(modeEnum).join(', '));
+      var props = { ref: ref, id: 'ps-bing-' + (Date.now() % 100000), mode: modeEnum ? modeEnum.PLANE : 0 };
+      if (sdk.ArraySubject) props.earthColors = sdk.ArraySubject.create(earthColorsFor(sdk));
+      else log('msfssdk.ArraySubject missing; map will keep its default black colours');
+      if (sdk.Subject) props.skyColor = sdk.Subject.create(0);
       var vnode = sdk.FSComponent.buildComponent(sdk.BingComponent, props);
       sdk.FSComponent.render(vnode, holder);
       bing = ref.instance;
       if (!bing) { log('BingComponent rendered but no instance reference came back.'); return; }
-      var methods = [];
-      try {
-        var proto = Object.getPrototypeOf(bing);
-        methods = Object.getOwnPropertyNames(proto).filter(function (n) { return typeof bing[n] === 'function' && n !== 'constructor'; });
-      } catch (e) { methods = []; }
-      log('BingComponent instance methods: ' + (methods.join(', ') || 'none found'));
-      ['wake', 'setVisible'].forEach(function (n) {
-        if (typeof bing[n] === 'function') {
-          try { bing[n](n === 'setVisible' ? true : undefined); log('called ' + n + '()'); } catch (e) { log(n + '() failed: ' + PS.errText(e)); }
-        }
-      });
       followOwn();
       if (bingTimer !== null) clearInterval(bingTimer);
-      bingTimer = setInterval(followOwn, 1000);
-      log('BingComponent mounted and following own position every 1 s. If the area is still black, report the method list above.');
+      var checks = 0;
+      bingTimer = setInterval(function () {
+        followOwn();
+        if (checks++ < 4) log('bing state: ' + bingState(holder));
+      }, 1000);
+      log('BingComponent mounted with earth colours; following own position every 1 s.');
     }
 
     // Best-effort mount of a built-in map. Which of these (if any) works inside an EFB app is exactly what we want to learn.

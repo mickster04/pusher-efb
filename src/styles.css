@@ -27,8 +27,8 @@
 .ps-btn.ps-danger { background: #8a2230; border-color: #ff5c6c; font-weight: bold; }
 .ps-btn.ps-ghost { background: transparent; }
 
-.ps-toggle { display: inline-block; border: 1px solid #3a4d5c; border-radius: 8px; overflow: hidden; }
-.ps-toggle-btn { padding: 12px 20px; border: 0; background: #1b2630; color: #cfd9e2; font-size: 15px; }
+.ps-toggle { display: flex; flex-wrap: wrap; }
+.ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; }
 .ps-toggle-btn.on { background: #f0a830; color: #131c24; font-weight: bold; }
 
 .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; }

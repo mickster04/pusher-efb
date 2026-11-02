@@ -11,7 +11,7 @@ PS.traffic = (function () {
     var rel = G.angleDiff(own.hdgDeg || 0, brg);
 
     var ownV = velocity(own.gsKt, own.hdgDeg);
-    var cV = velocity(c.gsKt, c.hdgDeg);
+    var cV = velocity(c.gsKt, c.trackDeg !== undefined ? c.trackDeg : c.hdgDeg);
     var v = { x: cV.x - ownV.x, y: cV.y - ownV.y };
     var v2 = v.x * v.x + v.y * v.y;
     var dot = p.x * v.x + p.y * v.y;
