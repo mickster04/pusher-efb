@@ -10,7 +10,9 @@ PS.ui = {
   },
   note: function (text, cls) { return PS.h('div', { class: 'ps-note' + (cls ? ' ' + cls : ''), text: text }); },
   field: function (label, input) {
-    return PS.h('label', { class: 'ps-field' }, PS.h('span', { class: 'ps-field-label', text: label }), input);
+    // A div, not a <label>: a label around a group of buttons can forward a click on any of them to the first one
+    // (the first button ended up selected whatever was pressed).
+    return PS.h('div', { class: 'ps-field' }, PS.h('span', { class: 'ps-field-label', text: label }), input);
   },
   input: function (value, attrs) {
     var a = attrs || {};

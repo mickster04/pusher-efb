@@ -3,7 +3,7 @@
 // so the tug "drive" visibly moves the aircraft when velocity writes arrive.
 (function () {
   var sim = {
-    'PLANE LATITUDE': 51.4700, 'PLANE LONGITUDE': -0.4543, 'PLANE HEADING DEGREES TRUE': 90, 'PLANE ALTITUDE': 80,
+    'PLANE LATITUDE': -43.4890, 'PLANE LONGITUDE': 172.5375, 'PLANE HEADING DEGREES TRUE': 90, 'PLANE ALTITUDE': 80,
     'PLANE ALT ABOVE GROUND': 0, 'GROUND VELOCITY': 0, 'AIRSPEED INDICATED': 0, 'VERTICAL SPEED': 0,
     'VELOCITY BODY Z': 0, 'VELOCITY BODY Y': 0, 'ROTATION VELOCITY BODY Y': 0, 'ROTATION VELOCITY BODY X': 0,
     'SIM ON GROUND': 1, 'GENERAL ENG COMBUSTION:1': 0, 'CAMERA STATE': 2, 'BRAKE PARKING POSITION': 0, 'BRAKE PARKING INDICATOR': 0,
@@ -64,6 +64,37 @@
     }
   };
   window.msfssdk = { DisplayComponent: DisplayComponent, FSComponent: FSComponent, Subject: Subject };
+
+
+  // Mock of the taxi WASM module over the CommBus. Replies come from harness/taxi-sample.txt, which is real output of the
+  // C++ core (wasm/test/gen_sample.cpp). Set window.__noTaxiModule = true to simulate the module not being installed.
+  var taxiLines = null;
+  function loadTaxiLines() {
+    if (taxiLines) return taxiLines;
+    var x = new XMLHttpRequest();
+    x.open('GET', '/harness/taxi-sample.txt', false);
+    x.send();
+    taxiLines = x.responseText.split('\n').filter(Boolean);
+    return taxiLines;
+  }
+  window.RegisterCommBusListener = function (cb) {
+    var handlers = {};
+    if (cb) setTimeout(cb, 0);
+    return {
+      on: function (name, h) { handlers[name] = h; },
+      callWasm: function (name, json) {
+        var req = JSON.parse(json);
+        var reply = function (obj, delay) { setTimeout(function () { if (handlers.PusherTaxiResponse) handlers.PusherTaxiResponse(JSON.stringify(obj)); }, delay || 5); };
+        if (window.__noTaxiModule) return Promise.resolve();
+        if (name === 'PusherTaxiPing') reply({ id: req.id, kind: 'pong', version: '0.1.0-mock' });
+        else if (name === 'PusherTaxiRequest') {
+          if (req.icao !== 'NZCH') { reply({ id: req.id, kind: 'error', message: 'the sim returned no taxiway data for ' + req.icao }, 200); return Promise.resolve(); }
+          loadTaxiLines().forEach(function (l, i) { var m = JSON.parse(l); m.id = req.id; reply(m, 150 + i * 40); });
+        }
+        return Promise.resolve();
+      }
+    };
+  };
 
   var started = false;
   window.EFB_API = {

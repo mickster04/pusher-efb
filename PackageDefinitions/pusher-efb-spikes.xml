@@ -28,5 +28,13 @@
 			<AssetDir>PackageSources\PusherSpikes\</AssetDir>
 			<OutputDir>.\html_ui\efb_ui\efb_apps\PusherSpikes\</OutputDir>
 		</AssetGroup>
+		<AssetGroup Name="modules_pusherspikes">
+			<Type Version="0">Copy</Type>
+			<Flags>
+				<FSXCompatibility>false</FSXCompatibility>
+			</Flags>
+			<AssetDir>PackageSources\modules\</AssetDir>
+			<OutputDir>modules\</OutputDir>
+		</AssetGroup>
 	</AssetGroups>
 </AssetPackage>

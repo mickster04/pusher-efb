@@ -70,6 +70,7 @@ PS.pages.push({
       return r;
     }
     function setWait(on) {
+      if (!on) stopHoldGuard();
       var r = PS.setVar('PUSHBACK WAIT', 'bool', on ? 1 : 0);
       say('PUSHBACK WAIT=' + (on ? 1 : 0) + ': ' + (r.ok ? 'sent' : 'FAILED ' + r.error));
       return r;
@@ -105,7 +106,8 @@ PS.pages.push({
     }
     function detachTug() {
       if (!isAttached()) { say('no tug attached to detach'); return; }
-      if (drive) stopDrive('detach');
+      stopHoldGuard();
+      if (drive) stopDrive('detach', true);
       key('TOGGLE_PUSHBACK', 1);
       say('detach requested');
     }
@@ -140,19 +142,63 @@ PS.pages.push({
     var armed = h('span', { class: 'ps-pill bad', text: 'NOT RUNNING' });
     var stats = h('div', { class: 'ps-kv', text: 'No run yet.' });
 
-    function stopDrive(reason) {
-      if (!drive) return;
-      clearInterval(drive.timer);
-      var d = drive;
-      drive = null;
+    // Stopping: by default the drive eases speed and turn to zero while still writing every tick (as the original app does),
+    // then holds. `immediate` (page hidden, app paused or closed, detach) zeroes at once for safety.
+    function zeroAndHold() {
       PS.setVar('VELOCITY BODY Z', 'feet per second', 0);
       PS.setVar('ROTATION VELOCITY BODY Y', rotUnitTog.get(), 0);
       PS.setVar('PUSHBACK WAIT', 'bool', 1);
+    }
+    function stopDrive(reason, immediate) {
+      if (!drive) return;
+      var d = drive;
+      if (!immediate) {
+        if (d.stopping) return;
+        d.stopping = true; d.stopReason = reason; d.stopHoldTicks = 0;
+        say('stopping (' + reason + '): easing to zero');
+        return;
+      }
+      finalizeStop(d, reason);
+    }
+    function finalizeStop(d, reason) {
+      clearInterval(d.timer);
+      drive = null;
+      zeroAndHold();
       armed.className = 'ps-pill bad';
       armed.textContent = 'NOT RUNNING';
       say('direct drive stopped (' + reason + '): ' + d.writes + ' tick writes, ' + d.failures + ' failed ticks');
       paintStats(d, true);
       stats.textContent.split('\n').forEach(function (l) { PS.log('tug', 'final ' + l); });
+      startHoldGuard();
+    }
+
+    // After a stop, keep telling the sim to hold still for a few seconds and log what it does (is the tug still attached,
+    // is the aircraft rolling?). A new drive, or the Go button, cancels it.
+    var HOLD_MS = 5000;
+    var holdTimer = null;
+    function stopHoldGuard() {
+      if (holdTimer !== null) { clearInterval(holdTimer); holdTimer = null; }
+    }
+    function startHoldGuard() {
+      stopHoldGuard();
+      var t0 = Date.now(), lastLog = 0;
+      holdTimer = setInterval(function () {
+        var now = Date.now();
+        if (drive || now - t0 > HOLD_MS) {
+          stopHoldGuard();
+          if (!drive) say('hold after stop finished');
+          return;
+        }
+        var attached = isAttached();
+        if (attached) zeroAndHold();
+        if (now - lastLog >= 500) {
+          lastLog = now;
+          var st = PS.getVar('PUSHBACK STATE', 'enum'), w = PS.getVar('PUSHBACK WAIT', 'bool'), gs = PS.getVar('GROUND VELOCITY', 'knots'),
+            vz = PS.getVar('VELOCITY BODY Z', 'feet per second'), br = PS.getVar('BRAKE PARKING POSITION', 'percent over 100');
+          PS.log('tug', 'after stop +' + PS.fmt.num((now - t0) / 1000, 1) + 's | attached=' + (attached ? 1 : 0) + ' state=' + PS.fmt.value(st.value) +
+            ' wait=' + PS.fmt.value(w.value) + ' | GS ' + PS.fmt.num(gs.value, 2) + ' kt, velZ ' + PS.fmt.num(vz.value, 2) + ' ft/s | brake ' + PS.fmt.num(br.value, 2));
+        }
+      }, 100);
     }
     function meanDt(d) {
       var m = 0, i;
@@ -190,6 +236,7 @@ PS.pages.push({
 
     function startDrive() {
       if (drive) return;
+      stopHoldGuard();
       if (!paintAttached() && !allowFreeChk.checked) {
         say('refusing to drive: no tug is attached. Press Attach tug first, or tick "drive without a tug" to test raw velocity writes.', true);
         stats.textContent = 'Not started: no tug attached. Press "Attach tug (original sequence)" and wait for TUG ATTACHED.';
@@ -211,18 +258,18 @@ PS.pages.push({
         var d = drive;
         if (!d) return;
         var now = Date.now();
-        if (now - d.startedAt >= d.maxMs) { stopDrive('time limit'); return; }
+        if (!d.stopping && now - d.startedAt >= d.maxMs) stopDrive('time limit');
         d.dts.push(now - d.lastTick);
         if (d.dts.length > 200) d.dts.shift();
         d.lastTick = now;
         // Read the inputs live every tick so changes (typed or from the preset buttons) take effect immediately.
-        var tgtSpeed = Number(speedIn.value) || 0;
-        var tgtTurn = Number(rotIn.value) || 0;
+        var tgtSpeed = d.stopping ? 0 : (Number(speedIn.value) || 0);
+        var tgtTurn = d.stopping ? 0 : (Number(rotIn.value) || 0);
         var unitNow = rotUnitTog.get();
         var dt = Math.min(0.2, d.dts[d.dts.length - 1] / 1000);
         d.curSpeed = approach(d.curSpeed, tgtSpeed, SPEED_RAMP * dt);
         d.curTurn = approach(d.curTurn, tgtTurn, TURN_RAMP * dt);
-        if (tgtSpeed !== d.cmdSpeed || tgtTurn !== d.cmdTurn) {
+        if (!d.stopping && (tgtSpeed !== d.cmdSpeed || tgtTurn !== d.cmdTurn)) {
           d.cmdSpeed = tgtSpeed; d.cmdTurn = tgtTurn;
           var hh = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
           d.hdg0 = hh.ok ? hh.value : null; d.measureStart = now;
@@ -240,6 +287,10 @@ PS.pages.push({
         for (var i = 0; i < results.length; i++) { if (!results[i].ok) { failed = true; d.lastError = results[i].error; } }
         d.writes++;
         if (failed) d.failures++;
+        if (d.stopping && d.curSpeed === 0 && d.curTurn === 0) {
+          d.stopHoldTicks++;
+          if (d.stopHoldTicks * d.intervalMs >= 600) { finalizeStop(d, d.stopReason); return; }
+        }
         if (d.writes % 5 === 0) {
           var vz = PS.getVar('VELOCITY BODY Z', 'feet per second');
           var ry = PS.getVar('ROTATION VELOCITY BODY Y', rotUnitTog.get());
@@ -319,7 +370,7 @@ PS.pages.push({
     );
 
     // Safety: stop the drive whenever the app is paused or closed.
-    PS.closeHooks.push(function () { stopDrive('app paused or closed'); });
+    PS.closeHooks.push(function () { stopDrive('app paused or closed', true); });
 
     return {
       el: el,
@@ -329,7 +380,7 @@ PS.pages.push({
         return lines.join('\n');
       },
       onShow: function () { refreshReadouts(); readTimer = setInterval(refreshReadouts, 250); },
-      onHide: function () { if (readTimer !== null) { clearInterval(readTimer); readTimer = null; } stopDrive('page hidden'); }
+      onHide: function () { if (readTimer !== null) { clearInterval(readTimer); readTimer = null; } stopDrive('page hidden', true); }
     };
   }
 });

@@ -83,6 +83,7 @@ The SDK has an "EFB Notifications" page; its body did not load. `props.notificat
 - **`EFB_API` members:** `apps`, `allAppsLoaded`, `bus`, `unitsSettingManager`, `efbSettingsManager`, `notificationManager`, `onboardingManager`, `loadCss`, `loadJs`, `use`, and setters. `apps` and `loadJs` are worth reading when looking for the flight planner map.
 - **Loop rate:** `setInterval` at 20 ms ran at a mean of about 33 ms (30 Hz) with the five per-tick writes; at 50 ms it ran at about 60 ms. Plan for 25-30 Hz, not the original's 50 Hz.
 - **Read inputs inside the loop:** a drive loop that captured speed and turn at start ignored later changes.
+- **Stopping a drive:** a one-shot zero then silence (the first version) leaves nothing holding the aircraft. The drive now eases speed and turn to zero while still writing each tick, then keeps writing zero velocity and `PUSHBACK WAIT`=1 for 5 s, and logs `after stop` lines (attached, state, wait, ground speed). A user report of the tug appearing to disconnect and the aircraft rolling after a time-out was not reproduced or explained; the user later thought it might be something else. If it recurs, read the `after stop` lines.
 - **Pushback needs the tug attached:** with `PUSHBACK ATTACHED` at 0, velocity writes act on a free aircraft.
 
 ## Gotchas

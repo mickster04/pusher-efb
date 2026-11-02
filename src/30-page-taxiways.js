@@ -88,15 +88,42 @@ PS.facility = {
   }
 };
 
+// Loads everything available for an airport: runways and gates from the SDK FacilityLoader, taxi paths and parking from
+// the WASM module. Either half may fail; it only rejects when both do. Resolves { raw, notes, hasSdk, hasWasm }.
+PS.facility.loadAirport = function (ident) {
+  var notes = [];
+  var sdkP = PS.facility.viaSdkLoader(ident).then(function (r) { return r; }, function (e) {
+    notes.push('FacilityLoader: ' + PS.errText(e)); PS.log('taxi', 'FacilityLoader failed: ' + PS.errText(e)); return null;
+  });
+  var wasmP = PS.wasmTaxi.request(ident).then(function (r) { return r; }, function (e) {
+    notes.push('taxi module: ' + PS.errText(e)); PS.log('taxi', 'taxi module failed: ' + PS.errText(e)); return null;
+  });
+  return Promise.all([sdkP, wasmP]).then(function (pair) {
+    var sdkRaw = pair[0], w = pair[1];
+    if (!sdkRaw && !w) throw new Error(notes.join(' | '));
+    var raw = {};
+    if (sdkRaw && typeof sdkRaw === 'object') { Object.keys(sdkRaw).forEach(function (k) { raw[k] = sdkRaw[k]; }); }
+    if (w) {
+      raw.icao = raw.icao || w.icao;
+      raw.refLat = w.refLat; raw.refLon = w.refLon;
+      raw.paths = w.paths;
+      raw.parking = w.parking;
+      delete raw.gates;   // the module's parking list is the fuller one
+      raw.taxiModule = w.counts;
+    }
+    return { raw: raw, notes: notes, hasSdk: !!sdkRaw, hasWasm: !!w, counts: w ? w.counts : null };
+  });
+};
+
 // Finds the nearest airport and puts its runways (and taxiways, if any) into PS.state.taxi for the map to draw.
 PS.facility.loadNearestIntoState = function () {
   var own = PS.readOwn();
   if (!own) return Promise.reject(new Error('aircraft position not readable'));
   return PS.facility.nearestAirport(own.lat, own.lon).then(function (r) {
-    return PS.facility.viaSdkLoader(r.ident).then(function (raw) {
-      var ex = PS.taxi.extract(raw);
+    return PS.facility.loadAirport(r.ident).then(function (res) {
+      var ex = PS.taxi.extract(res.raw);
       PS.state.taxi = { items: ex.items, parking: ex.parking, icao: r.ident };
-      PS.log('map', 'loaded ' + r.ident + ' for the map: ' + ex.items.length + ' runway/path item(s)');
+      PS.log('map', 'loaded ' + r.ident + ' for the map: ' + ex.items.length + ' runway/path item(s), ' + ex.parking.length + ' parking (taxi module ' + (res.hasWasm ? 'answered' : 'did not answer') + ')');
       return r.ident;
     });
   });
@@ -156,6 +183,20 @@ PS.pages.push({
       try { text = JSON.stringify(raw, null, 1); } catch (e) { text = '(not serialisable: ' + PS.errText(e) + ')'; }
       rawBox.textContent = (text || String(raw)).substring(0, 8000) + ((text && text.length > 8000) ? '\n... truncated' : '');
       var ex = PS.taxi.extract(raw);
+      // Log the shape of what the sim returned so a copied log shows exactly which fields exist (e.g. gates, parking).
+      try {
+        if (raw && typeof raw === 'object') {
+          PS.log('taxi', 'raw object keys: ' + Object.keys(raw).map(function (k) {
+            var v = raw[k];
+            return k + (Array.isArray(v) ? '[' + v.length + ']' : '');
+          }).join(', '));
+          Object.keys(raw).forEach(function (k) {
+            if (Array.isArray(raw[k]) && raw[k].length && raw[k][0] && typeof raw[k][0] === 'object') {
+              PS.log('taxi', '  ' + k + '[0] keys: ' + Object.keys(raw[k][0]).join(', '));
+            }
+          });
+        }
+      } catch (e) { PS.log('taxi', 'could not describe raw object: ' + PS.errText(e)); }
       current = { source: source, extracted: ex, refLat: raw && raw.refLat, refLon: raw && raw.refLon };
       var nTaxi = ex.items.filter(function (i) { return i.category !== 'Runway'; }).length;
       var nRw = ex.items.length - nTaxi;
@@ -179,13 +220,24 @@ PS.pages.push({
     function loadFromSim() {
       var icao = icaoIn.value.trim().toUpperCase();
       if (icao.length < 3) { say('Enter an ICAO code first.', true); return; }
-      say('Trying the sim facility APIs for ' + icao + '...');
-      PS.facility.viaSdkLoader(icao).then(function (raw) { accept('msfs-sdk FacilityLoader', raw); }, function (e1) {
-        PS.log('taxi', 'FacilityLoader failed: ' + PS.errText(e1));
-        PS.facility.viaListener(icao).then(function (raw) { accept('JS_LISTENER_FACILITY', raw); }, function (e2) {
-          PS.log('taxi', 'Listener failed: ' + PS.errText(e2));
-          say('No facility API returned data. FacilityLoader: ' + PS.errText(e1) + ' | Listener: ' + PS.errText(e2), true);
-        });
+      say('Loading ' + icao + ' from the sim (runways from the facility API, taxiways from the taxi module)...');
+      PS.facility.loadAirport(icao).then(function (res) {
+        var src = (res.hasSdk ? 'FacilityLoader' : '') + (res.hasSdk && res.hasWasm ? ' + ' : '') + (res.hasWasm ? 'taxi module' : '');
+        accept(src, res.raw);
+        if (!res.hasWasm) say(status.textContent + ' Taxi module did not answer: ' + res.notes.join(' | '), true);
+      }, function (e) {
+        say('Nothing returned data. ' + PS.errText(e), true);
+      });
+    }
+    // Is the taxi module installed? Ask it, quickly.
+    var moduleLine = h('div', { class: 'ps-result', text: 'Taxi module: checking...' });
+    function checkModule() {
+      PS.wasmTaxi.ping().then(function (r) {
+        moduleLine.textContent = 'Taxi module: found (version ' + r.version + ').'; moduleLine.className = 'ps-result ok';
+        PS.log('taxi', 'taxi module found, version ' + r.version);
+      }, function (e) {
+        moduleLine.textContent = 'Taxi module: not available. ' + PS.errText(e); moduleLine.className = 'ps-result bad';
+        PS.log('taxi', 'taxi module not available: ' + PS.errText(e));
       });
     }
     function useSample() {
@@ -201,8 +253,9 @@ PS.pages.push({
           ui.button('Detect nearest airport and load', function () { detectAirport(true); }),
           ui.button('Detect only', function () { detectAirport(false); }, 'ps-ghost'),
           ui.button('Load typed ICAO', loadFromSim), ui.button('Use offline sample', useSample, 'ps-ghost')),
-        status,
-        ui.note('Needs a result the original app got through SimConnect facility data. If nothing comes back here, taxiways need a WASM module or a bundled dataset. The sample button only exercises the table.')),
+        status, moduleLine,
+        h('div', { class: 'ps-row' }, ui.button('Check taxi module', checkModule, 'ps-small ps-ghost')),
+        ui.note('Runways come from the sim facility API. Taxiways and parking come from the taxi WASM module (wasm/), which reads the same SimConnect facility data the original app used. Without the module only runways load. The sample button only exercises the table.')),
       ui.panel('Named taxiways, runways and connectors',
         h('div', { class: 'ps-row' }, ui.field('Sort', sortSel), ui.field('Show', catSel)),
         tbl.el),
@@ -213,7 +266,7 @@ PS.pages.push({
     return {
       el: el,
       snapshot: function () { return status.textContent + '\n\nRaw data returned:\n' + rawBox.textContent; },
-      onShow: function () { repaint(); if (!detected) { detected = true; detectAirport(false); } },
+      onShow: function () { repaint(); if (!detected) { detected = true; checkModule(); detectAirport(false); } },
       onHide: function () {}
     };
   }

@@ -91,7 +91,7 @@ PS.taxi = (function () {
       });
     });
 
-    arraysByKey(raw, /park/i).forEach(function (g) {
+    arraysByKey(raw, /park|gate/i).forEach(function (g) {
       g.items.forEach(function (p) {
         if (!p || typeof p !== 'object') return;
         var pt = pointOf(p);

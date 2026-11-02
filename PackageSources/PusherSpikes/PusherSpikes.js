@@ -464,7 +464,7 @@ PS.taxi = (function () {
       });
     });
 
-    arraysByKey(raw, /park/i).forEach(function (g) {
+    arraysByKey(raw, /park|gate/i).forEach(function (g) {
       g.items.forEach(function (p) {
         if (!p || typeof p !== 'object') return;
         var pt = pointOf(p);
@@ -630,7 +630,9 @@ PS.ui = {
   },
   note: function (text, cls) { return PS.h('div', { class: 'ps-note' + (cls ? ' ' + cls : ''), text: text }); },
   field: function (label, input) {
-    return PS.h('label', { class: 'ps-field' }, PS.h('span', { class: 'ps-field-label', text: label }), input);
+    // A div, not a <label>: a label around a group of buttons can forward a click on any of them to the first one
+    // (the first button ended up selected whatever was pressed).
+    return PS.h('div', { class: 'ps-field' }, PS.h('span', { class: 'ps-field-label', text: label }), input);
   },
   input: function (value, attrs) {
     var a = attrs || {};
@@ -732,6 +734,174 @@ PS.ui.showText = function (text, title) {
   host.appendChild(overlay);
   ta.focus(); ta.select();
 };
+
+/* ---- 05-wasm-taxi.js ---- */
+// Client for the Pusher taxi WASM module (wasm/): sends requests over the sim's CommBus and assembles the reply.
+// Protocol (all JSON strings):
+//   JS -> module  "PusherTaxiPing"    {"id":1}                       -> reply kind "pong"
+//   JS -> module  "PusherTaxiRequest" {"id":7,"icao":"NZCH"}         -> reply messages below
+//   module -> JS  "PusherTaxiResponse" one of:
+//     {"id","kind":"pong","version"}
+//     {"id","kind":"meta","icao","refLat","refLon","points","parking","paths","skippedPaths","names","chunks"}
+//     {"id","kind":"names","seq","items":["A","B"]}
+//     {"id","kind":"parking","seq","items":[[label,type,lat,lon,headingDeg,radiusM],...]}
+//     {"id","kind":"paths","seq","items":[[type,widthM,lat1,lon1,lat2,lon2,nameIndex],...]}
+//     {"id","kind":"end","chunks"}
+//     {"id","kind":"error","message"}
+// The module and this client are tested against each other on the host (test/wasm-core.test.mjs); the sim side is not.
+
+PS.wasmTaxi = (function () {
+  var EVT_REQUEST = 'PusherTaxiRequest';
+  var EVT_PING = 'PusherTaxiPing';
+  var EVT_RESPONSE = 'PusherTaxiResponse';
+
+  var listener = null;
+  var nextId = 1;
+  var waiters = {};
+  var alive = false;
+  var version = '';
+
+  // Collects the messages of one request. add() returns the finished layout when everything has arrived, else null.
+  // Tolerates messages arriving in any order; throws on an error message.
+  function newAssembler() {
+    var meta = null;
+    var chunks = {};
+    var chunkCount = 0;
+    var ended = false;
+
+    function build() {
+      var names = [], parking = [], pathRows = [];
+      var seqs = Object.keys(chunks).map(Number).sort(function (a, b) { return a - b; });
+      seqs.forEach(function (s) {
+        var c = chunks[s];
+        if (c.kind === 'names') names = names.concat(c.items);
+        else if (c.kind === 'parking') parking = parking.concat(c.items);
+        else if (c.kind === 'paths') pathRows = pathRows.concat(c.items);
+      });
+      return {
+        icao: meta.icao, refLat: meta.refLat, refLon: meta.refLon,
+        counts: { points: meta.points, parking: meta.parking, paths: meta.paths, skippedPaths: meta.skippedPaths, names: meta.names },
+        paths: pathRows.map(function (r) {
+          return { name: names[r[6]] !== undefined ? names[r[6]] : '', type: r[0], widthM: r[1], points: [[r[2], r[3]], [r[4], r[5]]] };
+        }),
+        parking: parking.map(function (r) {
+          return { name: r[0], type: r[1], lat: r[2], lon: r[3], headingDeg: r[4], radiusM: r[5] };
+        })
+      };
+    }
+
+    return {
+      add: function (msg) {
+        if (msg.kind === 'error') throw new Error(msg.message || 'the taxi module reported an error');
+        if (msg.kind === 'meta') meta = msg;
+        else if (msg.kind === 'end') ended = true;
+        else if (msg.kind === 'names' || msg.kind === 'parking' || msg.kind === 'paths') {
+          if (!chunks[msg.seq]) chunkCount++;
+          chunks[msg.seq] = msg;
+        }
+        if (meta && ended && chunkCount >= meta.chunks) return build();
+        return null;
+      }
+    };
+  }
+
+  function parseMessage(raw) {
+    if (typeof raw === 'string') return JSON.parse(raw);
+    if (raw && typeof raw === 'object') return raw;
+    throw new Error('unexpected CommBus payload of type ' + typeof raw);
+  }
+
+  function finish(id, fn) {
+    var w = waiters[id];
+    if (!w) return;
+    delete waiters[id];
+    clearTimeout(w.timer);
+    fn(w);
+  }
+
+  function onMessage(raw) {
+    var msg;
+    try { msg = parseMessage(raw); } catch (e) { PS.log('wasm', 'unreadable message: ' + PS.errText(e)); return; }
+    var w = waiters[msg.id];
+    if (msg.kind === 'pong') {
+      alive = true; version = msg.version || '';
+      if (w) finish(msg.id, function (x) { x.resolve({ version: version }); });
+      return;
+    }
+    if (!w || w.type !== 'request') return;   // a late reply to a request that already timed out
+    try {
+      var result = w.asm.add(msg);
+      if (result) finish(msg.id, function (x) { x.resolve(result); });
+    } catch (e) {
+      finish(msg.id, function (x) { x.reject(e); });
+    }
+  }
+
+  function ensureListener() {
+    return new Promise(function (resolve, reject) {
+      if (listener) { resolve(listener); return; }
+      function attach() {
+        try {
+          listener = RegisterCommBusListener(function () { PS.log('wasm', 'CommBus listener registered'); });
+          listener.on(EVT_RESPONSE, onMessage);
+          resolve(listener);
+        } catch (e) { reject(e); }
+      }
+      if (typeof RegisterCommBusListener === 'function') { attach(); return; }
+      // CommBus.js is the file that defines it; ask the sim to load it and wait briefly.
+      if (typeof Include !== 'undefined' && Include && typeof Include.addScript === 'function') {
+        try { Include.addScript('/JS/Services/CommBus.js'); PS.log('wasm', 'asked the sim to include /JS/Services/CommBus.js'); } catch (e) { PS.log('wasm', 'Include.addScript failed: ' + PS.errText(e)); }
+      }
+      var tries = 0;
+      var t = setInterval(function () {
+        if (typeof RegisterCommBusListener === 'function') { clearInterval(t); attach(); }
+        else if (++tries > 30) { clearInterval(t); reject(new Error('RegisterCommBusListener is not available (CommBus.js not loaded)')); }
+      }, 100);
+    });
+  }
+
+  function callWasm(name, obj) {
+    var json = JSON.stringify(obj);
+    if (listener && typeof listener.callWasm === 'function') return listener.callWasm(name, json);
+    var co = PS.coherent();
+    if (co && co.call) return co.call('COMM_BUS_WASM_CALLBACK', name, json);
+    throw new Error('no way to call a WASM event (no callWasm, no Coherent)');
+  }
+
+  function ping(timeoutMs) {
+    return ensureListener().then(function () {
+      return new Promise(function (resolve, reject) {
+        var id = nextId++;
+        var timer = setTimeout(function () { finish(id, function (w) { w.reject(new Error('no reply from the taxi module (is it installed in the package modules folder?)')); }); }, timeoutMs || 2500);
+        waiters[id] = { type: 'ping', resolve: resolve, reject: reject, timer: timer };
+        try { callWasm(EVT_PING, { id: id }); } catch (e) { finish(id, function (w) { w.reject(e); }); }
+      });
+    });
+  }
+
+  function request(icao, timeoutMs) {
+    var first = alive ? Promise.resolve({ version: version }) : ping();
+    return first.then(function () {
+      return new Promise(function (resolve, reject) {
+        var id = nextId++;
+        var timer = setTimeout(function () { finish(id, function (w) { w.reject(new Error('taxi module did not finish within ' + Math.round((timeoutMs || 30000) / 1000) + ' s')); }); }, timeoutMs || 30000);
+        waiters[id] = { type: 'request', resolve: resolve, reject: reject, timer: timer, asm: newAssembler() };
+        PS.log('wasm', 'requesting taxi data for ' + icao + ' (id ' + id + ')');
+        try { callWasm(EVT_REQUEST, { id: id, icao: String(icao).toUpperCase() }); } catch (e) { finish(id, function (w) { w.reject(e); }); }
+      });
+    });
+  }
+
+  return {
+    newAssembler: newAssembler,
+    ping: ping,
+    request: request,
+    // Test hook: feed a message as if it came off the bus.
+    _deliver: onMessage,
+    isAlive: function () { return alive; },
+    version: function () { return version; }
+  };
+})();
 
 /* ---- 10-page-telemetry.js ---- */
 // Spike 1: which variables can an EFB app read, how fast, and does anything keep ticking while hidden?
@@ -954,6 +1124,7 @@ PS.pages.push({
       return r;
     }
     function setWait(on) {
+      if (!on) stopHoldGuard();
       var r = PS.setVar('PUSHBACK WAIT', 'bool', on ? 1 : 0);
       say('PUSHBACK WAIT=' + (on ? 1 : 0) + ': ' + (r.ok ? 'sent' : 'FAILED ' + r.error));
       return r;
@@ -989,7 +1160,8 @@ PS.pages.push({
     }
     function detachTug() {
       if (!isAttached()) { say('no tug attached to detach'); return; }
-      if (drive) stopDrive('detach');
+      stopHoldGuard();
+      if (drive) stopDrive('detach', true);
       key('TOGGLE_PUSHBACK', 1);
       say('detach requested');
     }
@@ -1024,19 +1196,63 @@ PS.pages.push({
     var armed = h('span', { class: 'ps-pill bad', text: 'NOT RUNNING' });
     var stats = h('div', { class: 'ps-kv', text: 'No run yet.' });
 
-    function stopDrive(reason) {
-      if (!drive) return;
-      clearInterval(drive.timer);
-      var d = drive;
-      drive = null;
+    // Stopping: by default the drive eases speed and turn to zero while still writing every tick (as the original app does),
+    // then holds. `immediate` (page hidden, app paused or closed, detach) zeroes at once for safety.
+    function zeroAndHold() {
       PS.setVar('VELOCITY BODY Z', 'feet per second', 0);
       PS.setVar('ROTATION VELOCITY BODY Y', rotUnitTog.get(), 0);
       PS.setVar('PUSHBACK WAIT', 'bool', 1);
+    }
+    function stopDrive(reason, immediate) {
+      if (!drive) return;
+      var d = drive;
+      if (!immediate) {
+        if (d.stopping) return;
+        d.stopping = true; d.stopReason = reason; d.stopHoldTicks = 0;
+        say('stopping (' + reason + '): easing to zero');
+        return;
+      }
+      finalizeStop(d, reason);
+    }
+    function finalizeStop(d, reason) {
+      clearInterval(d.timer);
+      drive = null;
+      zeroAndHold();
       armed.className = 'ps-pill bad';
       armed.textContent = 'NOT RUNNING';
       say('direct drive stopped (' + reason + '): ' + d.writes + ' tick writes, ' + d.failures + ' failed ticks');
       paintStats(d, true);
       stats.textContent.split('\n').forEach(function (l) { PS.log('tug', 'final ' + l); });
+      startHoldGuard();
+    }
+
+    // After a stop, keep telling the sim to hold still for a few seconds and log what it does (is the tug still attached,
+    // is the aircraft rolling?). A new drive, or the Go button, cancels it.
+    var HOLD_MS = 5000;
+    var holdTimer = null;
+    function stopHoldGuard() {
+      if (holdTimer !== null) { clearInterval(holdTimer); holdTimer = null; }
+    }
+    function startHoldGuard() {
+      stopHoldGuard();
+      var t0 = Date.now(), lastLog = 0;
+      holdTimer = setInterval(function () {
+        var now = Date.now();
+        if (drive || now - t0 > HOLD_MS) {
+          stopHoldGuard();
+          if (!drive) say('hold after stop finished');
+          return;
+        }
+        var attached = isAttached();
+        if (attached) zeroAndHold();
+        if (now - lastLog >= 500) {
+          lastLog = now;
+          var st = PS.getVar('PUSHBACK STATE', 'enum'), w = PS.getVar('PUSHBACK WAIT', 'bool'), gs = PS.getVar('GROUND VELOCITY', 'knots'),
+            vz = PS.getVar('VELOCITY BODY Z', 'feet per second'), br = PS.getVar('BRAKE PARKING POSITION', 'percent over 100');
+          PS.log('tug', 'after stop +' + PS.fmt.num((now - t0) / 1000, 1) + 's | attached=' + (attached ? 1 : 0) + ' state=' + PS.fmt.value(st.value) +
+            ' wait=' + PS.fmt.value(w.value) + ' | GS ' + PS.fmt.num(gs.value, 2) + ' kt, velZ ' + PS.fmt.num(vz.value, 2) + ' ft/s | brake ' + PS.fmt.num(br.value, 2));
+        }
+      }, 100);
     }
     function meanDt(d) {
       var m = 0, i;
@@ -1074,6 +1290,7 @@ PS.pages.push({
 
     function startDrive() {
       if (drive) return;
+      stopHoldGuard();
       if (!paintAttached() && !allowFreeChk.checked) {
         say('refusing to drive: no tug is attached. Press Attach tug first, or tick "drive without a tug" to test raw velocity writes.', true);
         stats.textContent = 'Not started: no tug attached. Press "Attach tug (original sequence)" and wait for TUG ATTACHED.';
@@ -1095,18 +1312,18 @@ PS.pages.push({
         var d = drive;
         if (!d) return;
         var now = Date.now();
-        if (now - d.startedAt >= d.maxMs) { stopDrive('time limit'); return; }
+        if (!d.stopping && now - d.startedAt >= d.maxMs) stopDrive('time limit');
         d.dts.push(now - d.lastTick);
         if (d.dts.length > 200) d.dts.shift();
         d.lastTick = now;
         // Read the inputs live every tick so changes (typed or from the preset buttons) take effect immediately.
-        var tgtSpeed = Number(speedIn.value) || 0;
-        var tgtTurn = Number(rotIn.value) || 0;
+        var tgtSpeed = d.stopping ? 0 : (Number(speedIn.value) || 0);
+        var tgtTurn = d.stopping ? 0 : (Number(rotIn.value) || 0);
         var unitNow = rotUnitTog.get();
         var dt = Math.min(0.2, d.dts[d.dts.length - 1] / 1000);
         d.curSpeed = approach(d.curSpeed, tgtSpeed, SPEED_RAMP * dt);
         d.curTurn = approach(d.curTurn, tgtTurn, TURN_RAMP * dt);
-        if (tgtSpeed !== d.cmdSpeed || tgtTurn !== d.cmdTurn) {
+        if (!d.stopping && (tgtSpeed !== d.cmdSpeed || tgtTurn !== d.cmdTurn)) {
           d.cmdSpeed = tgtSpeed; d.cmdTurn = tgtTurn;
           var hh = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
           d.hdg0 = hh.ok ? hh.value : null; d.measureStart = now;
@@ -1124,6 +1341,10 @@ PS.pages.push({
         for (var i = 0; i < results.length; i++) { if (!results[i].ok) { failed = true; d.lastError = results[i].error; } }
         d.writes++;
         if (failed) d.failures++;
+        if (d.stopping && d.curSpeed === 0 && d.curTurn === 0) {
+          d.stopHoldTicks++;
+          if (d.stopHoldTicks * d.intervalMs >= 600) { finalizeStop(d, d.stopReason); return; }
+        }
         if (d.writes % 5 === 0) {
           var vz = PS.getVar('VELOCITY BODY Z', 'feet per second');
           var ry = PS.getVar('ROTATION VELOCITY BODY Y', rotUnitTog.get());
@@ -1203,7 +1424,7 @@ PS.pages.push({
     );
 
     // Safety: stop the drive whenever the app is paused or closed.
-    PS.closeHooks.push(function () { stopDrive('app paused or closed'); });
+    PS.closeHooks.push(function () { stopDrive('app paused or closed', true); });
 
     return {
       el: el,
@@ -1213,7 +1434,7 @@ PS.pages.push({
         return lines.join('\n');
       },
       onShow: function () { refreshReadouts(); readTimer = setInterval(refreshReadouts, 250); },
-      onHide: function () { if (readTimer !== null) { clearInterval(readTimer); readTimer = null; } stopDrive('page hidden'); }
+      onHide: function () { if (readTimer !== null) { clearInterval(readTimer); readTimer = null; } stopDrive('page hidden', true); }
     };
   }
 });
@@ -1309,15 +1530,42 @@ PS.facility = {
   }
 };
 
+// Loads everything available for an airport: runways and gates from the SDK FacilityLoader, taxi paths and parking from
+// the WASM module. Either half may fail; it only rejects when both do. Resolves { raw, notes, hasSdk, hasWasm }.
+PS.facility.loadAirport = function (ident) {
+  var notes = [];
+  var sdkP = PS.facility.viaSdkLoader(ident).then(function (r) { return r; }, function (e) {
+    notes.push('FacilityLoader: ' + PS.errText(e)); PS.log('taxi', 'FacilityLoader failed: ' + PS.errText(e)); return null;
+  });
+  var wasmP = PS.wasmTaxi.request(ident).then(function (r) { return r; }, function (e) {
+    notes.push('taxi module: ' + PS.errText(e)); PS.log('taxi', 'taxi module failed: ' + PS.errText(e)); return null;
+  });
+  return Promise.all([sdkP, wasmP]).then(function (pair) {
+    var sdkRaw = pair[0], w = pair[1];
+    if (!sdkRaw && !w) throw new Error(notes.join(' | '));
+    var raw = {};
+    if (sdkRaw && typeof sdkRaw === 'object') { Object.keys(sdkRaw).forEach(function (k) { raw[k] = sdkRaw[k]; }); }
+    if (w) {
+      raw.icao = raw.icao || w.icao;
+      raw.refLat = w.refLat; raw.refLon = w.refLon;
+      raw.paths = w.paths;
+      raw.parking = w.parking;
+      delete raw.gates;   // the module's parking list is the fuller one
+      raw.taxiModule = w.counts;
+    }
+    return { raw: raw, notes: notes, hasSdk: !!sdkRaw, hasWasm: !!w, counts: w ? w.counts : null };
+  });
+};
+
 // Finds the nearest airport and puts its runways (and taxiways, if any) into PS.state.taxi for the map to draw.
 PS.facility.loadNearestIntoState = function () {
   var own = PS.readOwn();
   if (!own) return Promise.reject(new Error('aircraft position not readable'));
   return PS.facility.nearestAirport(own.lat, own.lon).then(function (r) {
-    return PS.facility.viaSdkLoader(r.ident).then(function (raw) {
-      var ex = PS.taxi.extract(raw);
+    return PS.facility.loadAirport(r.ident).then(function (res) {
+      var ex = PS.taxi.extract(res.raw);
       PS.state.taxi = { items: ex.items, parking: ex.parking, icao: r.ident };
-      PS.log('map', 'loaded ' + r.ident + ' for the map: ' + ex.items.length + ' runway/path item(s)');
+      PS.log('map', 'loaded ' + r.ident + ' for the map: ' + ex.items.length + ' runway/path item(s), ' + ex.parking.length + ' parking (taxi module ' + (res.hasWasm ? 'answered' : 'did not answer') + ')');
       return r.ident;
     });
   });
@@ -1377,6 +1625,20 @@ PS.pages.push({
       try { text = JSON.stringify(raw, null, 1); } catch (e) { text = '(not serialisable: ' + PS.errText(e) + ')'; }
       rawBox.textContent = (text || String(raw)).substring(0, 8000) + ((text && text.length > 8000) ? '\n... truncated' : '');
       var ex = PS.taxi.extract(raw);
+      // Log the shape of what the sim returned so a copied log shows exactly which fields exist (e.g. gates, parking).
+      try {
+        if (raw && typeof raw === 'object') {
+          PS.log('taxi', 'raw object keys: ' + Object.keys(raw).map(function (k) {
+            var v = raw[k];
+            return k + (Array.isArray(v) ? '[' + v.length + ']' : '');
+          }).join(', '));
+          Object.keys(raw).forEach(function (k) {
+            if (Array.isArray(raw[k]) && raw[k].length && raw[k][0] && typeof raw[k][0] === 'object') {
+              PS.log('taxi', '  ' + k + '[0] keys: ' + Object.keys(raw[k][0]).join(', '));
+            }
+          });
+        }
+      } catch (e) { PS.log('taxi', 'could not describe raw object: ' + PS.errText(e)); }
       current = { source: source, extracted: ex, refLat: raw && raw.refLat, refLon: raw && raw.refLon };
       var nTaxi = ex.items.filter(function (i) { return i.category !== 'Runway'; }).length;
       var nRw = ex.items.length - nTaxi;
@@ -1400,13 +1662,24 @@ PS.pages.push({
     function loadFromSim() {
       var icao = icaoIn.value.trim().toUpperCase();
       if (icao.length < 3) { say('Enter an ICAO code first.', true); return; }
-      say('Trying the sim facility APIs for ' + icao + '...');
-      PS.facility.viaSdkLoader(icao).then(function (raw) { accept('msfs-sdk FacilityLoader', raw); }, function (e1) {
-        PS.log('taxi', 'FacilityLoader failed: ' + PS.errText(e1));
-        PS.facility.viaListener(icao).then(function (raw) { accept('JS_LISTENER_FACILITY', raw); }, function (e2) {
-          PS.log('taxi', 'Listener failed: ' + PS.errText(e2));
-          say('No facility API returned data. FacilityLoader: ' + PS.errText(e1) + ' | Listener: ' + PS.errText(e2), true);
-        });
+      say('Loading ' + icao + ' from the sim (runways from the facility API, taxiways from the taxi module)...');
+      PS.facility.loadAirport(icao).then(function (res) {
+        var src = (res.hasSdk ? 'FacilityLoader' : '') + (res.hasSdk && res.hasWasm ? ' + ' : '') + (res.hasWasm ? 'taxi module' : '');
+        accept(src, res.raw);
+        if (!res.hasWasm) say(status.textContent + ' Taxi module did not answer: ' + res.notes.join(' | '), true);
+      }, function (e) {
+        say('Nothing returned data. ' + PS.errText(e), true);
+      });
+    }
+    // Is the taxi module installed? Ask it, quickly.
+    var moduleLine = h('div', { class: 'ps-result', text: 'Taxi module: checking...' });
+    function checkModule() {
+      PS.wasmTaxi.ping().then(function (r) {
+        moduleLine.textContent = 'Taxi module: found (version ' + r.version + ').'; moduleLine.className = 'ps-result ok';
+        PS.log('taxi', 'taxi module found, version ' + r.version);
+      }, function (e) {
+        moduleLine.textContent = 'Taxi module: not available. ' + PS.errText(e); moduleLine.className = 'ps-result bad';
+        PS.log('taxi', 'taxi module not available: ' + PS.errText(e));
       });
     }
     function useSample() {
@@ -1422,8 +1695,9 @@ PS.pages.push({
           ui.button('Detect nearest airport and load', function () { detectAirport(true); }),
           ui.button('Detect only', function () { detectAirport(false); }, 'ps-ghost'),
           ui.button('Load typed ICAO', loadFromSim), ui.button('Use offline sample', useSample, 'ps-ghost')),
-        status,
-        ui.note('Needs a result the original app got through SimConnect facility data. If nothing comes back here, taxiways need a WASM module or a bundled dataset. The sample button only exercises the table.')),
+        status, moduleLine,
+        h('div', { class: 'ps-row' }, ui.button('Check taxi module', checkModule, 'ps-small ps-ghost')),
+        ui.note('Runways come from the sim facility API. Taxiways and parking come from the taxi WASM module (wasm/), which reads the same SimConnect facility data the original app used. Without the module only runways load. The sample button only exercises the table.')),
       ui.panel('Named taxiways, runways and connectors',
         h('div', { class: 'ps-row' }, ui.field('Sort', sortSel), ui.field('Show', catSel)),
         tbl.el),
@@ -1434,7 +1708,7 @@ PS.pages.push({
     return {
       el: el,
       snapshot: function () { return status.textContent + '\n\nRaw data returned:\n' + rawBox.textContent; },
-      onShow: function () { repaint(); if (!detected) { detected = true; detectAirport(false); } },
+      onShow: function () { repaint(); if (!detected) { detected = true; checkModule(); detectAirport(false); } },
       onHide: function () {}
     };
   }
