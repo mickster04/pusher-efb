@@ -79,6 +79,10 @@ The SDK has an "EFB Notifications" page; its body did not load. `props.notificat
 - **Facility data:** `msfssdk.FacilityLoader` works from an EFB app; the ICAO must be in the sim's string form `"A      " + ident`. Nearest airport: `loader.startNearestSearchSession(FacilitySearchType.Airport)`, then `session.searchNearest(lat, lon, radiusMetres, max)`; results are those ICAO strings. A session only reports changes since its last search, so start a new one per query. Airport data included runways but not taxi paths.
 - **AI traffic:** `RegisterViewListener('JS_LISTENER_AIR_TRAFFIC', cb)`, then `listener.call('GET_AIR_TRAFFIC')` returns entries `{uId, name, lat, lon, alt (metres), heading}` (per the sdk `TrafficInstrument`; unverified in the sim).
 - **Bing map:** `BingComponent` (props `id`, `mode`, optional `earthColors`) draws black unless `earthColors` is supplied (`BingComponent.createEarthColorsArray(water, terrain)`). Position is set with `setPositionRadius({lat, long}, radiusMetres)`. Source: msfs-avionics-mirror `src/sdk/components/bing/BingComponent.tsx`.
+- **Bing map modes:** `EBingMode` is a sim global with CURSOR, PLANE, VFR, HORIZON, TOPVIEW. The map is bound at `coui://html_ui/efb_ui/efb_os/JS_BINGMAP_<id>_1`.
+- **`EFB_API` members:** `apps`, `allAppsLoaded`, `bus`, `unitsSettingManager`, `efbSettingsManager`, `notificationManager`, `onboardingManager`, `loadCss`, `loadJs`, `use`, and setters. `apps` and `loadJs` are worth reading when looking for the flight planner map.
+- **Loop rate:** `setInterval` at 20 ms ran at a mean of about 33 ms (30 Hz) with the five per-tick writes; at 50 ms it ran at about 60 ms. Plan for 25-30 Hz, not the original's 50 Hz.
+- **Read inputs inside the loop:** a drive loop that captured speed and turn at start ignored later changes.
 - **Pushback needs the tug attached:** with `PUSHBACK ATTACHED` at 0, velocity writes act on a free aircraft.
 
 ## Gotchas

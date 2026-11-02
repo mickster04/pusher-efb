@@ -49,7 +49,17 @@ PS.pages.push({
     var canvas = h('canvas', { class: 'ps-canvas', width: '640', height: '420' });
     var mountBox = h('div', { class: 'ps-mount' });
     var probeBox = h('pre', { class: 'ps-log', text: '(press Probe)' });
-    var rangeSel = ui.select([{ value: '200', label: '200 m' }, { value: '500', label: '500 m' }, { value: '1000', label: '1 km' }, { value: '3000', label: '3 km' }], '500', function () { draw(); });
+    var rangeSel = ui.select([{ value: '200', label: '200 m' }, { value: '500', label: '500 m' }, { value: '1000', label: '1 km' }, { value: '3000', label: '3 km' }, { value: '10000', label: '10 km' }], '1000', function () { draw(); });
+    // Bing map: the sim lists modes CURSOR, PLANE, VFR, HORIZON, TOPVIEW. PLANE is a terrain-coloured map; VFR is the detailed one.
+    var modeEnum = typeof EBingMode !== 'undefined' ? EBingMode : null;
+    var modeOptions = [];
+    ['VFR', 'PLANE', 'TOPVIEW'].forEach(function (k) { if (modeEnum && modeEnum[k] !== undefined) modeOptions.push({ value: k, label: k }); });
+    if (!modeOptions.length) modeOptions.push({ value: 'PLANE', label: 'PLANE' });
+    var bingModeSel = ui.select(modeOptions, modeOptions[0].value, function () { tryMount(); });
+    var bingRangeSel = ui.select([{ value: '500', label: '500 m' }, { value: '1000', label: '1 km' }, { value: '3000', label: '3 km' }, { value: '10000', label: '10 km' }, { value: '30000', label: '30 km' }], '3000', function () { followOwn(); });
+    var marker = null;
+    var mounted = false;
+    var airportLoading = false;
     var infoLine = h('div', { class: 'ps-kv', text: '' });
     var timer = null;
 
@@ -69,7 +79,11 @@ PS.pages.push({
       if (!bing) return;
       var own = PS.readOwn();
       if (!own) return;
-      var radius = Number(rangeSel.value);
+      var radius = Number(bingRangeSel.value);
+      if (marker) {
+        var t = 'rotate(' + Math.round(own.hdgDeg) + 'deg)';
+        marker.style.transform = t; marker.style.webkitTransform = t;
+      }
       try {
         if (typeof bing.setPositionRadius === 'function') bing.setPositionRadius({ lat: own.lat, long: own.lon }, radius);
       } catch (e) {
@@ -101,12 +115,11 @@ PS.pages.push({
 
     // Mounts msfs-sdk BingComponent in a sized holder, gives it earth colours, and keeps it centred on the aircraft.
     function mountBing(sdk) {
-      var holder = h('div', { style: 'position:relative;width:640px;height:360px;background:#000;overflow:hidden;' });
+      var holder = h('div', { style: 'position:relative;width:640px;height:400px;background:#000;overflow:hidden;' });
       mountBox.appendChild(holder);
       var ref = sdk.FSComponent.createRef();
-      var modeEnum = typeof EBingMode !== 'undefined' ? EBingMode : (sdk.EBingMode || null);
       if (modeEnum) log('EBingMode values: ' + Object.keys(modeEnum).join(', '));
-      var props = { ref: ref, id: 'ps-bing-' + (Date.now() % 100000), mode: modeEnum ? modeEnum.PLANE : 0 };
+      var props = { ref: ref, id: 'ps-bing-' + (Date.now() % 100000), mode: modeEnum ? modeEnum[bingModeSel.value] : 0 };
       if (sdk.ArraySubject) props.earthColors = sdk.ArraySubject.create(earthColorsFor(sdk));
       else log('msfssdk.ArraySubject missing; map will keep its default black colours');
       if (sdk.Subject) props.skyColor = sdk.Subject.create(0);
@@ -114,6 +127,10 @@ PS.pages.push({
       sdk.FSComponent.render(vnode, holder);
       bing = ref.instance;
       if (!bing) { log('BingComponent rendered but no instance reference came back.'); return; }
+      // Own aircraft marker (a CSS triangle, so no special characters are needed).
+      marker = h('div', { style: 'position:absolute;left:50%;top:50%;width:0;height:0;margin-left:-9px;margin-top:-14px;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:28px solid #4cd18a;' });
+      holder.appendChild(marker);
+      log('mounting Bing map in mode ' + bingModeSel.value);
       followOwn();
       if (bingTimer !== null) clearInterval(bingTimer);
       var checks = 0;
@@ -127,7 +144,7 @@ PS.pages.push({
     // Best-effort mount of a built-in map. Which of these (if any) works inside an EFB app is exactly what we want to learn.
     function tryMount() {
       PS.clear(mountBox);
-      bing = null;
+      bing = null; marker = null; mounted = true;
       var sdk = PS.global.msfssdk;
       try {
         if (sdk && sdk.BingComponent && sdk.FSComponent) { mountBing(sdk); return; }
@@ -178,33 +195,47 @@ PS.pages.push({
         });
         ctx2.lineWidth = 1;
       }
-      var contacts = PS.state.contacts || [];
+      PS.airTraffic.poll();
+      var contacts = (PS.state.contacts && PS.state.contacts.length) ? PS.state.contacts : (PS.airTraffic.contacts || []);
+      var inRange = 0;
+      ctx2.font = '11px Arial';
       contacts.forEach(function (c) {
         var q = xy(c.lat, c.lon);
+        if (q[0] < -10 || q[0] > w + 10 || q[1] < -10 || q[1] > hgt + 10) return;
+        inRange++;
         ctx2.fillStyle = c.simulated ? '#c46af0' : '#ff5c5c';
         ctx2.beginPath(); ctx2.arc(q[0], q[1], 5, 0, Math.PI * 2); ctx2.fill();
+        ctx2.fillStyle = '#e8b4b4'; ctx2.fillText(c.title || '', q[0] + 8, q[1] + 4);
       });
       // own aircraft: arrow pointing along heading
       ctx2.save(); ctx2.translate(cx, cy); ctx2.rotate(PS.geo.rad(own.hdgDeg));
-      ctx2.fillStyle = '#4cd18a'; ctx2.beginPath(); ctx2.moveTo(0, -12); ctx2.lineTo(8, 10); ctx2.lineTo(0, 5); ctx2.lineTo(-8, 10); ctx2.closePath(); ctx2.fill();
+      ctx2.fillStyle = '#4cd18a'; ctx2.beginPath(); ctx2.moveTo(0, -20); ctx2.lineTo(13, 16); ctx2.lineTo(0, 8); ctx2.lineTo(-13, 16); ctx2.closePath(); ctx2.fill();
       ctx2.restore();
-      infoLine.textContent = (live ? 'Own position live. ' : 'Own position: reference point (sim not readable). ') + 'Taxi items drawn: ' + drawn + '. Contacts drawn: ' + contacts.length +
-        '. Load taxiways on page 3 and contacts on page 4 to see them here.';
+      infoLine.textContent = (live ? 'Own position live. ' : 'Own position: reference point (sim not readable). ') + 'Taxi items drawn: ' + drawn + '. AI aircraft in view: ' + inRange + ' of ' + contacts.length +
+        (taxi && taxi.icao ? '. Airport ' + taxi.icao + ' loaded.' : '. No airport data loaded yet.');
     }
 
     var el = h('div', { class: 'ps-page' },
       ui.panel('Built-in map',
-        h('div', { class: 'ps-row' }, ui.button('Probe for map APIs', probe), ui.button('Try to mount a built-in map', tryMount)),
-        probeBox, mountBox,
+        h('div', { class: 'ps-row' }, ui.button('Probe for map APIs', probe), ui.button('Mount / remount built-in map', tryMount)),
+        h('div', { class: 'ps-row' }, ui.field('Map mode', bingModeSel), ui.field('Map range', bingRangeSel)),
+        mountBox, probeBox,
         ui.note('Looking for: whether the sim\'s own map can be shown in an EFB app, and whether we can draw taxiways, pins and the aircraft on top of it.')),
-      ui.panel('Baseline plot (no imagery)',
+      ui.panel('Plot (runways, taxiways, AI aircraft; no imagery)',
         h('div', { class: 'ps-row' }, ui.field('Range', rangeSel)),
         canvas, infoLine),
       ui.panel('Log', ui.logBox(['map']))
     );
     return {
       el: el,
-      onShow: function () { draw(); timer = setInterval(draw, 500); },
+      onShow: function () {
+        draw(); timer = setInterval(draw, 500);
+        if (!mounted) tryMount();
+        if (!PS.state.taxi && !airportLoading) {
+          airportLoading = true;
+          PS.facility.loadNearestIntoState().then(null, function (e) { log('could not load airport data: ' + PS.errText(e)); });
+        }
+      },
       onHide: function () { if (timer !== null) { clearInterval(timer); timer = null; } if (bingTimer !== null) { clearInterval(bingTimer); bingTimer = null; } }
     };
   }

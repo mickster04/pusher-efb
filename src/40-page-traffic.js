@@ -58,8 +58,8 @@ PS.airTraffic = {
           T.prev[d.uId] = { t: now, lat: d.lat, lon: d.lon, gsKt: 0, track: d.heading || 0 };
         }
         seen[d.uId] = true;
-        out.push({ id: d.uId, title: d.name || String(d.uId), lat: d.lat, lon: d.lon, hdgDeg: d.heading || 0,
-          gsKt: gs, trackDeg: track, altFt: (d.alt || 0) * 3.28084, onGround: null });
+        out.push({ id: d.uId, title: (d.name || String(d.uId)) + (d.plane_model_icao ? ' ' + d.plane_model_icao : ''), lat: d.lat, lon: d.lon, hdgDeg: d.heading || 0,
+          gsKt: gs, trackDeg: track, altFt: (d.alt || 0) * 3.28084, onGround: d.isOnGround === true ? true : (d.isOnGround === false ? false : null) });
       }
       for (var k in T.prev) { if (!seen[k]) delete T.prev[k]; }
       T.contacts = out;
@@ -98,7 +98,7 @@ PS.pages.push({
     var lastTs = 0;
     var sourceLine = h('div', { class: 'ps-result', text: 'No traffic source checked yet.' });
     var apiBox = h('pre', { class: 'ps-log', text: '(press Discover)' });
-    var tbl = ui.table(['Contact', 'Distance', 'Bearing', 'Relative', 'Alt diff', 'Speed', 'Heading', 'Closing', 'Time to closest', 'Closest', 'Ahead']);
+    var tbl = ui.table(['Contact', 'Distance', 'Bearing', 'Relative', 'Alt diff', 'Speed', 'Heading', 'Closing', 'Time to closest', 'Closest', 'Ahead', 'State']);
     var sortSel = ui.select([{ value: 'dist', label: 'Nearest first' }, { value: 'tcpa', label: 'Soonest closest approach' }], 'dist');
 
     function ownOrReference() {
@@ -167,7 +167,8 @@ PS.pages.push({
           h('td', { text: PS.fmt.num(a.closingKt, 1) + ' kt' }),
           h('td', { text: a.tcpaSec === null ? '—' : PS.fmt.seconds(a.tcpaSec) }),
           h('td', { text: PS.fmt.dist(a.cpaM) }),
-          h('td', { text: a.ahead ? 'yes' : 'no' })));
+          h('td', { text: a.ahead ? 'yes' : 'no' }),
+          h('td', { text: c.onGround === true ? 'ground' : (c.onGround === false ? 'air' : '\u2014') })));
       });
       PS.state.contacts = contacts;
     }

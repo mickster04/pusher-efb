@@ -88,6 +88,20 @@ PS.facility = {
   }
 };
 
+// Finds the nearest airport and puts its runways (and taxiways, if any) into PS.state.taxi for the map to draw.
+PS.facility.loadNearestIntoState = function () {
+  var own = PS.readOwn();
+  if (!own) return Promise.reject(new Error('aircraft position not readable'));
+  return PS.facility.nearestAirport(own.lat, own.lon).then(function (r) {
+    return PS.facility.viaSdkLoader(r.ident).then(function (raw) {
+      var ex = PS.taxi.extract(raw);
+      PS.state.taxi = { items: ex.items, parking: ex.parking, icao: r.ident };
+      PS.log('map', 'loaded ' + r.ident + ' for the map: ' + ex.items.length + ' runway/path item(s)');
+      return r.ident;
+    });
+  });
+};
+
 PS.pages.push({
   id: 'taxiways',
   title: '3 Taxiways',

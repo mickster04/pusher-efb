@@ -1,16 +1,31 @@
 // Spike 2: can the tug be driven from JS? Per-tick writes of PUSHBACK WAIT / VELOCITY BODY Z / ROTATION VELOCITY BODY Y
 // (what the original app does). Moves the aircraft: hard run-time limit, stops on hide, pause and close.
-// A native-events mode (KEY_TUG_HEADING) was tried and dropped: the direct writes worked.
+// Steering by the KEY_TUG_HEADING event is offered alongside, because turning by rotation write was not working.
 
 PS.TUG = {
   HEADING_UNITS_PER_DEG: 11930465,   // KEY_TUG_HEADING value = this * degrees, as 32-bit unsigned
   ROT_SCALE: 0.002                   // original app: commanded rotation * 0.002 into ROTATION VELOCITY BODY Y
 };
 
+// Turn rate to the value written to ROTATION VELOCITY BODY Y. The original app writes a yaw rate in rad/s
+// (rotation x 0.002 x tug speed units, which is about 0.05 rad/s = 2.9 deg/s at rotation 1 and cruise speed).
+PS.tugRotValue = function (turnDegPerSec, unit) {
+  return unit === 'degrees per second' ? turnDegPerSec : turnDegPerSec * Math.PI / 180;
+};
+
 PS.tugHeadingValue = function (deg) {
   var d = PS.geo.normDeg(deg);
   return Math.round(PS.TUG.HEADING_UNITS_PER_DEG * d) % 4294967296;
 };
+
+// Ramp limits for the live drive (the original ramps speed to cruise in about 0.35 s and eases the turn in).
+var SPEED_RAMP = 14;   // ft/s per second
+var TURN_RAMP = 5;     // deg/s per second
+function approach(cur, target, maxStep) {
+  if (cur < target) return Math.min(target, cur + maxStep);
+  if (cur > target) return Math.max(target, cur - maxStep);
+  return cur;
+}
 
 PS.pages.push({
   id: 'tug',
@@ -109,13 +124,11 @@ PS.pages.push({
     // ---- direct mode ----
     var speedIn = ui.input('1', { type: 'number', step: '0.5', min: '-5', max: '5' });
     var rotIn = ui.input('0', { type: 'number', step: '0.1', min: '-3', max: '3' });
-    var scaleChk = h('input', { type: 'checkbox', checked: true });
-    scaleChk.checked = true;
     var rotUnitTog = ui.toggle([
-      { value: 'feet per second', label: 'ft/s (original hack)' },
       { value: 'radians per second', label: 'rad/s' },
-      { value: 'degrees per second', label: 'deg/s' }
-    ], 'feet per second');
+      { value: 'degrees per second', label: 'deg/s' },
+      { value: 'feet per second', label: 'ft/s (original hack)' }
+    ], 'radians per second');
     var intervalTog = ui.toggle([{ value: '20', label: '20 ms' }, { value: '50', label: '50 ms' }, { value: '100', label: '100 ms' }], '50');
     var allowFreeChk = h('input', { type: 'checkbox' });
     function presets(input, values) {
@@ -139,6 +152,12 @@ PS.pages.push({
       armed.textContent = 'NOT RUNNING';
       say('direct drive stopped (' + reason + '): ' + d.writes + ' tick writes, ' + d.failures + ' failed ticks');
       paintStats(d, true);
+      stats.textContent.split('\n').forEach(function (l) { PS.log('tug', 'final ' + l); });
+    }
+    function meanDt(d) {
+      var m = 0, i;
+      for (i = 0; i < d.dts.length; i++) m += d.dts[i];
+      return d.dts.length ? m / d.dts.length : 0;
     }
     function paintStats(d, final) {
       var dts = d.dts;
@@ -150,9 +169,18 @@ PS.pages.push({
         (final ? 'Last run: ' : 'Running: ') + d.writes + ' ticks, ' + d.failures + ' with a failed write' + (d.lastError ? ' (last error: ' + d.lastError + ')' : ''),
         'Requested interval ' + d.intervalMs + ' ms; actual mean ' + PS.fmt.num(mean, 1) + ' ms, worst ' + PS.fmt.num(max, 1) + ' ms (' + PS.fmt.num(mean ? 1000 / mean : 0, 1) + ' Hz)',
         'Commanded VEL Z ' + PS.fmt.num(d.cmdSpeed, 2) + ' ft/s, read back ' + PS.fmt.num(rb.velZ, 2) + ' ft/s -> ' + verdict(d.cmdSpeed, rb.velZ),
-        'Ground speed ' + PS.fmt.num(rb.gs, 2) + ' kt, ROT VEL Y read back ' + PS.fmt.num(rb.rotY, 4)
+        'Ground speed ' + PS.fmt.num(rb.gs, 2) + ' kt, ROT VEL Y read back ' + PS.fmt.num(rb.rotY, 4),
+        turnLine(d, rb)
       ];
       stats.textContent = lines.join('\n');
+    }
+    function turnLine(d, rb) {
+      if (d.hdg0 === null || typeof rb.hdg !== 'number') return 'Turn: no heading readback';
+      var secs = (Date.now() - d.measureStart) / 1000;
+      var diff = PS.geo.angleDiff(d.hdg0, rb.hdg);
+      var rate = secs > 0.5 ? diff / secs : 0;
+      var verdictText = Math.abs(d.cmdTurn) < 0.01 ? 'straight commanded' : (Math.abs(rate) < Math.abs(d.cmdTurn) * 0.25 ? 'NOT TURNING (well below command)' : 'TURNING');
+      return 'Turn: heading changed ' + PS.fmt.num(diff, 1) + ' deg in ' + PS.fmt.num(secs, 1) + ' s = ' + PS.fmt.num(rate, 2) + ' deg/s (commanded ' + PS.fmt.num(d.cmdTurn, 2) + ' deg/s) -> ' + verdictText;
     }
     function verdict(cmd, read) {
       if (typeof read !== 'number') return 'no readback';
@@ -169,15 +197,16 @@ PS.pages.push({
       }
       var speed = Number(speedIn.value) || 0;
       var rot = Number(rotIn.value) || 0;
-      var scale = scaleChk.checked ? PS.TUG.ROT_SCALE : 1;
       var rotUnit = rotUnitTog.get();
       var intervalMs = Number(intervalTog.get());
       var maxMs = Math.max(1, Math.min(30, Number(maxSecIn.value) || 10)) * 1000;
+      var h0 = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
+      var rotWritten = PS.tugRotValue(rot, rotUnit);
       drive = { startedAt: Date.now(), maxMs: maxMs, writes: 0, failures: 0, dts: [], lastTick: Date.now(), lastError: '',
-        intervalMs: intervalMs, cmdSpeed: speed, lastReadback: null };
+        intervalMs: intervalMs, cmdSpeed: speed, cmdTurn: rot, curSpeed: 0, curTurn: 0, measureStart: Date.now(), hdg0: h0.ok ? h0.value : null, lastReadback: null };
       armed.className = 'ps-pill ok';
       armed.textContent = 'RUNNING (auto-stop in ' + (maxMs / 1000) + ' s)';
-      say('direct drive started: velZ=' + speed + ' ft/s, rot=' + rot + ' x' + scale + ' [' + rotUnit + '], every ' + intervalMs + ' ms, max ' + (maxMs / 1000) + ' s');
+      say('direct drive started: velZ=' + speed + ' ft/s, turn=' + rot + ' deg/s -> writing ' + PS.fmt.num(rotWritten, 5) + ' [' + rotUnit + '], every ' + intervalMs + ' ms, max ' + (maxMs / 1000) + ' s');
       drive.timer = setInterval(function () {
         var d = drive;
         if (!d) return;
@@ -186,13 +215,26 @@ PS.pages.push({
         d.dts.push(now - d.lastTick);
         if (d.dts.length > 200) d.dts.shift();
         d.lastTick = now;
+        // Read the inputs live every tick so changes (typed or from the preset buttons) take effect immediately.
+        var tgtSpeed = Number(speedIn.value) || 0;
+        var tgtTurn = Number(rotIn.value) || 0;
+        var unitNow = rotUnitTog.get();
+        var dt = Math.min(0.2, d.dts[d.dts.length - 1] / 1000);
+        d.curSpeed = approach(d.curSpeed, tgtSpeed, SPEED_RAMP * dt);
+        d.curTurn = approach(d.curTurn, tgtTurn, TURN_RAMP * dt);
+        if (tgtSpeed !== d.cmdSpeed || tgtTurn !== d.cmdTurn) {
+          d.cmdSpeed = tgtSpeed; d.cmdTurn = tgtTurn;
+          var hh = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
+          d.hdg0 = hh.ok ? hh.value : null; d.measureStart = now;
+          say('command changed live: speed ' + tgtSpeed + ' ft/s, turn ' + tgtTurn + ' deg/s');
+        }
         // The same set the original app writes every tick.
         var results = [
           PS.setVar('PUSHBACK WAIT', 'bool', 0),
           PS.setVar('VELOCITY BODY Y', 'feet per second', 0),
           PS.setVar('ROTATION VELOCITY BODY X', 'feet per second', 0),
-          PS.setVar('VELOCITY BODY Z', 'feet per second', speed),
-          PS.setVar('ROTATION VELOCITY BODY Y', rotUnit, rot * scale)
+          PS.setVar('VELOCITY BODY Z', 'feet per second', d.curSpeed),
+          PS.setVar('ROTATION VELOCITY BODY Y', unitNow, PS.tugRotValue(d.curTurn, unitNow))
         ];
         var failed = false;
         for (var i = 0; i < results.length; i++) { if (!results[i].ok) { failed = true; d.lastError = results[i].error; } }
@@ -200,34 +242,78 @@ PS.pages.push({
         if (failed) d.failures++;
         if (d.writes % 5 === 0) {
           var vz = PS.getVar('VELOCITY BODY Z', 'feet per second');
-          var ry = PS.getVar('ROTATION VELOCITY BODY Y', rotUnit);
+          var ry = PS.getVar('ROTATION VELOCITY BODY Y', rotUnitTog.get());
           var gs = PS.getVar('GROUND VELOCITY', 'knots');
-          d.lastReadback = { velZ: vz.ok ? vz.value : null, rotY: ry.ok ? ry.value : null, gs: gs.ok ? gs.value : null };
+          var hd = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
+          d.lastReadback = { velZ: vz.ok ? vz.value : null, rotY: ry.ok ? ry.value : null, gs: gs.ok ? gs.value : null, hdg: hd.ok ? hd.value : null };
           paintStats(d, false);
+          if (!d.lastLogAt || now - d.lastLogAt >= 1000) {
+            var rb2 = d.lastReadback;
+            var inst = null;
+            if (d.lastLogAt && typeof rb2.hdg === 'number' && typeof d.lastLogHdg === 'number') {
+              inst = PS.geo.angleDiff(d.lastLogHdg, rb2.hdg) / ((now - d.lastLogAt) / 1000);
+            }
+            var avgTurn = (d.hdg0 !== null && typeof rb2.hdg === 'number' && now - d.measureStart > 500)
+              ? PS.geo.angleDiff(d.hdg0, rb2.hdg) / ((now - d.measureStart) / 1000) : null;
+            PS.log('tug', 'drive t=' + PS.fmt.num((now - d.startedAt) / 1000, 1) + 's unit=' + unitNow +
+              ' | speed cmd ' + PS.fmt.num(d.cmdSpeed, 2) + ' ramped ' + PS.fmt.num(d.curSpeed, 2) + ' read ' + PS.fmt.num(rb2.velZ, 2) + ' ft/s, GS ' + PS.fmt.num(rb2.gs, 2) + ' kt' +
+              ' | turn cmd ' + PS.fmt.num(d.cmdTurn, 2) + ' ramped ' + PS.fmt.num(d.curTurn, 2) + ' deg/s, wrote ' + PS.fmt.num(PS.tugRotValue(d.curTurn, unitNow), 5) + ' [' + unitNow + ']' +
+              ' | heading ' + PS.fmt.num(rb2.hdg, 1) + ', measured turn ' + PS.fmt.num(inst, 2) + ' deg/s now, ' + PS.fmt.num(avgTurn, 2) + ' deg/s since last change' +
+              ' | ROT VEL Y read ' + PS.fmt.num(rb2.rotY, 4) + ' | interval mean ' + PS.fmt.num(meanDt(d), 1) + ' ms');
+            d.lastLogAt = now; d.lastLogHdg = rb2.hdg;
+          }
         }
       }, intervalMs);
     }
 
     var directPanel = ui.panel('Per-tick velocity writes',
-      ui.note('Moves the aircraft. Only use parked on the ground with the tug attached and the brake released. Stops by itself at the time limit, and when this page is hidden or the app is paused or closed.', 'warn'),
+      ui.note('Moves the aircraft. Only use parked on the ground with the tug attached and the brake released. Speed and turn are read every tick, so you can change them while it runs. Stops by itself at the time limit, and when this page is hidden or the app is paused or closed.', 'warn'),
       h('div', { class: 'ps-row' }, ui.field('Speed (ft/s, + forward, - reverse)', speedIn), ui.field('Max run (s)', maxSecIn)),
       presets(speedIn, [-5, -2, -1, 0, 1, 2, 5]),
-      h('div', { class: 'ps-row' }, ui.field('Rotation (original units)', rotIn)),
-      presets(rotIn, [-2, -1, -0.5, 0, 0.5, 1, 2]),
+      h('div', { class: 'ps-row' }, ui.field('Turn rate (deg/s, + = nose right)', rotIn)),
+      presets(rotIn, [-6, -3, -1.5, 0, 1.5, 3, 6]),
       h('div', { class: 'ps-row' }, ui.field('Rotation unit', rotUnitTog.el), ui.field('Update interval', intervalTog.el)),
       h('div', { class: 'ps-row' },
-        h('label', { class: 'ps-check' }, scaleChk, ' scale rotation by 0.002 (original app)'),
         h('label', { class: 'ps-check' }, allowFreeChk, ' drive without a tug (raw velocity test, can misbehave)'),
         armed),
       h('div', { class: 'ps-row' },
         ui.button('Start drive', startDrive, 'ps-warn'),
+        ui.button('Straight (turn 0)', function () { rotIn.value = '0'; }, 'ps-small'),
         ui.button('STOP (write 0)', function () { if (drive) stopDrive('stop button'); else { PS.setVar('VELOCITY BODY Z', 'feet per second', 0); say('stop pressed (no run active); wrote 0'); } }, 'ps-danger')),
       stats
+    );
+
+    // ---- steering by the tug heading event (retry now that the tug is attached) ----
+    var hdgIn = ui.input('0', { type: 'number', min: '0', max: '360', step: '1' });
+    function curHeading() {
+      var r = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
+      return r.ok && typeof r.value === 'number' ? r.value : null;
+    }
+    function sendHeading(deg) {
+      var v = PS.tugHeadingValue(deg);
+      key('KEY_TUG_HEADING', v);
+      say('tug heading target ' + PS.fmt.num(PS.geo.normDeg(deg), 1) + ' deg (event value ' + v + ')');
+    }
+    function nudge(delta) {
+      var cur = curHeading();
+      if (cur === null) { say('cannot read PLANE HEADING DEGREES TRUE', true); return; }
+      sendHeading(cur + delta);
+    }
+    var steerPanel = ui.panel('Steering by tug heading event (KEY_TUG_HEADING)',
+      ui.note('Tests turning without the rotation write. Attach the tug, start a drive (or leave the tug held and press Go), then press a button and watch the heading in the readouts. Each press sets a target relative to the current heading.'),
+      h('div', { class: 'ps-row' },
+        ui.button('Left 15', function () { nudge(-15); }), ui.button('Left 5', function () { nudge(-5); }),
+        ui.button('Right 5', function () { nudge(5); }), ui.button('Right 15', function () { nudge(15); })),
+      h('div', { class: 'ps-row' },
+        ui.field('Absolute heading (true)', hdgIn),
+        ui.button('Send heading', function () { sendHeading(Number(hdgIn.value) || 0); }),
+        ui.button('Use current', function () { var c = curHeading(); if (c !== null) hdgIn.value = String(Math.round(c)); }))
     );
 
     var el = h('div', { class: 'ps-page' },
       shared,
       directPanel,
+      steerPanel,
       ui.panel('Live readouts', readTable.el),
       ui.panel('Log', ui.logBox(['tug', 'key', 'set']))
     );

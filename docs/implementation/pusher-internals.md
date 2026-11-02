@@ -9,7 +9,7 @@ Source of truth is the sibling repo `../msfs-pusher-main` (C# bridge in `bridge/
   - `PUSHBACK WAIT` (bool) = wait flag
   - `VELOCITY BODY Y` = 0 and `ROTATION VELOCITY BODY X` = 0 (both with unit `feet per second`)
   - `VELOCITY BODY Z` = forward/reverse speed (`feet per second`)
-  - `ROTATION VELOCITY BODY Y` = turn rate, **written with unit `feet per second` too** (a numeric hack; the value is the commanded rotation × `RotationToRotY` = 0.002)
+  - `ROTATION VELOCITY BODY Y` = yaw rate in **rad/s**, computed as `rotation × RotationToRotY (0.002) × tugSpeed`, where `tugSpeed` is in speed units (velocity ft/s = speed units × 0.2) and keeps its sign, so reversing flips the turn direction. At rotation 1 and cruise speed 25 this is about 0.05 rad/s, or 2.9 deg/s. The original writes it through SimConnect with unit `feet per second` (a numeric hack). An earlier version of this note omitted the speed factor; the first EFB spike followed that and wrote a turn rate about 25 times too small, so the tug pushed straight.
 - The wait flag has hysteresis: wait turns on below speed 0.02 and off above 0.08 (`WaitOnBelowSpeed`, `WaitOffAboveSpeed`).
 - Speed: speed factor 5–50 (default 25), `SpeedUnitToFtPerSec` = 0.2, ramp to cruise in `SecondsToCruise` = 0.35 s. Rotation ramps at 1.7 per second; max rotation 2.2 (manual) and 3.0 (auto). Tick delta is clamped between 0.01 s and 0.12 s.
 - The parking brake holds the drive command at 0; a latched drive command waits (`waitingForBrake`) until the brake is released.

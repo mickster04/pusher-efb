@@ -58,6 +58,12 @@ PS.taxi = (function () {
         if (!r || typeof r !== 'object') return;
         var name = pick(r, ['designation', 'name', 'designator']);
         var pts = pointsOf(r);
+        // The sim's runway entries give a centre point, a heading and a length; turn that into a line.
+        var rdir = num(pick(r, ['direction', 'heading', 'headingDeg']));
+        var rlen = num(pick(r, ['length', 'lengthM']));
+        if (pts.length === 1 && rdir !== null && rlen) {
+          pts = [G.offset(pts[0][0], pts[0][1], rdir + 180, rlen / 2), G.offset(pts[0][0], pts[0][1], rdir, rlen / 2)];
+        }
         res.items.push({
           name: name !== undefined ? String(name) : 'Runway',
           category: 'Runway',

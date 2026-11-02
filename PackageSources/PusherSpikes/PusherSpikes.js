@@ -431,6 +431,12 @@ PS.taxi = (function () {
         if (!r || typeof r !== 'object') return;
         var name = pick(r, ['designation', 'name', 'designator']);
         var pts = pointsOf(r);
+        // The sim's runway entries give a centre point, a heading and a length; turn that into a line.
+        var rdir = num(pick(r, ['direction', 'heading', 'headingDeg']));
+        var rlen = num(pick(r, ['length', 'lengthM']));
+        if (pts.length === 1 && rdir !== null && rlen) {
+          pts = [G.offset(pts[0][0], pts[0][1], rdir + 180, rlen / 2), G.offset(pts[0][0], pts[0][1], rdir, rlen / 2)];
+        }
         res.items.push({
           name: name !== undefined ? String(name) : 'Runway',
           category: 'Runway',
@@ -878,17 +884,32 @@ PS.pages.push({
 /* ---- 20-page-tug.js ---- */
 // Spike 2: can the tug be driven from JS? Per-tick writes of PUSHBACK WAIT / VELOCITY BODY Z / ROTATION VELOCITY BODY Y
 // (what the original app does). Moves the aircraft: hard run-time limit, stops on hide, pause and close.
-// A native-events mode (KEY_TUG_HEADING) was tried and dropped: the direct writes worked.
+// Steering by the KEY_TUG_HEADING event is offered alongside, because turning by rotation write was not working.
 
 PS.TUG = {
   HEADING_UNITS_PER_DEG: 11930465,   // KEY_TUG_HEADING value = this * degrees, as 32-bit unsigned
   ROT_SCALE: 0.002                   // original app: commanded rotation * 0.002 into ROTATION VELOCITY BODY Y
 };
 
+// Turn rate to the value written to ROTATION VELOCITY BODY Y. The original app writes a yaw rate in rad/s
+// (rotation x 0.002 x tug speed units, which is about 0.05 rad/s = 2.9 deg/s at rotation 1 and cruise speed).
+PS.tugRotValue = function (turnDegPerSec, unit) {
+  return unit === 'degrees per second' ? turnDegPerSec : turnDegPerSec * Math.PI / 180;
+};
+
 PS.tugHeadingValue = function (deg) {
   var d = PS.geo.normDeg(deg);
   return Math.round(PS.TUG.HEADING_UNITS_PER_DEG * d) % 4294967296;
 };
+
+// Ramp limits for the live drive (the original ramps speed to cruise in about 0.35 s and eases the turn in).
+var SPEED_RAMP = 14;   // ft/s per second
+var TURN_RAMP = 5;     // deg/s per second
+function approach(cur, target, maxStep) {
+  if (cur < target) return Math.min(target, cur + maxStep);
+  if (cur > target) return Math.max(target, cur - maxStep);
+  return cur;
+}
 
 PS.pages.push({
   id: 'tug',
@@ -987,13 +1008,11 @@ PS.pages.push({
     // ---- direct mode ----
     var speedIn = ui.input('1', { type: 'number', step: '0.5', min: '-5', max: '5' });
     var rotIn = ui.input('0', { type: 'number', step: '0.1', min: '-3', max: '3' });
-    var scaleChk = h('input', { type: 'checkbox', checked: true });
-    scaleChk.checked = true;
     var rotUnitTog = ui.toggle([
-      { value: 'feet per second', label: 'ft/s (original hack)' },
       { value: 'radians per second', label: 'rad/s' },
-      { value: 'degrees per second', label: 'deg/s' }
-    ], 'feet per second');
+      { value: 'degrees per second', label: 'deg/s' },
+      { value: 'feet per second', label: 'ft/s (original hack)' }
+    ], 'radians per second');
     var intervalTog = ui.toggle([{ value: '20', label: '20 ms' }, { value: '50', label: '50 ms' }, { value: '100', label: '100 ms' }], '50');
     var allowFreeChk = h('input', { type: 'checkbox' });
     function presets(input, values) {
@@ -1017,6 +1036,12 @@ PS.pages.push({
       armed.textContent = 'NOT RUNNING';
       say('direct drive stopped (' + reason + '): ' + d.writes + ' tick writes, ' + d.failures + ' failed ticks');
       paintStats(d, true);
+      stats.textContent.split('\n').forEach(function (l) { PS.log('tug', 'final ' + l); });
+    }
+    function meanDt(d) {
+      var m = 0, i;
+      for (i = 0; i < d.dts.length; i++) m += d.dts[i];
+      return d.dts.length ? m / d.dts.length : 0;
     }
     function paintStats(d, final) {
       var dts = d.dts;
@@ -1028,9 +1053,18 @@ PS.pages.push({
         (final ? 'Last run: ' : 'Running: ') + d.writes + ' ticks, ' + d.failures + ' with a failed write' + (d.lastError ? ' (last error: ' + d.lastError + ')' : ''),
         'Requested interval ' + d.intervalMs + ' ms; actual mean ' + PS.fmt.num(mean, 1) + ' ms, worst ' + PS.fmt.num(max, 1) + ' ms (' + PS.fmt.num(mean ? 1000 / mean : 0, 1) + ' Hz)',
         'Commanded VEL Z ' + PS.fmt.num(d.cmdSpeed, 2) + ' ft/s, read back ' + PS.fmt.num(rb.velZ, 2) + ' ft/s -> ' + verdict(d.cmdSpeed, rb.velZ),
-        'Ground speed ' + PS.fmt.num(rb.gs, 2) + ' kt, ROT VEL Y read back ' + PS.fmt.num(rb.rotY, 4)
+        'Ground speed ' + PS.fmt.num(rb.gs, 2) + ' kt, ROT VEL Y read back ' + PS.fmt.num(rb.rotY, 4),
+        turnLine(d, rb)
       ];
       stats.textContent = lines.join('\n');
+    }
+    function turnLine(d, rb) {
+      if (d.hdg0 === null || typeof rb.hdg !== 'number') return 'Turn: no heading readback';
+      var secs = (Date.now() - d.measureStart) / 1000;
+      var diff = PS.geo.angleDiff(d.hdg0, rb.hdg);
+      var rate = secs > 0.5 ? diff / secs : 0;
+      var verdictText = Math.abs(d.cmdTurn) < 0.01 ? 'straight commanded' : (Math.abs(rate) < Math.abs(d.cmdTurn) * 0.25 ? 'NOT TURNING (well below command)' : 'TURNING');
+      return 'Turn: heading changed ' + PS.fmt.num(diff, 1) + ' deg in ' + PS.fmt.num(secs, 1) + ' s = ' + PS.fmt.num(rate, 2) + ' deg/s (commanded ' + PS.fmt.num(d.cmdTurn, 2) + ' deg/s) -> ' + verdictText;
     }
     function verdict(cmd, read) {
       if (typeof read !== 'number') return 'no readback';
@@ -1047,15 +1081,16 @@ PS.pages.push({
       }
       var speed = Number(speedIn.value) || 0;
       var rot = Number(rotIn.value) || 0;
-      var scale = scaleChk.checked ? PS.TUG.ROT_SCALE : 1;
       var rotUnit = rotUnitTog.get();
       var intervalMs = Number(intervalTog.get());
       var maxMs = Math.max(1, Math.min(30, Number(maxSecIn.value) || 10)) * 1000;
+      var h0 = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
+      var rotWritten = PS.tugRotValue(rot, rotUnit);
       drive = { startedAt: Date.now(), maxMs: maxMs, writes: 0, failures: 0, dts: [], lastTick: Date.now(), lastError: '',
-        intervalMs: intervalMs, cmdSpeed: speed, lastReadback: null };
+        intervalMs: intervalMs, cmdSpeed: speed, cmdTurn: rot, curSpeed: 0, curTurn: 0, measureStart: Date.now(), hdg0: h0.ok ? h0.value : null, lastReadback: null };
       armed.className = 'ps-pill ok';
       armed.textContent = 'RUNNING (auto-stop in ' + (maxMs / 1000) + ' s)';
-      say('direct drive started: velZ=' + speed + ' ft/s, rot=' + rot + ' x' + scale + ' [' + rotUnit + '], every ' + intervalMs + ' ms, max ' + (maxMs / 1000) + ' s');
+      say('direct drive started: velZ=' + speed + ' ft/s, turn=' + rot + ' deg/s -> writing ' + PS.fmt.num(rotWritten, 5) + ' [' + rotUnit + '], every ' + intervalMs + ' ms, max ' + (maxMs / 1000) + ' s');
       drive.timer = setInterval(function () {
         var d = drive;
         if (!d) return;
@@ -1064,13 +1099,26 @@ PS.pages.push({
         d.dts.push(now - d.lastTick);
         if (d.dts.length > 200) d.dts.shift();
         d.lastTick = now;
+        // Read the inputs live every tick so changes (typed or from the preset buttons) take effect immediately.
+        var tgtSpeed = Number(speedIn.value) || 0;
+        var tgtTurn = Number(rotIn.value) || 0;
+        var unitNow = rotUnitTog.get();
+        var dt = Math.min(0.2, d.dts[d.dts.length - 1] / 1000);
+        d.curSpeed = approach(d.curSpeed, tgtSpeed, SPEED_RAMP * dt);
+        d.curTurn = approach(d.curTurn, tgtTurn, TURN_RAMP * dt);
+        if (tgtSpeed !== d.cmdSpeed || tgtTurn !== d.cmdTurn) {
+          d.cmdSpeed = tgtSpeed; d.cmdTurn = tgtTurn;
+          var hh = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
+          d.hdg0 = hh.ok ? hh.value : null; d.measureStart = now;
+          say('command changed live: speed ' + tgtSpeed + ' ft/s, turn ' + tgtTurn + ' deg/s');
+        }
         // The same set the original app writes every tick.
         var results = [
           PS.setVar('PUSHBACK WAIT', 'bool', 0),
           PS.setVar('VELOCITY BODY Y', 'feet per second', 0),
           PS.setVar('ROTATION VELOCITY BODY X', 'feet per second', 0),
-          PS.setVar('VELOCITY BODY Z', 'feet per second', speed),
-          PS.setVar('ROTATION VELOCITY BODY Y', rotUnit, rot * scale)
+          PS.setVar('VELOCITY BODY Z', 'feet per second', d.curSpeed),
+          PS.setVar('ROTATION VELOCITY BODY Y', unitNow, PS.tugRotValue(d.curTurn, unitNow))
         ];
         var failed = false;
         for (var i = 0; i < results.length; i++) { if (!results[i].ok) { failed = true; d.lastError = results[i].error; } }
@@ -1078,34 +1126,78 @@ PS.pages.push({
         if (failed) d.failures++;
         if (d.writes % 5 === 0) {
           var vz = PS.getVar('VELOCITY BODY Z', 'feet per second');
-          var ry = PS.getVar('ROTATION VELOCITY BODY Y', rotUnit);
+          var ry = PS.getVar('ROTATION VELOCITY BODY Y', rotUnitTog.get());
           var gs = PS.getVar('GROUND VELOCITY', 'knots');
-          d.lastReadback = { velZ: vz.ok ? vz.value : null, rotY: ry.ok ? ry.value : null, gs: gs.ok ? gs.value : null };
+          var hd = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
+          d.lastReadback = { velZ: vz.ok ? vz.value : null, rotY: ry.ok ? ry.value : null, gs: gs.ok ? gs.value : null, hdg: hd.ok ? hd.value : null };
           paintStats(d, false);
+          if (!d.lastLogAt || now - d.lastLogAt >= 1000) {
+            var rb2 = d.lastReadback;
+            var inst = null;
+            if (d.lastLogAt && typeof rb2.hdg === 'number' && typeof d.lastLogHdg === 'number') {
+              inst = PS.geo.angleDiff(d.lastLogHdg, rb2.hdg) / ((now - d.lastLogAt) / 1000);
+            }
+            var avgTurn = (d.hdg0 !== null && typeof rb2.hdg === 'number' && now - d.measureStart > 500)
+              ? PS.geo.angleDiff(d.hdg0, rb2.hdg) / ((now - d.measureStart) / 1000) : null;
+            PS.log('tug', 'drive t=' + PS.fmt.num((now - d.startedAt) / 1000, 1) + 's unit=' + unitNow +
+              ' | speed cmd ' + PS.fmt.num(d.cmdSpeed, 2) + ' ramped ' + PS.fmt.num(d.curSpeed, 2) + ' read ' + PS.fmt.num(rb2.velZ, 2) + ' ft/s, GS ' + PS.fmt.num(rb2.gs, 2) + ' kt' +
+              ' | turn cmd ' + PS.fmt.num(d.cmdTurn, 2) + ' ramped ' + PS.fmt.num(d.curTurn, 2) + ' deg/s, wrote ' + PS.fmt.num(PS.tugRotValue(d.curTurn, unitNow), 5) + ' [' + unitNow + ']' +
+              ' | heading ' + PS.fmt.num(rb2.hdg, 1) + ', measured turn ' + PS.fmt.num(inst, 2) + ' deg/s now, ' + PS.fmt.num(avgTurn, 2) + ' deg/s since last change' +
+              ' | ROT VEL Y read ' + PS.fmt.num(rb2.rotY, 4) + ' | interval mean ' + PS.fmt.num(meanDt(d), 1) + ' ms');
+            d.lastLogAt = now; d.lastLogHdg = rb2.hdg;
+          }
         }
       }, intervalMs);
     }
 
     var directPanel = ui.panel('Per-tick velocity writes',
-      ui.note('Moves the aircraft. Only use parked on the ground with the tug attached and the brake released. Stops by itself at the time limit, and when this page is hidden or the app is paused or closed.', 'warn'),
+      ui.note('Moves the aircraft. Only use parked on the ground with the tug attached and the brake released. Speed and turn are read every tick, so you can change them while it runs. Stops by itself at the time limit, and when this page is hidden or the app is paused or closed.', 'warn'),
       h('div', { class: 'ps-row' }, ui.field('Speed (ft/s, + forward, - reverse)', speedIn), ui.field('Max run (s)', maxSecIn)),
       presets(speedIn, [-5, -2, -1, 0, 1, 2, 5]),
-      h('div', { class: 'ps-row' }, ui.field('Rotation (original units)', rotIn)),
-      presets(rotIn, [-2, -1, -0.5, 0, 0.5, 1, 2]),
+      h('div', { class: 'ps-row' }, ui.field('Turn rate (deg/s, + = nose right)', rotIn)),
+      presets(rotIn, [-6, -3, -1.5, 0, 1.5, 3, 6]),
       h('div', { class: 'ps-row' }, ui.field('Rotation unit', rotUnitTog.el), ui.field('Update interval', intervalTog.el)),
       h('div', { class: 'ps-row' },
-        h('label', { class: 'ps-check' }, scaleChk, ' scale rotation by 0.002 (original app)'),
         h('label', { class: 'ps-check' }, allowFreeChk, ' drive without a tug (raw velocity test, can misbehave)'),
         armed),
       h('div', { class: 'ps-row' },
         ui.button('Start drive', startDrive, 'ps-warn'),
+        ui.button('Straight (turn 0)', function () { rotIn.value = '0'; }, 'ps-small'),
         ui.button('STOP (write 0)', function () { if (drive) stopDrive('stop button'); else { PS.setVar('VELOCITY BODY Z', 'feet per second', 0); say('stop pressed (no run active); wrote 0'); } }, 'ps-danger')),
       stats
+    );
+
+    // ---- steering by the tug heading event (retry now that the tug is attached) ----
+    var hdgIn = ui.input('0', { type: 'number', min: '0', max: '360', step: '1' });
+    function curHeading() {
+      var r = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
+      return r.ok && typeof r.value === 'number' ? r.value : null;
+    }
+    function sendHeading(deg) {
+      var v = PS.tugHeadingValue(deg);
+      key('KEY_TUG_HEADING', v);
+      say('tug heading target ' + PS.fmt.num(PS.geo.normDeg(deg), 1) + ' deg (event value ' + v + ')');
+    }
+    function nudge(delta) {
+      var cur = curHeading();
+      if (cur === null) { say('cannot read PLANE HEADING DEGREES TRUE', true); return; }
+      sendHeading(cur + delta);
+    }
+    var steerPanel = ui.panel('Steering by tug heading event (KEY_TUG_HEADING)',
+      ui.note('Tests turning without the rotation write. Attach the tug, start a drive (or leave the tug held and press Go), then press a button and watch the heading in the readouts. Each press sets a target relative to the current heading.'),
+      h('div', { class: 'ps-row' },
+        ui.button('Left 15', function () { nudge(-15); }), ui.button('Left 5', function () { nudge(-5); }),
+        ui.button('Right 5', function () { nudge(5); }), ui.button('Right 15', function () { nudge(15); })),
+      h('div', { class: 'ps-row' },
+        ui.field('Absolute heading (true)', hdgIn),
+        ui.button('Send heading', function () { sendHeading(Number(hdgIn.value) || 0); }),
+        ui.button('Use current', function () { var c = curHeading(); if (c !== null) hdgIn.value = String(Math.round(c)); }))
     );
 
     var el = h('div', { class: 'ps-page' },
       shared,
       directPanel,
+      steerPanel,
       ui.panel('Live readouts', readTable.el),
       ui.panel('Log', ui.logBox(['tug', 'key', 'set']))
     );
@@ -1215,6 +1307,20 @@ PS.facility = {
       } catch (e) { reject(e); }
     }), 6000, 'LOAD_AIRPORT / SendAirport');
   }
+};
+
+// Finds the nearest airport and puts its runways (and taxiways, if any) into PS.state.taxi for the map to draw.
+PS.facility.loadNearestIntoState = function () {
+  var own = PS.readOwn();
+  if (!own) return Promise.reject(new Error('aircraft position not readable'));
+  return PS.facility.nearestAirport(own.lat, own.lon).then(function (r) {
+    return PS.facility.viaSdkLoader(r.ident).then(function (raw) {
+      var ex = PS.taxi.extract(raw);
+      PS.state.taxi = { items: ex.items, parking: ex.parking, icao: r.ident };
+      PS.log('map', 'loaded ' + r.ident + ' for the map: ' + ex.items.length + ' runway/path item(s)');
+      return r.ident;
+    });
+  });
 };
 
 PS.pages.push({
@@ -1395,8 +1501,8 @@ PS.airTraffic = {
           T.prev[d.uId] = { t: now, lat: d.lat, lon: d.lon, gsKt: 0, track: d.heading || 0 };
         }
         seen[d.uId] = true;
-        out.push({ id: d.uId, title: d.name || String(d.uId), lat: d.lat, lon: d.lon, hdgDeg: d.heading || 0,
-          gsKt: gs, trackDeg: track, altFt: (d.alt || 0) * 3.28084, onGround: null });
+        out.push({ id: d.uId, title: (d.name || String(d.uId)) + (d.plane_model_icao ? ' ' + d.plane_model_icao : ''), lat: d.lat, lon: d.lon, hdgDeg: d.heading || 0,
+          gsKt: gs, trackDeg: track, altFt: (d.alt || 0) * 3.28084, onGround: d.isOnGround === true ? true : (d.isOnGround === false ? false : null) });
       }
       for (var k in T.prev) { if (!seen[k]) delete T.prev[k]; }
       T.contacts = out;
@@ -1435,7 +1541,7 @@ PS.pages.push({
     var lastTs = 0;
     var sourceLine = h('div', { class: 'ps-result', text: 'No traffic source checked yet.' });
     var apiBox = h('pre', { class: 'ps-log', text: '(press Discover)' });
-    var tbl = ui.table(['Contact', 'Distance', 'Bearing', 'Relative', 'Alt diff', 'Speed', 'Heading', 'Closing', 'Time to closest', 'Closest', 'Ahead']);
+    var tbl = ui.table(['Contact', 'Distance', 'Bearing', 'Relative', 'Alt diff', 'Speed', 'Heading', 'Closing', 'Time to closest', 'Closest', 'Ahead', 'State']);
     var sortSel = ui.select([{ value: 'dist', label: 'Nearest first' }, { value: 'tcpa', label: 'Soonest closest approach' }], 'dist');
 
     function ownOrReference() {
@@ -1504,7 +1610,8 @@ PS.pages.push({
           h('td', { text: PS.fmt.num(a.closingKt, 1) + ' kt' }),
           h('td', { text: a.tcpaSec === null ? '—' : PS.fmt.seconds(a.tcpaSec) }),
           h('td', { text: PS.fmt.dist(a.cpaM) }),
-          h('td', { text: a.ahead ? 'yes' : 'no' })));
+          h('td', { text: a.ahead ? 'yes' : 'no' }),
+          h('td', { text: c.onGround === true ? 'ground' : (c.onGround === false ? 'air' : '\u2014') })));
       });
       PS.state.contacts = contacts;
     }
@@ -1715,7 +1822,17 @@ PS.pages.push({
     var canvas = h('canvas', { class: 'ps-canvas', width: '640', height: '420' });
     var mountBox = h('div', { class: 'ps-mount' });
     var probeBox = h('pre', { class: 'ps-log', text: '(press Probe)' });
-    var rangeSel = ui.select([{ value: '200', label: '200 m' }, { value: '500', label: '500 m' }, { value: '1000', label: '1 km' }, { value: '3000', label: '3 km' }], '500', function () { draw(); });
+    var rangeSel = ui.select([{ value: '200', label: '200 m' }, { value: '500', label: '500 m' }, { value: '1000', label: '1 km' }, { value: '3000', label: '3 km' }, { value: '10000', label: '10 km' }], '1000', function () { draw(); });
+    // Bing map: the sim lists modes CURSOR, PLANE, VFR, HORIZON, TOPVIEW. PLANE is a terrain-coloured map; VFR is the detailed one.
+    var modeEnum = typeof EBingMode !== 'undefined' ? EBingMode : null;
+    var modeOptions = [];
+    ['VFR', 'PLANE', 'TOPVIEW'].forEach(function (k) { if (modeEnum && modeEnum[k] !== undefined) modeOptions.push({ value: k, label: k }); });
+    if (!modeOptions.length) modeOptions.push({ value: 'PLANE', label: 'PLANE' });
+    var bingModeSel = ui.select(modeOptions, modeOptions[0].value, function () { tryMount(); });
+    var bingRangeSel = ui.select([{ value: '500', label: '500 m' }, { value: '1000', label: '1 km' }, { value: '3000', label: '3 km' }, { value: '10000', label: '10 km' }, { value: '30000', label: '30 km' }], '3000', function () { followOwn(); });
+    var marker = null;
+    var mounted = false;
+    var airportLoading = false;
     var infoLine = h('div', { class: 'ps-kv', text: '' });
     var timer = null;
 
@@ -1735,7 +1852,11 @@ PS.pages.push({
       if (!bing) return;
       var own = PS.readOwn();
       if (!own) return;
-      var radius = Number(rangeSel.value);
+      var radius = Number(bingRangeSel.value);
+      if (marker) {
+        var t = 'rotate(' + Math.round(own.hdgDeg) + 'deg)';
+        marker.style.transform = t; marker.style.webkitTransform = t;
+      }
       try {
         if (typeof bing.setPositionRadius === 'function') bing.setPositionRadius({ lat: own.lat, long: own.lon }, radius);
       } catch (e) {
@@ -1767,12 +1888,11 @@ PS.pages.push({
 
     // Mounts msfs-sdk BingComponent in a sized holder, gives it earth colours, and keeps it centred on the aircraft.
     function mountBing(sdk) {
-      var holder = h('div', { style: 'position:relative;width:640px;height:360px;background:#000;overflow:hidden;' });
+      var holder = h('div', { style: 'position:relative;width:640px;height:400px;background:#000;overflow:hidden;' });
       mountBox.appendChild(holder);
       var ref = sdk.FSComponent.createRef();
-      var modeEnum = typeof EBingMode !== 'undefined' ? EBingMode : (sdk.EBingMode || null);
       if (modeEnum) log('EBingMode values: ' + Object.keys(modeEnum).join(', '));
-      var props = { ref: ref, id: 'ps-bing-' + (Date.now() % 100000), mode: modeEnum ? modeEnum.PLANE : 0 };
+      var props = { ref: ref, id: 'ps-bing-' + (Date.now() % 100000), mode: modeEnum ? modeEnum[bingModeSel.value] : 0 };
       if (sdk.ArraySubject) props.earthColors = sdk.ArraySubject.create(earthColorsFor(sdk));
       else log('msfssdk.ArraySubject missing; map will keep its default black colours');
       if (sdk.Subject) props.skyColor = sdk.Subject.create(0);
@@ -1780,6 +1900,10 @@ PS.pages.push({
       sdk.FSComponent.render(vnode, holder);
       bing = ref.instance;
       if (!bing) { log('BingComponent rendered but no instance reference came back.'); return; }
+      // Own aircraft marker (a CSS triangle, so no special characters are needed).
+      marker = h('div', { style: 'position:absolute;left:50%;top:50%;width:0;height:0;margin-left:-9px;margin-top:-14px;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:28px solid #4cd18a;' });
+      holder.appendChild(marker);
+      log('mounting Bing map in mode ' + bingModeSel.value);
       followOwn();
       if (bingTimer !== null) clearInterval(bingTimer);
       var checks = 0;
@@ -1793,7 +1917,7 @@ PS.pages.push({
     // Best-effort mount of a built-in map. Which of these (if any) works inside an EFB app is exactly what we want to learn.
     function tryMount() {
       PS.clear(mountBox);
-      bing = null;
+      bing = null; marker = null; mounted = true;
       var sdk = PS.global.msfssdk;
       try {
         if (sdk && sdk.BingComponent && sdk.FSComponent) { mountBing(sdk); return; }
@@ -1844,33 +1968,47 @@ PS.pages.push({
         });
         ctx2.lineWidth = 1;
       }
-      var contacts = PS.state.contacts || [];
+      PS.airTraffic.poll();
+      var contacts = (PS.state.contacts && PS.state.contacts.length) ? PS.state.contacts : (PS.airTraffic.contacts || []);
+      var inRange = 0;
+      ctx2.font = '11px Arial';
       contacts.forEach(function (c) {
         var q = xy(c.lat, c.lon);
+        if (q[0] < -10 || q[0] > w + 10 || q[1] < -10 || q[1] > hgt + 10) return;
+        inRange++;
         ctx2.fillStyle = c.simulated ? '#c46af0' : '#ff5c5c';
         ctx2.beginPath(); ctx2.arc(q[0], q[1], 5, 0, Math.PI * 2); ctx2.fill();
+        ctx2.fillStyle = '#e8b4b4'; ctx2.fillText(c.title || '', q[0] + 8, q[1] + 4);
       });
       // own aircraft: arrow pointing along heading
       ctx2.save(); ctx2.translate(cx, cy); ctx2.rotate(PS.geo.rad(own.hdgDeg));
-      ctx2.fillStyle = '#4cd18a'; ctx2.beginPath(); ctx2.moveTo(0, -12); ctx2.lineTo(8, 10); ctx2.lineTo(0, 5); ctx2.lineTo(-8, 10); ctx2.closePath(); ctx2.fill();
+      ctx2.fillStyle = '#4cd18a'; ctx2.beginPath(); ctx2.moveTo(0, -20); ctx2.lineTo(13, 16); ctx2.lineTo(0, 8); ctx2.lineTo(-13, 16); ctx2.closePath(); ctx2.fill();
       ctx2.restore();
-      infoLine.textContent = (live ? 'Own position live. ' : 'Own position: reference point (sim not readable). ') + 'Taxi items drawn: ' + drawn + '. Contacts drawn: ' + contacts.length +
-        '. Load taxiways on page 3 and contacts on page 4 to see them here.';
+      infoLine.textContent = (live ? 'Own position live. ' : 'Own position: reference point (sim not readable). ') + 'Taxi items drawn: ' + drawn + '. AI aircraft in view: ' + inRange + ' of ' + contacts.length +
+        (taxi && taxi.icao ? '. Airport ' + taxi.icao + ' loaded.' : '. No airport data loaded yet.');
     }
 
     var el = h('div', { class: 'ps-page' },
       ui.panel('Built-in map',
-        h('div', { class: 'ps-row' }, ui.button('Probe for map APIs', probe), ui.button('Try to mount a built-in map', tryMount)),
-        probeBox, mountBox,
+        h('div', { class: 'ps-row' }, ui.button('Probe for map APIs', probe), ui.button('Mount / remount built-in map', tryMount)),
+        h('div', { class: 'ps-row' }, ui.field('Map mode', bingModeSel), ui.field('Map range', bingRangeSel)),
+        mountBox, probeBox,
         ui.note('Looking for: whether the sim\'s own map can be shown in an EFB app, and whether we can draw taxiways, pins and the aircraft on top of it.')),
-      ui.panel('Baseline plot (no imagery)',
+      ui.panel('Plot (runways, taxiways, AI aircraft; no imagery)',
         h('div', { class: 'ps-row' }, ui.field('Range', rangeSel)),
         canvas, infoLine),
       ui.panel('Log', ui.logBox(['map']))
     );
     return {
       el: el,
-      onShow: function () { draw(); timer = setInterval(draw, 500); },
+      onShow: function () {
+        draw(); timer = setInterval(draw, 500);
+        if (!mounted) tryMount();
+        if (!PS.state.taxi && !airportLoading) {
+          airportLoading = true;
+          PS.facility.loadNearestIntoState().then(null, function (e) { log('could not load airport data: ' + PS.errText(e)); });
+        }
+      },
       onHide: function () { if (timer !== null) { clearInterval(timer); timer = null; } if (bingTimer !== null) { clearInterval(bingTimer); bingTimer = null; } }
     };
   }

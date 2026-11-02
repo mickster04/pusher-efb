@@ -82,3 +82,11 @@ test('sim wrappers fail soft without a sim', () => {
   assert.equal(PS.keyEvent('X', 1, 'coherent').ok, false);
   assert.equal(PS.readOwn(), null);
 });
+
+test('runway centre + heading + length becomes a line of the right length', () => {
+  const ex = PS.taxi.extract({ runways: [{ designation: '02/20', latitude: -43.49, longitude: 172.53, direction: 20, length: 3000, width: 45 }] });
+  assert.equal(ex.items.length, 1);
+  assert.equal(ex.items[0].points.length, 2);
+  const len = PS.geo.polylineLengthM(ex.items[0].points);
+  assert.ok(Math.abs(len - 3000) < 5);
+});
