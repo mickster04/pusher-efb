@@ -3,3 +3,7 @@ Packages/
 PackagesMetadata/
 _PackageInt/
 *.xml.user
+.vs/
+wasm/vs/MSFS/
+wasm/vs/*/MSFS/
+*.wasm.bak

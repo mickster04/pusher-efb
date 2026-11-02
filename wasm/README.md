@@ -15,13 +15,12 @@ sim's CommBus. The EFB app cannot read these from JavaScript.
 
 ## Build (Windows, MSFS 2024 SDK)
 
-You need the MSFS 2024 SDK and Visual Studio with the MSFS WASM platform toolset. The SDK's sample is the reliable starting point:
+You need the MSFS 2024 SDK and Visual Studio with the MSFS 2024 WASM platform toolset. `vs/PusherTaxi.sln` is already set up, copied from the SDK's StandaloneModule sample (settings kept: `MSFS2024` toolset, `_MSFS_WASM`, no exceptions, no entry point), pointing at `src/module.cpp`, `src/taxi_core.cpp` and `src/taxi_core.h`.
 
-1. In the SDK, find the **StandaloneModule** sample (SDK docs: Samples > Misc > StandaloneModule). It has a Visual Studio project under its `Sources/Code` folder.
-2. Copy that sample somewhere writable. Replace its source file with `wasm/src/module.cpp`, and add `wasm/src/taxi_core.cpp` and `wasm/src/taxi_core.h` to the project. Keep the sample's project settings (platform toolset, linked `MSFS_WasmVersions.a`, exports of `module_init` and `module_deinit`).
-3. Build the Release configuration. Rename the output to `PusherTaxi.wasm` and copy it to `PackageSources/modules/` in this project.
-4. Build the package with the Project Editor as usual (`PusherEfbSpikesProject.xml`). The package definition copies `PackageSources/modules/` to the package's `modules/` folder, where the sim loads standalone modules automatically.
-5. Start a flight. In Developer Mode open the Console and search for `[PusherTaxi] module_init`. In the EFB, open Pusher Spikes, page 3 (Taxiways) and press **Check taxi module**.
+1. Open `wasm/vs/PusherTaxi.sln` in Visual Studio and build **Release | MSFS**.
+2. The post-build step copies `PusherTaxi.wasm` to `PackageSources/modules/` in this project. No renaming needed.
+3. Build the package with the Project Editor as usual (`PusherEfbSpikesProject.xml`). The package definition copies `PackageSources/modules/` to the package's `modules/` folder, where the sim loads standalone modules automatically.
+4. Start a flight. In Developer Mode open the Console and search for `[PusherTaxi] module_init`. In the EFB, open Pusher Spikes, page 3 (Taxiways) and press **Check taxi module**.
 
 If the module does not load: the folder in the package must be exactly `modules`, and the module must link `MSFS_WasmVersions.a` (automatic with the MSFS 2024 toolset) or the sim treats it as an MSFS 2020 module. One forum thread reports a module that mounted but never loaded with no error.
 
