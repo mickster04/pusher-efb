@@ -10,19 +10,38 @@ sim's CommBus. The EFB app cannot read these from JavaScript.
 |---|---|
 | `src/taxi_core.*` (parsing records, geometry, JSON) | Compiled with `-Wall -Wextra -Werror` and tested on the host (`npm test`) |
 | EFB client `src/05-wasm-taxi.js` | Tested against the real C++ output, including out-of-order and tiny chunks |
-| `src/module.cpp` (MSFS and SimConnect glue) | **Never compiled or run.** Written from the SDK docs on a machine without the SDK |
-| Whole thing inside the sim | **Not tested** |
+| `src/module.cpp` (MSFS and SimConnect glue) | Compiles with the SDK's clang (`build.sh`), loads in the sim, answers the ping and returns NZCH data (3 Nov 2026, MSFS 2024 1.9.21, SDK 1.8.1) |
+| Whole thing inside the sim | Loads and returns data: 681 points, 52 parking, 846 paths, 21 names for NZCH in 13 messages. **Not yet checked:** that the names, positions and path types are correct, and a full push using them |
 
 ## Build (Windows, MSFS 2024 SDK)
 
-You need the MSFS 2024 SDK and Visual Studio with the MSFS 2024 WASM platform toolset. `vs/PusherTaxi.sln` is already set up, copied from the SDK's StandaloneModule sample (settings kept: `MSFS2024` toolset, `_MSFS_WASM`, no exceptions, no entry point), pointing at `src/module.cpp`, `src/taxi_core.cpp` and `src/taxi_core.h`.
+### Without Visual Studio: `build.sh` (used so far)
 
-1. Open `wasm/vs/PusherTaxi.sln` in Visual Studio and build **Release | MSFS**.
-2. The post-build step copies `PusherTaxi.wasm` to `PackageSources/modules/` in this project. No renaming needed.
-3. Build the package with the Project Editor as usual (`PusherEfbSpikesProject.xml`). The package definition copies `PackageSources/modules/` to the package's `modules/` folder, where the sim loads standalone modules automatically.
-4. Start a flight. In Developer Mode open the Console and search for `[PusherTaxi] module_init`. In the EFB, open Pusher Spikes, page 3 (Taxiways) and press **Check taxi module**.
+From Git Bash: `bash wasm/build.sh` (optional argument: the SDK folder, default `/g/MSFS 2024 SDK`). It calls the SDK's own `WASM/llvm/bin/clang-cl.exe` and `wasm-ld.exe`, writes `wasm/build.log`, and copies `PusherTaxi.wasm` to `PackageSources/modules/`.
 
-If the module does not load: the folder in the package must be exactly `modules`, and the module must link `MSFS_WasmVersions.a` (automatic with the MSFS 2024 toolset) or the sim treats it as an MSFS 2020 module. One forum thread reports a module that mounted but never loaded with no error.
+The MSFS 2024 toolset's flags are not published; these were found by trial against the sim's load errors. Each one fixed a specific rejection:
+
+| Flag | Why |
+|---|---|
+| `--export-table` | Sim error `Error getting indirect function table in module ...` without it |
+| `--export=malloc --export=free` | Sim error `Error get malloc function pointer in module ...` without it |
+| `/GS-` | Otherwise the module imports `__stack_chk_fail`, which the sim does not provide |
+| `/clang:-O3 /clang:-fno-rtti /clang:-std=c++17` | clang-cl only takes plain clang flags through `/clang:` (plain `-O2`, `-fno-exceptions` were ignored with a warning) |
+| `--no-entry --allow-undefined --export=module_init --export=module_deinit` | Library module with the sim supplying the SimConnect and CommBus imports |
+
+It also links `MSFS_WasmVersions.a`, `libc`, `libc++`, `libc++abi` and `libclang_rt.builtins-wasm32.a` from the SDK's `WASM` folder. Check a new build with a wasm export/import listing: it should export `memory`, `__indirect_function_table`, `module_init`, `module_deinit`, `malloc`, `free`, and import only SimConnect, CommBus and a few `fd_*`/`commit_pages` calls.
+
+### With Visual Studio (documented route, not used yet)
+
+`vs/PusherTaxi.sln` is copied from the SDK's StandaloneModule sample (`MSFS2024` toolset, `_MSFS_WASM`, no exceptions, no entry point). Build **Release | MSFS**; the post-build step copies `PusherTaxi.wasm` to `PackageSources/modules/`. Untested.
+
+### After either build
+
+1. Rebuild the package with the Project Editor (`PusherEfbSpikesProject.xml`). The package definition copies `PackageSources/modules/` to the package's `modules/` folder.
+2. Copy the package to the Community folder (for MSFS 2024 this was `...\LocalCache\Packages\Community2024\pusher-efb-spikes`) and **restart the sim**: modules load only at start-up.
+3. In the sim log look for `WASM: Module path is ...pushertaxi.wasm`, then `loaded` and `initialized`, then `[PusherTaxi] module_init`. In the EFB, page 3 **Check taxi module** should say found.
+
+Sim load errors seen and what they mean: `Error getting indirect function table` (add `--export-table`), `Error get malloc function pointer` (export `malloc`). The sim's other warnings for optional exports (`get_pages_state`, `mallinfo` and similar) are harmless.
 
 ## Protocol
 

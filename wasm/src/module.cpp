@@ -71,7 +71,9 @@ void CALLBACK dispatch(SIMCONNECT_RECV* data, DWORD /*size*/, void* /*context*/)
       const SIMCONNECT_RECV_FACILITY_DATA* f = reinterpret_cast<const SIMCONNECT_RECV_FACILITY_DATA*>(data);
       if (!g_waiting || f->UserRequestId != kRequestTaxi) break;
       const unsigned char* bytes = reinterpret_cast<const unsigned char*>(&f->Data);
-      size_t avail = f->dwSize > offsetof(SIMCONNECT_RECV_FACILITY_DATA, Data) ? f->dwSize - offsetof(SIMCONNECT_RECV_FACILITY_DATA, Data) : 0;
+      // Not offsetof: the struct is not standard-layout, so the compiler warns. The pointer distance is the same value.
+      size_t headerSize = static_cast<size_t>(bytes - reinterpret_cast<const unsigned char*>(f));
+      size_t avail = f->dwSize > headerSize ? f->dwSize - headerSize : 0;
       g_collector.addRecord(static_cast<int>(f->Type), bytes, avail);
       break;
     }

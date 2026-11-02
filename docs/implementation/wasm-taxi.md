@@ -5,7 +5,8 @@ Why it exists: the EFB's JavaScript facility API returns runways (and maybe gate
 ## Verified vs not
 
 - **Verified on the host (this repo's tests):** record parsing, coordinate conversion, JSON encoding, chunking, the JS assembler, out-of-order delivery, request parsing, the ping and request flow against a fake bus.
-- **Not verified:** that `module.cpp` compiles against the MSFS SDK; that SimConnect delivers records in the layout the core assumes on MSFS 2024; that the CommBus accepts messages of this size; that the module loads from the package `modules` folder.
+- **Verified in the sim (3 Nov 2026, MSFS 2024 1.9.21, SDK 1.8.1):** `module.cpp` compiles with the SDK's clang (`wasm/build.sh`, flags in `wasm/README.md`); the module loads from the package `modules` folder once it exports the function table, `malloc` and `free`; the ping is answered ("taxi module found, version 0.1.0"); a request for NZCH returned 681 points, 52 parking, 846 paths and 21 names in 13 messages, and the EFB assembled them (809 path items, 52 parking spots) about 100 ms after the request. The round trip works, so the CommBus accepts messages of this size and SimConnect record sizes are at least plausible.
+- **Not yet verified:** that names, positions, widths and path types are correct (compare against the original app's data and the map overlay); that the 37 extra "runway" items (`40` runways reported against 3 from the facility API) are runway-type taxi paths and are classified as intended; behaviour at other airports or while a push is running.
 
 ## Sources used (MSFS 2024 SDK docs)
 

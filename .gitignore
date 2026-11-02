@@ -7,3 +7,5 @@ _PackageInt/
 wasm/vs/MSFS/
 wasm/vs/*/MSFS/
 *.wasm.bak
+wasm/build/
+wasm/build.log
