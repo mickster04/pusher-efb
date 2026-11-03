@@ -1,58 +1,35 @@
 // Plan tab: where the push should go. A north-up plot centred on the aircraft shows runways, taxiways, stands and AI aircraft. Tap to drop
 // directional pins (each is drawn as an aircraft pointing the way the nose will be there), drag a pin to move it, drag the handle behind a
-// selected pin to rotate it, or pick a suggested push. The planned route (turn arcs, forward and reverse legs, warnings) comes from
-// PS.plan / PS.planner. The plan it leaves is what the Push tab will drive.
+// selected pin to rotate it, drag empty map to move the map, or pick a suggested push. The planned route (turn arcs, forward and reverse legs,
+// warnings) comes from PS.plan / PS.planner. The plan it leaves is what the Push tab drives.
 
 PS.pages.push({
   id: 'plan',
   title: 'Plan',
   create: function (ctx) {
-    var ui = PS.ui, h = PS.h;
+    var ui = PS.ui, h = PS.h, D = PS.plotDraw;
     var PLOT_STEPS = [100, 200, 300, 500, 1000, 2000, 3000];
     var HANDLE_PX = 58;          // how far behind the tail the heading handle sits
-    var HANDLE_HIT_PX = 36;      // how close a press has to be to the handle (canvas pixels, which are screen pixels now that the canvas is not scaled)
+    var HANDLE_HIT_PX = 36;      // how close a press has to be to the handle (canvas pixels, which are screen pixels: the canvas is not scaled)
     var canvas = h('canvas', { class: 'ps-canvas', width: '900', height: '540' });
-    var plotRange = ui.stepper(PLOT_STEPS, 300, function () { draw('action'); }, 'plan');
+    var plotRange = ui.stepper(PLOT_STEPS, 300, function () { draw(); }, 'plan');
     var infoLine = h('div', { class: 'ps-kv', text: '' });
     var contactLine = h('div', { class: 'ps-kv', text: '' });
     var routeBox = h('div');
     var pinList = h('div');
     var sugBox = h('div');
     var airportLine = h('div', { class: 'ps-kv', text: '' });
-    var calLine = h('div', { class: 'ps-kv', text: '' });
-    var calBtn = null;
     var addBtn = null;
     var addMode = true;
     var timer = null;
     var airportLoading = false;
-    var drag = null;            // { kind: 'handle' | 'pin' | 'none', idx, sx, sy, moved }
-    var lastView = null, lastOwn = null, lastPlan = null, renderedPlan = null;
+    var drag = null;            // { kind: 'handle' | 'pin' | 'none', idx, sx, sy, moved, touch }
+    var lastView = null, lastPlan = null, renderedPlan = null, lastDrawAt = 0, lastDrawErr = '', lastTouchAt = 0;
     var selectedContact = null;
+    var pan = { x: 0, y: 0 };   // how far the view's centre is from the aircraft, metres east and north (drag empty map to change it)
     var sug = { list: [], selectedId: null, key: '', at: 0, logged: false, tookMs: 0 };
 
     function log(msg) { PS.log('plan', msg); }
-
-    // ---- the canvas is sized so its pixels and its on-screen size are the same ----
-    // In the sim the plot was drawn at its full backing size (900x540) but shown in a smaller box (CSS shrank it to fit): only the top-left
-    // part of the drawing was visible, and every tap was converted using a scale that the drawing did not have, so errors grew away from the
-    // top-left corner. All three tap measures agreed with each other, which pointed at the drawing, not the pointer. So the canvas is never
-    // scaled by CSS now: its backing size is set from the room available and its CSS size is set to exactly the same number of pixels.
-    var FIT_ASPECT = 0.6, FIT_MIN_W = 420, FIT_MAX_W = 900, lastFitKey = '';
-    function fitCanvas() {
-      var parent = canvas.parentNode, body = document.querySelector ? document.querySelector('.ps-body') : null;
-      var availW = parent ? parent.clientWidth - 34 : FIT_MAX_W;
-      if (!(availW > 0)) return;                                  // not laid out yet (page hidden)
-      var availH = body ? body.clientHeight - 150 : 640;          // leave room for the toolbar rows above the plot
-      var w = Math.floor(Math.min(FIT_MAX_W, availW, availH / FIT_ASPECT));
-      if (w < FIT_MIN_W) w = Math.min(FIT_MIN_W, Math.floor(availW));
-      var h = Math.round(w * FIT_ASPECT);
-      var key = w + 'x' + h;
-      if (key === lastFitKey && canvas.width === w && canvas.height === h) return;
-      lastFitKey = key; hitBox = null;
-      canvas.width = w; canvas.height = h;
-      canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
-      log('canvas sized to ' + key + ' px with no CSS scaling (room: ' + Math.floor(availW) + ' wide, ' + Math.floor(availH) + ' high)');
-    }
     function ownOrReference() {
       var o = PS.readOwn();
       if (o) return { own: o, live: true };
@@ -60,10 +37,6 @@ PS.pages.push({
       return { own: { lat: p ? p.lat : 51.47, lon: p ? p.lon : -0.4543, hdgDeg: 90, gsKt: 0, altFt: 0 }, live: false };
     }
     function contactsNow() { return PS.airTraffic.contacts || []; }
-    function canvasPoint(e) {
-      var r = canvas.getBoundingClientRect();
-      return [(e.clientX - r.left) * canvas.width / (r.width || canvas.width), (e.clientY - r.top) * canvas.height / (r.height || canvas.height)];
-    }
     function pxDist(a, b) { var dx = a[0] - b[0], dy = a[1] - b[1]; return Math.sqrt(dx * dx + dy * dy); }
     function distToSegment(p, a, b) {
       var dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy;
@@ -71,100 +44,16 @@ PS.pages.push({
       return pxDist(p, [a[0] + t * dx, a[1] + t * dy]);
     }
 
-    // ---------------- diagnostics: what triggers each redraw and whether the plot really changes ----------------
-    var lastDrawAt = 0, lastDrawErr = '';
-    var diag = { counts: { timer: 0, frame: 0, click: 0, manual: 0, show: 0, action: 0 }, draws: 0, errors: 0, msSum: 0, msMax: 0, gapMax: 0,
-      inChanged: 0, pxChanged: 0, sig: '', pix: '', ring: [], timerTicks: 0, timerLast: 0, timerGapMax: 0, frameCalls: 0, clicks: 0, mouse: 0,
-      shownAt: 0, shows: 0, hides: 0, lastSummaryDraws: 0, watch: 0 };
-    var diagBox = h('pre', { class: 'ps-log', text: '(opens with the page)' });
-    var diagTimer = null;
-    function pixelSig() {
-      try {
-        var t0 = Date.now(), g = canvas.getContext('2d'), sum = 0;
-        var d = g.getImageData(0, 0, canvas.width, canvas.height).data;
-        for (var i = 0; i < d.length; i += 52) sum = (sum * 31 + d[i] + d[i + 1] * 3 + d[i + 2] * 7) % 1000003;
-        diag.pixMs = (diag.pixMs || 0) + (Date.now() - t0); diag.pixRuns = (diag.pixRuns || 0) + 1;
-        return String(sum);
-      } catch (e) { return 'n/a'; }
-    }
-    function inputsSig(own, cs) {
-      var s = own.lat.toFixed(6) + ',' + own.lon.toFixed(6) + ',' + Math.round(own.hdgDeg) + '|' + plotRange.get() + '|' + PS.plan.count() + '|' + PS.plan.selected() + '|' + sug.selectedId + '|' + cs.length;
-      for (var i = 0; i < cs.length && i < 4; i++) s += '|' + cs[i].lat.toFixed(6) + ',' + cs[i].lon.toFixed(6);
-      return s;
-    }
-    function diagText() {
-      var now = Date.now(), T = PS.airTraffic, cs = contactsNow(), o = lastOwn;
-      var r = canvas.getBoundingClientRect ? canvas.getBoundingClientRect() : { width: 0, height: 0, left: 0, top: 0 };
-      var lines = [
-        'Refresh diagnostics. Page open for ' + (diag.shownAt ? Math.round((now - diag.shownAt) / 1000) : 0) + ' s (shown ' + diag.shows + 'x, hidden ' + diag.hides + 'x). document.hidden=' + (typeof document !== 'undefined' ? document.hidden : '?') + ', visibility=' + (typeof document !== 'undefined' ? document.visibilityState : '?'),
-        'draws: ' + diag.draws + ' (timer ' + diag.counts.timer + ', frame ' + diag.counts.frame + ', click ' + diag.counts.click + ', manual ' + diag.counts.manual + ', show ' + diag.counts.show + ', action ' + diag.counts.action + '); errors ' + diag.errors,
-        'draw time: avg ' + (diag.draws ? (diag.msSum / diag.draws).toFixed(1) : '0') + ' ms (of which the canvas pixel check ' + (diag.pixRuns ? (diag.pixMs / diag.pixRuns).toFixed(1) : '0') + ' ms), max ' + diag.msMax + ' ms; longest gap between draws ' + diag.gapMax + ' ms; last draw ' + (lastDrawAt ? ((now - lastDrawAt) / 1000).toFixed(1) + ' s ago' : 'never'),
-        'redraw timer: ' + diag.timerTicks + ' ticks (longest gap ' + diag.timerGapMax + ' ms); frame hook calls ' + diag.frameCalls + '; page clicks ' + diag.clicks + '; canvas mouse events ' + diag.mouse,
-        'repaint nudge mode: ' + nudgeMode + ' (all = resize + flush + style)',
-        'input events on the canvas: ' + (Object.keys(inp.counts).map(function (k) { return k + ' ' + inp.counts[k]; }).join(', ') || 'none yet') + '; presses handled ' + inp.presses,
-        'draws where the plot inputs changed: ' + diag.inChanged + ' of ' + diag.draws + '; where the canvas pixels changed: ' + diag.pxChanged + ' of ' + (diag.pxSamples || 0) + ' sampled (every 4th draw, in the all and flush repaint modes only)',
-        'canvas ' + canvas.width + 'x' + canvas.height + ', shown ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' at (' + Math.round(r.left) + ', ' + Math.round(r.top) + ')',
-        'own ' + (o ? o.lat.toFixed(6) + ', ' + o.lon.toFixed(6) + ', hdg ' + Math.round(o.hdgDeg) : 'unknown') + '; contacts ' + cs.length + '; traffic replies ' + T.calls + ', last reply ' + (T.lastAt ? ((now - T.lastAt) / 1000).toFixed(1) + ' s ago' : 'never') + (T.error ? ', error: ' + T.error : ''),
-        'airport ' + (PS.state.taxi ? PS.state.taxi.icao + ' (' + PS.state.taxi.items.length + ' items)' : 'not loaded') + '; suggestions ' + sug.list.length + ' (last run ' + sug.tookMs + ' ms); pins ' + PS.plan.count(),
-        'recent draws, newest last (+seconds since page opened):'
-      ];
-      diag.ring.slice(-25).forEach(function (d) {
-        lines.push('  +' + ((d.t - diag.shownAt) / 1000).toFixed(1) + 's ' + d.src + ' gap ' + d.gap + ' ms, ' + d.ms + ' ms, inputs ' + (d.inC ? 'Y' : '-') + ' pixels ' + (d.pxC ? 'Y' : '-') + ' contacts ' + d.n + ' replies ' + d.replies + ' hdg ' + Math.round(d.hdg) + (d.err ? ' ERROR ' + d.err : ''));
-      });
-      return lines.join('\n');
-    }
-    // Watchdog, independent of the redraw trigger: every 5 s it reports how many draws happened, and says so loudly when none did.
-    function diagTick() {
-      diagBox.textContent = diagText();
-      diag.watch++;
-      if (diag.watch % 5 !== 0) return;
-      var since = diag.draws - diag.lastSummaryDraws; diag.lastSummaryDraws = diag.draws;
-      log('refresh summary: ' + since + ' draw(s) in the last 5 s' + (since === 0 ? ' - NO REDRAWS' : '') + ' (timer ' + diag.counts.timer + ' frame ' + diag.counts.frame + ' click ' + diag.counts.click + ' total); redraw timer ticks ' + diag.timerTicks + ', frame hook calls ' + diag.frameCalls +
-        ', inputs changed ' + diag.inChanged + '/' + diag.draws + ', pixels changed ' + diag.pxChanged + '/' + (diag.pxSamples || 0) + ' sampled, traffic replies ' + PS.airTraffic.calls + ', errors ' + diag.errors + ', hidden=' + (typeof document !== 'undefined' ? document.hidden : '?'));
-    }
-    // ---- forcing the sim's browser to put the canvas on screen ----
-    // The canvas was drawn (the diagnostics say so) but only showed after the page was scrolled away and back: the sim does not repaint a
-    // canvas by itself. Three nudges are tried after every draw, and the mode can be switched on the page to find which one is needed:
-    //   resize: reassigning canvas.width reallocates the backing store (the whole plot is repainted every draw anyway);
-    //   flush:  reading one pixel back forces any queued drawing to complete;
-    //   style:  alternating the canvas opacity by 0.1% marks it as changed for the compositor.
-    // 'style' is the one that made the page update correctly in the sim, so it is the default (the others read the canvas back or reallocate
-    // it every draw, which costs more); the button still cycles through them.
-    var NUDGE_MODES = ['style', 'all', 'resize', 'flush', 'off'];
-    var nudgeMode = 'style', nudgeFlip = false;
-    function nudgeBefore() { if (nudgeMode === 'all' || nudgeMode === 'resize') { var w0 = canvas.width; canvas.width = w0; } }
-    function nudgeAfter() {
-      if (nudgeMode === 'off') return;
-      try {
-        if (nudgeMode === 'all' || nudgeMode === 'flush') canvas.getContext('2d').getImageData(0, 0, 1, 1);
-        if (nudgeMode === 'all' || nudgeMode === 'style') { nudgeFlip = !nudgeFlip; canvas.style.opacity = nudgeFlip ? '0.999' : '1'; }
-      } catch (e) { /* a nudge must never break the draw */ }
-    }
-    // draw() never throws: an error is shown under the plot and logged once, and the redraw triggers keep going.
-    function draw(src) {
-      src = typeof src === 'string' ? src : 'action';
-      var t0 = Date.now(), gap = lastDrawAt ? t0 - lastDrawAt : 0, err = '';
-      lastDrawAt = t0;
-      try { nudgeBefore(); drawPlot(); nudgeAfter(); if (typeof requestAnimationFrame === 'function') requestAnimationFrame(nudgeAfter); }
+    // draw() never throws: an error is shown under the plot and logged once, and the redraw triggers keep going. The nudge makes the sim's
+    // browser put the canvas on screen (it does not repaint a canvas by itself).
+    function draw() {
+      lastDrawAt = Date.now();
+      try { drawPlot(); D.nudge(canvas); }
       catch (e) {
-        err = PS.errText(e);
+        var err = PS.errText(e);
         infoLine.textContent = 'Plot draw error: ' + err;
-        diag.errors++;
         if (err !== lastDrawErr) { lastDrawErr = err; log('plot draw failed: ' + err); }
       }
-      try {
-        var ms = Date.now() - t0, o = lastOwn || { lat: 0, lon: 0, hdgDeg: 0 }, cs = contactsNow();
-        diag.draws++; diag.counts[src] = (diag.counts[src] || 0) + 1;
-        diag.msSum += ms; if (ms > diag.msMax) diag.msMax = ms; if (gap > diag.gapMax) diag.gapMax = gap;
-        var sig = inputsSig(o, cs), inC = sig !== diag.sig; diag.sig = sig; if (inC) diag.inChanged++;
-        // The pixel check reads the whole canvas back, which costs several ms, so it runs on every 4th draw only (changes are counted against those).
-        // Only in the modes that read the canvas back anyway: a readback forces a flush, which would hide what 'style', 'resize' and 'off' do.
-        var sampled = diag.draws % 4 === 1 && (nudgeMode === 'all' || nudgeMode === 'flush'), pxC = false;
-        if (sampled) { var pix = pixelSig(); pxC = pix !== diag.pix; diag.pix = pix; diag.pxSamples = (diag.pxSamples || 0) + 1; if (pxC) diag.pxChanged++; }
-        diag.ring.push({ t: t0, src: src, gap: gap, ms: ms, inC: inC, pxC: pxC, n: cs.length, replies: PS.airTraffic.calls, lat: o.lat, lon: o.lon, hdg: o.hdgDeg, err: err });
-        if (diag.ring.length > 60) diag.ring.shift();
-        if (diag.draws <= 6 || err) log('draw #' + diag.draws + ' (' + src + '): ' + ms + ' ms, ' + gap + ' ms since the last, inputs ' + (inC ? 'changed' : 'same') + ', canvas pixels ' + (sampled ? (pxC ? 'changed' : 'same') : 'not checked') + (err ? ', ERROR ' + err : ''));
-      } catch (e2) { log('diagnostics failed: ' + PS.errText(e2)); }
     }
 
     // ---------------- pins ----------------
@@ -173,11 +62,11 @@ PS.pages.push({
       if (addBtn) { addBtn.textContent = 'Add pins: ' + (on ? 'ON (tap the plot)' : 'off'); addBtn.className = 'ps-btn' + (on ? ' ps-warn' : ''); }
       canvas.className = 'ps-canvas' + (on ? ' ps-pinmode' : '');
     }
-    function planChanged() { renderedPlan = null; draw('action'); }
-    // Editing the plan by hand takes over from any suggestion that was being previewed, so its route is taken off the plot.
-    function dropSuggestionPreview() { if (sug.selectedId) { sug.selectedId = null; renderSuggestions(); } }
+    function planChanged() { renderedPlan = null; draw(); }
+    // Editing the plan by hand takes over from any suggestion that was highlighted.
+    function dropSuggestionHighlight() { if (sug.selectedId) { sug.selectedId = null; renderSuggestions(); } }
     function addPin(lat, lon) {
-      dropSuggestionPreview();
+      dropSuggestionHighlight();
       var i = PS.plan.add(lat, lon);
       log('pin ' + (i + 1) + ' added at ' + lat.toFixed(6) + ', ' + lon.toFixed(6));
       planChanged();
@@ -197,7 +86,7 @@ PS.pages.push({
     }
 
     function legWord(sign) { return sign < 0 ? 'push back' : 'drive forward'; }
-    function renderRoute(plan, own) {
+    function renderRoute(plan) {
       PS.clear(routeBox);
       if (plan.empty) {
         routeBox.appendChild(ui.note('No route yet. Tap the plot to drop pins (Add pins is on), or pick a suggested push below. The last pin is where the aircraft ends up; rotate it with the handle behind it.'));
@@ -228,179 +117,59 @@ PS.pages.push({
       });
     }
 
-    // ---------------- input: mouse, touch and pointer events ----------------
-    // Which of these the EFB delivers is not known. Touch is handled first (and stops the page scrolling under a drag), the mouse events
-    // that follow a touch are ignored, and every event type seen is counted with its first few logged, so the diagnostics show what arrives.
-    var inp = { counts: {}, lastTouchAt: 0, lastPoint: null, presses: 0, hits: {} };
-    function note(type, p) {
-      inp.counts[type] = (inp.counts[type] || 0) + 1;
-      if (inp.counts[type] <= 3) log('input event ' + type + ' #' + inp.counts[type] + (p ? ' at canvas ' + Math.round(p[0]) + ', ' + Math.round(p[1]) : ''));
-    }
-    // Where a tap lands on the canvas, in canvas pixels. Pins were landing about 100 m north of where they were tapped, so the position is
-    // worked out two ways and logged: from the event's client position against the canvas rectangle, and (mouse events) from offsetX/offsetY,
-    // which is relative to the canvas itself and is not thrown off if the EFB's panel is scaled or shifted. The offset method is used when
-    // there is one. A calibration (tap the middle of the green aircraft once) corrects any constant error that is left.
-    var CAL_NONE = { method: 'auto', ax: 1, bx: 0, ay: 1, by: 0, rms: 0 };
-    var cal = CAL_NONE;
-    var hover = null, showCross = true, lastHoverDraw = 0, hoverLogs = 0;
-    var pan = { x: 0, y: 0 };   // how far the view's centre is from the aircraft, metres east and north (drag empty map to change it)   // the cursor cross: where the app thinks the pointer is, live
-    var calibrating = false, calSamples = [];
-    function calTargets() { var w = canvas.width, h2 = canvas.height, m = 55; return [[m, m], [w - m, m], [w - m, h2 - m], [m, h2 - m], [w / 2, h2 * 0.2]]; }
-    var lastPress = null;     // { p: [x, y], at } for the marker drawn where the app thinks the tap was
-    try { var saved = JSON.parse(window.localStorage.getItem('pushplanner.tapcal3') || 'null'); if (saved && isFinite(saved.ax) && isFinite(saved.bx) && isFinite(saved.ay) && isFinite(saved.by)) cal = saved; } catch (e0) { /* storage may be unavailable */ }
-    // ---- the canvas's real position in event space, found by hit-testing ----
-    // document.elementFromPoint() asks the browser which element is at a point, so scanning it over the viewport finds where the canvas really
-    // is for events, whatever scaling or zoom the EFB applies to the page. Only trusted when the whole canvas is in view (a clipped canvas
-    // would give a box that is too small); scroll the whole plot into view and press Scan canvas.
-    var hitBox = null;
-    function scanHitRegion() {
-      if (typeof document.elementFromPoint !== 'function') return { ok: false, why: 'elementFromPoint is not available' };
-      var iw = window.innerWidth, ih = window.innerHeight, step = 20, x, y, minx = 1e9, miny = 1e9, maxx = -1, maxy = -1, count = 0, t0 = Date.now();
-      function hit(px, py) { return document.elementFromPoint(px, py) === canvas; }
-      for (y = 2; y < ih; y += step) { for (x = 2; x < iw; x += step) { if (hit(x, y)) { count++; if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y; } } }
-      if (!count) return { ok: false, why: 'the canvas was not hit anywhere in the ' + iw + 'x' + ih + ' viewport (scrolled out of view?)' };
-      // Refine each edge to 1 px by bisecting between the last miss and the first hit along a line through the box.
-      var midx = Math.round((minx + maxx) / 2), midy = Math.round((miny + maxy) / 2);
-      function edge(fromHit, toMiss, test) { var lo = fromHit, hi = toMiss; while (Math.abs(hi - lo) > 1) { var m = Math.round((lo + hi) / 2); if (test(m)) lo = m; else hi = m; } return lo; }
-      var left = edge(minx, Math.max(0, minx - step), function (v) { return hit(v, midy); });
-      var right = edge(maxx, Math.min(iw - 1, maxx + step), function (v) { return hit(v, midy); });
-      var top = edge(miny, Math.max(0, miny - step), function (v) { return hit(midx, v); });
-      var bottom = edge(maxy, Math.min(ih - 1, maxy + step), function (v) { return hit(midx, v); });
-      // Is an edge a real edge of the canvas, or where the scroll area (or the window) cuts it off? Just beyond a real edge is more of the page
-      // (inside the scroll area); just beyond a cut is outside it (the header or footer, or nothing).
-      function insideBody(el) { while (el) { if (el.className && String(el.className).indexOf('ps-body') >= 0) return true; el = el.parentNode; } return false; }
-      var cut = [];
-      if (top <= 1 || !insideBody(document.elementFromPoint(midx, top - 2))) cut.push('top');
-      if (bottom >= ih - 2 || !insideBody(document.elementFromPoint(midx, bottom + 3))) cut.push('bottom');
-      if (left <= 1 || !insideBody(document.elementFromPoint(left - 2, midy))) cut.push('left');
-      if (right >= iw - 2 || !insideBody(document.elementFromPoint(right + 3, midy))) cut.push('right');
-      return { ok: true, left: left, top: top, right: right + 1, bottom: bottom + 1, count: count, ms: Date.now() - t0, cut: cut, touchesViewport: cut.length > 0, iw: iw, ih: ih };
-    }
-    function describeEnvironment() {
-      var out = [];
-      var r = canvas.getBoundingClientRect();
-      out.push('window inner ' + window.innerWidth + 'x' + window.innerHeight + ', outer ' + window.outerWidth + 'x' + window.outerHeight + ', dpr ' + window.devicePixelRatio + ', screen ' + (window.screen ? window.screen.width + 'x' + window.screen.height : '?') + ', documentElement client ' + document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight);
-      out.push('canvas: backing ' + canvas.width + 'x' + canvas.height + ', css style ' + (canvas.style.width || 'none') + ' x ' + (canvas.style.height || 'none') + ', client ' + canvas.clientWidth + 'x' + canvas.clientHeight + ', offset ' + canvas.offsetWidth + 'x' + canvas.offsetHeight + ' at ' + canvas.offsetLeft + ',' + canvas.offsetTop + ', rect ' + r.width.toFixed(1) + 'x' + r.height.toFixed(1) + ' at ' + r.left.toFixed(1) + ',' + r.top.toFixed(1));
-      var n = canvas, depth = 0, items = [];
-      while (n && n.nodeType === 1 && depth < 14) {
-        var cs = window.getComputedStyle ? window.getComputedStyle(n) : null;
-        if (cs) {
-          var tf = cs.transform || cs.webkitTransform || 'none', zm = cs.zoom, ov = cs.overflowX + '/' + cs.overflowY;
-          var nr = n.getBoundingClientRect();
-          items.push((n.tagName || '?').toLowerCase() + (n.className ? '.' + String(n.className).split(' ')[0] : '') + ' ' + Math.round(nr.width) + 'x' + Math.round(nr.height) + (tf && tf !== 'none' ? ' transform=' + tf : '') + (zm && zm !== '1' && zm !== 'normal' ? ' zoom=' + zm : '') + (ov !== 'visible/visible' ? ' overflow=' + ov : ''));
-        }
-        n = n.parentNode; depth++;
-      }
-      out.push('ancestors (canvas outwards): ' + items.join(' < '));
-      return out;
-    }
-    function scanAndReport(why) {
-      describeEnvironment().forEach(function (l) { log('environment (' + why + '): ' + l); });
-      var res = scanHitRegion(), r = canvas.getBoundingClientRect();
-      if (!res.ok) { hitBox = null; log('hit-test scan: ' + res.why); return res; }
-      var bw = res.right - res.left, bh = res.bottom - res.top;
-      log('hit-test scan: the canvas is hit from ' + res.left + ',' + res.top + ' to ' + res.right + ',' + res.bottom + ' (' + bw + 'x' + bh + ', ' + res.count + ' points, ' + res.ms + ' ms); getBoundingClientRect says ' + r.left.toFixed(0) + ',' + r.top.toFixed(0) + ' ' + r.width.toFixed(0) + 'x' + r.height.toFixed(0) + (res.cut.length ? '. The canvas is cut off at its ' + res.cut.join(' and ') + ' (scrolled out of view or clipped), so this box is too small to use: scroll the whole plot into view and scan again' : '. Whole canvas in view'));
-      // The hit box is only usable as a measure when the canvas is wholly in view.
-      // Kept relative to the canvas rectangle (not as screen positions), so it stays right when the page scrolls.
-      hitBox = res.cut.length ? null : { dx: res.left - r.left, dy: res.top - r.top, width: bw, height: bh };
-      return res;
-    }
-    function rawOf(e) {
-      var touch = !!((e.changedTouches && e.changedTouches.length) || (e.touches && e.touches.length));
-      var t = touch ? (e.changedTouches && e.changedTouches.length ? e.changedTouches[0] : e.touches[0]) : e;
-      var r = canvas.getBoundingClientRect();
-      var sx = canvas.width / (r.width || canvas.width), sy = canvas.height / (r.height || canvas.height);
-      var rectPt = [(t.clientX - r.left) * sx, (t.clientY - r.top) * sy], offPt = null;
-      if (!touch && typeof e.offsetX === 'number' && e.target === canvas) offPt = [e.offsetX * canvas.width / (canvas.clientWidth || canvas.width), e.offsetY * canvas.height / (canvas.clientHeight || canvas.height)];
-      var hitPt = hitBox ? [(t.clientX - (r.left + hitBox.dx)) * canvas.width / hitBox.width, (t.clientY - (r.top + hitBox.dy)) * canvas.height / hitBox.height] : null;
-      return { touch: touch, t: t, r: r, rectPt: rectPt, offPt: offPt, hitPt: hitPt, base: offPt || rectPt };
-    }
-    function measured(o) { return cal.method === 'rect' ? o.rectPt : (cal.method === 'hit' ? (o.hitPt || o.offPt || o.rectPt) : (o.offPt || o.rectPt)); }
+    // ---------------- input ----------------
+    // The sim sends mouse events to the canvas (touch is handled too, for other hosts). A tap is placed with offsetX/offsetY where there is
+    // one (relative to the canvas itself) and with the canvas rectangle otherwise.
     function pointOf(e) {
-      var o = rawOf(e);
-      inp.lastRaw = o;
-      var m = measured(o);
-      return [cal.ax * m[0] + cal.bx, cal.ay * m[1] + cal.by];
+      var t = e;
+      if (e.changedTouches && e.changedTouches.length) t = e.changedTouches[0]; else if (e.touches && e.touches.length) t = e.touches[0];
+      if (t === e && typeof e.offsetX === 'number' && e.target === canvas) {
+        return [e.offsetX * canvas.width / (canvas.clientWidth || canvas.width), e.offsetY * canvas.height / (canvas.clientHeight || canvas.height)];
+      }
+      var r = canvas.getBoundingClientRect();
+      return [(t.clientX - r.left) * canvas.width / (r.width || canvas.width), (t.clientY - r.top) * canvas.height / (r.height || canvas.height)];
     }
-    function logPress(p, force) {
-      var o = inp.lastRaw;
-      if (!o || (inp.presses > 10 && !force)) return;
-      var b = document.querySelector ? document.querySelector('.ps-body') : null;
-      log('press raw: client ' + Math.round(o.t.clientX) + ',' + Math.round(o.t.clientY) + (typeof o.t.pageX === 'number' ? ' page ' + Math.round(o.t.pageX) + ',' + Math.round(o.t.pageY) : '') + (typeof o.t.screenX === 'number' ? ' screen ' + Math.round(o.t.screenX) + ',' + Math.round(o.t.screenY) : '') +
-        (o.offPt ? ' offset ' + Math.round(o.t.offsetX) + ',' + Math.round(o.t.offsetY) : '') + ' | canvas rect left ' + Math.round(o.r.left) + ' top ' + Math.round(o.r.top) + ' size ' + Math.round(o.r.width) + 'x' + Math.round(o.r.height) +
-        ' (css ' + canvas.clientWidth + 'x' + canvas.clientHeight + ', backing ' + canvas.width + 'x' + canvas.height + ') | window ' + window.innerWidth + 'x' + window.innerHeight + ' dpr ' + window.devicePixelRatio + (b ? ' bodyScrollTop ' + Math.round(b.scrollTop) : '') +
-        ' | canvas px by rect ' + Math.round(o.rectPt[0]) + ',' + Math.round(o.rectPt[1]) + (o.offPt ? ' by offset ' + Math.round(o.offPt[0]) + ',' + Math.round(o.offPt[1]) : '') + ' | used ' + Math.round(p[0]) + ',' + Math.round(p[1]) + ' (calibration: ' + cal.method + ', x*' + cal.ax.toFixed(3) + '+' + Math.round(cal.bx) + ', y*' + cal.ay.toFixed(3) + '+' + Math.round(cal.by) + ')');
-    }
-    function setCalibration(c) {
-      cal = c;
-      try { window.localStorage.setItem('pushplanner.tapcal3', JSON.stringify(cal)); } catch (e1) { /* not saved, still applied this session */ }
-      var none = cal.method === 'auto' && cal.ax === 1 && cal.bx === 0 && cal.ay === 1 && cal.by === 0;
-      calLine.textContent = none ? 'Tap calibration: none.' : 'Tap calibration: measuring by ' + cal.method + ', across x' + cal.ax.toFixed(3) + ' ' + (cal.bx >= 0 ? '+' : '') + Math.round(cal.bx) + ' px, down x' + cal.ay.toFixed(3) + ' ' + (cal.by >= 0 ? '+' : '') + Math.round(cal.by) + ' px (fit error ' + cal.rms.toFixed(1) + ' px).';
-    }
-    function finishCalibration() {
-      var fit = PS.fitTapCalibration(calSamples);
-      calibrating = false; calBtn.textContent = 'Calibrate taps (5 spots)';
-      ['rect', 'offset', 'hit'].forEach(function (k) {
-        var f = fit[k];
-        log('calibration fit by ' + k + ': ' + (f ? 'across x' + f.ax.toFixed(3) + ' ' + f.bx.toFixed(1) + ' px, down x' + f.ay.toFixed(3) + ' ' + f.by.toFixed(1) + ' px, residual ' + f.rms.toFixed(1) + ' px over ' + f.n + ' taps' : 'not available'));
-      });
-      if (fit.best) { setCalibration(fit.best); log('calibration applied: ' + calLine.textContent); }
-      calSamples = [];
-    }
-    function recentTouch() { return Date.now() - inp.lastTouchAt < 800; }
+    function recentTouch() { return Date.now() - lastTouchAt < 800; }   // a browser also sends mouse events after a touch: ignore those
 
     function inputDown(p, touch) {
-      diag.mouse++; inp.presses++; inp.lastPoint = p;
-      logPress(p);
-      lastPress = { p: p, at: Date.now() };
-      if (calibrating) {
-        // A calibration tap: aimed at the next target spot; record where the two measures put it and move on. It never places a pin.
-        var tgts = calTargets(), tgt = tgts[calSamples.length], raw = inp.lastRaw;
-        lastPress = { p: raw.base, at: Date.now() };
-        calSamples.push({ exp: tgt, rect: raw.rectPt, off: raw.offPt, hit: raw.hitPt });
-        logPress(p, true);
-        log('calibration tap ' + calSamples.length + ' of ' + tgts.length + ' aimed at canvas ' + Math.round(tgt[0]) + ',' + Math.round(tgt[1]) + ': by rect ' + Math.round(raw.rectPt[0]) + ',' + Math.round(raw.rectPt[1]) + (raw.offPt ? ', by offset ' + Math.round(raw.offPt[0]) + ',' + Math.round(raw.offPt[1]) : ''));
-        if (calSamples.length >= tgts.length) finishCalibration();
-        drag = null; draw('action'); return;
-      }
-      if (!lastView) { log('press ignored: the plot has not been drawn yet'); return; }
+      if (!lastView) return;
       var sel = PS.plan.selected();
       if (sel >= 0) {
         var hp = handlePx(sel), sq0 = lastView.toPx(PS.plan.list()[sel].lat, PS.plan.list()[sel].lon);
-        // The handle, or the stem joining it to the pin (beyond the pin's own marker), takes the press.
-        if (hp && (pxDist(hp, p) <= (touch ? HANDLE_HIT_PX + 10 : HANDLE_HIT_PX) || (pxDist(sq0, p) > 26 && distToSegment(p, sq0, hp) <= 14))) { drag = { kind: 'handle', idx: sel, sx: p[0], sy: p[1], moved: false, touch: touch }; if (inp.presses <= 12) log('press on the heading handle of pin ' + (sel + 1)); return; }
+        // The heading handle, or the stem joining it to the pin (beyond the pin's own marker), takes the press.
+        if (hp && (pxDist(hp, p) <= (touch ? HANDLE_HIT_PX + 10 : HANDLE_HIT_PX) || (pxDist(sq0, p) > 26 && distToSegment(p, sq0, hp) <= 14))) {
+          drag = { kind: 'handle', idx: sel, sx: p[0], sy: p[1], moved: false, touch: touch }; return;
+        }
       }
       var hit = PS.nearestPin(lastView, PS.plan.list(), p[0], p[1], touch ? 30 : 22);
-      if (hit >= 0) { PS.plan.select(hit); drag = { kind: 'pin', idx: hit, sx: p[0], sy: p[1], moved: false, touch: touch }; if (inp.presses <= 12) log('press on pin ' + (hit + 1)); planChanged(); return; }
+      if (hit >= 0) { PS.plan.select(hit); drag = { kind: 'pin', idx: hit, sx: p[0], sy: p[1], moved: false, touch: touch }; planChanged(); return; }
       drag = { kind: 'none', idx: -1, sx: p[0], sy: p[1], moved: false, touch: touch, panX: pan.x, panY: pan.y, scale: lastView.scale };
     }
     function inputMove(p) {
       if (!drag || !lastView) return;
-      inp.lastPoint = p;
       var limit = drag.touch ? 14 : 6;
       if (!drag.moved && Math.abs(p[0] - drag.sx) + Math.abs(p[1] - drag.sy) > limit) drag.moved = true;
       if (drag.kind === 'handle') {
         var pins = PS.plan.list(), q = lastView.toPx(pins[drag.idx].lat, pins[drag.idx].lon);
         PS.plan.setHeading(drag.idx, PS.plan.headingFromHandle(q[0], q[1], p[0], p[1]));
-        draw('action');
+        draw();
       } else if (drag.kind === 'none' && drag.moved) {
         // Dragging empty map moves the map with the pointer: the view's centre goes the other way.
         pan.x = drag.panX - (p[0] - drag.sx) / drag.scale;
         pan.y = drag.panY + (p[1] - drag.sy) / drag.scale;
-        draw('action');
+        draw();
       } else if (drag.kind === 'pin' && drag.moved) {
         var ll = lastView.fromPx(p[0], p[1]);
         PS.plan.move(drag.idx, ll[0], ll[1]);
-        draw('action');
+        draw();
       }
     }
     function inputUp(p) {
       if (!drag) return;
       var d = drag; drag = null;
-      if (d.kind === 'handle') { dropSuggestionPreview(); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); planChanged(); return; }
-      if (d.kind === 'pin') { if (d.moved) { dropSuggestionPreview(); log('pin ' + (d.idx + 1) + ' moved'); planChanged(); } return; }
-      if (d.moved) { log('map panned to ' + Math.round(pan.x) + ' m east, ' + Math.round(pan.y) + ' m north of the aircraft'); return; }
-      if (!lastView) return;
+      if (d.kind === 'handle') { dropSuggestionHighlight(); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); planChanged(); return; }
+      if (d.kind === 'pin') { if (d.moved) { dropSuggestionHighlight(); log('pin ' + (d.idx + 1) + ' moved'); planChanged(); } return; }
+      if (d.moved || !lastView) return;
       if (addMode) { var ll = lastView.fromPx(p[0], p[1]); addPin(ll[0], ll[1]); return; }
       // Add pins off: pick the nearest aircraft to read its details, or clear the selection.
       var best = null, bestD = 16;
@@ -411,47 +180,23 @@ PS.pages.push({
       selectedContact = best ? best.id : null;
       PS.plan.select(-1); planChanged();
     }
-
-    // Touch: handled here and the page is stopped from scrolling under the finger.
     ['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach(function (type) {
       canvas.addEventListener(type, function (e) {
-        inp.lastTouchAt = Date.now();
+        lastTouchAt = Date.now();
+        if (e.preventDefault) e.preventDefault();        // stop the page scrolling under a drag on the plot
         var p = pointOf(e);
-        note(type, p);
-        if (e.preventDefault) e.preventDefault();
         if (type === 'touchstart') inputDown(p, true);
         else if (type === 'touchmove') inputMove(p);
         else if (type === 'touchend') inputUp(p);
         else drag = null;
       }, false);
     });
-    // Mouse: the same handlers, ignoring the mouse events a browser emulates after a touch.
-    canvas.addEventListener('mousedown', function (e) { var p = pointOf(e); note('mousedown', p); if (recentTouch()) return; inputDown(p, false); });
-    canvas.addEventListener('mousemove', function (e) {
-      if (recentTouch()) return;
-      if (drag) note('mousemove', null);
-      var pp = pointOf(e);
-      hover = { p: pp, at: Date.now(), m: inp.lastRaw ? { rect: inp.lastRaw.rectPt, off: inp.lastRaw.offPt, hit: inp.lastRaw.hitPt } : null };
-      if (hoverLogs < 4 && inp.lastRaw) {
-        hoverLogs++;
-        log('hover raw: client ' + Math.round(inp.lastRaw.t.clientX) + ',' + Math.round(inp.lastRaw.t.clientY) + (inp.lastRaw.offPt ? ' offset ' + Math.round(inp.lastRaw.t.offsetX) + ',' + Math.round(inp.lastRaw.t.offsetY) : '') + ' | rect left ' + Math.round(inp.lastRaw.r.left) + ' top ' + Math.round(inp.lastRaw.r.top) + ' | canvas px by rect ' + Math.round(inp.lastRaw.rectPt[0]) + ',' + Math.round(inp.lastRaw.rectPt[1]) + (inp.lastRaw.offPt ? ' by offset ' + Math.round(inp.lastRaw.offPt[0]) + ',' + Math.round(inp.lastRaw.offPt[1]) : '') + ' | used ' + Math.round(pp[0]) + ',' + Math.round(pp[1]));
-      }
-      if (showCross && Date.now() - lastHoverDraw > 80) { lastHoverDraw = Date.now(); draw('action'); }
-      inputMove(pp);
-    });
-    canvas.addEventListener('mouseup', function (e) { var p = pointOf(e); note('mouseup', p); if (recentTouch()) return; inputUp(p); });
+    canvas.addEventListener('mousedown', function (e) { if (!recentTouch()) inputDown(pointOf(e), false); });
+    canvas.addEventListener('mousemove', function (e) { if (!recentTouch()) inputMove(pointOf(e)); });
+    canvas.addEventListener('mouseup', function (e) { if (!recentTouch()) inputUp(pointOf(e)); });
     canvas.addEventListener('mouseleave', function () { if (!recentTouch()) drag = null; });
-    // Pointer events: counted only, to learn whether the EFB sends them (the mouse and touch handlers above do the work).
-    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach(function (type) {
-      canvas.addEventListener(type, function (e) { if (type === 'pointermove' && !drag) return; note(type, pointOf(e)); }, false);
-    });
-    canvas.addEventListener('click', function (e) { note('click', pointOf(e)); }, false);
 
     // ---------------- suggested pushes ----------------
-    function selectedSuggestion() {
-      for (var i = 0; i < sug.list.length; i++) { if (sug.list[i].id === sug.selectedId) return sug.list[i]; }
-      return null;
-    }
     function renderSuggestions() {
       PS.clear(sugBox);
       var t = PS.state.taxi;
@@ -462,7 +207,7 @@ PS.pages.push({
       }
       sug.list.forEach(function (s, i) {
         sugBox.appendChild(h('button', { type: 'button', class: 'ps-sug' + (s.id === sug.selectedId ? ' on' : ''), onclick: function () {
-          if (s.id === sug.selectedId) { sug.selectedId = null; log('suggestion ' + (i + 1) + ' deselected (its pins stay in the plan; use Clear pins to remove them)'); renderSuggestions(); draw('action'); return; }
+          if (s.id === sug.selectedId) { sug.selectedId = null; log('suggestion ' + (i + 1) + ' deselected (its pins stay in the plan; use Clear pins to remove them)'); renderSuggestions(); draw(); return; }
           // Choosing a suggestion makes it the plan: any pins placed by hand that are not part of it are removed.
           var before = PS.plan.count();
           PS.plan.setAll(s.waypoints);
@@ -490,7 +235,7 @@ PS.pages.push({
         sug.tookMs = Date.now() - t0;
         if (!sug.logged || sug.list.length !== before) { sug.logged = true; log('suggested pushes: ' + sug.list.length + ' option(s) in ' + sug.tookMs + ' ms (heading ' + Math.round(own.hdgDeg) + ')'); }
       } catch (e) { sug.list = []; log('suggestion failed: ' + PS.errText(e)); }
-      if (sug.selectedId && !selectedSuggestion()) sug.selectedId = null;
+      if (sug.selectedId) { var still = false; sug.list.forEach(function (s) { if (s.id === sug.selectedId) still = true; }); if (!still) sug.selectedId = null; }
       renderSuggestions();
     }
     function loadAirport(why) {
@@ -498,52 +243,16 @@ PS.pages.push({
       airportLine.textContent = 'Loading airport data' + (why ? ' (' + why + ')' : '') + '...';
       return PS.facility.loadNearestIntoState().then(function (icao) {
         airportLoading = false; sug.key = ''; airportLine.textContent = 'Airport ' + icao + ' loaded: ' + PS.state.taxi.items.length + ' runway/path item(s), ' + PS.state.taxi.parking.length + ' stand(s).';
-        renderSuggestions(); draw('action');
+        renderSuggestions(); draw();
       }, function (e) { airportLoading = false; airportLine.textContent = 'Could not load airport data: ' + PS.errText(e); log('could not load airport data: ' + PS.errText(e)); });
     }
 
     // ---------------- drawing ----------------
-    // An aircraft marker (nose up, then rotated): the pin's direction is the way the nose points there.
-    function drawAircraftMarker(g, x, y, headingDeg, fill, stroke, scale) {
-      g.save(); g.translate(x, y); g.rotate(PS.geo.rad(headingDeg)); g.scale(scale, scale);
-      g.beginPath(); g.moveTo(0, -17); g.lineTo(5, -6); g.lineTo(17, 4); g.lineTo(17, 8); g.lineTo(5, 4); g.lineTo(4, 11); g.lineTo(9, 15); g.lineTo(9, 18); g.lineTo(0, 16); g.lineTo(-9, 18); g.lineTo(-9, 15); g.lineTo(-4, 11);
-      g.lineTo(-5, 4); g.lineTo(-17, 8); g.lineTo(-17, 4); g.lineTo(-5, -6); g.closePath();
-      if (fill) { g.fillStyle = fill; g.fill(); }
-      g.lineWidth = 2; g.strokeStyle = stroke; g.stroke();
-      g.restore();
-    }
-    function labelAt(g, text, x, y) {
-      g.font = 'bold 13px Arial'; g.lineWidth = 3; g.strokeStyle = '#0b1116'; g.strokeText(text, x, y); g.fillStyle = '#ffffff'; g.fillText(text, x, y);
-    }
-    // Direction chevrons along a drawn path every ~46 px, pointing the way the tug travels.
-    function chevrons(g, px, color) {
-      var acc = 0, next = 30;
-      g.fillStyle = color;
-      for (var i = 1; i < px.length; i++) {
-        var dx = px[i][0] - px[i - 1][0], dy = px[i][1] - px[i - 1][1], len = Math.sqrt(dx * dx + dy * dy);
-        if (len < 0.01) continue;
-        while (acc + len >= next) {
-          var f = (next - acc) / len, x = px[i - 1][0] + dx * f, y = px[i - 1][1] + dy * f, a = Math.atan2(dy, dx);
-          g.save(); g.translate(x, y); g.rotate(a); g.beginPath(); g.moveTo(5, 0); g.lineTo(-4, -5); g.lineTo(-4, 5); g.closePath(); g.fill(); g.restore();
-          next += 46;
-        }
-        acc += len;
-      }
-    }
-    function strokePath(g, pts, view, color, width) {
-      g.strokeStyle = color; g.lineWidth = width; g.beginPath();
-      var px = pts.map(function (p) { return view.toPx(p[0], p[1]); });
-      px.forEach(function (q, i) { if (i === 0) g.moveTo(q[0], q[1]); else g.lineTo(q[0], q[1]); });
-      g.stroke(); g.lineWidth = 1;
-      return px;
-    }
-
     function drawPlot() {
       var g = canvas.getContext && canvas.getContext('2d');
       if (!g) { infoLine.textContent = 'Canvas 2D not available.'; return; }
-      fitCanvas();
+      D.fitCanvas(canvas);
       var c = ownOrReference(), own = c.own;
-      lastOwn = own;
       var w = canvas.width, hgt = canvas.height, range = plotRange.get();
       var centre = pan.x || pan.y ? PS.geo.fromXY(own.lat, own.lon, pan.x, pan.y) : [own.lat, own.lon];
       var view = PS.plotView(w, hgt, { lat: centre[0], lon: centre[1] }, range);
@@ -552,47 +261,14 @@ PS.pages.push({
       refreshSuggestions(own);
       var plan = PS.plan.evaluate(own);
       lastPlan = plan;
-      if (plan !== renderedPlan) { renderedPlan = plan; renderRoute(plan, own); renderPins(plan, own); }
+      if (plan !== renderedPlan) { renderedPlan = plan; renderRoute(plan); renderPins(plan, own); }
 
-      g.fillStyle = '#0f171e'; g.fillRect(0, 0, w, hgt);
-      g.lineWidth = 1; g.strokeStyle = '#2a3a47'; g.fillStyle = '#6f8294'; g.font = '11px Arial';
-      [0.25, 0.5, 0.75, 1].forEach(function (f) {
-        g.beginPath(); g.arc(ownPx[0], ownPx[1], range * f * view.scale, 0, Math.PI * 2); g.stroke();
-        g.fillText(PS.fmt.dist(range * f), ownPx[0] + 4, ownPx[1] - range * f * view.scale + 12);
-      });
-      g.fillStyle = '#8aa0b2'; g.font = 'bold 12px Arial'; g.fillText('N', 8, 16);
+      var taxi = PS.state.taxi;
+      var drawn = D.backdrop(g, view, w, hgt, range, ownPx, taxi);
 
-      var taxi = PS.state.taxi, drawn = 0, labels = {};
-      if (taxi) {
-        taxi.items.forEach(function (it) {
-          if (!it.points.length) return;
-          g.strokeStyle = it.category === 'Runway' ? '#8aa3b8' : (it.category === 'Taxiway' ? '#f0a830' : '#4d6275');
-          g.lineWidth = it.category === 'Runway' ? 4 : 2;
-          g.beginPath();
-          var first = null, last = null;
-          it.points.forEach(function (p, i) { var q = view.toPx(p[0], p[1]); if (i === 0) { g.moveTo(q[0], q[1]); first = q; } else g.lineTo(q[0], q[1]); last = q; });
-          g.stroke(); drawn++;
-          var nm = it.rawName;
-          if (range <= 1000 && nm && it.category === 'Taxiway' && first && last && !labels[nm]) {
-            var mx = (first[0] + last[0]) / 2, my = (first[1] + last[1]) / 2;
-            if (mx > 0 && mx < w && my > 0 && my < hgt) labels[nm] = [mx, my];
-          }
-        });
-        g.lineWidth = 1; g.font = '11px Arial'; g.fillStyle = '#ffd37a';
-        Object.keys(labels).forEach(function (nm) { g.fillText(nm, labels[nm][0] + 3, labels[nm][1] - 3); });
-        if (range <= 300) {
-          g.fillStyle = '#8aa3b8'; g.font = '10px Arial';
-          (taxi.parking || []).forEach(function (p) {
-            if (p.lat === null) return;
-            var q = view.toPx(p.lat, p.lon);
-            if (q[0] < 0 || q[0] > w || q[1] < 0 || q[1] > hgt) return;
-            g.fillRect(q[0] - 2, q[1] - 2, 4, 4); g.fillText(p.name, q[0] + 4, q[1] + 3);
-          });
-        }
-      }
-
-      // Suggested pushes: end markers for all (numbered), the planned route and final nose for the chosen one.
-      var chosen = selectedSuggestion();
+      // Suggested pushes: numbered end markers, and the route and final nose of the chosen one while the plan is empty.
+      var chosen = null;
+      sug.list.forEach(function (s) { if (s.id === sug.selectedId) chosen = s; });
       g.font = 'bold 11px Arial';
       sug.list.forEach(function (s, i) {
         if (s === chosen) return;
@@ -601,24 +277,14 @@ PS.pages.push({
         g.fillStyle = '#0f171e'; g.fillText(String(i + 1), q[0] - (i > 8 ? 6 : 3), q[1] + 4);
       });
       if (chosen && PS.plan.count() === 0) {
-        chevrons(g, strokePath(g, chosen.route, view, '#34d2c8', 4), '#0f171e');
+        D.chevrons(g, D.strokePath(g, chosen.route, view, '#34d2c8', 4), '#0f171e');
         var ep = chosen.pins[chosen.pins.length - 1], eq = view.toPx(ep[0], ep[1]);
-        drawAircraftMarker(g, eq[0], eq[1], chosen.facingDeg, 'rgba(52,210,200,0.35)', '#34d2c8', 1);
+        D.aircraftMarker(g, eq[0], eq[1], chosen.facingDeg, 'rgba(52,210,200,0.35)', '#34d2c8', 1);
       }
 
-      // The plan: planned route by leg (push back = teal, forward = blue, a leg the tug may not manage = red), then directional pins.
+      // The plan, and the ring and heading handle of the selected pin.
       if (!plan.empty) {
-        plan.segments.forEach(function (sg, n) {
-          var color = plan.legs[n].warning ? '#ff5c6c' : (sg.sign < 0 ? '#ffffff' : '#5aa8ff');
-          chevrons(g, strokePath(g, sg.points, view, color, 3), color);
-        });
-        g.font = 'bold 13px Arial';
-        plan.items.forEach(function (it) {
-          var q = view.toPx(it.wp.lat, it.wp.lon), isEnd = it.userIndex === PS.plan.count() - 1;
-          if (it.turnaround) { drawAircraftMarker(g, q[0], q[1], it.headingDeg === null ? 0 : it.headingDeg, null, '#9fb3c4', 0.8); labelAt(g, 'turn', q[0] + 14, q[1] - 12); return; }
-          drawAircraftMarker(g, q[0], q[1], it.headingDeg === null ? 0 : it.headingDeg, isEnd ? '#ff9f43' : '#e8f0f6', '#0b1116', isEnd ? 1.15 : 1);
-          labelAt(g, isEnd ? 'End' : String(it.userIndex + 1), q[0] + 16, q[1] - 14);
-        });
+        D.planRoute(g, view, plan, { pinCount: PS.plan.count() });
         var sel = PS.plan.selected();
         if (sel >= 0 && PS.plan.list()[sel]) {
           var sp = PS.plan.list()[sel], sq = view.toPx(sp.lat, sp.lon), hp = handlePx(sel);
@@ -633,58 +299,15 @@ PS.pages.push({
         }
       }
 
-      // AI traffic, read fresh from the sim's listener on every redraw.
+      // AI traffic, read fresh from the sim's listener on every redraw, then the own aircraft.
       PS.airTraffic.poll();
-      var contacts = contactsNow(), inView = 0, T = PS.airTraffic;
-      g.font = '11px Arial';
-      contacts.forEach(function (ct) {
-        var q = view.toPx(ct.lat, ct.lon);
-        if (q[0] < -10 || q[0] > w + 10 || q[1] < -10 || q[1] > hgt + 10) return;
-        inView++;
-        var sel2 = ct.id === selectedContact;
-        g.fillStyle = '#ff5c5c';
-        g.beginPath(); g.arc(q[0], q[1], sel2 ? 7 : 5, 0, Math.PI * 2); g.fill();
-        var trk = typeof ct.trackDeg === 'number' && ct.gsKt > 1 ? ct.trackDeg : (ct.hdgDeg || 0);
-        g.strokeStyle = '#ff5c5c'; g.lineWidth = 2; g.beginPath(); g.moveTo(q[0], q[1]);
-        g.lineTo(q[0] + Math.sin(PS.geo.rad(trk)) * 16, q[1] - Math.cos(PS.geo.rad(trk)) * 16); g.stroke(); g.lineWidth = 1;
-        g.fillStyle = '#e8b4b4'; g.fillText(ct.title || '', q[0] + 8, q[1] + 4);
-      });
-
-      // Own aircraft, pointing along its heading.
-      drawAircraftMarker(g, ownPx[0], ownPx[1], own.hdgDeg, '#4cd18a', '#0b1116', 1.1);
-      // Where the app thinks the last tap landed (for a few seconds), so any offset from where it was really tapped is visible.
-      if (lastPress && Date.now() - lastPress.at < 5000) {
-        g.strokeStyle = '#00e5ff'; g.lineWidth = 2; g.beginPath(); g.arc(lastPress.p[0], lastPress.p[1], 9, 0, Math.PI * 2); g.moveTo(lastPress.p[0] - 14, lastPress.p[1]); g.lineTo(lastPress.p[0] + 14, lastPress.p[1]);
-        g.moveTo(lastPress.p[0], lastPress.p[1] - 14); g.lineTo(lastPress.p[0], lastPress.p[1] + 14); g.stroke(); g.lineWidth = 1;
-      }
-      if (showCross && hover && Date.now() - hover.at < 4000) {
-        // One cross per way of measuring the pointer: R = against getBoundingClientRect, O = from offsetX/offsetY, H = against the hit-test box.
-        // Whichever sits under the real cursor (also in the far corners) is the right one; white is what the page is actually using.
-        var arms = hover.m ? [['R', hover.m.rect, '#ff5c5c'], ['O', hover.m.off, '#4cd18a'], ['H', hover.m.hit, '#e56bff']] : [];
-        g.font = 'bold 12px Arial'; g.lineWidth = 2;
-        arms.forEach(function (a) {
-          if (!a[1]) return;
-          g.strokeStyle = a[2]; g.beginPath(); g.moveTo(a[1][0] - 10, a[1][1]); g.lineTo(a[1][0] + 10, a[1][1]); g.moveTo(a[1][0], a[1][1] - 10); g.lineTo(a[1][0], a[1][1] + 10); g.stroke();
-          g.fillStyle = a[2]; g.fillText(a[0], a[1][0] + 8, a[1][1] - 8);
-        });
-        g.strokeStyle = '#ffffff'; g.lineWidth = 1; g.beginPath(); g.moveTo(hover.p[0] - 14, hover.p[1]); g.lineTo(hover.p[0] + 14, hover.p[1]); g.moveTo(hover.p[0], hover.p[1] - 14); g.lineTo(hover.p[0], hover.p[1] + 14); g.stroke();
-      }
-      if (calibrating) {
-        var tg = calTargets();
-        g.font = 'bold 16px Arial';
-        tg.forEach(function (t, i) {
-          var done = i < calSamples.length, cur = i === calSamples.length;
-          g.lineWidth = cur ? 5 : 3; g.strokeStyle = done ? '#4cd18a' : (cur ? '#ffe14d' : '#00e5ff');
-          g.beginPath(); g.arc(t[0], t[1], cur ? 26 : 20, 0, Math.PI * 2); g.moveTo(t[0] - 34, t[1]); g.lineTo(t[0] + 34, t[1]); g.moveTo(t[0], t[1] - 34); g.lineTo(t[0], t[1] + 34); g.stroke();
-          g.font = 'bold 22px Arial'; g.fillStyle = done ? '#4cd18a' : (cur ? '#ffe14d' : '#00e5ff'); g.fillText(String(i + 1), t[0] + 30, t[1] - 24);
-        });
-        g.lineWidth = 1; g.fillStyle = '#ffe14d'; g.font = 'bold 17px Arial';
-        g.fillText('Calibration: tap the centre of target ' + Math.min(calSamples.length + 1, tg.length) + ' of ' + tg.length + ' (yellow)', Math.max(8, view.cx - 215), 105);
-        g.font = '13px Arial'; g.fillText('Scroll so the whole plot is on screen first. Taps do not place pins now.', Math.max(8, view.cx - 215), 128);
-      }
+      var contacts = contactsNow(), T = PS.airTraffic;
+      var inView = D.contacts(g, view, contacts, w, hgt, selectedContact);
+      D.aircraftMarker(g, ownPx[0], ownPx[1], own.hdgDeg, '#4cd18a', '#0b1116', 1.1);
 
       var age = T.lastAt ? ((Date.now() - T.lastAt) / 1000).toFixed(1) + ' s ago' : 'never';
-      infoLine.textContent = (c.live ? 'Own position live. ' : 'Own position: reference point (sim not readable). ') + 'Range ' + PS.fmt.dist(range) + (pan.x || pan.y ? '. Map moved ' + PS.fmt.dist(Math.sqrt(pan.x * pan.x + pan.y * pan.y)) + ' from the aircraft (Recentre brings it back)' : '') + '. Taxi items drawn: ' + drawn +
+      infoLine.textContent = (c.live ? 'Own position live. ' : 'Own position: reference point (sim not readable). ') + 'Range ' + PS.fmt.dist(range) +
+        (pan.x || pan.y ? '. Map moved ' + PS.fmt.dist(Math.sqrt(pan.x * pan.x + pan.y * pan.y)) + ' from the aircraft (Recentre brings it back)' : '') + '. Taxi items drawn: ' + drawn +
         '. AI aircraft in view: ' + inView + ' of ' + contacts.length + ' (listener updated ' + age + ')' + (taxi && taxi.icao ? '. Airport ' + taxi.icao + '.' : '. No airport data yet.');
       var sc = null;
       for (var k = 0; k < contacts.length; k++) { if (contacts[k].id === selectedContact) sc = contacts[k]; }
@@ -704,81 +327,37 @@ PS.pages.push({
       try { window.localStorage.setItem('pushplanner.tightest', String(v)); } catch (e4) { /* not saved */ }
       log('tightest allowed turn radius set to ' + v + ' m'); planChanged();
     }, 'plan', ['Tighter  -', 'Looser  +'], function (v) { return v + ' m'; });
-    var repaintBtn = ui.button('Repaint: style', function () {
-      nudgeMode = NUDGE_MODES[(NUDGE_MODES.indexOf(nudgeMode) + 1) % NUDGE_MODES.length];
-      repaintBtn.textContent = 'Repaint: ' + nudgeMode;
-      log('repaint nudge mode set to ' + nudgeMode);
-      draw('manual');
-    }, 'ps-ghost');
-    calBtn = ui.button('Calibrate taps (5 spots)', function () {
-      calibrating = !calibrating; calSamples = [];
-      calBtn.textContent = calibrating ? 'Cancel calibration' : 'Calibrate taps (5 spots)';
-      log(calibrating ? 'tap calibration started: tap the five numbered spots in order' : 'tap calibration cancelled'); draw('action');
-    }, 'ps-small ps-ghost');
-    function chooseMeasure(m) {
-      if (m === 'hit' && !hitBox) { log('Use H: no hit-test box yet (scroll the whole plot into view and press Scan canvas first)'); calLine.textContent = 'H needs a scan with the whole plot in view first.'; return; }
-      setCalibration({ method: m, ax: 1, bx: 0, ay: 1, by: 0, rms: 0 });
-      log('tap measure chosen by you: ' + m); draw('action');
-    }
-    var crossBtn = ui.button('Cursor cross: on', function () { showCross = !showCross; crossBtn.textContent = 'Cursor cross: ' + (showCross ? 'on' : 'off'); draw('action'); }, 'ps-small ps-ghost');
-    setCalibration(cal);
     addBtn = ui.button('Add pins: ON (tap the plot)', function () { setAddMode(!addMode); });
     setAddMode(true);
 
     var el = h('div', { class: 'ps-page' },
       ui.panel('Plan the push',
-        h('div', { class: 'ps-row' }, ui.field('Range', plotRange.stepperEl || plotRange.el), addBtn,
+        h('div', { class: 'ps-row' }, ui.field('Range', plotRange.el), addBtn,
           ui.button('Undo pin', function () { if (PS.plan.count()) deletePin(PS.plan.count() - 1); }, 'ps-ghost'),
           ui.button('Clear pins', function () { PS.plan.clear(); log('pins cleared'); planChanged(); }, 'ps-ghost'),
-          ui.button('Recentre', function () { pan.x = 0; pan.y = 0; log('map recentred on the aircraft'); draw('action'); }, 'ps-ghost'),
-          ui.button('Refresh', function () { draw('manual'); }, 'ps-ghost'),
-          repaintBtn),
+          ui.button('Recentre', function () { pan.x = 0; pan.y = 0; log('map recentred on the aircraft'); draw(); }, 'ps-ghost')),
         canvas, infoLine, contactLine,
-        h('div', { class: 'ps-row' }, ui.button('Scan canvas', function () { scanAndReport('asked'); draw('action'); }, 'ps-small ps-ghost'),
-          ui.button('Use R', function () { chooseMeasure('rect'); }, 'ps-small ps-ghost'), ui.button('Use O', function () { chooseMeasure('offset'); }, 'ps-small ps-ghost'),
-          ui.button('Use H', function () { chooseMeasure('hit'); }, 'ps-small ps-ghost'), ui.button('Use auto', function () { chooseMeasure('auto'); }, 'ps-small ps-ghost')),
-        h('div', { class: 'ps-row' }, calBtn, crossBtn, ui.button('Reset calibration', function () { setCalibration(CAL_NONE); log('tap calibration reset'); draw('action'); }, 'ps-small ps-ghost'), calLine),
-        ui.note('Drag empty map to move it; tap a pin to select it. Three crosses follow your cursor: R (red), O (green) and H (magenta) are three ways of measuring where it is, and white is the one in use. Move to the corners of the plot and see which letter stays under the real cursor, then press Use R, Use O or Use H. (H needs the whole plot in view and Scan canvas first.) If none do, use Calibrate taps. North is up, centred on the aircraft. Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it. White route = push back, blue = drive forward, red = the tug may not manage that leg. Teal = suggested push.')),
+        ui.note('North is up, centred on the aircraft; drag empty map to move it. Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it. White route = push back, blue = drive forward, red = the tug may not manage that leg.')),
       ui.panel('Route', h('div', { class: 'ps-row' }, ui.field('Tightest turn the plan may use', tightest.el)), routeBox),
       ui.panel('Suggested pushes', airportLine, sugBox,
         h('div', { class: 'ps-row' }, ui.button('Reload airport data', function () { loadAirport('asked'); }, 'ps-small ps-ghost')),
         ui.note('From the original app\'s suggester, planned with the same tug turn radius. Only options the tug can make without a warning are offered. Pick one and it becomes your plan, replacing any pins you placed; then adjust it with pins of your own.')),
-      ui.panel('Pins', pinList),
-      ui.panel('Refresh diagnostics (send these back if the plot does not refresh)', diagBox,
-        h('div', { class: 'ps-row' }, ui.button('Copy diagnostics', function () {
-          var text = diagText(), ok = PS.ui.copyText(text);
-          log(ok ? 'diagnostics copied' : 'clipboard copy not available; showing text');
-          if (!ok) PS.ui.showText(text, 'Plan diagnostics (select all and copy)');
-        }, 'ps-small'))),
-      ui.panel('Log', ui.logBox(['plan', 'traffic', 'taxi', 'wasm']))
+      ui.panel('Pins', pinList)
     );
-    el.addEventListener('click', function () { diag.clicks++; setTimeout(function () { draw('click'); }, 0); setTimeout(function () { draw('click'); }, 400); });
-    var frameHook = function () { diag.frameCalls++; if (Date.now() - lastDrawAt > 450) draw('frame'); };
+    // Redraw triggers: the interval, the EFB's per-frame update (a second chance if timers are throttled), and any click on the page.
+    el.addEventListener('click', function () { setTimeout(draw, 0); setTimeout(draw, 400); });
+    var frameHook = function () { if (Date.now() - lastDrawAt > 450) draw(); };
     return {
       el: el,
-      snapshot: function () { return diagText(); },
       onShow: function () {
-        // Redraw triggers: the interval (started first, so a failing first draw cannot stop it), the EFB's per-frame update, and any click.
         if (timer !== null) clearInterval(timer);
-        timer = setInterval(function () {
-          var n = Date.now(); diag.timerTicks++;
-          if (diag.timerLast) { var gp = n - diag.timerLast; if (gp > diag.timerGapMax) diag.timerGapMax = gp; }
-          diag.timerLast = n; draw('timer');
-        }, 500);
-        diag.shownAt = Date.now(); diag.shows++; diag.watch = 0;
-        if (diagTimer !== null) clearInterval(diagTimer);
-        diagTimer = setInterval(diagTick, 1000);
+        timer = setInterval(draw, 500);
         if (PS.frameHooks.indexOf(frameHook) < 0) PS.frameHooks.push(frameHook);
-        log('plan page shown: canvas ' + canvas.width + 'x' + canvas.height + ', document.hidden=' + (typeof document !== 'undefined' ? document.hidden : '?') + ', setInterval=' + typeof setInterval + ', requestAnimationFrame=' + typeof requestAnimationFrame);
-        lastFitKey = ''; fitCanvas();
         renderedPlan = null; renderSuggestions();
-        draw('show');
-        setTimeout(function () { try { scanAndReport('on opening'); } catch (e2) { log('environment scan failed: ' + PS.errText(e2)); } }, 1500);
+        draw();
         if (!PS.state.taxi && !airportLoading) loadAirport('on opening');
       },
       onHide: function () {
-        diag.hides++; log('plan page hidden after ' + diag.draws + ' draw(s)');
-        if (diagTimer !== null) { clearInterval(diagTimer); diagTimer = null; }
         var fi = PS.frameHooks.indexOf(frameHook); if (fi >= 0) PS.frameHooks.splice(fi, 1);
         if (timer !== null) { clearInterval(timer); timer = null; }
         drag = null;

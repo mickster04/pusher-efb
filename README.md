@@ -6,25 +6,14 @@ An MSFS 2024 EFB app that plans and drives a pushback, ported from the Pusher de
 
 ## Tabs
 
-1. **Plan** (built): a north-up plot centred on the aircraft with runways, taxiways, stands and AI aircraft. Tap to drop pins; each pin is drawn as an aircraft pointing the way the nose will be there. Drag a pin to move it, drag the yellow handle behind a selected pin to rotate it. The planned route is drawn with the tug's turn arcs (white = push back, blue = forward, red = the tug may not manage that leg). Suggested pushes from the original app's suggester can be shown and used as the plan. Refresh diagnostics are at the bottom of the tab.
-2. **Push** (next): toggle the tug, check and enforce the parking brake off, then follow the plan with remaining distance and a toast like the old app's.
+1. **Plan** (built, working in the sim): a north-up plot centred on the aircraft with runways, taxiways, stands and AI aircraft. Tap to drop pins; each pin is drawn as an aircraft pointing the way the nose will be there. Drag a pin to move it, drag the yellow handle behind a selected pin to rotate it, drag empty map to move the map. The planned route is drawn with the tug's turn arcs (white = push back, blue = forward, red = the tug may not manage that leg), tightening the turn radius where a corner is cramped. Suggested pushes from the original app's suggester can be chosen as the plan.
+2. **Push** (built; tested only against a fake sim so far, not in the real sim): **Start** does it all in one press: it calls the tug if it is not on, checks the parking brake and waits for it to be off (it can release it for you), then drives the plan with a path follower. It shows the distance left, the leg, speed and how far off the path it is, a live map, and a popup over every tab with the distance left and Pause/Resume/Stop. When it arrives, a popup offers to set the brake and dismiss the tug. It stops at once if you press STOP, the sim takes the tug away, the brake is set mid-push (it carries on when the brake is released), or the app is paused or closed.
 
-Use **Copy all logs** (top right) to copy the whole log and the Plan tab's diagnostics.
+Use **Copy all logs** (top right) to copy the whole log. The Push tab has its own log panel.
 
 ## Layout of the code
 
-`src/*.js` are concatenated in filename order by `build.mjs`: sim access and logging (00), geometry (01), taxi and traffic data (02, 03), UI helpers (04), the taxi WASM client (05), plot maths (06), the route planner (06, a port of the original's `mapGeo.ts` planner), the suggester (07, a port of `taxiSuggest.ts`), the plan model (08), facility loading (30), AI traffic (40), the Plan tab (60) and the app shell (90). `src/reference/` holds the earlier Tug page, the code the Push tab will be built from; it is not built.
-
-## Install in the sim
-
-1. Build the JS: `npm run build` (needs only Node).
-2. Optional: build the taxi module with `bash wasm/build.sh` (see above).
-3. Package it with the MSFS SDK Project Editor using `PushPlannerProject.xml` (Windows). The package definition copies `PackageSources/PushPlanner/` to `html_ui/efb_ui/efb_apps/PushPlanner/` and `PackageSources/modules/` to `modules/`.
-4. Put the built package in the MSFS 2024 Community folder (on this install the sim reads `...\LocalCache\Packages\Community2024`), start the sim, open the EFB and look for **Push Planner** (the app keeps that name for now).
-
-**Renamed from "Pusher Spikes":** the app, package and files are now `PushPlanner` / `push-planner`. Open `PushPlannerProject.xml` in the Project Editor, and delete the old `pusher-efb-spikes` folder from the Community folder, or the sim will load both.
-
-If the app does not appear, the usual cause is a name mismatch: the internal name `PushPlanner` must be identical in the JS, the JS file name, the `PackageSources` folder and the `OutputDir` in the package definition. See [docs/implementation/efb-platform-notes.md](docs/implementation/efb-platform-notes.md).
+`src/*.js` are concatenated in filename order by `build.mjs`: sim access and logging (00), geometry (01), taxi and traffic data (02, 03), UI helpers (04), the taxi WASM client (05), plot maths and drawing (06), the route planner (06, a port of the original's `mapGeo.ts` planner), the suggester (07, a port of `taxiSuggest.ts`), the plan model (08), the parking brake and tug (09), the path follower (10), the push controller (11), facility loading (30), AI traffic (40), the Plan tab (60), the Push tab (70) and the app shell (90).
 
 ## Taxi WASM module
 

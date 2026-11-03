@@ -6,7 +6,7 @@
     'PLANE LATITUDE': -43.4890, 'PLANE LONGITUDE': 172.5375, 'PLANE HEADING DEGREES TRUE': 90, 'PLANE ALTITUDE': 80,
     'PLANE ALT ABOVE GROUND': 0, 'GROUND VELOCITY': 0, 'AIRSPEED INDICATED': 0, 'VERTICAL SPEED': 0,
     'VELOCITY BODY Z': 0, 'VELOCITY BODY Y': 0, 'ROTATION VELOCITY BODY Y': 0, 'ROTATION VELOCITY BODY X': 0,
-    'SIM ON GROUND': 1, 'GENERAL ENG COMBUSTION:1': 0, 'CAMERA STATE': 2, 'BRAKE PARKING POSITION': 0, 'BRAKE PARKING INDICATOR': 0,
+    'SIM ON GROUND': 1, 'GENERAL ENG COMBUSTION:1': 0, 'CAMERA STATE': 2, 'BRAKE PARKING POSITION': 1, 'BRAKE PARKING INDICATOR': 1,
     'L:A32NX_PARK_BRAKE_LEVER_POS': 0, 'L:XMLVAR_PARK_BRAKE_POS': 0,
     'PUSHBACK ATTACHED': 0, 'PUSHBACK STATE': 3, 'PUSHBACK WAIT': 1,
     'TITLE': 'Mock Airbus A320neo', 'ATC MODEL': 'A20N', 'ATC AIRLINE': 'MOCK', 'ATC FLIGHT NUMBER': '123'
@@ -15,13 +15,18 @@
   var last = Date.now();
   setInterval(function () {
     var now = Date.now(), dt = (now - last) / 1000; last = now;
-    var vz = sim['VELOCITY BODY Z'];
-    sim['GROUND VELOCITY'] = Math.abs(vz) / 1.688;
-    var hdg = sim['PLANE HEADING DEGREES TRUE'] * Math.PI / 180;
-    sim['PLANE LATITUDE'] += (vz * 0.3048 * dt * Math.cos(hdg)) / 111320;
-    sim['PLANE LONGITUDE'] += (vz * 0.3048 * dt * Math.sin(hdg)) / (111320 * Math.cos(sim['PLANE LATITUDE'] * Math.PI / 180));
-    sim['PLANE HEADING DEGREES TRUE'] = (sim['PLANE HEADING DEGREES TRUE'] + sim['ROTATION VELOCITY BODY Y'] * 20000 * dt + 360) % 360;
-    sim['VELOCITY BODY Z'] *= 0.96; // velocity is not sticky: decays unless rewritten
+    var vz = sim['VELOCITY BODY Z'], yawDegS = sim['ROTATION VELOCITY BODY Y'] * 180 / Math.PI;
+    var driven = sim['PUSHBACK ATTACHED'] > 0 && sim['PUSHBACK WAIT'] === 0;
+    sim['GROUND VELOCITY'] = driven ? Math.abs(vz) / 1.688 : 0;
+    if (driven) {
+      var hdg = sim['PLANE HEADING DEGREES TRUE'] * Math.PI / 180;
+      sim['PLANE LATITUDE'] += (vz * 0.3048 * dt * Math.cos(hdg)) / 111320;
+      sim['PLANE LONGITUDE'] += (vz * 0.3048 * dt * Math.sin(hdg)) / (111320 * Math.cos(sim['PLANE LATITUDE'] * Math.PI / 180));
+      // the nose turns at 0.77 x what is written, less a small dead band (the response the original app measured)
+      var mag = Math.max(0, 0.77 * Math.abs(yawDegS) - 0.30);
+      sim['PLANE HEADING DEGREES TRUE'] = (sim['PLANE HEADING DEGREES TRUE'] + (yawDegS < 0 ? -1 : 1) * mag * dt + 360) % 360;
+    }
+    sim['VELOCITY BODY Z'] *= 0.96; sim['ROTATION VELOCITY BODY Y'] *= 0.96;   // velocity is not sticky: it decays unless rewritten
   }, 50);
 
   window.SimVar = {
@@ -31,7 +36,12 @@
       return sim[name];
     },
     SetSimVarValue: function (name, unit, value) {
-      if (name.indexOf('K:') === 0) { console.log('[mock] key event', name, value); window.__lastKey = [name, value]; return Promise.resolve(); }
+      if (name.indexOf('K:') === 0) {
+        console.log('[mock] key event', name, value); window.__lastKey = [name, value];
+        if (name === 'K:TOGGLE_PUSHBACK') setTimeout(function () { sim['PUSHBACK ATTACHED'] = sim['PUSHBACK ATTACHED'] ? 0 : 1; }, 300);
+        if (name === 'K:PARKING_BRAKES') sim['BRAKE PARKING POSITION'] = sim['BRAKE PARKING POSITION'] ? 0 : 1;
+        return Promise.resolve();
+      }
       if (READ_ONLY[name]) return Promise.resolve();
       sim[name] = value; return Promise.resolve();
     }

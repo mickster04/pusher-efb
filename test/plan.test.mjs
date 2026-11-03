@@ -103,28 +103,6 @@ test('setAll: copies a suggestion and drops planner-added turnaround pins', () =
   plan.clear();
 });
 
-test('tap calibration: recovers a shift and a scale, and prefers the measure that fits', () => {
-  const targets = [[55, 55], [845, 55], [845, 485], [55, 485], [450, 270]];
-  // taps land 60 px too far down and 8% too far across: measured = (expected - shift) / scale
-  const rect = targets.map((t) => ({ exp: t, rect: [t[0] / 1.08, t[1] - 60], off: null }));
-  const fit = PS.fitTapCalibration(rect);
-  assert.equal(fit.best.method, 'rect');
-  assert.ok(Math.abs(fit.best.ax - 1.08) < 1e-6 && Math.abs(fit.best.bx) < 1e-6, 'x scale ' + fit.best.ax + ' shift ' + fit.best.bx);
-  assert.ok(Math.abs(fit.best.ay - 1) < 1e-6 && Math.abs(fit.best.by - 60) < 1e-6, 'y shift ' + fit.best.by);
-  assert.ok(fit.best.rms < 1e-6);
-  // applying it puts a tap back where it was aimed
-  const m = [900 / 1.08, 100];
-  assert.ok(Math.abs(fit.best.ax * m[0] + fit.best.bx - 900) < 1e-6 && Math.abs(fit.best.ay * m[1] + fit.best.by - 160) < 1e-6);
-  // when offsetX/offsetY are right and the rectangle method is wrong, the offset measure wins
-  const both = targets.map((t) => ({ exp: t, rect: [t[0] + 5, t[1] - 70], off: [t[0], t[1]] }));
-  const f2 = PS.fitTapCalibration(both);
-  assert.equal(f2.best.method, 'offset');
-  assert.ok(f2.offset.rms < 1e-6 && Math.abs(f2.offset.ax - 1) < 1e-6 && Math.abs(f2.offset.bx) < 1e-6);
-  // a nonsense scale is not trusted
-  const bad = PS.fitTapCalibration([{ exp: [0, 0], rect: [100, 100], off: null }, { exp: [10, 10], rect: [100.001, 100.001], off: null }]);
-  assert.equal(bad.best.ax, 1);
-});
-
 // ---- turn radius ----
 const own0 = { lat: -43.49, lon: 172.53, hdgDeg: 0 };
 function cornerRadius(len1, len2, deflectionDeg, requested) {
