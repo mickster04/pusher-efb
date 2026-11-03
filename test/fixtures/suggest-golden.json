@@ -1,0 +1,549 @@
+{
+ "straight@0": [
+  {
+   "title": "Straight back to taxiway A",
+   "pins": 1,
+   "endHeading": 0
+  },
+  {
+   "title": "Taxiway A, pointing north",
+   "pins": 1,
+   "endHeading": 0
+  },
+  {
+   "title": "Taxiway A, pointing south",
+   "pins": 1,
+   "endHeading": 180
+  },
+  {
+   "title": "Taxiway A, facing east, clear of LINK 1",
+   "pins": 2,
+   "endHeading": 90
+  },
+  {
+   "title": "Taxiway A, facing west",
+   "pins": 2,
+   "endHeading": 270
+  },
+  {
+   "title": "Taxiway A, facing east",
+   "pins": 2,
+   "endHeading": 90
+  }
+ ],
+ "straight@30": [
+  {
+   "title": "Straight back to taxiway A",
+   "pins": 1,
+   "endHeading": 30
+  },
+  {
+   "title": "Taxiway A, facing east",
+   "pins": 1,
+   "endHeading": 90
+  },
+  {
+   "title": "Taxiway A, pointing south",
+   "pins": 1,
+   "endHeading": 180
+  },
+  {
+   "title": "Taxiway A, pointing north",
+   "pins": 2,
+   "endHeading": 0
+  },
+  {
+   "title": "Taxiway A, facing west",
+   "pins": 2,
+   "endHeading": 270
+  },
+  {
+   "title": "LINK 1, facing south",
+   "pins": 1,
+   "endHeading": 180
+  },
+  {
+   "title": "LINK 1, facing north",
+   "pins": 2,
+   "endHeading": 0
+  }
+ ],
+ "straight@90": [
+  {
+   "title": "LINK 1, facing north",
+   "pins": 1,
+   "endHeading": 0
+  },
+  {
+   "title": "LINK 1, facing south",
+   "pins": 1,
+   "endHeading": 180
+  }
+ ],
+ "straight@135": [
+  {
+   "title": "Taxiway A, facing west",
+   "pins": 2,
+   "endHeading": 270
+  },
+  {
+   "title": "Taxiway A, facing east",
+   "pins": 1,
+   "endHeading": 90
+  },
+  {
+   "title": "LINK 1, facing south",
+   "pins": 2,
+   "endHeading": 180
+  }
+ ],
+ "straight@180": [
+  {
+   "title": "Taxiway A, facing west",
+   "pins": 1,
+   "endHeading": 270
+  },
+  {
+   "title": "Taxiway A, facing east",
+   "pins": 1,
+   "endHeading": 90
+  }
+ ],
+ "straight@225": [
+  {
+   "title": "Taxiway A, facing east",
+   "pins": 2,
+   "endHeading": 90
+  },
+  {
+   "title": "Taxiway A, facing west",
+   "pins": 1,
+   "endHeading": 270
+  },
+  {
+   "title": "LINK 1, facing north",
+   "pins": 2,
+   "endHeading": 0
+  }
+ ],
+ "straight@270": [
+  {
+   "title": "LINK 1, facing south",
+   "pins": 1,
+   "endHeading": 180
+  },
+  {
+   "title": "LINK 1, facing north",
+   "pins": 1,
+   "endHeading": 0
+  }
+ ],
+ "straight@330": [
+  {
+   "title": "Straight back to taxiway A",
+   "pins": 1,
+   "endHeading": 330
+  },
+  {
+   "title": "Taxiway A, facing west",
+   "pins": 1,
+   "endHeading": 270
+  },
+  {
+   "title": "Taxiway A, pointing south",
+   "pins": 1,
+   "endHeading": 180
+  },
+  {
+   "title": "Taxiway A, pointing north",
+   "pins": 2,
+   "endHeading": 0
+  },
+  {
+   "title": "Taxiway A, facing east",
+   "pins": 2,
+   "endHeading": 90
+  },
+  {
+   "title": "LINK 1, facing north",
+   "pins": 2,
+   "endHeading": 0
+  }
+ ],
+ "bend@0": [
+  {
+   "title": "Straight back to taxiway B",
+   "pins": 1,
+   "endHeading": 0
+  },
+  {
+   "title": "Taxiway B, facing east",
+   "pins": 2,
+   "endHeading": 90
+  },
+  {
+   "title": "Taxiway B, facing west",
+   "pins": 2,
+   "endHeading": 270
+  }
+ ],
+ "bend@30": [
+  {
+   "title": "Straight back to taxiway B",
+   "pins": 1,
+   "endHeading": 30
+  },
+  {
+   "title": "Taxiway B, facing east",
+   "pins": 1,
+   "endHeading": 90
+  },
+  {
+   "title": "Taxiway B, facing west",
+   "pins": 2,
+   "endHeading": 270
+  }
+ ],
+ "bend@90": [
+  {
+   "title": "Taxiway B, facing north",
+   "pins": 1,
+   "endHeading": 0
+  },
+  {
+   "title": "Taxiway B, facing south",
+   "pins": 1,
+   "endHeading": 180
+  }
+ ],
+ "bend@135": [
+  {
+   "title": "Taxiway B, facing east",
+   "pins": 1,
+   "endHeading": 90
+  },
+  {
+   "title": "Taxiway B, facing west",
+   "pins": 2,
+   "endHeading": 270
+  }
+ ],
+ "bend@180": [
+  {
+   "title": "Taxiway B, facing west",
+   "pins": 1,
+   "endHeading": 270
+  },
+  {
+   "title": "Taxiway B, facing east",
+   "pins": 1,
+   "endHeading": 90
+  }
+ ],
+ "bend@225": [
+  {
+   "title": "Straight back to taxiway B",
+   "pins": 1,
+   "endHeading": 225
+  },
+  {
+   "title": "Taxiway B, facing west",
+   "pins": 1,
+   "endHeading": 270
+  }
+ ],
+ "bend@270": [
+  {
+   "title": "Straight back to taxiway B",
+   "pins": 1,
+   "endHeading": 270
+  },
+  {
+   "title": "Taxiway B, facing north",
+   "pins": 1,
+   "endHeading": 0
+  },
+  {
+   "title": "Taxiway B, facing south",
+   "pins": 2,
+   "endHeading": 180
+  }
+ ],
+ "bend@330": [
+  {
+   "title": "Straight back to taxiway B",
+   "pins": 1,
+   "endHeading": 330
+  },
+  {
+   "title": "Taxiway B, facing west",
+   "pins": 2,
+   "endHeading": 270
+  },
+  {
+   "title": "Taxiway B, facing east",
+   "pins": 2,
+   "endHeading": 90
+  }
+ ],
+ "two@0": [
+  {
+   "title": "Straight back to taxiway A",
+   "pins": 1,
+   "endHeading": 0
+  },
+  {
+   "title": "Taxiway A, facing east",
+   "pins": 1,
+   "endHeading": 110
+  },
+  {
+   "title": "Taxiway A, facing west",
+   "pins": 1,
+   "endHeading": 290
+  },
+  {
+   "title": "Taxiway A, pointing north",
+   "pins": 1,
+   "endHeading": 0
+  },
+  {
+   "title": "Taxiway C, facing east",
+   "pins": 1,
+   "endHeading": 70
+  },
+  {
+   "title": "Taxiway C, facing west",
+   "pins": 1,
+   "endHeading": 250
+  }
+ ],
+ "two@30": [
+  {
+   "title": "Straight back to taxiway A",
+   "pins": 1,
+   "endHeading": 30
+  },
+  {
+   "title": "Taxiway A, facing west",
+   "pins": 1,
+   "endHeading": 290
+  },
+  {
+   "title": "Taxiway A, facing east",
+   "pins": 1,
+   "endHeading": 110
+  },
+  {
+   "title": "Taxiway A, pointing north",
+   "pins": 1,
+   "endHeading": 0
+  },
+  {
+   "title": "Taxiway A, pointing south",
+   "pins": 2,
+   "endHeading": 180
+  }
+ ],
+ "two@90": [
+  {
+   "title": "Taxiway A, facing west",
+   "pins": 2,
+   "endHeading": 290
+  },
+  {
+   "title": "Taxiway A, facing east",
+   "pins": 2,
+   "endHeading": 110
+  }
+ ],
+ "two@135": [
+  {
+   "title": "Taxiway A, facing west",
+   "pins": 2,
+   "endHeading": 290
+  },
+  {
+   "title": "Taxiway A, facing east",
+   "pins": 2,
+   "endHeading": 110
+  },
+  {
+   "title": "Taxiway C, facing east",
+   "pins": 1,
+   "endHeading": 70
+  },
+  {
+   "title": "Taxiway C, facing west",
+   "pins": 2,
+   "endHeading": 250
+  }
+ ],
+ "two@180": [
+  {
+   "title": "Taxiway A, facing west",
+   "pins": 1,
+   "endHeading": 290
+  },
+  {
+   "title": "Taxiway A, facing east",
+   "pins": 1,
+   "endHeading": 110
+  },
+  {
+   "title": "Taxiway C, facing west",
+   "pins": 1,
+   "endHeading": 250
+  },
+  {
+   "title": "Taxiway C, facing east",
+   "pins": 1,
+   "endHeading": 70
+  }
+ ],
+ "two@225": [
+  {
+   "title": "Taxiway A, facing east",
+   "pins": 1,
+   "endHeading": 110
+  },
+  {
+   "title": "Taxiway A, facing west",
+   "pins": 1,
+   "endHeading": 290
+  }
+ ],
+ "two@270": [
+  {
+   "title": "Taxiway A, facing east",
+   "pins": 2,
+   "endHeading": 110
+  },
+  {
+   "title": "Taxiway A, facing west",
+   "pins": 2,
+   "endHeading": 290
+  }
+ ],
+ "two@330": [
+  {
+   "title": "Straight back to taxiway A",
+   "pins": 1,
+   "endHeading": 330
+  },
+  {
+   "title": "Taxiway A, facing east",
+   "pins": 2,
+   "endHeading": 110
+  },
+  {
+   "title": "Taxiway A, pointing north",
+   "pins": 1,
+   "endHeading": 0
+  },
+  {
+   "title": "Taxiway C, facing east",
+   "pins": 1,
+   "endHeading": 70
+  },
+  {
+   "title": "Taxiway C, facing west",
+   "pins": 1,
+   "endHeading": 250
+  },
+  {
+   "title": "Taxiway A, facing west",
+   "pins": 1,
+   "endHeading": 290
+  }
+ ],
+ "connector@0": [
+  {
+   "title": "Straight back to the apron lane",
+   "pins": 1,
+   "endHeading": 0
+  },
+  {
+   "title": "Apron lane, facing north",
+   "pins": 1,
+   "endHeading": 0
+  },
+  {
+   "title": "Apron lane, facing east",
+   "pins": 1,
+   "endHeading": 90
+  }
+ ],
+ "connector@30": [
+  {
+   "title": "Straight back to the apron lane",
+   "pins": 1,
+   "endHeading": 30
+  },
+  {
+   "title": "Apron lane, facing north",
+   "pins": 1,
+   "endHeading": 0
+  },
+  {
+   "title": "Apron lane, facing west",
+   "pins": 1,
+   "endHeading": 270
+  }
+ ],
+ "connector@90": [],
+ "connector@135": [
+  {
+   "title": "Apron lane, facing south",
+   "pins": 1,
+   "endHeading": 180
+  },
+  {
+   "title": "Apron lane, facing west",
+   "pins": 2,
+   "endHeading": 270
+  }
+ ],
+ "connector@180": [
+  {
+   "title": "Apron lane, facing south",
+   "pins": 1,
+   "endHeading": 180
+  },
+  {
+   "title": "Apron lane, facing north",
+   "pins": 2,
+   "endHeading": 0
+  }
+ ],
+ "connector@225": [
+  {
+   "title": "Apron lane, facing south",
+   "pins": 1,
+   "endHeading": 180
+  },
+  {
+   "title": "Apron lane, facing east",
+   "pins": 2,
+   "endHeading": 90
+  }
+ ],
+ "connector@270": [],
+ "connector@330": [
+  {
+   "title": "Straight back to the apron lane",
+   "pins": 1,
+   "endHeading": 330
+  },
+  {
+   "title": "Apron lane, facing north",
+   "pins": 1,
+   "endHeading": 0
+  },
+  {
+   "title": "Apron lane, facing east",
+   "pins": 1,
+   "endHeading": 90
+  }
+ ]
+}

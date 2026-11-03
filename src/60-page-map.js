@@ -313,12 +313,15 @@ PS.pages.push({
         return;
       }
       var key = [t.icao || '', t.items.length, own.lat.toFixed(5), own.lon.toFixed(5), Math.round(own.hdgDeg)].join('|');
-      if (key === sug.key || now - sug.at < 1500) return;
+      // Not while the aircraft is moving (a push is under way), and no more often than 10x the time the last run took.
+      if (key === sug.key || now - sug.at < Math.max(1500, (sug.tookMs || 0) * 10)) return;
+      if (own.gsKt > 1 && sug.list.length) return;
       sug.key = key; sug.at = now;
       var before = sug.list.length;
       try {
         var t0 = Date.now();
-        sug.list = PS.suggest.suggest(t.items, own);
+        sug.list = PS.suggest.suggest(t.items, own, t.parking);
+        sug.tookMs = Date.now() - t0;
         if (!sug.logged || sug.list.length !== before) { sug.logged = true; log('suggested pushes: ' + sug.list.length + ' option(s) in ' + (Date.now() - t0) + ' ms (heading ' + Math.round(own.hdgDeg) + ')'); }
       } catch (e) { sug.list = []; log('suggestion failed: ' + PS.errText(e)); }
       if (sug.selectedId && !selectedSuggestion()) sug.selectedId = null;
@@ -328,14 +331,77 @@ PS.pages.push({
     // ---- drawing ----
     // draw() never throws: an error is shown under the plot and logged once, and the redraw timers keep going.
     var lastDrawAt = 0, lastDrawErr = '';
-    function draw() {
-      lastDrawAt = Date.now();
+    // ---- refresh diagnostics: what triggers each redraw, how long it takes, and whether the plot's inputs and pixels really change ----
+    var diag = { counts: { timer: 0, frame: 0, click: 0, manual: 0, show: 0, action: 0 }, draws: 0, errors: 0, msSum: 0, msMax: 0, gapMax: 0,
+      inChanged: 0, pxChanged: 0, sig: '', pix: '', ring: [], timerTicks: 0, timerLast: 0, timerGapMax: 0, frameCalls: 0, clicks: 0, mouse: 0,
+      shownAt: 0, shows: 0, hides: 0, lastSummaryDraws: 0, summaries: 0 };
+    var diagBox = h('pre', { class: 'ps-log', text: '(opens with the page)' });
+    var diagTimer = null;
+    function pixelSig() {
+      try {
+        var g = canvas.getContext('2d'), sum = 0, rows = [60, 180, 240, 300, 420];
+        for (var r = 0; r < rows.length; r++) {
+          var d = g.getImageData(0, rows[r], canvas.width, 1).data;
+          for (var i = 0; i < d.length; i += 16) sum = (sum * 31 + d[i] + d[i + 1] * 3 + d[i + 2] * 7) % 1000003;
+        }
+        return String(sum);
+      } catch (e) { return 'n/a'; }
+    }
+    function inputsSig(own, cs) {
+      var s = own.lat.toFixed(6) + ',' + own.lon.toFixed(6) + ',' + Math.round(own.hdgDeg) + '|' + plotRange.get() + '|' + PS.state.pins.length + '|' + sug.selectedId + '|' + cs.length;
+      for (var i = 0; i < cs.length && i < 4; i++) s += '|' + cs[i].lat.toFixed(6) + ',' + cs[i].lon.toFixed(6);
+      return s;
+    }
+    function draw(src) {
+      src = typeof src === 'string' ? src : 'action';
+      var t0 = Date.now(), gap = lastDrawAt ? t0 - lastDrawAt : 0, err = '';
+      lastDrawAt = t0;
       try { drawPlot(); }
       catch (e) {
-        var m = PS.errText(e);
-        infoLine.textContent = 'Plot draw error: ' + m;
-        if (m !== lastDrawErr) { lastDrawErr = m; log('plot draw failed: ' + m); }
+        err = PS.errText(e);
+        infoLine.textContent = 'Plot draw error: ' + err;
+        diag.errors++;
+        if (err !== lastDrawErr) { lastDrawErr = err; log('plot draw failed: ' + err); }
       }
+      try {
+        var ms = Date.now() - t0, o = lastOwn || { lat: 0, lon: 0, hdgDeg: 0 }, cs = contactsNow();
+        diag.draws++; diag.counts[src] = (diag.counts[src] || 0) + 1;
+        diag.msSum += ms; if (ms > diag.msMax) diag.msMax = ms; if (gap > diag.gapMax) diag.gapMax = gap;
+        var sig = inputsSig(o, cs), inC = sig !== diag.sig; diag.sig = sig; if (inC) diag.inChanged++;
+        var pix = pixelSig(), pxC = pix !== diag.pix; diag.pix = pix; if (pxC) diag.pxChanged++;
+        diag.ring.push({ t: t0, src: src, gap: gap, ms: ms, inC: inC, pxC: pxC, n: cs.length, replies: PS.airTraffic.calls, lat: o.lat, lon: o.lon, hdg: o.hdgDeg, err: err });
+        if (diag.ring.length > 60) diag.ring.shift();
+        if (diag.draws <= 6 || err) log('draw #' + diag.draws + ' (' + src + '): ' + ms + ' ms, ' + gap + ' ms since the last, inputs ' + (inC ? 'changed' : 'same') + ', canvas pixels ' + (pxC ? 'changed' : 'same') + (err ? ', ERROR ' + err : ''));
+      } catch (e2) { log('diagnostics failed: ' + PS.errText(e2)); }
+    }
+    function diagText() {
+      var now = Date.now(), T = PS.airTraffic, cs = contactsNow(), o = lastOwn;
+      var r = canvas.getBoundingClientRect ? canvas.getBoundingClientRect() : { width: 0, height: 0, left: 0, top: 0 };
+      var lines = [
+        'Refresh diagnostics. Page open for ' + (diag.shownAt ? Math.round((now - diag.shownAt) / 1000) : 0) + ' s (shown ' + diag.shows + 'x, hidden ' + diag.hides + 'x). document.hidden=' + (typeof document !== 'undefined' ? document.hidden : '?') + ', visibility=' + (typeof document !== 'undefined' ? document.visibilityState : '?'),
+        'draws: ' + diag.draws + ' (timer ' + diag.counts.timer + ', frame ' + diag.counts.frame + ', click ' + diag.counts.click + ', manual ' + diag.counts.manual + ', show ' + diag.counts.show + ', action ' + diag.counts.action + '); errors ' + diag.errors,
+        'draw time: avg ' + (diag.draws ? (diag.msSum / diag.draws).toFixed(1) : '0') + ' ms, max ' + diag.msMax + ' ms; longest gap between draws ' + diag.gapMax + ' ms; last draw ' + (lastDrawAt ? ((now - lastDrawAt) / 1000).toFixed(1) + ' s ago' : 'never'),
+        'redraw timer: ' + diag.timerTicks + ' ticks (longest gap ' + diag.timerGapMax + ' ms); frame hook calls ' + diag.frameCalls + '; page clicks ' + diag.clicks + '; canvas mouse events ' + diag.mouse,
+        'draws where the plot inputs changed: ' + diag.inChanged + ' of ' + diag.draws + '; where the canvas pixels changed: ' + diag.pxChanged + ' of ' + diag.draws,
+        'canvas ' + canvas.width + 'x' + canvas.height + ', shown ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' at (' + Math.round(r.left) + ', ' + Math.round(r.top) + ')',
+        'own ' + (o ? o.lat.toFixed(6) + ', ' + o.lon.toFixed(6) + ', hdg ' + Math.round(o.hdgDeg) : 'unknown') + '; contacts ' + cs.length + '; traffic replies ' + T.calls + ', last reply ' + (T.lastAt ? ((now - T.lastAt) / 1000).toFixed(1) + ' s ago' : 'never') + (T.error ? ', error: ' + T.error : ''),
+        'airport ' + (PS.state.taxi ? PS.state.taxi.icao + ' (' + PS.state.taxi.items.length + ' items)' : 'not loaded') + '; suggestions ' + sug.list.length + '; pins ' + PS.state.pins.length,
+        'recent draws, newest last (+seconds since page opened):'
+      ];
+      diag.ring.slice(-25).forEach(function (d) {
+        lines.push('  +' + ((d.t - diag.shownAt) / 1000).toFixed(1) + 's ' + d.src + ' gap ' + d.gap + ' ms, ' + d.ms + ' ms, inputs ' + (d.inC ? 'Y' : '-') + ' pixels ' + (d.pxC ? 'Y' : '-') + ' contacts ' + d.n + ' replies ' + d.replies + ' hdg ' + Math.round(d.hdg) + (d.err ? ' ERROR ' + d.err : ''));
+      });
+      return lines.join('\n');
+    }
+    // Watchdog: independent of the redraw trigger, it reports every 5 s how many draws happened, and says so loudly when none did.
+    function diagTick() {
+      diagBox.textContent = diagText();
+      var every = 5;
+      diag.watch = (diag.watch || 0) + 1;
+      if (diag.watch % every !== 0) return;
+      var since = diag.draws - diag.lastSummaryDraws; diag.lastSummaryDraws = diag.draws; diag.summaries++;
+      log('refresh summary: ' + since + ' draw(s) in the last ' + every + ' s' + (since === 0 ? ' - NO REDRAWS' : '') + ' (timer ' + diag.counts.timer + ' frame ' + diag.counts.frame + ' click ' + diag.counts.click + ' total); redraw timer ticks ' + diag.timerTicks + ', frame hook calls ' + diag.frameCalls +
+        ', inputs changed ' + diag.inChanged + '/' + diag.draws + ', pixels changed ' + diag.pxChanged + '/' + diag.draws + ', traffic replies ' + PS.airTraffic.calls + ', errors ' + diag.errors + ', hidden=' + (typeof document !== 'undefined' ? document.hidden : '?'));
     }
     function drawPlot() {
       var g = canvas.getContext && canvas.getContext('2d');
@@ -469,10 +535,16 @@ PS.pages.push({
     var el = h('div', { class: 'ps-page' },
       ui.panel('Plot (runways, taxiways, AI aircraft, pins and suggested pushes; no imagery)',
         h('div', { class: 'ps-row' }, ui.field('Range', plotRange.el), pinModeBtn,
-          ui.button('Undo pin', undoPin, 'ps-ghost'), ui.button('Clear pins', clearPins, 'ps-ghost'), ui.button('Refresh', function () { draw(); }, 'ps-ghost')),
+          ui.button('Undo pin', undoPin, 'ps-ghost'), ui.button('Clear pins', clearPins, 'ps-ghost'), ui.button('Refresh', function () { draw('manual'); }, 'ps-ghost')),
         canvas, infoLine, contactLine,
         ui.note('North is up, centred on the aircraft. Pin mode on: tap to drop pins, drag a pin to move it. Pin mode off: tap an aircraft to read its details. Orange = taxiway, grey-blue = runway, red = AI aircraft, teal = suggested push end points, white = your pins.')),
       ui.panel('Pins', pinList),
+      ui.panel('Refresh diagnostics (send these back if the plot does not refresh)', diagBox,
+        h('div', { class: 'ps-row' }, ui.button('Copy diagnostics', function () {
+          var text = diagText(), ok = PS.ui.copyText(text);
+          log(ok ? 'diagnostics copied' : 'clipboard copy not available; showing text');
+          if (!ok) PS.ui.showText(text, 'Map diagnostics (select all and copy)');
+        }, 'ps-small'))),
       ui.panel('Suggested pushes', sugBox,
         ui.note('Simplified port of the original suggester: straight back to the nearest taxiways, links and lanes, and back then along a taxiway either way. It does not yet check whether the tug can make the turn the way the original planner does, so treat sharp-turn options with care.')),
       ui.panel('Built-in map (kept for reference; not very useful)',
@@ -482,23 +554,33 @@ PS.pages.push({
         ui.note('Looking for: whether the sim\'s own map can be shown in an EFB app, and whether we can draw taxiways, pins and the aircraft on top of it. Not mounted automatically any more; press Mount.')),
       ui.panel('Log', ui.logBox(['map', 'traffic']))
     );
-    el.addEventListener('click', function () { setTimeout(draw, 0); setTimeout(draw, 400); });
-    var frameHook = function () { if (Date.now() - lastDrawAt > 450) draw(); };
+    el.addEventListener('click', function () { diag.clicks++; setTimeout(function () { draw('click'); }, 0); setTimeout(function () { draw('click'); }, 400); });
+    canvas.addEventListener('mousedown', function () { diag.mouse++; });
+    var frameHook = function () { diag.frameCalls++; if (Date.now() - lastDrawAt > 450) draw('frame'); };
     return {
       el: el,
+      snapshot: function () { return diagText(); },
       onShow: function () {
         // Redraw triggers: the interval (started first, so a failing first draw cannot stop it), the EFB's per-frame update, and any click.
         if (timer !== null) clearInterval(timer);
-        timer = setInterval(draw, 500);
+        timer = setInterval(function () {
+          var n = Date.now(); diag.timerTicks++;
+          if (diag.timerLast) { var gp = n - diag.timerLast; if (gp > diag.timerGapMax) diag.timerGapMax = gp; }
+          diag.timerLast = n; draw('timer');
+        }, 500);
+        diag.shownAt = Date.now(); diag.shows++; diag.watch = 0;
+        if (diagTimer !== null) clearInterval(diagTimer);
+        diagTimer = setInterval(diagTick, 1000);
+        log('map page shown: canvas ' + canvas.width + 'x' + canvas.height + ', document.hidden=' + (typeof document !== 'undefined' ? document.hidden : '?') + ', setInterval=' + typeof setInterval + ', requestAnimationFrame=' + typeof requestAnimationFrame);
         if (PS.frameHooks.indexOf(frameHook) < 0) PS.frameHooks.push(frameHook);
         renderPins(); renderSuggestions();
-        draw();
+        draw('show');
         if (!PS.state.taxi && !airportLoading) {
           airportLoading = true;
           PS.facility.loadNearestIntoState().then(null, function (e) { log('could not load airport data: ' + PS.errText(e)); });
         }
       },
-      onHide: function () { var fi = PS.frameHooks.indexOf(frameHook); if (fi >= 0) PS.frameHooks.splice(fi, 1); if (timer !== null) { clearInterval(timer); timer = null; } if (bingTimer !== null) { clearInterval(bingTimer); bingTimer = null; } drag = null; }
+      onHide: function () { diag.hides++; log('map page hidden after ' + diag.draws + ' draw(s)'); if (diagTimer !== null) { clearInterval(diagTimer); diagTimer = null; } var fi = PS.frameHooks.indexOf(frameHook); if (fi >= 0) PS.frameHooks.splice(fi, 1); if (timer !== null) { clearInterval(timer); timer = null; } if (bingTimer !== null) { clearInterval(bingTimer); bingTimer = null; } drag = null; }
     };
   }
 });

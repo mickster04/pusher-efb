@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
+import { scenarios } from './tools/suggest-scenarios.mjs';
 const require = createRequire(import.meta.url);
 const PS = require('../PackageSources/PusherSpikes/PusherSpikes.js');
 const G = PS.geo;
@@ -61,54 +63,86 @@ test('routeLegs measures legs and the total', () => {
   assert.ok(Math.abs(r.totalM - 150) < 1);
 });
 
-test('suggest: straight back to the taxiway keeps the nose, and along options run both ways', () => {
+test('suggest: straight back keeps the nose, and the planner turns the along options', () => {
   const list = PS.suggest.suggest(taxiwayA(), own);
   assert.ok(list.length >= 3, 'got ' + list.length);
-  const back = list.find((s) => s.id.indexOf('back-') === 0);
+  const back = list.find((s) => s.title === 'Straight back to taxiway A');
   assert.ok(back, 'straight back option');
+  assert.equal(list[0].id, back.id, 'straight back is offered first');
   assert.ok(Math.abs(back.lengthM - 60) < 1, 'straight back is 60 m, got ' + back.lengthM);
   assert.equal(Math.round(back.facingDeg), 0);
-  assert.equal(back.route.length, 2);
-  // the first suggestion is the straight back one
-  assert.equal(list[0].id, back.id);
-  const along = list.filter((s) => s.id.indexOf('along-') === 0);
-  assert.ok(along.length >= 2, 'along options');
-  // pushing back then east along the taxiway: the nose ends pointing west (reversing east); the other way, east
-  const facings = along.map((s) => Math.round(s.facingDeg));
-  assert.ok(facings.indexOf(270) >= 0 && facings.indexOf(90) >= 0, 'both directions offered, got ' + facings.join(','));
-  // route is the aircraft, the junction, then the pins
-  along.forEach((s) => { assert.equal(s.route.length, 2 + s.pins.length); assert.ok(s.lengthM > 60); });
+  assert.equal(back.warning, null);
+  // back then along: the planned line leaves the aircraft, and ends facing along the taxiway either way
+  const east = list.find((s) => s.title === 'Taxiway A, facing east'), west = list.find((s) => s.title === 'Taxiway A, facing west');
+  assert.ok(east && west, 'both directions along the taxiway are offered');
+  [east, west].forEach((s) => { assert.equal(s.warning, null); assert.ok(s.waypoints.length >= 1 && s.route.length > 2); });
+  assert.ok(Math.abs(east.facingDeg - 90) < 8 && Math.abs(west.facingDeg - 270) < 8, 'nose ends along the taxiway: ' + east.facingDeg + ' / ' + west.facingDeg);
 });
 
-test('suggest: nothing without named taxiway data or a position', () => {
+test('suggest: nothing without taxi data, a position, or inside reach', () => {
   assert.deepEqual(PS.suggest.suggest([], own), []);
   assert.deepEqual(PS.suggest.suggest(taxiwayA(), null), []);
-  // runways, parking connectors and paint are ignored
-  const junk = [{ name: 'A', rawName: 'A', category: 'Taxiway', rawType: 2, points: taxiwayA()[0].points }, { name: '', rawName: '', category: 'Parking connector', rawType: 3, points: taxiwayA()[1].points }];
+  const junk = [{ name: 'A', rawName: 'A', category: 'Taxiway', rawType: 2, points: taxiwayA()[0].points }];   // a runway-type path
   assert.deepEqual(PS.suggest.suggest(junk, own), []);
-});
-
-test('suggest: a taxiway beyond reach is not offered', () => {
   const far = taxiwayA().map((it) => ({ ...it, points: it.points.map((p) => G.offset(p[0], p[1], 180, 400)) }));
   assert.deepEqual(PS.suggest.suggest(far, own), []);
 });
 
-test('suggest: a taxiway running along the push line (a sharp turn) offers no along option that way', () => {
-  // a taxiway running north-south through the aircraft's tail axis, 40 m south: pushing back then north reverses direction
-  const items = [{ name: 'B', rawName: 'B', category: 'Taxiway', rawType: 1, points: [G.offset(ref.lat, ref.lon, 180, 40), G.offset(ref.lat, ref.lon, 180, 200)] }];
-  const list = PS.suggest.suggest(items, own);
-  // parallel to the tail axis: no intersection, so no options at all
-  assert.equal(list.length, 0);
+test('suggest: matches the original app (taxiSuggest.ts) on the recorded scenarios', () => {
+  const golden = JSON.parse(readFileSync(new URL('./fixtures/suggest-golden.json', import.meta.url), 'utf8'));
+  // Scenarios where the original and the port pick different but equally good end points (a tie that float noise decides); only the count is compared.
+  const knownTies = ['connector@180'];
+  const sc = scenarios(G);
+  let checked = 0;
+  for (const [name, mk] of Object.entries(sc.layouts)) {
+    for (const hdg of sc.headings) {
+      const key = name + '@' + hdg;
+      const gotList = PS.suggest.suggestPushbacks(mk(), { lat: sc.ref[0], lon: sc.ref[1], hdgDeg: hdg });
+      const got = gotList.map((s) => s.title).sort();
+      const want = golden[key].map((s) => s.title).sort();
+      if (knownTies.indexOf(key) >= 0) { assert.equal(got.length, want.length, key + ' count'); continue; }
+      assert.deepEqual(got, want, key);
+      // The same options, so the pin counts agree within one (an end point tie can differ by a turnaround or bend pin).
+      golden[key].forEach((w) => {
+        const g = gotList.find((x) => x.title === w.title);
+        assert.ok(Math.abs(g.waypoints.length - w.pins) <= 1, key + ' ' + w.title + ': ' + g.waypoints.length + ' vs ' + w.pins + ' pins');
+      });
+      checked++;
+    }
+  }
+  assert.ok(checked >= 28, 'checked ' + checked);
+});
+
+test('planner: a straight push has no warning, a hairpin gets a turnaround pin or a warning', () => {
+  const P = PS.planner;
+  const origin = { lat: ref.lat, lon: ref.lon, hdgDeg: 0 };
+  const back = G.offset(ref.lat, ref.lon, 180, 80);
+  const straight = P.plannedRouteSegments(origin, [{ lat: back[0], lon: back[1], headingDeg: 0, headingUser: false, drive: 'auto' }]);
+  assert.equal(straight.length, 1);
+  assert.equal(straight[0].sign, -1, 'pushing back');
+  assert.ok(Math.abs(P.pathLengthM(straight[0].points) - 80) < 1);
+  assert.equal(P.segmentWarning(straight[0]), null);
+  // a pin just beside the aircraft needs a turn tighter than the tug's radius
+  const beside = G.offset(ref.lat, ref.lon, 90, 12);
+  const tight = P.plannedRouteSegments(origin, [{ lat: beside[0], lon: beside[1], headingDeg: 180, headingUser: true, drive: 'auto' }]);
+  assert.ok(tight.some((g) => P.segmentWarning(g) !== null) || tight.length > 1, 'a hairpin warns or is split into legs');
+});
+
+test('planner: fillet arcs respect the turn radius', () => {
+  const P = PS.planner;
+  const a = [ref.lat, ref.lon], b = G.offset(a[0], a[1], 0, 100), c = G.offset(b[0], b[1], 90, 100);
+  const stats = { minRadiusM: P.PATH_TURN_RADIUS_M };
+  const out = P.filletPath([a, b, c], P.PATH_TURN_RADIUS_M, stats);
+  assert.ok(out.length > 3, 'the corner is rounded');
+  assert.ok(Math.abs(stats.minRadiusM - P.PATH_TURN_RADIUS_M) < 0.5, 'radius ' + stats.minRadiusM);
+  assert.ok(P.pathLengthM(out) < 200, 'rounded path is shorter than the two legs');
 });
 
 test('taxi extract keeps the raw type and name that the suggester needs', () => {
   const raw = { paths: [{ name: 'A', type: 1, widthM: 23, points: [[-43.49, 172.53], [-43.4901, 172.5301]] }, { name: '', type: 4, widthM: 15, points: [[-43.49, 172.53], [-43.4902, 172.5302]] }] };
   const ex = PS.taxi.extract(raw);
-  const named = ex.items.find((i) => i.rawName === 'A');
-  assert.equal(named.rawType, 1);
+  assert.equal(ex.items.find((i) => i.rawName === 'A').rawType, 1);
   const lane = ex.items.find((i) => i.rawType === 4);
   assert.equal(lane.rawName, '');
-  // and the suggester treats the unnamed type-4 stretch as a lane
-  const list = PS.suggest.suggest(ex.items, { lat: -43.4905, lon: 172.5295, hdgDeg: 45 });
-  assert.ok(Array.isArray(list));
+  assert.ok(Array.isArray(PS.suggest.suggest(ex.items, { lat: -43.4905, lon: 172.5295, hdgDeg: 45 })));
 });
