@@ -1,3 +1,5 @@
+> **Superseded.** The spike pages described here are on the `spikes-app` branch. `master` now has the Plan tab (and the Push tab is next); see the README and `docs/implementation/app-design.md`. The findings below are still the record of what the sim does.
+
 # Spike app design
 
 A single EFB app, internal name `PusherSpikes`, whose pages are the feasibility spikes from `docs/efb-requirements.md`. Its job is to give answers from inside the sim, not to be the product. When a spike is settled, record the result in the table at the end of this file.

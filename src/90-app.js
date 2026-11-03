@@ -109,7 +109,7 @@ PS.buildShell = function (root) {
   root.appendChild(h('div', { class: 'ps-app' },
     h('div', { class: 'ps-header' },
       PS.ui.button('Copy all logs', copyAll, 'ps-headbtn'),
-      h('span', { class: 'ps-title', text: PS.APP_NAME }), h('span', { class: 'ps-sub', text: 'feasibility spikes for the Pusher EFB port' })),
+      h('span', { class: 'ps-title', text: PS.APP_NAME }), h('span', { class: 'ps-sub', text: 'pushback planner' })),
     nav, toastHost, body, footer));
 
   showPage(PS.pages[0].id);

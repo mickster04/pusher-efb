@@ -1992,546 +1992,111 @@ PS.suggest = (function () {
     isTaxiwayPath: isTaxiwayPath, isLanePath: isLanePath };
 })();
 
-/* ---- 10-page-telemetry.js ---- */
-// Spike 1: which variables can an EFB app read, how fast, and does anything keep ticking while hidden?
+/* ---- 08-plan.js ---- */
+// The push plan: the pins the pushback will follow, and what the planner makes of them. Pure logic (no DOM), shared by the Plan tab and,
+// later, the Push tab, which drives the route this module evaluates.
+//
+// Pins are waypoints in the original app's shape: { id, label, lat, lon, seq, terminal, headingDeg, headingUser, drive, leadInM }.
+// A pin's heading is Auto (headingDeg null: the planner works out the nose it ends with) until you rotate it with its handle (headingUser
+// true: the route then arrives along that heading, with a turnaround pin added by the planner if one leg cannot do it).
 
-PS.pages.push({
-  id: 'telemetry',
-  title: '1 Telemetry',
-  create: function (ctx) {
-    var ui = PS.ui, h = PS.h;
-    var vars = PS.DEFAULT_VARS.map(function (v) { return { group: v.group, name: v.name, unit: v.unit, custom: false }; });
-    var timer = null;
-    var rateMs = 250;
-    var cycles = 0;
-    var lastCycleMs = 0;
-    var cells = [];
+PS.plan = (function () {
+  var P = PS.planner, G = PS.geo;
+  var pins = [];
+  var selected = -1;
+  var seq = 0;
+  var cache = { key: '', value: null };
 
-    // ---- status / heartbeat ----
-    var envLine = h('div', { class: 'ps-kv' });
-    var hbLine = h('div', { class: 'ps-kv' });
-    var cycleLine = h('div', { class: 'ps-kv' });
-
-    function paintStatus() {
-      var env = PS.env();
-      PS.clear(envLine);
-      ['simVar', 'coherent', 'efb', 'sdk', 'notificationManager'].forEach(function (k) {
-        envLine.appendChild(h('span', { class: 'ps-pill ' + (env[k] ? 'ok' : 'bad'), text: k + ': ' + (env[k] ? 'yes' : 'no') }));
-      });
-      var hb = PS.hb;
-      var up = (Date.now() - hb.startedAt) / 1000;
-      var parts = [
-        'own timer ticks: ' + hb.ticks + ' (expected about ' + Math.floor(up / 0.5) + ')',
-        'EFB onUpdate frames: ' + hb.frames,
-        'browser animation frames: ' + hb.raf,
-        'largest timer gap: ' + hb.maxGapMs + ' ms',
-        'app state: ' + (hb.paused ? 'PAUSED (hidden)' : 'visible')
-      ];
-      if (hb.lastPause) {
-        parts.push('last hidden period: ' + Math.round(hb.lastPause.ms / 1000) + ' s, ' + hb.lastPause.ticks +
-          ' timer ticks, ' + hb.lastPause.frames + ' onUpdate frames and ' + hb.lastPause.raf + ' animation frames while hidden');
-      }
-      var hookNames = Object.keys(hb.hooks);
-      parts.push('EFB hooks called: ' + (hookNames.length ? hookNames.map(function (n) { return n + ' x' + hb.hooks[n]; }).join(', ') : 'none yet'));
-      hbLine.textContent = parts.join('   |   ');
-      cycleLine.textContent = 'read cycles: ' + cycles + '   |   last cycle: ' + vars.length + ' vars in ' + PS.fmt.num(lastCycleMs, 1) + ' ms   |   poll every ' + rateMs + ' ms';
-    }
-
-    // ---- variable table ----
-    var tbl = ui.table(['Group', 'Variable', 'Unit', 'Value', '']);
-    function buildRows() {
-      PS.clear(tbl.body);
-      cells = [];
-      vars.forEach(function (v, i) {
-        var valueCell = h('td', { class: 'ps-val' });
-        var del = v.custom ? ui.button('x', function () { vars.splice(i, 1); buildRows(); }, 'ps-small') : null;
-        tbl.body.appendChild(h('tr', null,
-          h('td', { text: v.group }), h('td', { class: 'ps-mono', text: v.name }), h('td', { text: v.unit }), valueCell, h('td', null, del)));
-        cells.push(valueCell);
-      });
-    }
-    function cycle() {
-      var t0 = Date.now();
-      for (var i = 0; i < vars.length; i++) {
-        var r = PS.getVar(vars[i].name, vars[i].unit);
-        var cell = cells[i];
-        if (!cell) continue;
-        if (r.ok) { cell.textContent = PS.fmt.value(r.value); cell.className = 'ps-val'; }
-        else { cell.textContent = 'ERR ' + r.error; cell.className = 'ps-val bad'; }
-      }
-      lastCycleMs = Date.now() - t0;
-      cycles++;
-      paintStatus();
-    }
-    function start() {
-      if (timer !== null) clearInterval(timer);
-      timer = setInterval(cycle, rateMs);
-    }
-    function stop() { if (timer !== null) { clearInterval(timer); timer = null; } }
-
-    // ---- input row ----
-    var nameIn = ui.input('PLANE HEADING DEGREES MAGNETIC', { placeholder: 'Variable, e.g. A:... or L:... or K:... event' });
-    var unitIn = ui.input('degrees', { placeholder: 'Unit' });
-    var valueIn = ui.input('0', { placeholder: 'Value to set' });
-    var methodSel = ui.select([{ value: 'simvar', label: 'K: via SimVar' }, { value: 'coherent', label: 'TRIGGER_KEY_EVENT' }], 'simvar');
-    var result = h('div', { class: 'ps-result', text: 'Enter a variable and press a button.' });
-
-    function say(text, bad) { result.textContent = text; result.className = 'ps-result' + (bad ? ' bad' : ' ok'); PS.log('telemetry', text); }
-    function parseValue() {
-      var raw = valueIn.value;
-      var n = Number(raw);
-      return raw !== '' && isFinite(n) ? n : raw;
-    }
-
-    var input = ui.panel('Test a variable',
-      h('div', { class: 'ps-row' }, ui.field('Name', nameIn), ui.field('Unit', unitIn), ui.field('Value', valueIn), ui.field('Key event method', methodSel.el || methodSel)),
-      h('div', { class: 'ps-row' },
-        ui.button('Read once', function () {
-          var r = PS.getVar(nameIn.value, unitIn.value);
-          say(r.ok ? nameIn.value + ' [' + unitIn.value + '] = ' + PS.fmt.value(r.value) : 'read failed: ' + r.error, !r.ok);
-        }),
-        ui.button('Add to table', function () {
-          vars.push({ group: 'Custom', name: nameIn.value, unit: unitIn.value, custom: true });
-          buildRows(); say('added ' + nameIn.value);
-        }),
-        ui.button('Set value (SetSimVarValue)', function () {
-          var before = PS.getVar(nameIn.value, unitIn.value);
-          var r = PS.setVar(nameIn.value, unitIn.value, parseValue());
-          if (!r.ok) { say('set failed: ' + r.error, true); return; }
-          setTimeout(function () {
-            var after = PS.getVar(nameIn.value, unitIn.value);
-            var changed = before.ok && after.ok && before.value !== after.value;
-            say('set ' + nameIn.value + ' = ' + parseValue() + ' sent. Before: ' + (before.ok ? PS.fmt.value(before.value) : 'n/a') +
-              ', after: ' + (after.ok ? PS.fmt.value(after.value) : 'n/a') + (changed ? ' (changed)' : ' (unchanged: not writable, or applied later)'), !changed);
-          }, 300);
-        }, 'ps-warn'),
-        ui.button('Send as key event', function () {
-          var key = nameIn.value.replace(/^K:/, '');
-          var r = PS.keyEvent(key, parseValue(), methodSel.value);
-          say(r.ok ? 'key event ' + key + ' (' + methodSel.value + ') sent with ' + parseValue() : 'key event failed: ' + r.error, !r.ok);
-        }, 'ps-warn')
-      ),
-      result,
-      ui.note('Set value and key events change the sim. A silent no-change after Set usually means the variable is read-only from JS.')
-    );
-
-    var rateSel = ui.select([{ value: '100', label: '100 ms' }, { value: '250', label: '250 ms' }, { value: '500', label: '500 ms' }, { value: '1000', label: '1 s' }], '250',
-      function () { rateMs = Number(rateSel.value); if (timer !== null) start(); });
-
-    var el = h('div', { class: 'ps-page' },
-      ui.panel('Environment and tick behaviour', envLine, hbLine, cycleLine,
-        h('div', { class: 'ps-row' }, ui.field('Poll interval', rateSel)),
-        ui.note('To test ticking while hidden: leave this page open, switch to another EFB app for 30 s, come back, and read "last hidden period".')),
-      input,
-      ui.panel('Polled variables', tbl.el),
-      ui.panel('Log', ui.logBox(['telemetry', 'heartbeat']))
-    );
-
-    buildRows();
-    paintStatus();
-    return {
-      el: el,
-      snapshot: function () {
-        return vars.map(function (v, i) { return v.name + ' [' + v.unit + '] = ' + (cells[i] ? cells[i].textContent : ''); }).join('\n');
-      },
-      onShow: function () { cycle(); start(); },
-      onHide: function () { stop(); }
-    };
+  function newId() { seq++; return 'pin-' + Date.now() + '-' + seq; }
+  function copyPin(w) {
+    return { id: w.id || newId(), label: w.label || '', lat: w.lat, lon: w.lon, seq: 0, terminal: false,
+      headingDeg: w.headingUser && w.headingDeg !== undefined ? w.headingDeg : null, headingUser: !!w.headingUser, drive: w.drive || 'auto',
+      leadInM: w.leadInM !== undefined ? w.leadInM : undefined };
   }
-});
-
-/* ---- 20-page-tug.js ---- */
-// Spike 2: can the tug be driven from JS? Per-tick writes of PUSHBACK WAIT / VELOCITY BODY Z / ROTATION VELOCITY BODY Y
-// (what the original app does). Moves the aircraft: hard run-time limit, stops on hide, pause and close.
-// Steering by the KEY_TUG_HEADING event is offered alongside, because turning by rotation write was not working.
-
-PS.TUG = {
-  HEADING_UNITS_PER_DEG: 11930465,   // KEY_TUG_HEADING value = this * degrees, as 32-bit unsigned
-  ROT_SCALE: 0.002                   // original app: commanded rotation * 0.002 into ROTATION VELOCITY BODY Y
-};
-
-// Turn rate to the value written to ROTATION VELOCITY BODY Y. The original app writes a yaw rate in rad/s
-// (rotation x 0.002 x tug speed units, which is about 0.05 rad/s = 2.9 deg/s at rotation 1 and cruise speed).
-PS.tugRotValue = function (turnDegPerSec, unit) {
-  return unit === 'degrees per second' ? turnDegPerSec : turnDegPerSec * Math.PI / 180;
-};
-
-PS.tugHeadingValue = function (deg) {
-  var d = PS.geo.normDeg(deg);
-  return Math.round(PS.TUG.HEADING_UNITS_PER_DEG * d) % 4294967296;
-};
-
-// Ramp limits for the live drive (the original ramps speed to cruise in about 0.35 s and eases the turn in).
-var SPEED_RAMP = 14;   // ft/s per second
-var TURN_RAMP = 5;     // deg/s per second
-function approach(cur, target, maxStep) {
-  if (cur < target) return Math.min(target, cur + maxStep);
-  if (cur > target) return Math.max(target, cur - maxStep);
-  return cur;
-}
-
-PS.pages.push({
-  id: 'tug',
-  title: '2 Tug',
-  create: function (ctx) {
-    var ui = PS.ui, h = PS.h;
-    var drive = null;      // { timer, startedAt, maxMs, writes, failures, dts[], lastTick, lastError }
-    var readTimer = null;
-
-    // ---- live readouts ----
-    var readVars = [
-      ['PUSHBACK ATTACHED', 'bool'], ['PUSHBACK STATE', 'enum'], ['PUSHBACK WAIT', 'bool'],
-      ['BRAKE PARKING POSITION', 'percent over 100'], ['SIM ON GROUND', 'bool'],
-      ['GROUND VELOCITY', 'knots'], ['PLANE HEADING DEGREES TRUE', 'degrees'],
-      ['VELOCITY BODY Z', 'feet per second'], ['ROTATION VELOCITY BODY Y', 'feet per second']
-    ];
-    var readCells = {};
-    var readTable = ui.table(['Variable', 'Value']);
-    readVars.forEach(function (v) {
-      var c = h('td', { class: 'ps-val' });
-      readCells[v[0]] = c;
-      readTable.body.appendChild(h('tr', null, h('td', { class: 'ps-mono', text: v[0] }), c));
+  // The last pin is the end pin. Labels follow position unless the pin carries a name of its own.
+  function relabel() {
+    pins.forEach(function (w, i) {
+      w.seq = i;
+      w.terminal = i === pins.length - 1;
+      if (!w.custom) w.label = w.terminal ? 'End position' : 'Pin ' + (i + 1);
+      if (!w.headingUser) w.headingDeg = null;
     });
-    function refreshReadouts() {
-      if (typeof paintAttached === 'function') paintAttached();
-      readVars.forEach(function (v) {
-        var r = PS.getVar(v[0], v[1]);
-        var c = readCells[v[0]];
-        c.textContent = r.ok ? PS.fmt.value(r.value) : 'ERR ' + r.error;
-        c.className = 'ps-val' + (r.ok ? '' : ' bad');
+  }
+  function changed() { cache.key = ''; cache.value = null; }
+
+  function add(lat, lon) {
+    pins.push({ id: newId(), label: '', lat: lat, lon: lon, seq: 0, terminal: false, headingDeg: null, headingUser: false, drive: 'auto' });
+    relabel(); changed();
+    selected = pins.length - 1;
+    return selected;
+  }
+  function move(i, lat, lon) { if (!pins[i]) return; pins[i].lat = lat; pins[i].lon = lon; changed(); }
+  function remove(i) {
+    if (!pins[i]) return;
+    pins.splice(i, 1);
+    relabel(); changed();
+    selected = selected === i ? -1 : (selected > i ? selected - 1 : selected);
+  }
+  function clear() { pins.length = 0; selected = -1; changed(); }
+  function setHeading(i, deg) { if (!pins[i]) return; pins[i].headingDeg = Math.round(G.normDeg(deg)); pins[i].headingUser = true; changed(); }
+  function resetHeading(i) { if (!pins[i]) return; pins[i].headingDeg = null; pins[i].headingUser = false; pins[i].leadInM = undefined; changed(); }
+  // Replace the plan (for example with a suggestion's waypoints). Pins the planner added itself (turnaround pins) are dropped: it adds them again.
+  function setAll(waypoints) {
+    pins.length = 0;
+    waypoints.forEach(function (w) { if (w.label !== P.TURNAROUND_PIN_LABEL) pins.push(copyPin(w)); });
+    relabel(); changed();
+    selected = -1;
+  }
+  function select(i) { selected = i >= -1 && i < pins.length ? i : -1; }
+
+  // The heading (degrees) a drag of the heading handle means: the handle sits behind the tail, so the nose points from the handle through
+  // the pin. Screen coordinates (y grows downward).
+  function headingFromHandle(pinX, pinY, handleX, handleY) {
+    return G.normDeg(G.deg(Math.atan2(pinX - handleX, -(pinY - handleY))));
+  }
+
+  // The planned route for the pins, from the aircraft. origin: { lat, lon, hdgDeg }.
+  // Returns { empty, waypoints (with any turnaround pin), segments, route ([[lat, lon], ...] from the aircraft), items, legs, totalM, warnings, turnaroundAdded, info }
+  // items: one per effective waypoint { wp, userIndex (-1 for a planner-added pin), headingDeg (the nose there), turnaround }.
+  function evaluate(origin) {
+    var key = JSON.stringify([pins.map(function (w) { return [w.id, w.lat, w.lon, w.headingDeg, w.headingUser, w.leadInM]; }),
+      origin.lat.toFixed(6), origin.lon.toFixed(6), Math.round(origin.hdgDeg)]);
+    if (cache.key === key && cache.value) return cache.value;
+    var res = { empty: pins.length === 0, waypoints: [], segments: [], route: [[origin.lat, origin.lon]], items: [], legs: [], totalM: 0, warnings: [], turnaroundAdded: false, info: '' };
+    if (pins.length) {
+      var o = { lat: origin.lat, lon: origin.lon, hdgDeg: origin.hdgDeg };
+      var r = P.withTurnaroundPin(o, P.ensureTerminal(pins));
+      res.waypoints = r.waypoints; res.turnaroundAdded = r.added; res.info = r.info;
+      res.segments = P.plannedRouteSegments(o, r.waypoints);
+      var headings = P.plannedPinHeadings(res.segments, r.waypoints);
+      res.items = r.waypoints.map(function (w, idx) {
+        var ui = -1;
+        for (var k = 0; k < pins.length; k++) { if (pins[k].id === w.id) { ui = k; break; } }
+        return { wp: w, userIndex: ui, headingDeg: w.headingUser && w.headingDeg !== null && w.headingDeg !== undefined ? w.headingDeg : headings[idx], turnaround: w.label === P.TURNAROUND_PIN_LABEL };
+      });
+      res.segments.forEach(function (g, n) {
+        var len = P.pathLengthM(g.points), warn = P.segmentWarning(g);
+        res.legs.push({ sign: g.sign, lengthM: len, endHdgDeg: g.endHdgDeg, warning: warn, pinIdx: g.pinIdx });
+        res.totalM += len;
+        if (warn) res.warnings.push('Leg ' + (n + 1) + ': ' + warn);
+        g.points.forEach(function (pt, i) { if (!(i === 0 && res.route.length > 1)) res.route.push(pt); });
       });
     }
-
-    // ---- shared controls ----
-    // Toggle buttons rather than <select>: the sim's dropdown could not be changed in the EFB.
-    var methodTog = ui.toggle([{ value: 'simvar', label: 'K: via SimVar' }, { value: 'coherent', label: 'TRIGGER_KEY_EVENT' }], 'simvar');
-    var attachedPill = h('span', { class: 'ps-pill bad', text: 'TUG NOT ATTACHED' });
-    function say(text, bad) { PS.log('tug', text); return bad; }
-    function key(name, value) {
-      var r = PS.keyEvent(name, value, methodTog.get());
-      say('key ' + name + '=' + value + ' via ' + methodTog.get() + ': ' + (r.ok ? 'sent' : 'FAILED ' + r.error));
-      return r;
-    }
-    function setWait(on) {
-      if (!on) stopHoldGuard();
-      var r = PS.setVar('PUSHBACK WAIT', 'bool', on ? 1 : 0);
-      say('PUSHBACK WAIT=' + (on ? 1 : 0) + ': ' + (r.ok ? 'sent' : 'FAILED ' + r.error));
-      return r;
-    }
-    function isAttached() {
-      var r = PS.getVar('PUSHBACK ATTACHED', 'bool');
-      return r.ok && Number(r.value) > 0;
-    }
-    function paintAttached() {
-      var a = isAttached();
-      attachedPill.className = 'ps-pill ' + (a ? 'ok' : 'bad');
-      attachedPill.textContent = a ? 'TUG ATTACHED' : 'TUG NOT ATTACHED';
-      return a;
-    }
-    // The original app's sequence: hold the tug (WAIT on), send TOGGLE_PUSHBACK, then wait for PUSHBACK ATTACHED.
-    var attachTimer = null;
-    function attachTug() {
-      if (attachTimer !== null) { clearInterval(attachTimer); attachTimer = null; }
-      if (isAttached()) { say('tug is already attached'); paintAttached(); return; }
-      setWait(true);
-      key('TOGGLE_PUSHBACK', 1);
-      var t0 = Date.now();
-      say('waiting for PUSHBACK ATTACHED (up to 15 s)...');
-      attachTimer = setInterval(function () {
-        if (paintAttached()) {
-          say('tug attached after ' + (Date.now() - t0) + ' ms');
-          clearInterval(attachTimer); attachTimer = null;
-        } else if (Date.now() - t0 > 15000) {
-          say('PUSHBACK ATTACHED never became true in 15 s (the aircraft may use its own pushback system)', true);
-          clearInterval(attachTimer); attachTimer = null;
-        }
-      }, 250);
-    }
-    function detachTug() {
-      if (!isAttached()) { say('no tug attached to detach'); return; }
-      stopHoldGuard();
-      if (drive) stopDrive('detach', true);
-      key('TOGGLE_PUSHBACK', 1);
-      say('detach requested');
-    }
-    var shared = ui.panel('Tug',
-      h('div', { class: 'ps-row' }, attachedPill),
-      h('div', { class: 'ps-row' },
-        ui.button('Attach tug (original sequence)', attachTug),
-        ui.button('Detach tug', detachTug, 'ps-ghost'),
-        ui.button('Hold tug (WAIT on)', function () { setWait(true); }),
-        ui.button('Go (WAIT off)', function () { setWait(false); }),
-        ui.field('Key event method', methodTog.el)
-      ),
-      ui.note('Attach the tug first. Without a tug, writing velocity just shoves a free aircraft around (it can lift or skid), so Start drive refuses unless a tug is attached. The original app sets PUSHBACK WAIT to 1 before TOGGLE_PUSHBACK, then waits for PUSHBACK ATTACHED.')
-    );
-
-    // ---- direct mode ----
-    var speedIn = ui.input('1', { type: 'number', step: '0.5', min: '-5', max: '5' });
-    var rotIn = ui.input('0', { type: 'number', step: '0.1', min: '-3', max: '3' });
-    var rotUnitTog = ui.toggle([
-      { value: 'radians per second', label: 'rad/s' },
-      { value: 'degrees per second', label: 'deg/s' },
-      { value: 'feet per second', label: 'ft/s (original hack)' }
-    ], 'radians per second');
-    var intervalTog = ui.toggle([{ value: '20', label: '20 ms' }, { value: '50', label: '50 ms' }, { value: '100', label: '100 ms' }], '50');
-    var allowFreeChk = h('input', { type: 'checkbox' });
-    function presets(input, values) {
-      var row = h('div', { class: 'ps-row' });
-      values.forEach(function (v) { row.appendChild(ui.button(String(v), function () { input.value = String(v); }, 'ps-small')); });
-      return row;
-    }
-    var maxSecIn = ui.input('10', { type: 'number', min: '1', max: '30', step: '1' });
-    var armed = h('span', { class: 'ps-pill bad', text: 'NOT RUNNING' });
-    var stats = h('div', { class: 'ps-kv', text: 'No run yet.' });
-
-    // Stopping: by default the drive eases speed and turn to zero while still writing every tick (as the original app does),
-    // then holds. `immediate` (page hidden, app paused or closed, detach) zeroes at once for safety.
-    function zeroAndHold() {
-      PS.setVar('VELOCITY BODY Z', 'feet per second', 0);
-      PS.setVar('ROTATION VELOCITY BODY Y', rotUnitTog.get(), 0);
-      PS.setVar('PUSHBACK WAIT', 'bool', 1);
-    }
-    function stopDrive(reason, immediate) {
-      if (!drive) return;
-      var d = drive;
-      if (!immediate) {
-        if (d.stopping) return;
-        d.stopping = true; d.stopReason = reason; d.stopHoldTicks = 0;
-        say('stopping (' + reason + '): easing to zero');
-        return;
-      }
-      finalizeStop(d, reason);
-    }
-    function finalizeStop(d, reason) {
-      clearInterval(d.timer);
-      drive = null;
-      zeroAndHold();
-      armed.className = 'ps-pill bad';
-      armed.textContent = 'NOT RUNNING';
-      say('direct drive stopped (' + reason + '): ' + d.writes + ' tick writes, ' + d.failures + ' failed ticks');
-      paintStats(d, true);
-      stats.textContent.split('\n').forEach(function (l) { PS.log('tug', 'final ' + l); });
-      startHoldGuard();
-    }
-
-    // After a stop, keep telling the sim to hold still for a few seconds and log what it does (is the tug still attached,
-    // is the aircraft rolling?). A new drive, or the Go button, cancels it.
-    var HOLD_MS = 5000;
-    var holdTimer = null;
-    function stopHoldGuard() {
-      if (holdTimer !== null) { clearInterval(holdTimer); holdTimer = null; }
-    }
-    function startHoldGuard() {
-      stopHoldGuard();
-      var t0 = Date.now(), lastLog = 0;
-      holdTimer = setInterval(function () {
-        var now = Date.now();
-        if (drive || now - t0 > HOLD_MS) {
-          stopHoldGuard();
-          if (!drive) say('hold after stop finished');
-          return;
-        }
-        var attached = isAttached();
-        if (attached) zeroAndHold();
-        if (now - lastLog >= 500) {
-          lastLog = now;
-          var st = PS.getVar('PUSHBACK STATE', 'enum'), w = PS.getVar('PUSHBACK WAIT', 'bool'), gs = PS.getVar('GROUND VELOCITY', 'knots'),
-            vz = PS.getVar('VELOCITY BODY Z', 'feet per second'), br = PS.getVar('BRAKE PARKING POSITION', 'percent over 100');
-          PS.log('tug', 'after stop +' + PS.fmt.num((now - t0) / 1000, 1) + 's | attached=' + (attached ? 1 : 0) + ' state=' + PS.fmt.value(st.value) +
-            ' wait=' + PS.fmt.value(w.value) + ' | GS ' + PS.fmt.num(gs.value, 2) + ' kt, velZ ' + PS.fmt.num(vz.value, 2) + ' ft/s | brake ' + PS.fmt.num(br.value, 2));
-        }
-      }, 100);
-    }
-    function meanDt(d) {
-      var m = 0, i;
-      for (i = 0; i < d.dts.length; i++) m += d.dts[i];
-      return d.dts.length ? m / d.dts.length : 0;
-    }
-    function paintStats(d, final) {
-      var dts = d.dts;
-      var mean = 0, max = 0, i;
-      for (i = 0; i < dts.length; i++) { mean += dts[i]; if (dts[i] > max) max = dts[i]; }
-      mean = dts.length ? mean / dts.length : 0;
-      var rb = d.lastReadback || {};
-      var lines = [
-        (final ? 'Last run: ' : 'Running: ') + d.writes + ' ticks, ' + d.failures + ' with a failed write' + (d.lastError ? ' (last error: ' + d.lastError + ')' : ''),
-        'Requested interval ' + d.intervalMs + ' ms; actual mean ' + PS.fmt.num(mean, 1) + ' ms, worst ' + PS.fmt.num(max, 1) + ' ms (' + PS.fmt.num(mean ? 1000 / mean : 0, 1) + ' Hz)',
-        'Commanded VEL Z ' + PS.fmt.num(d.cmdSpeed, 2) + ' ft/s, read back ' + PS.fmt.num(rb.velZ, 2) + ' ft/s -> ' + verdict(d.cmdSpeed, rb.velZ),
-        'Ground speed ' + PS.fmt.num(rb.gs, 2) + ' kt, ROT VEL Y read back ' + PS.fmt.num(rb.rotY, 4),
-        turnLine(d, rb)
-      ];
-      stats.textContent = lines.join('\n');
-    }
-    function turnLine(d, rb) {
-      if (d.hdg0 === null || typeof rb.hdg !== 'number') return 'Turn: no heading readback';
-      var secs = (Date.now() - d.measureStart) / 1000;
-      var diff = PS.geo.angleDiff(d.hdg0, rb.hdg);
-      var rate = secs > 0.5 ? diff / secs : 0;
-      var verdictText = Math.abs(d.cmdTurn) < 0.01 ? 'straight commanded' : (Math.abs(rate) < Math.abs(d.cmdTurn) * 0.25 ? 'NOT TURNING (well below command)' : 'TURNING');
-      return 'Turn: heading changed ' + PS.fmt.num(diff, 1) + ' deg in ' + PS.fmt.num(secs, 1) + ' s = ' + PS.fmt.num(rate, 2) + ' deg/s (commanded ' + PS.fmt.num(d.cmdTurn, 2) + ' deg/s) -> ' + verdictText;
-    }
-    function verdict(cmd, read) {
-      if (typeof read !== 'number') return 'no readback';
-      if (Math.abs(cmd) < 0.01) return Math.abs(read) < 0.2 ? 'at rest, as commanded' : 'not at rest';
-      return Math.abs(read - cmd) < Math.max(0.3, Math.abs(cmd) * 0.2) ? 'MATCHES (writes are taking effect)' : 'DOES NOT MATCH (writes ignored, overridden or clamped)';
-    }
-
-    function startDrive() {
-      if (drive) return;
-      stopHoldGuard();
-      if (!paintAttached() && !allowFreeChk.checked) {
-        say('refusing to drive: no tug is attached. Press Attach tug first, or tick "drive without a tug" to test raw velocity writes.', true);
-        stats.textContent = 'Not started: no tug attached. Press "Attach tug (original sequence)" and wait for TUG ATTACHED.';
-        return;
-      }
-      var speed = Number(speedIn.value) || 0;
-      var rot = Number(rotIn.value) || 0;
-      var rotUnit = rotUnitTog.get();
-      var intervalMs = Number(intervalTog.get());
-      var maxMs = Math.max(1, Math.min(30, Number(maxSecIn.value) || 10)) * 1000;
-      var h0 = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
-      var rotWritten = PS.tugRotValue(rot, rotUnit);
-      drive = { startedAt: Date.now(), maxMs: maxMs, writes: 0, failures: 0, dts: [], lastTick: Date.now(), lastError: '',
-        intervalMs: intervalMs, cmdSpeed: speed, cmdTurn: rot, curSpeed: 0, curTurn: 0, measureStart: Date.now(), hdg0: h0.ok ? h0.value : null, lastReadback: null };
-      armed.className = 'ps-pill ok';
-      armed.textContent = 'RUNNING (auto-stop in ' + (maxMs / 1000) + ' s)';
-      say('direct drive started: velZ=' + speed + ' ft/s, turn=' + rot + ' deg/s -> writing ' + PS.fmt.num(rotWritten, 5) + ' [' + rotUnit + '], every ' + intervalMs + ' ms, max ' + (maxMs / 1000) + ' s');
-      drive.timer = setInterval(function () {
-        var d = drive;
-        if (!d) return;
-        var now = Date.now();
-        if (!d.stopping && now - d.startedAt >= d.maxMs) stopDrive('time limit');
-        d.dts.push(now - d.lastTick);
-        if (d.dts.length > 200) d.dts.shift();
-        d.lastTick = now;
-        // Read the inputs live every tick so changes (typed or from the preset buttons) take effect immediately.
-        var tgtSpeed = d.stopping ? 0 : (Number(speedIn.value) || 0);
-        var tgtTurn = d.stopping ? 0 : (Number(rotIn.value) || 0);
-        var unitNow = rotUnitTog.get();
-        var dt = Math.min(0.2, d.dts[d.dts.length - 1] / 1000);
-        d.curSpeed = approach(d.curSpeed, tgtSpeed, SPEED_RAMP * dt);
-        d.curTurn = approach(d.curTurn, tgtTurn, TURN_RAMP * dt);
-        if (!d.stopping && (tgtSpeed !== d.cmdSpeed || tgtTurn !== d.cmdTurn)) {
-          d.cmdSpeed = tgtSpeed; d.cmdTurn = tgtTurn;
-          var hh = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
-          d.hdg0 = hh.ok ? hh.value : null; d.measureStart = now;
-          say('command changed live: speed ' + tgtSpeed + ' ft/s, turn ' + tgtTurn + ' deg/s');
-        }
-        // The same set the original app writes every tick.
-        var results = [
-          PS.setVar('PUSHBACK WAIT', 'bool', 0),
-          PS.setVar('VELOCITY BODY Y', 'feet per second', 0),
-          PS.setVar('ROTATION VELOCITY BODY X', 'feet per second', 0),
-          PS.setVar('VELOCITY BODY Z', 'feet per second', d.curSpeed),
-          PS.setVar('ROTATION VELOCITY BODY Y', unitNow, PS.tugRotValue(d.curTurn, unitNow))
-        ];
-        var failed = false;
-        for (var i = 0; i < results.length; i++) { if (!results[i].ok) { failed = true; d.lastError = results[i].error; } }
-        d.writes++;
-        if (failed) d.failures++;
-        if (d.stopping && d.curSpeed === 0 && d.curTurn === 0) {
-          d.stopHoldTicks++;
-          if (d.stopHoldTicks * d.intervalMs >= 600) { finalizeStop(d, d.stopReason); return; }
-        }
-        if (d.writes % 5 === 0) {
-          var vz = PS.getVar('VELOCITY BODY Z', 'feet per second');
-          var ry = PS.getVar('ROTATION VELOCITY BODY Y', rotUnitTog.get());
-          var gs = PS.getVar('GROUND VELOCITY', 'knots');
-          var hd = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
-          d.lastReadback = { velZ: vz.ok ? vz.value : null, rotY: ry.ok ? ry.value : null, gs: gs.ok ? gs.value : null, hdg: hd.ok ? hd.value : null };
-          paintStats(d, false);
-          if (!d.lastLogAt || now - d.lastLogAt >= 1000) {
-            var rb2 = d.lastReadback;
-            var inst = null;
-            if (d.lastLogAt && typeof rb2.hdg === 'number' && typeof d.lastLogHdg === 'number') {
-              inst = PS.geo.angleDiff(d.lastLogHdg, rb2.hdg) / ((now - d.lastLogAt) / 1000);
-            }
-            var avgTurn = (d.hdg0 !== null && typeof rb2.hdg === 'number' && now - d.measureStart > 500)
-              ? PS.geo.angleDiff(d.hdg0, rb2.hdg) / ((now - d.measureStart) / 1000) : null;
-            PS.log('tug', 'drive t=' + PS.fmt.num((now - d.startedAt) / 1000, 1) + 's unit=' + unitNow +
-              ' | speed cmd ' + PS.fmt.num(d.cmdSpeed, 2) + ' ramped ' + PS.fmt.num(d.curSpeed, 2) + ' read ' + PS.fmt.num(rb2.velZ, 2) + ' ft/s, GS ' + PS.fmt.num(rb2.gs, 2) + ' kt' +
-              ' | turn cmd ' + PS.fmt.num(d.cmdTurn, 2) + ' ramped ' + PS.fmt.num(d.curTurn, 2) + ' deg/s, wrote ' + PS.fmt.num(PS.tugRotValue(d.curTurn, unitNow), 5) + ' [' + unitNow + ']' +
-              ' | heading ' + PS.fmt.num(rb2.hdg, 1) + ', measured turn ' + PS.fmt.num(inst, 2) + ' deg/s now, ' + PS.fmt.num(avgTurn, 2) + ' deg/s since last change' +
-              ' | ROT VEL Y read ' + PS.fmt.num(rb2.rotY, 4) + ' | interval mean ' + PS.fmt.num(meanDt(d), 1) + ' ms');
-            d.lastLogAt = now; d.lastLogHdg = rb2.hdg;
-          }
-        }
-      }, intervalMs);
-    }
-
-    var directPanel = ui.panel('Per-tick velocity writes',
-      ui.note('Moves the aircraft. Only use parked on the ground with the tug attached and the brake released. Speed and turn are read every tick, so you can change them while it runs. Stops by itself at the time limit, and when this page is hidden or the app is paused or closed.', 'warn'),
-      h('div', { class: 'ps-row' }, ui.field('Speed (ft/s, + forward, - reverse)', speedIn), ui.field('Max run (s)', maxSecIn)),
-      presets(speedIn, [-5, -2, -1, 0, 1, 2, 5]),
-      h('div', { class: 'ps-row' }, ui.field('Turn rate (deg/s, + = nose right)', rotIn)),
-      presets(rotIn, [-6, -3, -1.5, 0, 1.5, 3, 6]),
-      h('div', { class: 'ps-row' }, ui.field('Rotation unit', rotUnitTog.el), ui.field('Update interval', intervalTog.el)),
-      h('div', { class: 'ps-row' },
-        h('label', { class: 'ps-check' }, allowFreeChk, ' drive without a tug (raw velocity test, can misbehave)'),
-        armed),
-      h('div', { class: 'ps-row' },
-        ui.button('Start drive', startDrive, 'ps-warn'),
-        ui.button('Straight (turn 0)', function () { rotIn.value = '0'; }, 'ps-small'),
-        ui.button('STOP (write 0)', function () { if (drive) stopDrive('stop button'); else { PS.setVar('VELOCITY BODY Z', 'feet per second', 0); say('stop pressed (no run active); wrote 0'); } }, 'ps-danger')),
-      stats
-    );
-
-    // ---- steering by the tug heading event (retry now that the tug is attached) ----
-    var hdgIn = ui.input('0', { type: 'number', min: '0', max: '360', step: '1' });
-    function curHeading() {
-      var r = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
-      return r.ok && typeof r.value === 'number' ? r.value : null;
-    }
-    function sendHeading(deg) {
-      var v = PS.tugHeadingValue(deg);
-      key('KEY_TUG_HEADING', v);
-      say('tug heading target ' + PS.fmt.num(PS.geo.normDeg(deg), 1) + ' deg (event value ' + v + ')');
-    }
-    function nudge(delta) {
-      var cur = curHeading();
-      if (cur === null) { say('cannot read PLANE HEADING DEGREES TRUE', true); return; }
-      sendHeading(cur + delta);
-    }
-    var steerPanel = ui.panel('Steering by tug heading event (KEY_TUG_HEADING)',
-      ui.note('Tests turning without the rotation write. Attach the tug, start a drive (or leave the tug held and press Go), then press a button and watch the heading in the readouts. Each press sets a target relative to the current heading.'),
-      h('div', { class: 'ps-row' },
-        ui.button('Left 15', function () { nudge(-15); }), ui.button('Left 5', function () { nudge(-5); }),
-        ui.button('Right 5', function () { nudge(5); }), ui.button('Right 15', function () { nudge(15); })),
-      h('div', { class: 'ps-row' },
-        ui.field('Absolute heading (true)', hdgIn),
-        ui.button('Send heading', function () { sendHeading(Number(hdgIn.value) || 0); }),
-        ui.button('Use current', function () { var c = curHeading(); if (c !== null) hdgIn.value = String(Math.round(c)); }))
-    );
-
-    var el = h('div', { class: 'ps-page' },
-      shared,
-      directPanel,
-      steerPanel,
-      ui.panel('Live readouts', readTable.el),
-      ui.panel('Log', ui.logBox(['tug', 'key', 'set']))
-    );
-
-    // Safety: stop the drive whenever the app is paused or closed.
-    PS.closeHooks.push(function () { stopDrive('app paused or closed', true); });
-
-    return {
-      el: el,
-      snapshot: function () {
-        var lines = readVars.map(function (v) { return v[0] + ' = ' + readCells[v[0]].textContent; });
-        lines.push('', 'Last drive stats:', stats.textContent);
-        return lines.join('\n');
-      },
-      onShow: function () { refreshReadouts(); readTimer = setInterval(refreshReadouts, 250); },
-      onHide: function () { if (readTimer !== null) { clearInterval(readTimer); readTimer = null; } stopDrive('page hidden', true); }
-    };
+    cache.key = key; cache.value = res;
+    return res;
   }
-});
 
-/* ---- 30-page-taxiways.js ---- */
-// Spike 3: can taxiway data be read from JS, and what can we show about it?
-// The loaders below are candidates, tried and reported one by one. The original app reads taxi paths through
-// SimConnect facility data, which an EFB app may not be able to reach; this page finds out.
+  return {
+    list: function () { return pins; }, count: function () { return pins.length; },
+    selected: function () { return selected; }, select: select,
+    add: add, move: move, remove: remove, clear: clear, setHeading: setHeading, resetHeading: resetHeading, setAll: setAll,
+    headingFromHandle: headingFromHandle, evaluate: evaluate
+  };
+})();
+
+/* ---- 30-facility.js ---- */
+// Facility data: finds the nearest airport and loads its runways (sim facility loader) and taxi paths and parking (taxi WASM module).
+// Moved out of the spike Taxiways page; the page is gone but this is the loading code the planner uses.
 
 PS.facility = {
   // Candidate ICAO spellings the facility APIs might expect for an airport.
@@ -2660,155 +2225,8 @@ PS.facility.loadNearestIntoState = function () {
   });
 };
 
-PS.pages.push({
-  id: 'taxiways',
-  title: '3 Taxiways',
-  create: function (ctx) {
-    var ui = PS.ui, h = PS.h;
-    var icaoIn = ui.input('EGLL', { maxlength: '4', style: 'width:6em;text-transform:uppercase' });
-    var status = h('div', { class: 'ps-result', text: 'Nothing loaded.' });
-    var rawBox = h('pre', { class: 'ps-log ps-raw', text: '(nothing yet)' });
-    var tbl = ui.table(['Name', 'Category', 'Segments', 'Length', 'Width', 'Nearest', 'Bearing']);
-    var parkTbl = ui.table(['Stand', 'Heading', 'Radius', 'Distance']);
-    var sortSel = ui.select([{ value: 'near', label: 'Nearest first' }, { value: 'name', label: 'Name' }, { value: 'length', label: 'Longest first' }], 'near', function () { repaint(); });
-    var catSel = ui.select([{ value: 'all', label: 'All categories' }, { value: 'Taxiway', label: 'Taxiways' }, { value: 'Runway', label: 'Runways' }, { value: 'Parking connector', label: 'Parking connectors' }, { value: 'other', label: 'Other' }], 'all', function () { repaint(); });
-    var current = null; // { source, extracted }
-
-    function say(text, bad) { status.textContent = text; status.className = 'ps-result ' + (bad ? 'bad' : 'ok'); PS.log('taxi', text); }
-
-    function repaint() {
-      PS.clear(tbl.body); PS.clear(parkTbl.body);
-      if (!current) return;
-      var own = PS.readOwn();
-      var ownLat = own ? own.lat : (current.refLat !== undefined ? current.refLat : undefined);
-      var ownLon = own ? own.lon : (current.refLon !== undefined ? current.refLon : undefined);
-      var rows = PS.taxi.aggregate(current.extracted.items, ownLat, ownLon);
-      var cat = catSel.value;
-      rows = rows.filter(function (r) {
-        if (cat === 'all') return true;
-        if (cat === 'other') return ['Taxiway', 'Runway', 'Parking connector'].indexOf(r.category) < 0;
-        return r.category === cat;
-      });
-      if (sortSel.value === 'name') rows.sort(function (a, b) { return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0); });
-      if (sortSel.value === 'length') rows.sort(function (a, b) { return (b.lengthM || 0) - (a.lengthM || 0); });
-      rows.forEach(function (r) {
-        tbl.body.appendChild(h('tr', null,
-          h('td', { text: r.name }), h('td', { text: r.category }), h('td', { text: String(r.segments) }),
-          h('td', { text: r.lengthM === null ? '—' : PS.fmt.dist(r.lengthM) }),
-          h('td', { text: r.widthM === null ? '—' : Math.round(r.widthM) + ' m' }),
-          h('td', { text: r.nearestM === null ? '—' : PS.fmt.dist(r.nearestM) }),
-          h('td', { text: r.bearingDeg === null ? '—' : Math.round(r.bearingDeg) + '°' })));
-      });
-      current.extracted.parking.forEach(function (p) {
-        var d = own && p.lat !== null ? PS.geo.distanceM(own.lat, own.lon, p.lat, p.lon) : null;
-        parkTbl.body.appendChild(h('tr', null, h('td', { text: p.name }),
-          h('td', { text: p.headingDeg === null ? '—' : Math.round(p.headingDeg) + '°' }),
-          h('td', { text: p.radiusM === null ? '—' : Math.round(p.radiusM) + ' m' }),
-          h('td', { text: d === null ? '—' : PS.fmt.dist(d) })));
-      });
-      PS.state.taxi = { items: current.extracted.items, parking: current.extracted.parking };
-    }
-
-    function accept(source, raw) {
-      var text;
-      try { text = JSON.stringify(raw, null, 1); } catch (e) { text = '(not serialisable: ' + PS.errText(e) + ')'; }
-      rawBox.textContent = (text || String(raw)).substring(0, 8000) + ((text && text.length > 8000) ? '\n... truncated' : '');
-      var ex = PS.taxi.extract(raw);
-      // Log the shape of what the sim returned so a copied log shows exactly which fields exist (e.g. gates, parking).
-      try {
-        if (raw && typeof raw === 'object') {
-          PS.log('taxi', 'raw object keys: ' + Object.keys(raw).map(function (k) {
-            var v = raw[k];
-            return k + (Array.isArray(v) ? '[' + v.length + ']' : '');
-          }).join(', '));
-          Object.keys(raw).forEach(function (k) {
-            if (Array.isArray(raw[k]) && raw[k].length && raw[k][0] && typeof raw[k][0] === 'object') {
-              PS.log('taxi', '  ' + k + '[0] keys: ' + Object.keys(raw[k][0]).join(', '));
-            }
-          });
-        }
-      } catch (e) { PS.log('taxi', 'could not describe raw object: ' + PS.errText(e)); }
-      current = { source: source, extracted: ex, refLat: raw && raw.refLat, refLon: raw && raw.refLon };
-      var nTaxi = ex.items.filter(function (i) { return i.category !== 'Runway'; }).length;
-      var nRw = ex.items.length - nTaxi;
-      say('Source: ' + source + '. Found ' + nRw + ' runway(s), ' + nTaxi + ' taxiway/path item(s), ' + ex.parking.length + ' parking spot(s).' +
-        (ex.notes.length ? ' ' + ex.notes.join(' ') : ''), ex.items.length === 0);
-      repaint();
-    }
-
-    var detected = false;
-    function detectAirport(thenLoad) {
-      var own = PS.readOwn();
-      if (!own) { say('Cannot detect the airport: the aircraft position is not readable.', true); return; }
-      say('Finding the nearest airport...');
-      PS.facility.nearestAirport(own.lat, own.lon).then(function (r) {
-        icaoIn.value = r.ident;
-        say('Nearest airport: ' + r.ident + (r.distM < 1e11 ? ' (' + PS.fmt.dist(r.distM) + ' away)' : '') + '.');
-        if (thenLoad) loadFromSim();
-      }, function (e) { say('Could not detect the airport: ' + PS.errText(e), true); });
-    }
-
-    function loadFromSim() {
-      var icao = icaoIn.value.trim().toUpperCase();
-      if (icao.length < 3) { say('Enter an ICAO code first.', true); return; }
-      say('Loading ' + icao + ' from the sim (runways from the facility API, taxiways from the taxi module)...');
-      PS.facility.loadAirport(icao).then(function (res) {
-        var src = (res.hasSdk ? 'FacilityLoader' : '') + (res.hasSdk && res.hasWasm ? ' + ' : '') + (res.hasWasm ? 'taxi module' : '');
-        accept(src, res.raw);
-        if (!res.hasWasm) say(status.textContent + ' Taxi module did not answer: ' + res.notes.join(' | '), true);
-      }, function (e) {
-        say('Nothing returned data. ' + PS.errText(e), true);
-      });
-    }
-    // Is the taxi module installed? Ask it, quickly.
-    var moduleLine = h('div', { class: 'ps-result', text: 'Taxi module: checking...' });
-    function checkModule() {
-      PS.wasmTaxi.ping().then(function (r) {
-        moduleLine.textContent = 'Taxi module: found (version ' + r.version + ').'; moduleLine.className = 'ps-result ok';
-        PS.log('taxi', 'taxi module found, version ' + r.version);
-      }, function (e) {
-        moduleLine.textContent = 'Taxi module: not available. ' + PS.errText(e); moduleLine.className = 'ps-result bad';
-        PS.log('taxi', 'taxi module not available: ' + PS.errText(e));
-      });
-    }
-    function useSample() {
-      var own = PS.readOwn();
-      var lat = own ? own.lat : 51.47, lon = own ? own.lon : -0.4543;
-      var s = PS.taxi.sample(lat, lon);
-      accept('offline sample (not from the sim)', { icao: s.icao, refLat: s.refLat, refLon: s.refLon, runways: s.runways, paths: s.paths, parking: s.parking });
-    }
-
-    var el = h('div', { class: 'ps-page' },
-      ui.panel('Load taxiway data',
-        h('div', { class: 'ps-row' }, ui.field('Airport ICAO', icaoIn),
-          ui.button('Detect nearest airport and load', function () { detectAirport(true); }),
-          ui.button('Detect only', function () { detectAirport(false); }, 'ps-ghost'),
-          ui.button('Load typed ICAO', loadFromSim), ui.button('Use offline sample', useSample, 'ps-ghost')),
-        status, moduleLine,
-        h('div', { class: 'ps-row' }, ui.button('Check taxi module', checkModule, 'ps-small ps-ghost')),
-        ui.note('Runways come from the sim facility API. Taxiways and parking come from the taxi WASM module (wasm/), which reads the same SimConnect facility data the original app used. Without the module only runways load. The sample button only exercises the table.')),
-      ui.panel('Named taxiways, runways and connectors',
-        h('div', { class: 'ps-row' }, ui.field('Sort', sortSel), ui.field('Show', catSel)),
-        tbl.el),
-      ui.panel('Parking', parkTbl.el),
-      ui.panel('Raw data returned', rawBox),
-      ui.panel('Log', ui.logBox(['taxi']))
-    );
-    return {
-      el: el,
-      snapshot: function () { return status.textContent + '\n\nRaw data returned:\n' + rawBox.textContent; },
-      onShow: function () { repaint(); if (!detected) { detected = true; checkModule(); detectAirport(false); } },
-      onHide: function () {}
-    };
-  }
-});
-
-/* ---- 40-page-traffic.js ---- */
-// Spike 4: can AI traffic be listed from JS, and what is useful to show about it?
-// No JS source for AI aircraft is confirmed. The page lists candidate APIs it can find, takes contacts from the
-// first source that returns any, and can show simulated contacts so the table and maths can be reviewed.
-
-PS.trafficSources = []; // functions returning an array of { id, title, lat, lon, hdgDeg, gsKt, altFt, onGround } or null
+/* ---- 40-air-traffic.js ---- */
+// AI traffic from the sim: the sdk's TrafficInstrument source (JS_LISTENER_AIR_TRAFFIC, GET_AIR_TRAFFIC), polled by whoever draws it.
 
 // AI traffic as the msfs-sdk TrafficInstrument reads it: RegisterViewListener('JS_LISTENER_AIR_TRAFFIC') then
 // listener.call('GET_AIR_TRAFFIC'), which returns entries { uId, name, lat, lon, alt (metres), heading }.
@@ -2873,610 +2291,61 @@ PS.airTraffic = {
     }, function (e) { T.busy = false; T.error = 'GET_AIR_TRAFFIC failed: ' + PS.errText(e); PS.log('traffic', T.error); });
   }
 };
-PS.trafficSources.push(function () {
-  var c = PS.airTraffic.contacts;
-  return c && c.length ? c : null;
-});
 
-PS.discoverTrafficApis = function () {
-  var found = [];
-  var re = /traffic|tcas|\bai\b|aiobject|simobject/i;
-  function scan(label, obj) {
-    if (!obj) return;
-    var keys = [];
-    try { keys = Object.getOwnPropertyNames(obj); } catch (e) { keys = []; }
-    keys.forEach(function (k) { if (re.test(k)) found.push(label + '.' + k); });
-  }
-  scan('window', PS.global);
-  scan('msfssdk', PS.global.msfssdk);
-  scan('SimVar', PS.simVar());
-  scan('Coherent', PS.coherent());
-  return found;
-};
+/* ---- 60-page-plan.js ---- */
+// Plan tab: where the push should go. A north-up plot centred on the aircraft shows runways, taxiways, stands and AI aircraft. Tap to drop
+// directional pins (each is drawn as an aircraft pointing the way the nose will be there), drag a pin to move it, drag the handle behind a
+// selected pin to rotate it, or pick a suggested push. The planned route (turn arcs, forward and reverse legs, warnings) comes from
+// PS.plan / PS.planner. The plan it leaves is what the Push tab will drive.
 
 PS.pages.push({
-  id: 'traffic',
-  title: '4 Traffic',
-  create: function (ctx) {
-    var ui = PS.ui, h = PS.h;
-    var timer = null;
-    var simulate = false;
-    var simContacts = null;
-    var lastTs = 0;
-    var sourceLine = h('div', { class: 'ps-result', text: 'No traffic source checked yet.' });
-    var apiBox = h('pre', { class: 'ps-log', text: '(press Discover)' });
-    var tbl = ui.table(['Contact', 'Distance', 'Bearing', 'Relative', 'Alt diff', 'Speed', 'Heading', 'Closing', 'Time to closest', 'Closest', 'Ahead', 'State']);
-    var sortSel = ui.select([{ value: 'dist', label: 'Nearest first' }, { value: 'tcpa', label: 'Soonest closest approach' }], 'dist');
-
-    function ownOrReference() {
-      var o = PS.readOwn();
-      if (o) return { own: o, live: true };
-      return { own: { lat: 51.4700, lon: -0.4543, hdgDeg: 90, gsKt: 0, altFt: 80, onGround: true }, live: false };
-    }
-
-    function discover() {
-      var found = PS.discoverTrafficApis();
-      apiBox.textContent = found.length ? found.join('\n') : 'No names matching traffic / tcas / ai / simobject found on window, msfssdk, SimVar or Coherent.';
-      PS.log('traffic', 'discovery: ' + found.length + ' candidate name(s)');
-      found.forEach(function (n) { PS.log('traffic', '  candidate ' + n); });
-    }
-
-    function fetchContacts() {
-      for (var i = 0; i < PS.trafficSources.length; i++) {
-        try {
-          var c = PS.trafficSources[i]();
-          if (c && c.length) return { contacts: c, source: 'registered source #' + (i + 1) };
-        } catch (e) { PS.log('traffic', 'source failed: ' + PS.errText(e)); }
-      }
-      return null;
-    }
-
-    function tick() {
-      PS.airTraffic.poll();
-      var ctxo = ownOrReference();
-      var res = fetchContacts();
-      var contacts = null, label;
-      if (res) { contacts = res.contacts; label = 'sim AI traffic (JS_LISTENER_AIR_TRAFFIC)'; }
-      else if (simulate) {
-        var now = Date.now();
-        if (!simContacts) { simContacts = PS.traffic.sample(ctxo.own); lastTs = now; }
-        var dt = (now - lastTs) / 1000; lastTs = now;
-        simContacts.forEach(function (c) { PS.traffic.advance(c, dt); });
-        contacts = simContacts; label = 'SIMULATED contacts (not from the sim)';
-      }
-      PS.clear(tbl.body);
-      if (!contacts) {
-        sourceLine.textContent = 'No traffic returned. Listener ready: ' + PS.airTraffic.ready + ', calls: ' + PS.airTraffic.calls + ', entries in last reply: ' + PS.airTraffic.entries + (PS.airTraffic.error ? ', error: ' + PS.airTraffic.error : '') + '. Own position: ' + (ctxo.live ? 'live from sim' : 'reference point (sim not readable)') + '.';
-        sourceLine.className = 'ps-result bad';
-        PS.state.contacts = [];
-        return;
-      }
-      sourceLine.textContent = 'Source: ' + label + '. ' + contacts.length + ' contact(s). Own position: ' + (ctxo.live ? 'live' : 'reference point') + '.';
-      sourceLine.className = 'ps-result ok';
-      var rows = contacts.map(function (c) { return { c: c, a: PS.traffic.analyse(ctxo.own, c) }; });
-      rows.sort(function (x, y) {
-        if (sortSel.value === 'tcpa') {
-          var xt = x.a.tcpaSec === null ? 1e9 : x.a.tcpaSec, yt = y.a.tcpaSec === null ? 1e9 : y.a.tcpaSec;
-          return xt - yt;
-        }
-        return x.a.distM - y.a.distM;
-      });
-      rows.forEach(function (r) {
-        var a = r.a, c = r.c;
-        tbl.body.appendChild(h('tr', { class: a.ahead && a.closingKt > 0 ? 'ps-hot' : '' },
-          h('td', { text: c.title || c.id || '?' }),
-          h('td', { text: PS.fmt.dist(a.distM) }),
-          h('td', { text: Math.round(a.bearingDeg) + '°' }),
-          h('td', { text: (a.relBearingDeg >= 0 ? '+' : '') + Math.round(a.relBearingDeg) + '°' }),
-          h('td', { text: Math.round(a.altDiffFt) + ' ft' }),
-          h('td', { text: PS.fmt.num(c.gsKt, 0) + ' kt' }),
-          h('td', { text: Math.round(c.hdgDeg || 0) + '°' }),
-          h('td', { text: PS.fmt.num(a.closingKt, 1) + ' kt' }),
-          h('td', { text: a.tcpaSec === null ? '—' : PS.fmt.seconds(a.tcpaSec) }),
-          h('td', { text: PS.fmt.dist(a.cpaM) }),
-          h('td', { text: a.ahead ? 'yes' : 'no' }),
-          h('td', { text: c.onGround === true ? 'ground' : (c.onGround === false ? 'air' : '\u2014') })));
-      });
-      PS.state.contacts = contacts;
-    }
-
-    var simBtn = ui.button('Show simulated contacts: off', function () {
-      simulate = !simulate; simContacts = null;
-      simBtn.textContent = 'Show simulated contacts: ' + (simulate ? 'on' : 'off');
-      tick();
-    }, 'ps-ghost');
-
-    var el = h('div', { class: 'ps-page' },
-      ui.panel('Traffic source',
-        sourceLine,
-        h('div', { class: 'ps-row' }, ui.button('Discover candidate APIs', discover), simBtn, ui.field('Sort', sortSel)),
-        ui.note('The original app polls AI aircraft within a radius once a second and pauses a push when one is ahead on the route. Rows highlighted: ahead (within 45° of heading) and closing.')),
-      ui.panel('Contacts', tbl.el),
-      ui.panel('Candidate APIs found', apiBox),
-      ui.panel('Log', ui.logBox(['traffic']))
-    );
-    return {
-      el: el,
-      onShow: function () { tick(); timer = setInterval(tick, 1000); },
-      onHide: function () { if (timer !== null) { clearInterval(timer); timer = null; } }
-    };
-  }
-});
-
-/* ---- 50-page-notifications.js ---- */
-// Spike 5: popups. Part A is our own in-tablet toast host (always works, can carry action buttons).
-// Part B probes the EFB's notificationManager (handed to the app at install) to see what it offers.
-
-PS.pages.push({
-  id: 'notifications',
-  title: '5 Notifications',
-  create: function (ctx) {
-    var ui = PS.ui, h = PS.h;
-    var distance = 180;
-    var paused = false;
-    var distTimer = null;
-
-    function log(msg) { PS.log('notify', msg); }
-    function act(label) { return function () { log('button pressed: ' + label); }; }
-
-    var kinds = [
-      ['Info (auto-dismiss)', function () {
-        PS.toasts.show({ kind: 'info', title: 'Tug attached', message: 'Ready to push. Release the parking brake when clear.', ttlMs: 5000 });
-        log('shown: info');
-      }],
-      ['Release parking brake', function () {
-        PS.toasts.show({ id: 'parking-brake', kind: 'brake', title: 'Release parking brake',
-          message: 'Pushback is armed and waiting. Release the parking brake in the cockpit; the tug starts as soon as it is off.',
-          persistent: true, actions: [{ label: 'Dismiss', onClick: function () { PS.toasts.dismiss('parking-brake'); log('dismissed: parking brake'); } }] });
-        log('shown: release parking brake');
-      }],
-      ['Set parking brake (2 actions)', function () {
-        PS.toasts.show({ id: 'set-brake', kind: 'brake', title: 'Set the parking brake',
-          message: 'Pushback finished. Set the parking brake, then dismiss the tug or return to the gate.',
-          persistent: true, actions: [
-            { label: 'Dismiss tug', onClick: function () { log('action: dismiss tug'); PS.toasts.dismiss('set-brake'); } },
-            { label: 'Return to gate', onClick: function () { log('action: return to gate'); PS.toasts.dismiss('set-brake'); } }] });
-        log('shown: set parking brake');
-      }],
-      ['Distance left + Pause/Resume', function () {
-        distance = 180; paused = false;
-        function body() { return 'Distance left: ' + Math.round(distance) + ' m' + (paused ? ' (paused)' : ''); }
-        function actions() {
-          return [{ label: paused ? 'Resume' : 'Pause', onClick: function () { paused = !paused; PS.toasts.update('distance', { message: body(), actions: actions() }); log(paused ? 'action: pause' : 'action: resume'); } },
-            { label: 'Stop', onClick: function () { PS.toasts.dismiss('distance'); if (distTimer) { clearInterval(distTimer); distTimer = null; } log('action: stop'); } }];
-        }
-        PS.toasts.show({ id: 'distance', kind: 'info', title: 'Pushing back', message: body(), persistent: true, actions: actions() });
-        if (distTimer) clearInterval(distTimer);
-        distTimer = setInterval(function () {
-          if (!paused) distance = Math.max(0, distance - 4);
-          var ok = PS.toasts.update('distance', { message: body() });
-          if (!ok || distance <= 0) { clearInterval(distTimer); distTimer = null; if (distance <= 0) PS.toasts.dismiss('distance'); }
-        }, 500);
-        log('shown: distance left (counts down live)');
-      }],
-      ['Traffic hold + Ignore', function () {
-        PS.toasts.show({ id: 'traffic', kind: 'warn', title: 'Holding for traffic',
-          message: 'Another aircraft is on the route ahead. The push resumes when it clears.',
-          persistent: true, actions: [{ label: 'Ignore traffic', onClick: function () { log('action: ignore traffic'); PS.toasts.dismiss('traffic'); } }] });
-        log('shown: traffic hold');
-      }]
-    ];
-
-    var buttons = h('div', { class: 'ps-row' });
-    kinds.forEach(function (k) { buttons.appendChild(ui.button(k[0], k[1])); });
-    buttons.appendChild(ui.button('Clear all', function () { PS.toasts.clear(); log('cleared'); }, 'ps-ghost'));
-
-    // ---- Part B: EFB notificationManager probe ----
-    var probeOut = h('pre', { class: 'ps-log', text: '(press Inspect)' });
-    var probeButtons = h('div', { class: 'ps-row' });
-    var payload = ui.input('Hello from Pusher Spikes', { placeholder: 'Test message' });
-
-    function methodsOf(obj) {
-      var names = {};
-      var o = obj, depth = 0;
-      while (o && o !== Object.prototype && depth < 4) {
-        Object.getOwnPropertyNames(o).forEach(function (n) { if (n !== 'constructor') names[n] = typeof obj[n]; });
-        o = Object.getPrototypeOf(o); depth++;
-      }
-      return names;
-    }
-    function inspect() {
-      var nm = PS.state.notificationManager;
-      PS.clear(probeButtons);
-      if (!nm) { probeOut.textContent = 'No notificationManager was handed to the app (install props had none).'; log('no notificationManager'); return; }
-      var m = methodsOf(nm);
-      var lines = Object.keys(m).sort().map(function (n) { return n + ' : ' + m[n]; });
-      probeOut.textContent = 'notificationManager members:\n' + lines.join('\n');
-      log('notificationManager has ' + lines.length + ' members');
-      lines.forEach(function (l) { log('  member ' + l); });
-      Object.keys(m).sort().forEach(function (n) {
-        if (m[n] !== 'function' || !/^(add|show|create|push|send)/i.test(n)) return;
-        try {
-          var src = String(nm[n]);
-          log(n + '.length = ' + nm[n].length + ' (declared argument count)');
-          log(n + ' source: ' + src.replace(/\s+/g, ' ').substring(0, 700));
-        } catch (e) { log(n + ' source unavailable: ' + PS.errText(e)); }
-      });
-      Object.keys(m).sort().forEach(function (n) {
-        if (m[n] !== 'function' || !/notif|show|push|add|send|create|post|alert/i.test(n)) return;
-        probeButtons.appendChild(ui.button('Try ' + n + '()', function () { tryCall(nm, n); }, 'ps-warn'));
-      });
-      if (!probeButtons.firstChild) probeButtons.appendChild(ui.note('No obviously notification-like methods to try. Read the member list above.'));
-    }
-    function tryCall(nm, name) {
-      var text = payload.value || 'Test';
-      var shapes = [
-        function () { return nm[name]({ title: 'Pusher Spikes', message: text, description: text, body: text }); },
-        function () { return nm[name]('Pusher Spikes', text); },
-        function () { return nm[name](text); }
-      ];
-      for (var i = 0; i < shapes.length; i++) {
-        try {
-          var r = shapes[i]();
-          log(name + '() shape ' + (i + 1) + ' did not throw; returned ' + (r === undefined ? 'undefined' : typeof r) + '. Check the tablet for a notification.');
-          return;
-        } catch (e) { log(name + '() shape ' + (i + 1) + ' threw: ' + PS.errText(e)); }
-      }
-      log(name + '(): all three argument shapes threw');
-    }
-
-    var el = h('div', { class: 'ps-page' },
-      ui.panel('A. In-tablet toasts (our own, with action buttons)',
-        buttons,
-        ui.note('These appear at the top of the app on every page, like the original app\'s overlay toasts. They are only visible while the tablet is open.')),
-      ui.panel('B. EFB notification manager (probe)',
-        h('div', { class: 'ps-row' }, ui.button('Inspect notificationManager', inspect), ui.field('Test text', payload)),
-        probeButtons, probeOut,
-        ui.note('Each Try button calls the method with three argument shapes until one does not throw. The member list tells us what the EFB really offers; read it before trusting any result.')),
-      ui.panel('Log', ui.logBox(['notify']))
-    );
-    return { el: el, onShow: function () {}, onHide: function () {} };
-  }
-});
-
-/* ---- 60-page-map.js ---- */
-// Spike 6: can the sim's built-in map be used? Probes for map elements and msfs-sdk map classes, tries to mount one,
-// and always shows a tile-less canvas plot as the baseline (own aircraft, range rings, taxiways, traffic).
-
-PS.mapProbe = function () {
-  var lines = [];
-  var sdk = PS.global.msfssdk;
-  var re = /map|bing|vfr/i;
-  try {
-    ['map-instrument', 'bing-map', 'vfr-map'].forEach(function (tag) {
-      var def = typeof customElements !== 'undefined' && customElements.get ? customElements.get(tag) : null;
-      lines.push('custom element <' + tag + '>: ' + (def ? 'registered' : 'not registered'));
-    });
-  } catch (e) { lines.push('custom element check failed: ' + PS.errText(e)); }
-  ['Bing', 'MapInstrument', 'BingMap', 'MapSystemBuilder'].forEach(function (n) {
-    lines.push('global ' + n + ': ' + (typeof PS.global[n]));
-  });
-  if (sdk) {
-    var names = [];
-    try { names = Object.getOwnPropertyNames(sdk).filter(function (k) { return re.test(k); }); } catch (e) { names = []; }
-    lines.push('msfssdk names matching map/bing/vfr (' + names.length + '): ' + (names.slice(0, 40).join(', ') || 'none'));
-  } else {
-    lines.push('msfssdk: not available');
-  }
-  var co = PS.coherent();
-  lines.push('Coherent: ' + (co ? 'available' : 'not available') + '; RegisterViewListener: ' + typeof PS.global.RegisterViewListener);
-  lines.push('global EBingMode: ' + (typeof EBingMode === 'undefined' ? 'undefined' : Object.keys(EBingMode).join(', ')));
-  if (sdk) {
-    var all = [];
-    try { all = Object.getOwnPropertyNames(sdk).filter(function (k) { return re.test(k); }); } catch (e) { all = []; }
-    lines.push('ALL msfssdk map/bing/vfr names: ' + all.join(', '));
-  }
-  var efb = PS.global.EFB_API;
-  if (efb) {
-    var members = [];
-    try { members = Object.getOwnPropertyNames(efb).concat(Object.getOwnPropertyNames(Object.getPrototypeOf(efb) || {})); } catch (e) { members = []; }
-    lines.push('EFB_API members: ' + members.join(', '));
-  }
-  var efbGlobals = [];
-  try { efbGlobals = Object.getOwnPropertyNames(PS.global).filter(function (k) { return /efb|flightplan|vfrmap|navmap/i.test(k); }); } catch (e) { efbGlobals = []; }
-  lines.push('window names matching efb/flightplan/vfrmap/navmap: ' + (efbGlobals.join(', ') || 'none'));
-  return lines;
-};
-
-
-PS.pages.push({
-  id: 'map',
-  title: '6 Map',
+  id: 'plan',
+  title: 'Plan',
   create: function (ctx) {
     var ui = PS.ui, h = PS.h;
     var PLOT_STEPS = [100, 200, 300, 500, 1000, 2000, 3000];
-    var BING_STEPS = [500, 1000, 3000, 10000, 30000];
-    var canvas = h('canvas', { class: 'ps-canvas', width: '760', height: '480' });
-    var mountBox = h('div', { class: 'ps-mount' });
-    var probeBox = h('pre', { class: 'ps-log', text: '(press Probe)' });
-    var plotRange = ui.stepper(PLOT_STEPS, 500, function () { draw(); }, 'map');
-    var bingRange = ui.stepper(BING_STEPS, 3000, function () { followOwn(); }, 'map');
-    // Bing map: the sim lists modes CURSOR, PLANE, VFR, HORIZON, TOPVIEW. PLANE is a terrain-coloured map; VFR is the detailed one.
-    var modeEnum = typeof EBingMode !== 'undefined' ? EBingMode : null;
-    var modeOptions = [];
-    ['VFR', 'PLANE', 'TOPVIEW'].forEach(function (k) { if (modeEnum && modeEnum[k] !== undefined) modeOptions.push({ value: k, label: k }); });
-    if (!modeOptions.length) modeOptions.push({ value: 'PLANE', label: 'PLANE' });
-    var bingModeSel = ui.select(modeOptions, modeOptions[0].value, function () { tryMount(); });
-    var marker = null;
-    var mounted = false;
-    var airportLoading = false;
-    var timer = null;
-
-    function log(msg) { PS.log('map', msg); }
-
-    function probe() {
-      var lines = PS.mapProbe();
-      probeBox.textContent = lines.join('\n');
-      lines.forEach(function (l) { log(l); });
-    }
-
-    var bing = null;
-    var bingTimer = null;
-    var bingErrors = 0;
-
-    function followOwn() {
-      if (!bing) return;
-      var own = PS.readOwn();
-      if (!own) return;
-      var radius = bingRange.get();
-      if (marker) {
-        var t = 'rotate(' + Math.round(own.hdgDeg) + 'deg)';
-        marker.style.transform = t; marker.style.webkitTransform = t;
-      }
-      try {
-        if (typeof bing.setPositionRadius === 'function') bing.setPositionRadius({ lat: own.lat, long: own.lon }, radius);
-      } catch (e) {
-        if (bingErrors++ < 3) log('setPositionRadius failed: ' + PS.errText(e));
-      }
-    }
-
-    // Earth colours: the sdk's BingComponent paints water and every terrain height black unless it is given colours.
-    // That is why the first mount was a black square.
-    function earthColorsFor(sdk) {
-      var terrain = [
-        { elev: 0, color: '#4f8a4b' }, { elev: 1500, color: '#8aa35a' }, { elev: 5000, color: '#a68d5e' },
-        { elev: 10000, color: '#cfc7b8' }, { elev: 30000, color: '#ffffff' }
-      ];
-      try {
-        if (typeof sdk.BingComponent.createEarthColorsArray === 'function') return sdk.BingComponent.createEarthColorsArray('#2b6a9c', terrain);
-      } catch (e) { log('createEarthColorsArray failed: ' + PS.errText(e)); }
-      // Fallback: a flat array. R + G*256 + B*256^2.
-      var water = 0x2b + 0x6a * 256 + 0x9c * 65536, land = 0x4f + 0x8a * 256 + 0x4b * 65536, arr = [water];
-      for (var i = 0; i < 61; i++) arr.push(land);
-      return arr;
-    }
-
-    function bingState(holder) {
-      var img = holder ? holder.querySelector('img') : null;
-      return 'isBound=' + (bing && bing.isBound ? bing.isBound() : '?') + ' isAwake=' + (bing && bing.isAwake ? bing.isAwake() : '?') +
-        ' img.src=' + (img ? String(img.src).substring(0, 80) : 'none') + ' img size=' + (img ? img.clientWidth + 'x' + img.clientHeight : 'n/a');
-    }
-
-    // Mounts msfs-sdk BingComponent in a sized holder, gives it earth colours, and keeps it centred on the aircraft.
-    function mountBing(sdk) {
-      var holder = h('div', { style: 'position:relative;width:640px;height:400px;background:#000;overflow:hidden;' });
-      mountBox.appendChild(holder);
-      var ref = sdk.FSComponent.createRef();
-      if (modeEnum) log('EBingMode values: ' + Object.keys(modeEnum).join(', '));
-      var props = { ref: ref, id: 'ps-bing-' + (Date.now() % 100000), mode: modeEnum ? modeEnum[bingModeSel.value] : 0 };
-      if (sdk.ArraySubject) props.earthColors = sdk.ArraySubject.create(earthColorsFor(sdk));
-      else log('msfssdk.ArraySubject missing; map will keep its default black colours');
-      if (sdk.Subject) props.skyColor = sdk.Subject.create(0);
-      var vnode = sdk.FSComponent.buildComponent(sdk.BingComponent, props);
-      sdk.FSComponent.render(vnode, holder);
-      bing = ref.instance;
-      if (!bing) { log('BingComponent rendered but no instance reference came back.'); return; }
-      // Own aircraft marker (a CSS triangle, so no special characters are needed).
-      marker = h('div', { style: 'position:absolute;left:50%;top:50%;width:0;height:0;margin-left:-9px;margin-top:-14px;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:28px solid #4cd18a;' });
-      holder.appendChild(marker);
-      log('mounting Bing map in mode ' + bingModeSel.value);
-      followOwn();
-      if (bingTimer !== null) clearInterval(bingTimer);
-      var checks = 0;
-      bingTimer = setInterval(function () {
-        followOwn();
-        if (checks++ < 4) log('bing state: ' + bingState(holder));
-      }, 1000);
-      log('BingComponent mounted with earth colours; following own position every 1 s.');
-    }
-
-    // Best-effort mount of a built-in map. Which of these (if any) works inside an EFB app is exactly what we want to learn.
-    function tryMount() {
-      PS.clear(mountBox);
-      bing = null; marker = null; mounted = true;
-      var sdk = PS.global.msfssdk;
-      try {
-        if (sdk && sdk.BingComponent && sdk.FSComponent) { mountBing(sdk); return; }
-        var def = typeof customElements !== 'undefined' && customElements.get ? customElements.get('map-instrument') : null;
-        if (def) {
-          var mi = document.createElement('map-instrument');
-          mi.style.width = '100%'; mi.style.height = '320px';
-          mountBox.appendChild(mi);
-          log('created <map-instrument>; it needs configuration we have not added. Check whether it renders anything.');
-          return;
-        }
-        log('no known built-in map element or msfssdk BingComponent found; cannot mount.');
-        mountBox.appendChild(ui.note('No built-in map component found to mount. The canvas plot below is a baseline only (no imagery).', 'warn'));
-      } catch (e) {
-        log('mount failed: ' + PS.errText(e));
-        mountBox.appendChild(ui.note('Mount failed: ' + PS.errText(e), 'warn'));
-      }
-    }
-
-    // ---------------- Plot: runways, taxiways, traffic, pins and suggested pushes ----------------
+    var HANDLE_PX = 42;          // how far behind the tail the heading handle sits
+    var canvas = h('canvas', { class: 'ps-canvas', width: '900', height: '540' });
+    var plotRange = ui.stepper(PLOT_STEPS, 300, function () { draw('action'); }, 'plan');
     var infoLine = h('div', { class: 'ps-kv', text: '' });
     var contactLine = h('div', { class: 'ps-kv', text: '' });
+    var routeBox = h('div');
     var pinList = h('div');
     var sugBox = h('div');
-    var pinModeBtn = null;
-    var pinMode = false;
-    var selectedPin = -1;
+    var airportLine = h('div', { class: 'ps-kv', text: '' });
+    var addBtn = null;
+    var addMode = true;
+    var timer = null;
+    var airportLoading = false;
+    var drag = null;            // { kind: 'handle' | 'pin' | 'none', idx, sx, sy, moved }
+    var lastView = null, lastOwn = null, lastPlan = null, renderedPlan = null;
     var selectedContact = null;
-    var drag = null;            // { idx, sx, sy, moved } while a pin is held
-    var lastView = null;
-    var lastOwn = null;
-    var sug = { list: [], selectedId: null, key: '', at: 0, logged: false };
+    var sug = { list: [], selectedId: null, key: '', at: 0, logged: false, tookMs: 0 };
 
+    function log(msg) { PS.log('plan', msg); }
     function ownOrReference() {
       var o = PS.readOwn();
       if (o) return { own: o, live: true };
       var t = PS.state.taxi, p = t && t.parking && t.parking.length ? t.parking[0] : null;
       return { own: { lat: p ? p.lat : 51.47, lon: p ? p.lon : -0.4543, hdgDeg: 90, gsKt: 0, altFt: 0 }, live: false };
     }
-
-    function contactsNow() {
-      var real = PS.airTraffic.contacts || [];
-      if (real.length) return real;
-      // Simulated contacts from the Traffic page only (a stale real list used to be shown here and never updated).
-      var st = PS.state.contacts || [];
-      for (var i = 0; i < st.length; i++) { if (st[i].simulated) return st; }
-      return [];
-    }
-
+    function contactsNow() { return PS.airTraffic.contacts || []; }
     function canvasPoint(e) {
       var r = canvas.getBoundingClientRect();
       return [(e.clientX - r.left) * canvas.width / (r.width || canvas.width), (e.clientY - r.top) * canvas.height / (r.height || canvas.height)];
     }
+    function pxDist(a, b) { var dx = a[0] - b[0], dy = a[1] - b[1]; return Math.sqrt(dx * dx + dy * dy); }
 
-    // ---- pins ----
-    function renderPins() {
-      PS.clear(pinList);
-      var pins = PS.state.pins, o = lastOwn;
-      if (!pins.length) {
-        pinList.appendChild(ui.note('No pins. Press "Pin mode", then tap the plot to drop a pin; tap again for the next one. Pins are joined from the aircraft in order. Drag a pin to move it, or pick a suggested push below and press "Use as pins".'));
-        return;
-      }
-      var r = PS.routeLegs(o || { lat: pins[0].lat, lon: pins[0].lon }, pins);
-      pinList.appendChild(h('div', { class: 'ps-kv', text: pins.length + ' pin(s), route length ' + PS.fmt.dist(r.totalM) + (o ? ' from the aircraft' : '') }));
-      pins.forEach(function (p, i) {
-        var leg = r.legs[i];
-        pinList.appendChild(h('div', { class: 'ps-pinrow' + (i === selectedPin ? ' on' : '') },
-          h('span', { text: (i + 1) + ': ' + PS.fmt.dist(leg.distM) + ' on a bearing of ' + Math.round(leg.bearingDeg) + '°   (' + p.lat.toFixed(6) + ', ' + p.lon.toFixed(6) + ')' }),
-          ui.button('Delete', function () { deletePin(i); }, 'ps-small ps-ghost')));
-      });
-    }
-    function addPin(lat, lon) {
-      PS.state.pins.push({ lat: lat, lon: lon });
-      selectedPin = PS.state.pins.length - 1;
-      log('pin ' + PS.state.pins.length + ' added at ' + lat.toFixed(6) + ', ' + lon.toFixed(6));
-      renderPins(); draw();
-    }
-    function deletePin(i) {
-      PS.state.pins.splice(i, 1);
-      selectedPin = -1;
-      log('pin ' + (i + 1) + ' deleted; ' + PS.state.pins.length + ' left');
-      renderPins(); draw();
-    }
-    function undoPin() { if (PS.state.pins.length) deletePin(PS.state.pins.length - 1); }
-    function clearPins() { PS.state.pins.length = 0; selectedPin = -1; log('pins cleared'); renderPins(); draw(); }
-    function setPinMode(on) {
-      pinMode = on;
-      if (pinModeBtn) { pinModeBtn.textContent = 'Pin mode: ' + (on ? 'ON (tap the plot)' : 'off'); pinModeBtn.className = 'ps-btn' + (on ? ' ps-warn' : ''); }
-      canvas.className = 'ps-canvas' + (on ? ' ps-pinmode' : '');
-    }
-
-    canvas.addEventListener('mousedown', function (e) {
-      if (!lastView) return;
-      var p = canvasPoint(e);
-      var hit = PS.nearestPin(lastView, PS.state.pins, p[0], p[1], 18);
-      drag = hit >= 0 ? { idx: hit, sx: p[0], sy: p[1], moved: false } : { idx: -1, sx: p[0], sy: p[1], moved: false };
-      if (hit >= 0) { selectedPin = hit; renderPins(); draw(); }
-    });
-    canvas.addEventListener('mousemove', function (e) {
-      if (!drag || !lastView) return;
-      var p = canvasPoint(e);
-      if (!drag.moved && Math.abs(p[0] - drag.sx) + Math.abs(p[1] - drag.sy) > 6) drag.moved = true;
-      if (drag.idx >= 0 && drag.moved) {
-        var ll = lastView.fromPx(p[0], p[1]);
-        PS.state.pins[drag.idx].lat = ll[0]; PS.state.pins[drag.idx].lon = ll[1];
-        draw();
-      }
-    });
-    function release(e) {
-      if (!drag) return;
-      var d = drag; drag = null;
-      if (d.idx >= 0) { if (d.moved) { log('pin ' + (d.idx + 1) + ' moved'); renderPins(); } return; }
-      if (d.moved || !lastView) return;
-      var p = canvasPoint(e);
-      if (pinMode) { var ll = lastView.fromPx(p[0], p[1]); addPin(ll[0], ll[1]); return; }
-      // Not in pin mode: pick the nearest aircraft to read its details.
-      var best = null, bestD = 16;
-      contactsNow().forEach(function (c) {
-        var q = lastView.toPx(c.lat, c.lon), dd = Math.sqrt((q[0] - p[0]) * (q[0] - p[0]) + (q[1] - p[1]) * (q[1] - p[1]));
-        if (dd < bestD) { bestD = dd; best = c; }
-      });
-      selectedContact = best ? best.id : null;
-      selectedPin = -1; renderPins(); draw();
-    }
-    canvas.addEventListener('mouseup', release);
-    canvas.addEventListener('mouseleave', function () { drag = null; });
-
-    // ---- suggested pushes ----
-    function selectedSuggestion() {
-      for (var i = 0; i < sug.list.length; i++) { if (sug.list[i].id === sug.selectedId) return sug.list[i]; }
-      return null;
-    }
-    function renderSuggestions() {
-      PS.clear(sugBox);
-      var t = PS.state.taxi;
-      if (!t) { sugBox.appendChild(ui.note('No airport data loaded yet. Suggestions need the taxiway data (page 3, or wait for the airport to load here).')); return; }
-      if (!sug.list.length) {
-        sugBox.appendChild(ui.note('No suggestions: none of the named taxiways, links or lanes is within reach behind or beside the aircraft, or the taxi module did not supply taxi paths (' + t.items.length + ' items loaded).'));
-        return;
-      }
-      var cur = selectedSuggestion();
-      if (cur) {
-        sugBox.appendChild(h('div', { class: 'ps-row' },
-          ui.button('Use as pins', function () {
-            PS.state.pins.length = 0;
-            cur.pins.forEach(function (p) { PS.state.pins.push({ lat: p[0], lon: p[1] }); });
-            selectedPin = -1; log('copied suggestion "' + cur.title + '" into ' + cur.pins.length + ' pin(s)');
-            renderPins(); draw();
-          }),
-          ui.button('Hide route', function () { sug.selectedId = null; renderSuggestions(); draw(); }, 'ps-ghost')));
-      }
-      sug.list.forEach(function (s, i) {
-        sugBox.appendChild(h('button', { type: 'button', class: 'ps-sug' + (s.id === sug.selectedId ? ' on' : ''), onclick: function () {
-          sug.selectedId = s.id === sug.selectedId ? null : s.id;
-          log('suggestion ' + (i + 1) + (sug.selectedId ? ' shown: ' : ' hidden: ') + s.title + ' (' + Math.round(s.lengthM) + ' m)');
-          renderSuggestions(); draw();
-        } }, h('div', { class: 'ps-sug-title', text: (i + 1) + '. ' + s.title }), h('div', { class: 'ps-sug-detail', text: s.detail })));
-      });
-    }
-    function refreshSuggestions(own) {
-      var now = Date.now(), t = PS.state.taxi;
-      if (!t || !t.items || !t.items.length) {
-        if (sug.list.length || sug.key !== 'none') { sug.list = []; sug.key = 'none'; renderSuggestions(); }
-        return;
-      }
-      var key = [t.icao || '', t.items.length, own.lat.toFixed(5), own.lon.toFixed(5), Math.round(own.hdgDeg)].join('|');
-      // Not while the aircraft is moving (a push is under way), and no more often than 10x the time the last run took.
-      if (key === sug.key || now - sug.at < Math.max(1500, (sug.tookMs || 0) * 10)) return;
-      if (own.gsKt > 1 && sug.list.length) return;
-      sug.key = key; sug.at = now;
-      var before = sug.list.length;
-      try {
-        var t0 = Date.now();
-        sug.list = PS.suggest.suggest(t.items, own, t.parking);
-        sug.tookMs = Date.now() - t0;
-        if (!sug.logged || sug.list.length !== before) { sug.logged = true; log('suggested pushes: ' + sug.list.length + ' option(s) in ' + (Date.now() - t0) + ' ms (heading ' + Math.round(own.hdgDeg) + ')'); }
-      } catch (e) { sug.list = []; log('suggestion failed: ' + PS.errText(e)); }
-      if (sug.selectedId && !selectedSuggestion()) sug.selectedId = null;
-      renderSuggestions();
-    }
-
-    // ---- drawing ----
-    // draw() never throws: an error is shown under the plot and logged once, and the redraw timers keep going.
+    // ---------------- diagnostics: what triggers each redraw and whether the plot really changes ----------------
     var lastDrawAt = 0, lastDrawErr = '';
-    // ---- refresh diagnostics: what triggers each redraw, how long it takes, and whether the plot's inputs and pixels really change ----
     var diag = { counts: { timer: 0, frame: 0, click: 0, manual: 0, show: 0, action: 0 }, draws: 0, errors: 0, msSum: 0, msMax: 0, gapMax: 0,
       inChanged: 0, pxChanged: 0, sig: '', pix: '', ring: [], timerTicks: 0, timerLast: 0, timerGapMax: 0, frameCalls: 0, clicks: 0, mouse: 0,
-      shownAt: 0, shows: 0, hides: 0, lastSummaryDraws: 0, summaries: 0 };
+      shownAt: 0, shows: 0, hides: 0, lastSummaryDraws: 0, watch: 0 };
     var diagBox = h('pre', { class: 'ps-log', text: '(opens with the page)' });
     var diagTimer = null;
     function pixelSig() {
       try {
-        var g = canvas.getContext('2d'), sum = 0, rows = [60, 180, 240, 300, 420];
+        var g = canvas.getContext('2d'), sum = 0, rows = [60, 180, 270, 360, 480];
         for (var r = 0; r < rows.length; r++) {
           var d = g.getImageData(0, rows[r], canvas.width, 1).data;
           for (var i = 0; i < d.length; i += 16) sum = (sum * 31 + d[i] + d[i + 1] * 3 + d[i + 2] * 7) % 1000003;
@@ -3485,10 +2354,39 @@ PS.pages.push({
       } catch (e) { return 'n/a'; }
     }
     function inputsSig(own, cs) {
-      var s = own.lat.toFixed(6) + ',' + own.lon.toFixed(6) + ',' + Math.round(own.hdgDeg) + '|' + plotRange.get() + '|' + PS.state.pins.length + '|' + sug.selectedId + '|' + cs.length;
+      var s = own.lat.toFixed(6) + ',' + own.lon.toFixed(6) + ',' + Math.round(own.hdgDeg) + '|' + plotRange.get() + '|' + PS.plan.count() + '|' + PS.plan.selected() + '|' + sug.selectedId + '|' + cs.length;
       for (var i = 0; i < cs.length && i < 4; i++) s += '|' + cs[i].lat.toFixed(6) + ',' + cs[i].lon.toFixed(6);
       return s;
     }
+    function diagText() {
+      var now = Date.now(), T = PS.airTraffic, cs = contactsNow(), o = lastOwn;
+      var r = canvas.getBoundingClientRect ? canvas.getBoundingClientRect() : { width: 0, height: 0, left: 0, top: 0 };
+      var lines = [
+        'Refresh diagnostics. Page open for ' + (diag.shownAt ? Math.round((now - diag.shownAt) / 1000) : 0) + ' s (shown ' + diag.shows + 'x, hidden ' + diag.hides + 'x). document.hidden=' + (typeof document !== 'undefined' ? document.hidden : '?') + ', visibility=' + (typeof document !== 'undefined' ? document.visibilityState : '?'),
+        'draws: ' + diag.draws + ' (timer ' + diag.counts.timer + ', frame ' + diag.counts.frame + ', click ' + diag.counts.click + ', manual ' + diag.counts.manual + ', show ' + diag.counts.show + ', action ' + diag.counts.action + '); errors ' + diag.errors,
+        'draw time: avg ' + (diag.draws ? (diag.msSum / diag.draws).toFixed(1) : '0') + ' ms, max ' + diag.msMax + ' ms; longest gap between draws ' + diag.gapMax + ' ms; last draw ' + (lastDrawAt ? ((now - lastDrawAt) / 1000).toFixed(1) + ' s ago' : 'never'),
+        'redraw timer: ' + diag.timerTicks + ' ticks (longest gap ' + diag.timerGapMax + ' ms); frame hook calls ' + diag.frameCalls + '; page clicks ' + diag.clicks + '; canvas mouse events ' + diag.mouse,
+        'draws where the plot inputs changed: ' + diag.inChanged + ' of ' + diag.draws + '; where the canvas pixels changed: ' + diag.pxChanged + ' of ' + diag.draws,
+        'canvas ' + canvas.width + 'x' + canvas.height + ', shown ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' at (' + Math.round(r.left) + ', ' + Math.round(r.top) + ')',
+        'own ' + (o ? o.lat.toFixed(6) + ', ' + o.lon.toFixed(6) + ', hdg ' + Math.round(o.hdgDeg) : 'unknown') + '; contacts ' + cs.length + '; traffic replies ' + T.calls + ', last reply ' + (T.lastAt ? ((now - T.lastAt) / 1000).toFixed(1) + ' s ago' : 'never') + (T.error ? ', error: ' + T.error : ''),
+        'airport ' + (PS.state.taxi ? PS.state.taxi.icao + ' (' + PS.state.taxi.items.length + ' items)' : 'not loaded') + '; suggestions ' + sug.list.length + ' (last run ' + sug.tookMs + ' ms); pins ' + PS.plan.count(),
+        'recent draws, newest last (+seconds since page opened):'
+      ];
+      diag.ring.slice(-25).forEach(function (d) {
+        lines.push('  +' + ((d.t - diag.shownAt) / 1000).toFixed(1) + 's ' + d.src + ' gap ' + d.gap + ' ms, ' + d.ms + ' ms, inputs ' + (d.inC ? 'Y' : '-') + ' pixels ' + (d.pxC ? 'Y' : '-') + ' contacts ' + d.n + ' replies ' + d.replies + ' hdg ' + Math.round(d.hdg) + (d.err ? ' ERROR ' + d.err : ''));
+      });
+      return lines.join('\n');
+    }
+    // Watchdog, independent of the redraw trigger: every 5 s it reports how many draws happened, and says so loudly when none did.
+    function diagTick() {
+      diagBox.textContent = diagText();
+      diag.watch++;
+      if (diag.watch % 5 !== 0) return;
+      var since = diag.draws - diag.lastSummaryDraws; diag.lastSummaryDraws = diag.draws;
+      log('refresh summary: ' + since + ' draw(s) in the last 5 s' + (since === 0 ? ' - NO REDRAWS' : '') + ' (timer ' + diag.counts.timer + ' frame ' + diag.counts.frame + ' click ' + diag.counts.click + ' total); redraw timer ticks ' + diag.timerTicks + ', frame hook calls ' + diag.frameCalls +
+        ', inputs changed ' + diag.inChanged + '/' + diag.draws + ', pixels changed ' + diag.pxChanged + '/' + diag.draws + ', traffic replies ' + PS.airTraffic.calls + ', errors ' + diag.errors + ', hidden=' + (typeof document !== 'undefined' ? document.hidden : '?'));
+    }
+    // draw() never throws: an error is shown under the plot and logged once, and the redraw triggers keep going.
     function draw(src) {
       src = typeof src === 'string' ? src : 'action';
       var t0 = Date.now(), gap = lastDrawAt ? t0 - lastDrawAt : 0, err = '';
@@ -3511,45 +2409,218 @@ PS.pages.push({
         if (diag.draws <= 6 || err) log('draw #' + diag.draws + ' (' + src + '): ' + ms + ' ms, ' + gap + ' ms since the last, inputs ' + (inC ? 'changed' : 'same') + ', canvas pixels ' + (pxC ? 'changed' : 'same') + (err ? ', ERROR ' + err : ''));
       } catch (e2) { log('diagnostics failed: ' + PS.errText(e2)); }
     }
-    function diagText() {
-      var now = Date.now(), T = PS.airTraffic, cs = contactsNow(), o = lastOwn;
-      var r = canvas.getBoundingClientRect ? canvas.getBoundingClientRect() : { width: 0, height: 0, left: 0, top: 0 };
-      var lines = [
-        'Refresh diagnostics. Page open for ' + (diag.shownAt ? Math.round((now - diag.shownAt) / 1000) : 0) + ' s (shown ' + diag.shows + 'x, hidden ' + diag.hides + 'x). document.hidden=' + (typeof document !== 'undefined' ? document.hidden : '?') + ', visibility=' + (typeof document !== 'undefined' ? document.visibilityState : '?'),
-        'draws: ' + diag.draws + ' (timer ' + diag.counts.timer + ', frame ' + diag.counts.frame + ', click ' + diag.counts.click + ', manual ' + diag.counts.manual + ', show ' + diag.counts.show + ', action ' + diag.counts.action + '); errors ' + diag.errors,
-        'draw time: avg ' + (diag.draws ? (diag.msSum / diag.draws).toFixed(1) : '0') + ' ms, max ' + diag.msMax + ' ms; longest gap between draws ' + diag.gapMax + ' ms; last draw ' + (lastDrawAt ? ((now - lastDrawAt) / 1000).toFixed(1) + ' s ago' : 'never'),
-        'redraw timer: ' + diag.timerTicks + ' ticks (longest gap ' + diag.timerGapMax + ' ms); frame hook calls ' + diag.frameCalls + '; page clicks ' + diag.clicks + '; canvas mouse events ' + diag.mouse,
-        'draws where the plot inputs changed: ' + diag.inChanged + ' of ' + diag.draws + '; where the canvas pixels changed: ' + diag.pxChanged + ' of ' + diag.draws,
-        'canvas ' + canvas.width + 'x' + canvas.height + ', shown ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' at (' + Math.round(r.left) + ', ' + Math.round(r.top) + ')',
-        'own ' + (o ? o.lat.toFixed(6) + ', ' + o.lon.toFixed(6) + ', hdg ' + Math.round(o.hdgDeg) : 'unknown') + '; contacts ' + cs.length + '; traffic replies ' + T.calls + ', last reply ' + (T.lastAt ? ((now - T.lastAt) / 1000).toFixed(1) + ' s ago' : 'never') + (T.error ? ', error: ' + T.error : ''),
-        'airport ' + (PS.state.taxi ? PS.state.taxi.icao + ' (' + PS.state.taxi.items.length + ' items)' : 'not loaded') + '; suggestions ' + sug.list.length + '; pins ' + PS.state.pins.length,
-        'recent draws, newest last (+seconds since page opened):'
-      ];
-      diag.ring.slice(-25).forEach(function (d) {
-        lines.push('  +' + ((d.t - diag.shownAt) / 1000).toFixed(1) + 's ' + d.src + ' gap ' + d.gap + ' ms, ' + d.ms + ' ms, inputs ' + (d.inC ? 'Y' : '-') + ' pixels ' + (d.pxC ? 'Y' : '-') + ' contacts ' + d.n + ' replies ' + d.replies + ' hdg ' + Math.round(d.hdg) + (d.err ? ' ERROR ' + d.err : ''));
+
+    // ---------------- pins ----------------
+    function setAddMode(on) {
+      addMode = on;
+      if (addBtn) { addBtn.textContent = 'Add pins: ' + (on ? 'ON (tap the plot)' : 'off'); addBtn.className = 'ps-btn' + (on ? ' ps-warn' : ''); }
+      canvas.className = 'ps-canvas' + (on ? ' ps-pinmode' : '');
+    }
+    function planChanged() { renderedPlan = null; draw('action'); }
+    function addPin(lat, lon) {
+      var i = PS.plan.add(lat, lon);
+      log('pin ' + (i + 1) + ' added at ' + lat.toFixed(6) + ', ' + lon.toFixed(6));
+      planChanged();
+    }
+    function deletePin(i) { PS.plan.remove(i); log('pin ' + (i + 1) + ' deleted; ' + PS.plan.count() + ' left'); planChanged(); }
+    function pinHeading(i) {
+      if (!lastPlan) return null;
+      for (var k = 0; k < lastPlan.items.length; k++) { if (lastPlan.items[k].userIndex === i) return lastPlan.items[k].headingDeg; }
+      return null;
+    }
+    // Where the heading handle of pin i sits on the canvas: HANDLE_PX behind the tail of the aircraft drawn there.
+    function handlePx(i) {
+      var pins = PS.plan.list(), hd = pinHeading(i);
+      if (!lastView || !pins[i] || hd === null || hd === undefined) return null;
+      var q = lastView.toPx(pins[i].lat, pins[i].lon), a = PS.geo.rad(hd);
+      return [q[0] - Math.sin(a) * HANDLE_PX, q[1] + Math.cos(a) * HANDLE_PX];
+    }
+
+    function legWord(sign) { return sign < 0 ? 'push back' : 'drive forward'; }
+    function renderRoute(plan, own) {
+      PS.clear(routeBox);
+      if (plan.empty) {
+        routeBox.appendChild(ui.note('No route yet. Tap the plot to drop pins (Add pins is on), or pick a suggested push below. The last pin is where the aircraft ends up; rotate it with the handle behind it.'));
+        return;
+      }
+      routeBox.appendChild(h('div', { class: 'ps-result ' + (plan.warnings.length ? 'bad' : 'ok'),
+        text: PS.fmt.dist(plan.totalM) + ' in ' + plan.legs.length + ' leg(s)' + (plan.turnaroundAdded ? ', with a turnaround pin added by the planner' : '') + (plan.warnings.length ? '. The tug may not manage it (see below)' : '. Plans without a warning') }));
+      plan.legs.forEach(function (l, n) {
+        routeBox.appendChild(h('div', { class: 'ps-kv', text: 'Leg ' + (n + 1) + ': ' + legWord(l.sign) + ' ' + PS.fmt.dist(l.lengthM) + ', ends facing ' + Math.round(l.endHdgDeg) + '°' }));
       });
-      return lines.join('\n');
+      plan.warnings.forEach(function (w) { routeBox.appendChild(h('div', { class: 'ps-result bad', text: w })); });
     }
-    // Watchdog: independent of the redraw trigger, it reports every 5 s how many draws happened, and says so loudly when none did.
-    function diagTick() {
-      diagBox.textContent = diagText();
-      var every = 5;
-      diag.watch = (diag.watch || 0) + 1;
-      if (diag.watch % every !== 0) return;
-      var since = diag.draws - diag.lastSummaryDraws; diag.lastSummaryDraws = diag.draws; diag.summaries++;
-      log('refresh summary: ' + since + ' draw(s) in the last ' + every + ' s' + (since === 0 ? ' - NO REDRAWS' : '') + ' (timer ' + diag.counts.timer + ' frame ' + diag.counts.frame + ' click ' + diag.counts.click + ' total); redraw timer ticks ' + diag.timerTicks + ', frame hook calls ' + diag.frameCalls +
-        ', inputs changed ' + diag.inChanged + '/' + diag.draws + ', pixels changed ' + diag.pxChanged + '/' + diag.draws + ', traffic replies ' + PS.airTraffic.calls + ', errors ' + diag.errors + ', hidden=' + (typeof document !== 'undefined' ? document.hidden : '?'));
+    function renderPins(plan, own) {
+      PS.clear(pinList);
+      var pins = PS.plan.list();
+      if (!pins.length) { pinList.appendChild(ui.note('No pins.')); return; }
+      var legs = PS.routeLegs(own, pins), sel = PS.plan.selected();
+      pins.forEach(function (p, i) {
+        var hd = pinHeading(i);
+        pinList.appendChild(h('div', { class: 'ps-pinrow' + (i === sel ? ' on' : '') },
+          h('span', { text: (i === pins.length - 1 ? 'End' : 'Pin ' + (i + 1)) + ': ' + PS.fmt.dist(legs.legs[i].distM) + ' on a bearing of ' + Math.round(legs.legs[i].bearingDeg) + '°, nose ' + (hd === null ? '?' : Math.round(hd) + '°') + (p.headingUser ? ' (set by you)' : ' (auto)') }),
+          ui.button(i === sel ? 'Selected' : 'Select', function () { PS.plan.select(i); planChanged(); }, 'ps-small ps-ghost'),
+          p.headingUser ? ui.button('Auto heading', function () { PS.plan.resetHeading(i); log('pin ' + (i + 1) + ' heading back to auto'); planChanged(); }, 'ps-small ps-ghost') : null,
+          ui.button('Delete', function () { deletePin(i); }, 'ps-small ps-ghost')));
+      });
     }
+
+    // ---------------- mouse ----------------
+    canvas.addEventListener('mousedown', function (e) {
+      diag.mouse++;
+      if (!lastView) return;
+      var p = canvasPoint(e), sel = PS.plan.selected();
+      if (sel >= 0) {
+        var hp = handlePx(sel);
+        if (hp && pxDist(hp, p) <= 16) { drag = { kind: 'handle', idx: sel, sx: p[0], sy: p[1], moved: false }; return; }
+      }
+      var hit = PS.nearestPin(lastView, PS.plan.list(), p[0], p[1], 22);
+      if (hit >= 0) { PS.plan.select(hit); drag = { kind: 'pin', idx: hit, sx: p[0], sy: p[1], moved: false }; planChanged(); return; }
+      drag = { kind: 'none', idx: -1, sx: p[0], sy: p[1], moved: false };
+    });
+    canvas.addEventListener('mousemove', function (e) {
+      if (!drag || !lastView) return;
+      var p = canvasPoint(e);
+      if (!drag.moved && Math.abs(p[0] - drag.sx) + Math.abs(p[1] - drag.sy) > 6) drag.moved = true;
+      if (drag.kind === 'handle') {
+        var pins = PS.plan.list(), q = lastView.toPx(pins[drag.idx].lat, pins[drag.idx].lon);
+        PS.plan.setHeading(drag.idx, PS.plan.headingFromHandle(q[0], q[1], p[0], p[1]));
+        draw('action');
+      } else if (drag.kind === 'pin' && drag.moved) {
+        var ll = lastView.fromPx(p[0], p[1]);
+        PS.plan.move(drag.idx, ll[0], ll[1]);
+        draw('action');
+      }
+    });
+    function release(e) {
+      if (!drag) return;
+      var d = drag; drag = null;
+      if (d.kind === 'handle') { log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); planChanged(); return; }
+      if (d.kind === 'pin') { if (d.moved) { log('pin ' + (d.idx + 1) + ' moved'); planChanged(); } return; }
+      if (d.moved || !lastView) return;
+      var p = canvasPoint(e);
+      if (addMode) { var ll = lastView.fromPx(p[0], p[1]); addPin(ll[0], ll[1]); return; }
+      // Add pins off: pick the nearest aircraft to read its details, or clear the selection.
+      var best = null, bestD = 16;
+      contactsNow().forEach(function (c) {
+        var dd = pxDist(lastView.toPx(c.lat, c.lon), p);
+        if (dd < bestD) { bestD = dd; best = c; }
+      });
+      selectedContact = best ? best.id : null;
+      PS.plan.select(-1); planChanged();
+    }
+    canvas.addEventListener('mouseup', release);
+    canvas.addEventListener('mouseleave', function () { drag = null; });
+
+    // ---------------- suggested pushes ----------------
+    function selectedSuggestion() {
+      for (var i = 0; i < sug.list.length; i++) { if (sug.list[i].id === sug.selectedId) return sug.list[i]; }
+      return null;
+    }
+    function renderSuggestions() {
+      PS.clear(sugBox);
+      var t = PS.state.taxi;
+      if (!t) { sugBox.appendChild(ui.note('No airport data loaded yet.')); return; }
+      if (!sug.list.length) {
+        sugBox.appendChild(ui.note('No suggestions: no named taxiway, link or lane is within reach where the tail points, or the taxi module supplied no paths (' + t.items.length + ' items loaded). You can still drop pins by hand.'));
+        return;
+      }
+      var cur = selectedSuggestion();
+      if (cur) {
+        sugBox.appendChild(h('div', { class: 'ps-row' },
+          ui.button('Use as my plan', function () {
+            PS.plan.setAll(cur.waypoints);
+            log('plan set from suggestion "' + cur.title + '" (' + PS.plan.count() + ' pin(s))');
+            sug.selectedId = null; renderSuggestions(); planChanged();
+          }),
+          ui.button('Hide route', function () { sug.selectedId = null; renderSuggestions(); draw('action'); }, 'ps-ghost')));
+      }
+      sug.list.forEach(function (s, i) {
+        sugBox.appendChild(h('button', { type: 'button', class: 'ps-sug' + (s.id === sug.selectedId ? ' on' : ''), onclick: function () {
+          sug.selectedId = s.id === sug.selectedId ? null : s.id;
+          log('suggestion ' + (i + 1) + (sug.selectedId ? ' shown: ' : ' hidden: ') + s.title + ' (' + Math.round(s.lengthM) + ' m)');
+          renderSuggestions(); draw('action');
+        } }, h('div', { class: 'ps-sug-title', text: (i + 1) + '. ' + s.title + '  (' + PS.fmt.dist(s.lengthM) + ')' }), h('div', { class: 'ps-sug-detail', text: s.detail })));
+      });
+    }
+    function refreshSuggestions(own) {
+      var now = Date.now(), t = PS.state.taxi;
+      if (!t || !t.items || !t.items.length) {
+        if (sug.list.length || sug.key !== 'none') { sug.list = []; sug.key = 'none'; renderSuggestions(); }
+        return;
+      }
+      var key = [t.icao || '', t.items.length, own.lat.toFixed(5), own.lon.toFixed(5), Math.round(own.hdgDeg)].join('|');
+      // Not while the aircraft is moving (a push is under way), and no more often than 10x the time the last run took.
+      if (key === sug.key || now - sug.at < Math.max(1500, sug.tookMs * 10)) return;
+      if (own.gsKt > 1 && sug.list.length) return;
+      sug.key = key; sug.at = now;
+      var before = sug.list.length;
+      try {
+        var t0 = Date.now();
+        sug.list = PS.suggest.suggest(t.items, own, t.parking);
+        sug.tookMs = Date.now() - t0;
+        if (!sug.logged || sug.list.length !== before) { sug.logged = true; log('suggested pushes: ' + sug.list.length + ' option(s) in ' + sug.tookMs + ' ms (heading ' + Math.round(own.hdgDeg) + ')'); }
+      } catch (e) { sug.list = []; log('suggestion failed: ' + PS.errText(e)); }
+      if (sug.selectedId && !selectedSuggestion()) sug.selectedId = null;
+      renderSuggestions();
+    }
+    function loadAirport(why) {
+      airportLoading = true;
+      airportLine.textContent = 'Loading airport data' + (why ? ' (' + why + ')' : '') + '...';
+      return PS.facility.loadNearestIntoState().then(function (icao) {
+        airportLoading = false; sug.key = ''; airportLine.textContent = 'Airport ' + icao + ' loaded: ' + PS.state.taxi.items.length + ' runway/path item(s), ' + PS.state.taxi.parking.length + ' stand(s).';
+        renderSuggestions();
+      }, function (e) { airportLoading = false; airportLine.textContent = 'Could not load airport data: ' + PS.errText(e); log('could not load airport data: ' + PS.errText(e)); });
+    }
+
+    // ---------------- drawing ----------------
+    // An aircraft marker (nose up, then rotated): the pin's direction is the way the nose points there.
+    function drawAircraftMarker(g, x, y, headingDeg, fill, stroke, scale) {
+      g.save(); g.translate(x, y); g.rotate(PS.geo.rad(headingDeg)); g.scale(scale, scale);
+      g.beginPath(); g.moveTo(0, -17); g.lineTo(5, -6); g.lineTo(17, 4); g.lineTo(17, 8); g.lineTo(5, 4); g.lineTo(4, 11); g.lineTo(9, 15); g.lineTo(9, 18); g.lineTo(0, 16); g.lineTo(-9, 18); g.lineTo(-9, 15); g.lineTo(-4, 11);
+      g.lineTo(-5, 4); g.lineTo(-17, 8); g.lineTo(-17, 4); g.lineTo(-5, -6); g.closePath();
+      if (fill) { g.fillStyle = fill; g.fill(); }
+      g.lineWidth = 2; g.strokeStyle = stroke; g.stroke();
+      g.restore();
+    }
+    function labelAt(g, text, x, y) {
+      g.font = 'bold 13px Arial'; g.lineWidth = 3; g.strokeStyle = '#0b1116'; g.strokeText(text, x, y); g.fillStyle = '#ffffff'; g.fillText(text, x, y);
+    }
+    // Direction chevrons along a drawn path every ~46 px, pointing the way the tug travels.
+    function chevrons(g, px, color) {
+      var acc = 0, next = 30;
+      g.fillStyle = color;
+      for (var i = 1; i < px.length; i++) {
+        var dx = px[i][0] - px[i - 1][0], dy = px[i][1] - px[i - 1][1], len = Math.sqrt(dx * dx + dy * dy);
+        if (len < 0.01) continue;
+        while (acc + len >= next) {
+          var f = (next - acc) / len, x = px[i - 1][0] + dx * f, y = px[i - 1][1] + dy * f, a = Math.atan2(dy, dx);
+          g.save(); g.translate(x, y); g.rotate(a); g.beginPath(); g.moveTo(5, 0); g.lineTo(-4, -5); g.lineTo(-4, 5); g.closePath(); g.fill(); g.restore();
+          next += 46;
+        }
+        acc += len;
+      }
+    }
+    function strokePath(g, pts, view, color, width) {
+      g.strokeStyle = color; g.lineWidth = width; g.beginPath();
+      var px = pts.map(function (p) { return view.toPx(p[0], p[1]); });
+      px.forEach(function (q, i) { if (i === 0) g.moveTo(q[0], q[1]); else g.lineTo(q[0], q[1]); });
+      g.stroke(); g.lineWidth = 1;
+      return px;
+    }
+
     function drawPlot() {
       var g = canvas.getContext && canvas.getContext('2d');
       if (!g) { infoLine.textContent = 'Canvas 2D not available.'; return; }
       var c = ownOrReference(), own = c.own;
       lastOwn = own;
-      var w = canvas.width, hgt = canvas.height;
-      var range = plotRange.get();
+      var w = canvas.width, hgt = canvas.height, range = plotRange.get();
       var view = PS.plotView(w, hgt, own, range);
       lastView = view;
       refreshSuggestions(own);
+      var plan = PS.plan.evaluate(own);
+      lastPlan = plan;
+      if (plan !== renderedPlan) { renderedPlan = plan; renderRoute(plan, own); renderPins(plan, own); }
 
       g.fillStyle = '#0f171e'; g.fillRect(0, 0, w, hgt);
       g.lineWidth = 1; g.strokeStyle = '#2a3a47'; g.fillStyle = '#6f8294'; g.font = '11px Arial';
@@ -3572,7 +2643,7 @@ PS.pages.push({
           var nm = it.rawName;
           if (range <= 1000 && nm && it.category === 'Taxiway' && first && last && !labels[nm]) {
             var mx = (first[0] + last[0]) / 2, my = (first[1] + last[1]) / 2;
-            if (mx > 0 && mx < w && my > 0 && my < hgt) { labels[nm] = [mx, my]; }
+            if (mx > 0 && mx < w && my > 0 && my < hgt) labels[nm] = [mx, my];
           }
         });
         g.lineWidth = 1; g.font = '11px Arial'; g.fillStyle = '#ffd37a';
@@ -3588,50 +2659,48 @@ PS.pages.push({
         }
       }
 
-      // Suggested pushes: end markers for all, the full route for the chosen one.
+      // Suggested pushes: end markers for all (numbered), the planned route and final nose for the chosen one.
       var chosen = selectedSuggestion();
       g.font = 'bold 11px Arial';
       sug.list.forEach(function (s, i) {
         if (s === chosen) return;
         var e = s.pins[s.pins.length - 1], q = view.toPx(e[0], e[1]);
-        g.fillStyle = '#34d2c8'; g.beginPath(); g.arc(q[0], q[1], 6, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#34d2c8'; g.beginPath(); g.arc(q[0], q[1], 7, 0, Math.PI * 2); g.fill();
         g.fillStyle = '#0f171e'; g.fillText(String(i + 1), q[0] - (i > 8 ? 6 : 3), q[1] + 4);
       });
       if (chosen) {
-        g.strokeStyle = '#34d2c8'; g.lineWidth = 4; g.beginPath();
-        chosen.route.forEach(function (p, i) { var q = view.toPx(p[0], p[1]); if (i === 0) g.moveTo(q[0], q[1]); else g.lineTo(q[0], q[1]); });
-        g.stroke(); g.lineWidth = 1;
-        chosen.pins.forEach(function (p, i) {
-          var q = view.toPx(p[0], p[1]), isEnd = i === chosen.pins.length - 1;
-          g.fillStyle = '#34d2c8'; g.beginPath(); g.arc(q[0], q[1], isEnd ? 8 : 5, 0, Math.PI * 2); g.fill();
-        });
-        // The nose direction the push ends with, drawn at the end point.
+        chevrons(g, strokePath(g, chosen.route, view, '#34d2c8', 4), '#0f171e');
         var ep = chosen.pins[chosen.pins.length - 1], eq = view.toPx(ep[0], ep[1]);
-        g.save(); g.translate(eq[0], eq[1]); g.rotate(PS.geo.rad(chosen.facingDeg));
-        g.fillStyle = '#ffffff'; g.beginPath(); g.moveTo(0, -22); g.lineTo(7, -10); g.lineTo(-7, -10); g.closePath(); g.fill();
-        g.restore();
+        drawAircraftMarker(g, eq[0], eq[1], chosen.facingDeg, 'rgba(52,210,200,0.35)', '#34d2c8', 1);
       }
 
-      // Pins: joined from the aircraft in order.
-      var pins = PS.state.pins;
-      if (pins.length) {
-        g.strokeStyle = '#ffffff'; g.lineWidth = 2;
-        if (g.setLineDash) g.setLineDash([6, 4]);
-        g.beginPath(); g.moveTo(view.cx, view.cy);
-        pins.forEach(function (p) { var q = view.toPx(p.lat, p.lon); g.lineTo(q[0], q[1]); });
-        g.stroke();
-        if (g.setLineDash) g.setLineDash([]);
-        g.lineWidth = 1; g.font = 'bold 13px Arial';
-        pins.forEach(function (p, i) {
-          var q = view.toPx(p.lat, p.lon), sel = i === selectedPin;
-          if (sel) { g.strokeStyle = '#ffe14d'; g.lineWidth = 3; g.beginPath(); g.arc(q[0], q[1], 17, 0, Math.PI * 2); g.stroke(); g.lineWidth = 1; }
-          g.fillStyle = i === pins.length - 1 ? '#ff7a45' : '#ffffff';
-          g.beginPath(); g.arc(q[0], q[1], 11, 0, Math.PI * 2); g.fill();
-          g.fillStyle = '#0f171e'; g.fillText(String(i + 1), q[0] - (i > 8 ? 7 : 4), q[1] + 5);
+      // The plan: planned route by leg (push back = teal, forward = blue, a leg the tug may not manage = red), then directional pins.
+      if (!plan.empty) {
+        plan.segments.forEach(function (sg, n) {
+          var color = plan.legs[n].warning ? '#ff5c6c' : (sg.sign < 0 ? '#ffffff' : '#5aa8ff');
+          chevrons(g, strokePath(g, sg.points, view, color, 3), color);
         });
+        g.font = 'bold 13px Arial';
+        plan.items.forEach(function (it) {
+          var q = view.toPx(it.wp.lat, it.wp.lon), isEnd = it.userIndex === PS.plan.count() - 1;
+          if (it.turnaround) { drawAircraftMarker(g, q[0], q[1], it.headingDeg === null ? 0 : it.headingDeg, null, '#9fb3c4', 0.8); labelAt(g, 'turn', q[0] + 14, q[1] - 12); return; }
+          drawAircraftMarker(g, q[0], q[1], it.headingDeg === null ? 0 : it.headingDeg, isEnd ? '#ff9f43' : '#e8f0f6', '#0b1116', isEnd ? 1.15 : 1);
+          labelAt(g, isEnd ? 'End' : String(it.userIndex + 1), q[0] + 16, q[1] - 14);
+        });
+        var sel = PS.plan.selected();
+        if (sel >= 0 && PS.plan.list()[sel]) {
+          var sp = PS.plan.list()[sel], sq = view.toPx(sp.lat, sp.lon), hp = handlePx(sel);
+          g.strokeStyle = '#ffe14d'; g.lineWidth = 3; g.beginPath(); g.arc(sq[0], sq[1], 25, 0, Math.PI * 2); g.stroke();
+          if (hp) {
+            g.lineWidth = 2; g.beginPath(); g.moveTo(sq[0], sq[1]); g.lineTo(hp[0], hp[1]); g.stroke();
+            g.fillStyle = '#ffe14d'; g.beginPath(); g.arc(hp[0], hp[1], 10, 0, Math.PI * 2); g.fill();
+            g.strokeStyle = '#0b1116'; g.lineWidth = 2; g.beginPath(); g.arc(hp[0], hp[1], 10, 0, Math.PI * 2); g.stroke();
+          }
+          g.lineWidth = 1;
+        }
       }
 
-      // AI traffic: read fresh from the listener on every redraw.
+      // AI traffic, read fresh from the sim's listener on every redraw.
       PS.airTraffic.poll();
       var contacts = contactsNow(), inView = 0, T = PS.airTraffic;
       g.font = '11px Arial';
@@ -3639,60 +2708,57 @@ PS.pages.push({
         var q = view.toPx(ct.lat, ct.lon);
         if (q[0] < -10 || q[0] > w + 10 || q[1] < -10 || q[1] > hgt + 10) return;
         inView++;
-        var sel = ct.id === selectedContact;
-        g.fillStyle = ct.simulated ? '#c46af0' : '#ff5c5c';
-        g.beginPath(); g.arc(q[0], q[1], sel ? 7 : 5, 0, Math.PI * 2); g.fill();
+        var sel2 = ct.id === selectedContact;
+        g.fillStyle = '#ff5c5c';
+        g.beginPath(); g.arc(q[0], q[1], sel2 ? 7 : 5, 0, Math.PI * 2); g.fill();
         var trk = typeof ct.trackDeg === 'number' && ct.gsKt > 1 ? ct.trackDeg : (ct.hdgDeg || 0);
-        g.strokeStyle = g.fillStyle; g.lineWidth = 2; g.beginPath(); g.moveTo(q[0], q[1]);
+        g.strokeStyle = '#ff5c5c'; g.lineWidth = 2; g.beginPath(); g.moveTo(q[0], q[1]);
         g.lineTo(q[0] + Math.sin(PS.geo.rad(trk)) * 16, q[1] - Math.cos(PS.geo.rad(trk)) * 16); g.stroke(); g.lineWidth = 1;
         g.fillStyle = '#e8b4b4'; g.fillText(ct.title || '', q[0] + 8, q[1] + 4);
       });
 
       // Own aircraft, pointing along its heading.
-      g.save(); g.translate(view.cx, view.cy); g.rotate(PS.geo.rad(own.hdgDeg));
-      g.fillStyle = '#4cd18a'; g.beginPath(); g.moveTo(0, -20); g.lineTo(13, 16); g.lineTo(0, 8); g.lineTo(-13, 16); g.closePath(); g.fill();
-      g.restore();
+      drawAircraftMarker(g, view.cx, view.cy, own.hdgDeg, '#4cd18a', '#0b1116', 1.1);
 
       var age = T.lastAt ? ((Date.now() - T.lastAt) / 1000).toFixed(1) + ' s ago' : 'never';
       infoLine.textContent = (c.live ? 'Own position live. ' : 'Own position: reference point (sim not readable). ') + 'Range ' + PS.fmt.dist(range) + '. Taxi items drawn: ' + drawn +
-        '. AI aircraft in view: ' + inView + ' of ' + contacts.length + ' (listener updated ' + age + ', ' + T.calls + ' replies)' +
-        (taxi && taxi.icao ? '. Airport ' + taxi.icao + ' loaded.' : '. No airport data loaded yet.');
+        '. AI aircraft in view: ' + inView + ' of ' + contacts.length + ' (listener updated ' + age + ')' + (taxi && taxi.icao ? '. Airport ' + taxi.icao + '.' : '. No airport data yet.');
       var sc = null;
       for (var k = 0; k < contacts.length; k++) { if (contacts[k].id === selectedContact) sc = contacts[k]; }
       if (sc) {
         var a = PS.traffic.analyse(own, sc);
         contactLine.textContent = (sc.title || sc.id) + ': ' + PS.fmt.dist(a.distM) + ' away on a bearing of ' + Math.round(a.bearingDeg) + '°, ' + PS.fmt.num(sc.gsKt, 0) + ' kt, heading ' + Math.round(sc.hdgDeg || 0) + '°, closing ' + PS.fmt.num(a.closingKt, 1) + ' kt';
       } else {
-        contactLine.textContent = contacts.length ? 'Tap an aircraft (pin mode off) to read its details.' : '';
+        contactLine.textContent = contacts.length && !addMode ? 'Tap an aircraft to read its details.' : '';
       }
     }
 
-    pinModeBtn = ui.button('Pin mode: off', function () { setPinMode(!pinMode); });
+    // ---------------- page ----------------
+    addBtn = ui.button('Add pins: ON (tap the plot)', function () { setAddMode(!addMode); });
+    setAddMode(true);
 
     var el = h('div', { class: 'ps-page' },
-      ui.panel('Plot (runways, taxiways, AI aircraft, pins and suggested pushes; no imagery)',
-        h('div', { class: 'ps-row' }, ui.field('Range', plotRange.el), pinModeBtn,
-          ui.button('Undo pin', undoPin, 'ps-ghost'), ui.button('Clear pins', clearPins, 'ps-ghost'), ui.button('Refresh', function () { draw('manual'); }, 'ps-ghost')),
+      ui.panel('Plan the push',
+        h('div', { class: 'ps-row' }, ui.field('Range', plotRange.stepperEl || plotRange.el), addBtn,
+          ui.button('Undo pin', function () { if (PS.plan.count()) deletePin(PS.plan.count() - 1); }, 'ps-ghost'),
+          ui.button('Clear pins', function () { PS.plan.clear(); log('pins cleared'); planChanged(); }, 'ps-ghost'),
+          ui.button('Refresh', function () { draw('manual'); }, 'ps-ghost')),
         canvas, infoLine, contactLine,
-        ui.note('North is up, centred on the aircraft. Pin mode on: tap to drop pins, drag a pin to move it. Pin mode off: tap an aircraft to read its details. Orange = taxiway, grey-blue = runway, red = AI aircraft, teal = suggested push end points, white = your pins.')),
+        ui.note('North is up, centred on the aircraft. Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it. White route = push back, blue = drive forward, red = the tug may not manage that leg. Teal = suggested push.')),
+      ui.panel('Route', routeBox),
+      ui.panel('Suggested pushes', airportLine, sugBox,
+        h('div', { class: 'ps-row' }, ui.button('Reload airport data', function () { loadAirport('asked'); }, 'ps-small ps-ghost')),
+        ui.note('From the original app\'s suggester, planned with the same tug turn radius. Only options the tug can make without a warning are offered. Pick one to see it, then use it as your plan.')),
       ui.panel('Pins', pinList),
       ui.panel('Refresh diagnostics (send these back if the plot does not refresh)', diagBox,
         h('div', { class: 'ps-row' }, ui.button('Copy diagnostics', function () {
           var text = diagText(), ok = PS.ui.copyText(text);
           log(ok ? 'diagnostics copied' : 'clipboard copy not available; showing text');
-          if (!ok) PS.ui.showText(text, 'Map diagnostics (select all and copy)');
+          if (!ok) PS.ui.showText(text, 'Plan diagnostics (select all and copy)');
         }, 'ps-small'))),
-      ui.panel('Suggested pushes', sugBox,
-        ui.note('Simplified port of the original suggester: straight back to the nearest taxiways, links and lanes, and back then along a taxiway either way. It does not yet check whether the tug can make the turn the way the original planner does, so treat sharp-turn options with care.')),
-      ui.panel('Built-in map (kept for reference; not very useful)',
-        h('div', { class: 'ps-row' }, ui.button('Probe for map APIs', probe), ui.button('Mount / remount built-in map', tryMount)),
-        h('div', { class: 'ps-row' }, ui.field('Map mode', bingModeSel), ui.field('Map range', bingRange.el)),
-        mountBox, probeBox,
-        ui.note('Looking for: whether the sim\'s own map can be shown in an EFB app, and whether we can draw taxiways, pins and the aircraft on top of it. Not mounted automatically any more; press Mount.')),
-      ui.panel('Log', ui.logBox(['map', 'traffic']))
+      ui.panel('Log', ui.logBox(['plan', 'traffic', 'taxi', 'wasm']))
     );
     el.addEventListener('click', function () { diag.clicks++; setTimeout(function () { draw('click'); }, 0); setTimeout(function () { draw('click'); }, 400); });
-    canvas.addEventListener('mousedown', function () { diag.mouse++; });
     var frameHook = function () { diag.frameCalls++; if (Date.now() - lastDrawAt > 450) draw('frame'); };
     return {
       el: el,
@@ -3708,16 +2774,19 @@ PS.pages.push({
         diag.shownAt = Date.now(); diag.shows++; diag.watch = 0;
         if (diagTimer !== null) clearInterval(diagTimer);
         diagTimer = setInterval(diagTick, 1000);
-        log('map page shown: canvas ' + canvas.width + 'x' + canvas.height + ', document.hidden=' + (typeof document !== 'undefined' ? document.hidden : '?') + ', setInterval=' + typeof setInterval + ', requestAnimationFrame=' + typeof requestAnimationFrame);
         if (PS.frameHooks.indexOf(frameHook) < 0) PS.frameHooks.push(frameHook);
-        renderPins(); renderSuggestions();
+        log('plan page shown: canvas ' + canvas.width + 'x' + canvas.height + ', document.hidden=' + (typeof document !== 'undefined' ? document.hidden : '?') + ', setInterval=' + typeof setInterval + ', requestAnimationFrame=' + typeof requestAnimationFrame);
+        renderedPlan = null; renderSuggestions();
         draw('show');
-        if (!PS.state.taxi && !airportLoading) {
-          airportLoading = true;
-          PS.facility.loadNearestIntoState().then(null, function (e) { log('could not load airport data: ' + PS.errText(e)); });
-        }
+        if (!PS.state.taxi && !airportLoading) loadAirport('on opening');
       },
-      onHide: function () { diag.hides++; log('map page hidden after ' + diag.draws + ' draw(s)'); if (diagTimer !== null) { clearInterval(diagTimer); diagTimer = null; } var fi = PS.frameHooks.indexOf(frameHook); if (fi >= 0) PS.frameHooks.splice(fi, 1); if (timer !== null) { clearInterval(timer); timer = null; } if (bingTimer !== null) { clearInterval(bingTimer); bingTimer = null; } drag = null; }
+      onHide: function () {
+        diag.hides++; log('plan page hidden after ' + diag.draws + ' draw(s)');
+        if (diagTimer !== null) { clearInterval(diagTimer); diagTimer = null; }
+        var fi = PS.frameHooks.indexOf(frameHook); if (fi >= 0) PS.frameHooks.splice(fi, 1);
+        if (timer !== null) { clearInterval(timer); timer = null; }
+        drag = null;
+      }
     };
   }
 });
@@ -3834,7 +2903,7 @@ PS.buildShell = function (root) {
   root.appendChild(h('div', { class: 'ps-app' },
     h('div', { class: 'ps-header' },
       PS.ui.button('Copy all logs', copyAll, 'ps-headbtn'),
-      h('span', { class: 'ps-title', text: PS.APP_NAME }), h('span', { class: 'ps-sub', text: 'feasibility spikes for the Pusher EFB port' })),
+      h('span', { class: 'ps-title', text: PS.APP_NAME }), h('span', { class: 'ps-sub', text: 'pushback planner' })),
     nav, toastHost, body, footer));
 
   showPage(PS.pages[0].id);

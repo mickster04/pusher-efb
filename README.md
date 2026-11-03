@@ -1,26 +1,26 @@
-# Pusher EFB: spike app
+# Pusher EFB
 
-A single MSFS 2024 EFB app with six pages, each answering a feasibility question for porting Pusher (pushback manager) to a standalone EFB app. Plain JavaScript, no dependencies, no SDK needed to build.
+An MSFS 2024 EFB app that plans and drives a pushback, ported from the Pusher desktop app. Plain JavaScript, no dependencies, no SDK needed to build. The internal name is still `PusherSpikes` (the sim matches it against file and folder names, so renaming is a separate step).
 
-**Status: runs in the MSFS 2024 EFB.** The app loads, and telemetry, the tug drive, AI traffic, the facility loader, toasts and the map have been exercised in the sim. The taxi WASM module loads and returns taxiway data (3 Nov 2026). Results and open questions are in [docs/implementation/spike-app.md](docs/implementation/spike-app.md) and [docs/implementation/wasm-taxi.md](docs/implementation/wasm-taxi.md). Anything not listed there as verified has only been run in the browser mock on a Mac.
+**Status: under construction, replacing the feasibility spikes.** The spike app (telemetry, tug, taxiways, traffic, notifications, built-in map pages) is kept on the `spikes-app` branch. The spikes showed the sim can do what the port needs: reads, the tug (attach and per-tick driving), AI traffic, the facility loader, and taxi paths through a WASM module ([docs/implementation/spike-app.md](docs/implementation/spike-app.md), [docs/implementation/wasm-taxi.md](docs/implementation/wasm-taxi.md)). Everything below has run in the browser harness and in unit tests; the Plan tab has not yet run in the sim.
 
-## Pages
+## Tabs
 
-1. **Telemetry**: live table of the variables the original app reads, an input row to read, add, set or send any variable on the fly, and counters that show whether anything keeps ticking while the app is hidden.
-2. **Tug**: attaches the sim's tug and drives it with per-tick velocity and turn writes, as the original does, with speed and turn-rate inputs, steering buttons and numeric logging. It has a run-time limit and stops on hide or pause.
-3. **Taxiways**: finds the nearest airport, loads its runways from the facility API and its taxi paths and parking from the **taxi WASM module** (see below), and lists named taxiways, runways and connectors with category, length, width, and nearest distance and bearing. Raw data panel, a **Check taxi module** button, and an offline sample for reviewing the table.
-4. **Traffic**: discovers candidate AI traffic APIs and lists contacts with distance, bearing, relative bearing, altitude difference, speed, closing speed and time to closest approach. Simulated-contacts button for reviewing the table.
-5. **Notifications**: in-tablet toasts with action buttons (release brake, set brake with two actions, distance left with Pause/Resume, traffic hold with Ignore), and a probe of the EFB's notification manager.
-6. **Map**: the main view is a north-up plot (no imagery) centred on the aircraft: runways, named taxiways, parking, AI aircraft (read live from the sim), **pins** you drop and drag, and **suggested pushes** drawn as routes. Zoom buttons set the range. The sim's built-in map is kept below it for reference (not very useful) and is only mounted on request.
+1. **Plan** (built): a north-up plot centred on the aircraft with runways, taxiways, stands and AI aircraft. Tap to drop pins; each pin is drawn as an aircraft pointing the way the nose will be there. Drag a pin to move it, drag the yellow handle behind a selected pin to rotate it. The planned route is drawn with the tug's turn arcs (white = push back, blue = forward, red = the tug may not manage that leg). Suggested pushes from the original app's suggester can be shown and used as the plan. Refresh diagnostics are at the bottom of the tab.
+2. **Push** (next): toggle the tug, check and enforce the parking brake off, then follow the plan with remaining distance and a toast like the old app's.
 
-Each page has a log with a Copy button. After a sim session, paste the logs back so results can be recorded in [docs/implementation/spike-app.md](docs/implementation/spike-app.md).
+Use **Copy all logs** (top right) to copy the whole log and the Plan tab's diagnostics.
+
+## Layout of the code
+
+`src/*.js` are concatenated in filename order by `build.mjs`: sim access and logging (00), geometry (01), taxi and traffic data (02, 03), UI helpers (04), the taxi WASM client (05), plot maths (06), the route planner (06, a port of the original's `mapGeo.ts` planner), the suggester (07, a port of `taxiSuggest.ts`), the plan model (08), facility loading (30), AI traffic (40), the Plan tab (60) and the app shell (90). `src/reference/` holds the spike Tug page, the code the Push tab will be built from; it is not built.
 
 ## Install in the sim
 
 1. Build the JS: `npm run build` (needs only Node).
 2. Optional: build the taxi module with `bash wasm/build.sh` (see above).
 3. Package it with the MSFS SDK Project Editor using `PusherEfbSpikesProject.xml` (Windows). The package definition copies `PackageSources/PusherSpikes/` to `html_ui/efb_ui/efb_apps/PusherSpikes/` and `PackageSources/modules/` to `modules/`.
-4. Put the built package in the MSFS 2024 Community folder (on this install the sim reads `...\LocalCache\Packages\Community2024`), start the sim, open the EFB and look for **Pusher Spikes**.
+4. Put the built package in the MSFS 2024 Community folder (on this install the sim reads `...\LocalCache\Packages\Community2024`), start the sim, open the EFB and look for **Pusher Spikes** (the app keeps that name for now).
 
 If the app does not appear, the usual cause is a name mismatch: the internal name `PusherSpikes` must be identical in the JS, the JS file name, the `PackageSources` folder and the `OutputDir` in the package definition. See [docs/implementation/efb-platform-notes.md](docs/implementation/efb-platform-notes.md).
 
