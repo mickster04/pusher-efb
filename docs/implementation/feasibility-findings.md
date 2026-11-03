@@ -1,12 +1,12 @@
-> **Superseded.** The spike pages described here are on the `spikes-app` branch. `master` now has the Plan tab (and the Push tab is next); see the README and `docs/implementation/app-design.md`. The findings below are still the record of what the sim does.
+> **Superseded.** The test pages described here are on the `spikes-app` branch. `master` now has the Plan tab (and the Push tab is next); see the README and `docs/implementation/app-design.md`. The findings below are still the record of what the sim does.
 
-# Spike app design
+# Feasibility findings (the earlier test app)
 
-A single EFB app, internal name `PusherSpikes`, whose pages are the feasibility spikes from `docs/efb-requirements.md`. Its job is to give answers from inside the sim, not to be the product. When a spike is settled, record the result in the table at the end of this file.
+A single EFB app, internal name `PushPlanner`, whose pages were the feasibility tests from `docs/efb-requirements.md`. Its job is to give answers from inside the sim, not to be the product. When a spike is settled, record the result in the table at the end of this file.
 
 ## Structure
 
-- `src/*.js` are concatenated by `build.mjs` (in filename order) into `PackageSources/PusherSpikes/PusherSpikes.js`, wrapped in one IIFE. Modules share one object, `PS`.
+- `src/*.js` are concatenated by `build.mjs` (in filename order) into `PackageSources/PushPlanner/PushPlanner.js`, wrapped in one IIFE. Modules share one object, `PS`.
 - `src/styles.css` is inlined into the bundle and injected as a `<style>` element. All class names start with `ps-`.
 - Pure helpers (formatting, geometry, taxiway extraction) must not touch the DOM at load time, so `test/` can load the built file in node.
 - Pages are objects `{ id, title, create(ctx) }` pushed onto `PS.pages`; `create` returns `{ el, onShow(), onHide() }`. Each page owns its timers: it starts them in `onShow` and stops them in `onHide`. The shell shows one page at a time and keeps built pages alive.
@@ -35,9 +35,9 @@ A single EFB app, internal name `PusherSpikes`, whose pages are the feasibility 
 
 Each page has a results log (timestamped lines, copyable). After a sim session, paste the logs back into the conversation and record outcomes below.
 
-## Spike results (fill in)
+## Test results
 
-| Spike | Result | Date | Notes |
+| Test | Result | Date | Notes |
 |---|---|---|---|
 | 0 App loads in EFB | Works | 2026-11-02 | Plain-JS pattern with `window.EFB_API` / `window.msfssdk` registers and renders. |
 | 1 Telemetry | Pass | 2026-11-02 | All 24 default variables read with no errors, about 0.1 ms per cycle. Hidden for 67 s: 130 timer ticks (about 134 expected) and 958 browser animation frames, but **0 `onUpdate` calls**. So `setInterval` keeps running while the app is hidden, `onUpdate` runs only while visible (7788 calls over the session), and animation frames continue at a reduced rate. Hooks seen: onOpen, onResume, onUpdate, onPause. Use `setInterval` for anything that must run hidden. |

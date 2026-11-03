@@ -1,8 +1,8 @@
 {
-  "name": "pusher-efb-spikes",
+  "name": "push-planner",
   "version": "0.1.0",
   "private": true,
-  "description": "Spike app for the Pusher MSFS 2024 EFB port. Plain JS, no dependencies.",
+  "description": "Push Planner: plans and drives a pushback from the MSFS 2024 EFB. Plain JS, no dependencies.",
   "scripts": {
     "build": "node build.mjs",
     "test": "node build.mjs && node --test \"test/*.test.mjs\"",

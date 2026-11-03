@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Version="2" Name="PusherEfbSpikesProject" FolderName="Packages" MetadataFolderName="PackagesMetadata">
+<Project Version="2" Name="PushPlannerProject" FolderName="Packages" MetadataFolderName="PackagesMetadata">
 	<OutputDirectory>.</OutputDirectory>
 	<TemporaryOutputDirectory>_PackageInt</TemporaryOutputDirectory>
 	<Packages>
-		<Package>PackageDefinitions\pusher-efb-spikes.xml</Package>
+		<Package>PackageDefinitions\push-planner.xml</Package>
 	</Packages>
 </Project>

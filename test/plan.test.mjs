@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const PS = require('../PackageSources/PusherSpikes/PusherSpikes.js');
+const PS = require('../PackageSources/PushPlanner/PushPlanner.js');
 const G = PS.geo, plan = PS.plan;
 const ref = { lat: -43.49, lon: 172.53 };
 const own = { lat: ref.lat, lon: ref.lon, hdgDeg: 0 };

@@ -2,8 +2,8 @@
 // Nothing here touches the DOM or starts timers at load time (so node tests can load the bundle).
 
 PS.VERSION = '0.1.0';
-PS.APP_NAME = 'Pusher Spikes';
-PS.INTERNAL_NAME = 'PusherSpikes';
+PS.APP_NAME = 'Push Planner';
+PS.INTERNAL_NAME = 'PushPlanner';
 PS.pages = [];
 PS.closeHooks = [];   // called when the view closes or pauses (e.g. stop the tug)
 PS.state = { taxi: null, contacts: [], pins: [], notificationManager: null, bus: null };

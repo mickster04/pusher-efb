@@ -1,5 +1,5 @@
 // Facility data: finds the nearest airport and loads its runways (sim facility loader) and taxi paths and parking (taxi WASM module).
-// Moved out of the spike Taxiways page; the page is gone but this is the loading code the planner uses.
+// Used by the Plan tab (it came from the earlier Taxiways test page, now on the spikes-app branch).
 
 PS.facility = {
   // Candidate ICAO spellings the facility APIs might expect for an airport.

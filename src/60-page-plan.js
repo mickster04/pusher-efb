@@ -50,11 +50,10 @@ PS.pages.push({
     var diagTimer = null;
     function pixelSig() {
       try {
-        var g = canvas.getContext('2d'), sum = 0, rows = [60, 180, 270, 360, 480];
-        for (var r = 0; r < rows.length; r++) {
-          var d = g.getImageData(0, rows[r], canvas.width, 1).data;
-          for (var i = 0; i < d.length; i += 16) sum = (sum * 31 + d[i] + d[i + 1] * 3 + d[i + 2] * 7) % 1000003;
-        }
+        var t0 = Date.now(), g = canvas.getContext('2d'), sum = 0;
+        var d = g.getImageData(0, 0, canvas.width, canvas.height).data;
+        for (var i = 0; i < d.length; i += 52) sum = (sum * 31 + d[i] + d[i + 1] * 3 + d[i + 2] * 7) % 1000003;
+        diag.pixMs = (diag.pixMs || 0) + (Date.now() - t0); diag.pixRuns = (diag.pixRuns || 0) + 1;
         return String(sum);
       } catch (e) { return 'n/a'; }
     }
@@ -69,9 +68,10 @@ PS.pages.push({
       var lines = [
         'Refresh diagnostics. Page open for ' + (diag.shownAt ? Math.round((now - diag.shownAt) / 1000) : 0) + ' s (shown ' + diag.shows + 'x, hidden ' + diag.hides + 'x). document.hidden=' + (typeof document !== 'undefined' ? document.hidden : '?') + ', visibility=' + (typeof document !== 'undefined' ? document.visibilityState : '?'),
         'draws: ' + diag.draws + ' (timer ' + diag.counts.timer + ', frame ' + diag.counts.frame + ', click ' + diag.counts.click + ', manual ' + diag.counts.manual + ', show ' + diag.counts.show + ', action ' + diag.counts.action + '); errors ' + diag.errors,
-        'draw time: avg ' + (diag.draws ? (diag.msSum / diag.draws).toFixed(1) : '0') + ' ms, max ' + diag.msMax + ' ms; longest gap between draws ' + diag.gapMax + ' ms; last draw ' + (lastDrawAt ? ((now - lastDrawAt) / 1000).toFixed(1) + ' s ago' : 'never'),
+        'draw time: avg ' + (diag.draws ? (diag.msSum / diag.draws).toFixed(1) : '0') + ' ms (of which the canvas pixel check ' + (diag.pixRuns ? (diag.pixMs / diag.pixRuns).toFixed(1) : '0') + ' ms), max ' + diag.msMax + ' ms; longest gap between draws ' + diag.gapMax + ' ms; last draw ' + (lastDrawAt ? ((now - lastDrawAt) / 1000).toFixed(1) + ' s ago' : 'never'),
         'redraw timer: ' + diag.timerTicks + ' ticks (longest gap ' + diag.timerGapMax + ' ms); frame hook calls ' + diag.frameCalls + '; page clicks ' + diag.clicks + '; canvas mouse events ' + diag.mouse,
-        'draws where the plot inputs changed: ' + diag.inChanged + ' of ' + diag.draws + '; where the canvas pixels changed: ' + diag.pxChanged + ' of ' + diag.draws,
+        'input events on the canvas: ' + (Object.keys(inp.counts).map(function (k) { return k + ' ' + inp.counts[k]; }).join(', ') || 'none yet') + '; presses handled ' + inp.presses,
+        'draws where the plot inputs changed: ' + diag.inChanged + ' of ' + diag.draws + '; where the canvas pixels changed: ' + diag.pxChanged + ' of ' + (diag.pxSamples || 0) + ' sampled (every 4th draw)',
         'canvas ' + canvas.width + 'x' + canvas.height + ', shown ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' at (' + Math.round(r.left) + ', ' + Math.round(r.top) + ')',
         'own ' + (o ? o.lat.toFixed(6) + ', ' + o.lon.toFixed(6) + ', hdg ' + Math.round(o.hdgDeg) : 'unknown') + '; contacts ' + cs.length + '; traffic replies ' + T.calls + ', last reply ' + (T.lastAt ? ((now - T.lastAt) / 1000).toFixed(1) + ' s ago' : 'never') + (T.error ? ', error: ' + T.error : ''),
         'airport ' + (PS.state.taxi ? PS.state.taxi.icao + ' (' + PS.state.taxi.items.length + ' items)' : 'not loaded') + '; suggestions ' + sug.list.length + ' (last run ' + sug.tookMs + ' ms); pins ' + PS.plan.count(),
@@ -89,7 +89,7 @@ PS.pages.push({
       if (diag.watch % 5 !== 0) return;
       var since = diag.draws - diag.lastSummaryDraws; diag.lastSummaryDraws = diag.draws;
       log('refresh summary: ' + since + ' draw(s) in the last 5 s' + (since === 0 ? ' - NO REDRAWS' : '') + ' (timer ' + diag.counts.timer + ' frame ' + diag.counts.frame + ' click ' + diag.counts.click + ' total); redraw timer ticks ' + diag.timerTicks + ', frame hook calls ' + diag.frameCalls +
-        ', inputs changed ' + diag.inChanged + '/' + diag.draws + ', pixels changed ' + diag.pxChanged + '/' + diag.draws + ', traffic replies ' + PS.airTraffic.calls + ', errors ' + diag.errors + ', hidden=' + (typeof document !== 'undefined' ? document.hidden : '?'));
+        ', inputs changed ' + diag.inChanged + '/' + diag.draws + ', pixels changed ' + diag.pxChanged + '/' + (diag.pxSamples || 0) + ' sampled, traffic replies ' + PS.airTraffic.calls + ', errors ' + diag.errors + ', hidden=' + (typeof document !== 'undefined' ? document.hidden : '?'));
     }
     // draw() never throws: an error is shown under the plot and logged once, and the redraw triggers keep going.
     function draw(src) {
@@ -108,10 +108,12 @@ PS.pages.push({
         diag.draws++; diag.counts[src] = (diag.counts[src] || 0) + 1;
         diag.msSum += ms; if (ms > diag.msMax) diag.msMax = ms; if (gap > diag.gapMax) diag.gapMax = gap;
         var sig = inputsSig(o, cs), inC = sig !== diag.sig; diag.sig = sig; if (inC) diag.inChanged++;
-        var pix = pixelSig(), pxC = pix !== diag.pix; diag.pix = pix; if (pxC) diag.pxChanged++;
+        // The pixel check reads the whole canvas back, which costs several ms, so it runs on every 4th draw only (changes are counted against those).
+        var sampled = diag.draws % 4 === 1, pxC = false;
+        if (sampled) { var pix = pixelSig(); pxC = pix !== diag.pix; diag.pix = pix; diag.pxSamples = (diag.pxSamples || 0) + 1; if (pxC) diag.pxChanged++; }
         diag.ring.push({ t: t0, src: src, gap: gap, ms: ms, inC: inC, pxC: pxC, n: cs.length, replies: PS.airTraffic.calls, lat: o.lat, lon: o.lon, hdg: o.hdgDeg, err: err });
         if (diag.ring.length > 60) diag.ring.shift();
-        if (diag.draws <= 6 || err) log('draw #' + diag.draws + ' (' + src + '): ' + ms + ' ms, ' + gap + ' ms since the last, inputs ' + (inC ? 'changed' : 'same') + ', canvas pixels ' + (pxC ? 'changed' : 'same') + (err ? ', ERROR ' + err : ''));
+        if (diag.draws <= 6 || err) log('draw #' + diag.draws + ' (' + src + '): ' + ms + ' ms, ' + gap + ' ms since the last, inputs ' + (inC ? 'changed' : 'same') + ', canvas pixels ' + (sampled ? (pxC ? 'changed' : 'same') : 'not checked') + (err ? ', ERROR ' + err : ''));
       } catch (e2) { log('diagnostics failed: ' + PS.errText(e2)); }
     }
 
@@ -170,23 +172,39 @@ PS.pages.push({
       });
     }
 
-    // ---------------- mouse ----------------
-    canvas.addEventListener('mousedown', function (e) {
-      diag.mouse++;
-      if (!lastView) return;
-      var p = canvasPoint(e), sel = PS.plan.selected();
+    // ---------------- input: mouse, touch and pointer events ----------------
+    // Which of these the EFB delivers is not known. Touch is handled first (and stops the page scrolling under a drag), the mouse events
+    // that follow a touch are ignored, and every event type seen is counted with its first few logged, so the diagnostics show what arrives.
+    var inp = { counts: {}, lastTouchAt: 0, lastPoint: null, presses: 0, hits: {} };
+    function note(type, p) {
+      inp.counts[type] = (inp.counts[type] || 0) + 1;
+      if (inp.counts[type] <= 3) log('input event ' + type + ' #' + inp.counts[type] + (p ? ' at canvas ' + Math.round(p[0]) + ', ' + Math.round(p[1]) : ''));
+    }
+    function pointOf(e) {
+      var t = e;
+      if (e.changedTouches && e.changedTouches.length) t = e.changedTouches[0]; else if (e.touches && e.touches.length) t = e.touches[0];
+      var r = canvas.getBoundingClientRect();
+      return [(t.clientX - r.left) * canvas.width / (r.width || canvas.width), (t.clientY - r.top) * canvas.height / (r.height || canvas.height)];
+    }
+    function recentTouch() { return Date.now() - inp.lastTouchAt < 800; }
+
+    function inputDown(p, touch) {
+      diag.mouse++; inp.presses++; inp.lastPoint = p;
+      if (!lastView) { log('press ignored: the plot has not been drawn yet'); return; }
+      var sel = PS.plan.selected();
       if (sel >= 0) {
         var hp = handlePx(sel);
-        if (hp && pxDist(hp, p) <= 16) { drag = { kind: 'handle', idx: sel, sx: p[0], sy: p[1], moved: false }; return; }
+        if (hp && pxDist(hp, p) <= (touch ? 26 : 16)) { drag = { kind: 'handle', idx: sel, sx: p[0], sy: p[1], moved: false, touch: touch }; if (inp.presses <= 12) log('press on the heading handle of pin ' + (sel + 1)); return; }
       }
-      var hit = PS.nearestPin(lastView, PS.plan.list(), p[0], p[1], 22);
-      if (hit >= 0) { PS.plan.select(hit); drag = { kind: 'pin', idx: hit, sx: p[0], sy: p[1], moved: false }; planChanged(); return; }
-      drag = { kind: 'none', idx: -1, sx: p[0], sy: p[1], moved: false };
-    });
-    canvas.addEventListener('mousemove', function (e) {
+      var hit = PS.nearestPin(lastView, PS.plan.list(), p[0], p[1], touch ? 30 : 22);
+      if (hit >= 0) { PS.plan.select(hit); drag = { kind: 'pin', idx: hit, sx: p[0], sy: p[1], moved: false, touch: touch }; if (inp.presses <= 12) log('press on pin ' + (hit + 1)); planChanged(); return; }
+      drag = { kind: 'none', idx: -1, sx: p[0], sy: p[1], moved: false, touch: touch };
+    }
+    function inputMove(p) {
       if (!drag || !lastView) return;
-      var p = canvasPoint(e);
-      if (!drag.moved && Math.abs(p[0] - drag.sx) + Math.abs(p[1] - drag.sy) > 6) drag.moved = true;
+      inp.lastPoint = p;
+      var limit = drag.touch ? 14 : 6;
+      if (!drag.moved && Math.abs(p[0] - drag.sx) + Math.abs(p[1] - drag.sy) > limit) drag.moved = true;
       if (drag.kind === 'handle') {
         var pins = PS.plan.list(), q = lastView.toPx(pins[drag.idx].lat, pins[drag.idx].lon);
         PS.plan.setHeading(drag.idx, PS.plan.headingFromHandle(q[0], q[1], p[0], p[1]));
@@ -196,14 +214,13 @@ PS.pages.push({
         PS.plan.move(drag.idx, ll[0], ll[1]);
         draw('action');
       }
-    });
-    function release(e) {
+    }
+    function inputUp(p) {
       if (!drag) return;
       var d = drag; drag = null;
       if (d.kind === 'handle') { log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); planChanged(); return; }
       if (d.kind === 'pin') { if (d.moved) { log('pin ' + (d.idx + 1) + ' moved'); planChanged(); } return; }
       if (d.moved || !lastView) return;
-      var p = canvasPoint(e);
       if (addMode) { var ll = lastView.fromPx(p[0], p[1]); addPin(ll[0], ll[1]); return; }
       // Add pins off: pick the nearest aircraft to read its details, or clear the selection.
       var best = null, bestD = 16;
@@ -214,8 +231,30 @@ PS.pages.push({
       selectedContact = best ? best.id : null;
       PS.plan.select(-1); planChanged();
     }
-    canvas.addEventListener('mouseup', release);
-    canvas.addEventListener('mouseleave', function () { drag = null; });
+
+    // Touch: handled here and the page is stopped from scrolling under the finger.
+    ['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach(function (type) {
+      canvas.addEventListener(type, function (e) {
+        inp.lastTouchAt = Date.now();
+        var p = pointOf(e);
+        note(type, p);
+        if (e.preventDefault) e.preventDefault();
+        if (type === 'touchstart') inputDown(p, true);
+        else if (type === 'touchmove') inputMove(p);
+        else if (type === 'touchend') inputUp(p);
+        else drag = null;
+      }, false);
+    });
+    // Mouse: the same handlers, ignoring the mouse events a browser emulates after a touch.
+    canvas.addEventListener('mousedown', function (e) { var p = pointOf(e); note('mousedown', p); if (recentTouch()) return; inputDown(p, false); });
+    canvas.addEventListener('mousemove', function (e) { if (recentTouch()) return; if (drag) note('mousemove', null); inputMove(pointOf(e)); });
+    canvas.addEventListener('mouseup', function (e) { var p = pointOf(e); note('mouseup', p); if (recentTouch()) return; inputUp(p); });
+    canvas.addEventListener('mouseleave', function () { if (!recentTouch()) drag = null; });
+    // Pointer events: counted only, to learn whether the EFB sends them (the mouse and touch handlers above do the work).
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach(function (type) {
+      canvas.addEventListener(type, function (e) { if (type === 'pointermove' && !drag) return; note(type, pointOf(e)); }, false);
+    });
+    canvas.addEventListener('click', function (e) { note('click', pointOf(e)); }, false);
 
     // ---------------- suggested pushes ----------------
     function selectedSuggestion() {

@@ -1,8 +1,8 @@
 # Pusher EFB
 
-An MSFS 2024 EFB app that plans and drives a pushback, ported from the Pusher desktop app. Plain JavaScript, no dependencies, no SDK needed to build. The internal name is still `PusherSpikes` (the sim matches it against file and folder names, so renaming is a separate step).
+An MSFS 2024 EFB app that plans and drives a pushback, ported from the Pusher desktop app. Plain JavaScript, no dependencies, no SDK needed to build. The internal name is still `PushPlanner` (the sim matches it against file and folder names, so renaming is a separate step).
 
-**Status: under construction, replacing the feasibility spikes.** The spike app (telemetry, tug, taxiways, traffic, notifications, built-in map pages) is kept on the `spikes-app` branch. The spikes showed the sim can do what the port needs: reads, the tug (attach and per-tick driving), AI traffic, the facility loader, and taxi paths through a WASM module ([docs/implementation/spike-app.md](docs/implementation/spike-app.md), [docs/implementation/wasm-taxi.md](docs/implementation/wasm-taxi.md)). Everything below has run in the browser harness and in unit tests; the Plan tab has not yet run in the sim.
+**Status: under construction.** The earlier feasibility app (telemetry, tug, taxiways, traffic, notifications and built-in map pages) is kept on the `spikes-app` branch. It showed the sim can do what the port needs: reads, the tug (attach and per-tick driving), AI traffic, the facility loader, and taxi paths through a WASM module ([docs/implementation/feasibility-findings.md](docs/implementation/feasibility-findings.md), [docs/implementation/wasm-taxi.md](docs/implementation/wasm-taxi.md)). Everything below has run in the browser harness and in unit tests; the Plan tab has only been tried in the sim by hand so far.
 
 ## Tabs
 
@@ -13,16 +13,18 @@ Use **Copy all logs** (top right) to copy the whole log and the Plan tab's diagn
 
 ## Layout of the code
 
-`src/*.js` are concatenated in filename order by `build.mjs`: sim access and logging (00), geometry (01), taxi and traffic data (02, 03), UI helpers (04), the taxi WASM client (05), plot maths (06), the route planner (06, a port of the original's `mapGeo.ts` planner), the suggester (07, a port of `taxiSuggest.ts`), the plan model (08), facility loading (30), AI traffic (40), the Plan tab (60) and the app shell (90). `src/reference/` holds the spike Tug page, the code the Push tab will be built from; it is not built.
+`src/*.js` are concatenated in filename order by `build.mjs`: sim access and logging (00), geometry (01), taxi and traffic data (02, 03), UI helpers (04), the taxi WASM client (05), plot maths (06), the route planner (06, a port of the original's `mapGeo.ts` planner), the suggester (07, a port of `taxiSuggest.ts`), the plan model (08), facility loading (30), AI traffic (40), the Plan tab (60) and the app shell (90). `src/reference/` holds the earlier Tug page, the code the Push tab will be built from; it is not built.
 
 ## Install in the sim
 
 1. Build the JS: `npm run build` (needs only Node).
 2. Optional: build the taxi module with `bash wasm/build.sh` (see above).
-3. Package it with the MSFS SDK Project Editor using `PusherEfbSpikesProject.xml` (Windows). The package definition copies `PackageSources/PusherSpikes/` to `html_ui/efb_ui/efb_apps/PusherSpikes/` and `PackageSources/modules/` to `modules/`.
-4. Put the built package in the MSFS 2024 Community folder (on this install the sim reads `...\LocalCache\Packages\Community2024`), start the sim, open the EFB and look for **Pusher Spikes** (the app keeps that name for now).
+3. Package it with the MSFS SDK Project Editor using `PushPlannerProject.xml` (Windows). The package definition copies `PackageSources/PushPlanner/` to `html_ui/efb_ui/efb_apps/PushPlanner/` and `PackageSources/modules/` to `modules/`.
+4. Put the built package in the MSFS 2024 Community folder (on this install the sim reads `...\LocalCache\Packages\Community2024`), start the sim, open the EFB and look for **Push Planner** (the app keeps that name for now).
 
-If the app does not appear, the usual cause is a name mismatch: the internal name `PusherSpikes` must be identical in the JS, the JS file name, the `PackageSources` folder and the `OutputDir` in the package definition. See [docs/implementation/efb-platform-notes.md](docs/implementation/efb-platform-notes.md).
+**Renamed from "Pusher Spikes":** the app, package and files are now `PushPlanner` / `push-planner`. Open `PushPlannerProject.xml` in the Project Editor, and delete the old `pusher-efb-spikes` folder from the Community folder, or the sim will load both.
+
+If the app does not appear, the usual cause is a name mismatch: the internal name `PushPlanner` must be identical in the JS, the JS file name, the `PackageSources` folder and the `OutputDir` in the package definition. See [docs/implementation/efb-platform-notes.md](docs/implementation/efb-platform-notes.md).
 
 ## Taxi WASM module
 

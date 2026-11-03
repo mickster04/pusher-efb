@@ -1,7 +1,7 @@
 # Pusher for the MSFS 2024 EFB: requirements and feasibility
 
 Status: draft. Requirements are extracted from the current Pusher code (bridge C#, Electron/React app, `packages/shared/api/types.ts`). The repo has no other spec.
-Feasibility ratings come from the MSFS 2024 SDK docs and forum posts found so far. Anything marked **Unverified** needs a spike before it is relied on.
+Feasibility ratings come from the MSFS 2024 SDK docs and forum posts found so far. Anything marked **Unverified** needs a feasibility check before it is relied on.
 
 Priority is MoSCoW (Must, Should, Could), set by the product owner. Ratings: **G** = should port directly, **A** = port with changes or a workaround, **R** = high risk or unknown, **X** = drop or replace.
 
@@ -129,7 +129,7 @@ Two parts in one package:
 
 It is standalone because both parts ship in the sim package, with no external exe. The WASM module also keeps a push running when the tablet is closed.
 
-If the spikes show pure JS can drive the tug, skip the WASM module and keep everything in the EFB app.
+If the feasibility checks show pure JS can drive the tug, skip the WASM module and keep everything in the EFB app.
 
 Storage: plans and settings go to the sim's data-storage API or `localStorage`. Logs go to an in-app ring buffer that can be exported. **Unverified**: how persistent each store is.
 
@@ -142,7 +142,7 @@ Storage: plans and settings go to the sim's data-storage API or `localStorage`. 
 5. **In-sim notifications.** Check the EFB notification API in the SDK docs. Without it, prompts only show while the EFB is open.
 6. **Per-aircraft behaviour.** Brake and tiller LVars, and jet bridge and services key events, vary by aircraft. Keep the current probing and add a way to log what works.
 
-## 6. Spikes before building
+## 6. Feasibility checks before building
 
 Do these in order. Each is a day or two.
 

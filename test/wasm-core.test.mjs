@@ -12,7 +12,7 @@ import { createRequire } from 'node:module';
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
 const require = createRequire(import.meta.url);
-const PS = require('../PackageSources/PusherSpikes/PusherSpikes.js');
+const PS = require('../PackageSources/PushPlanner/PushPlanner.js');
 
 function findCompiler() {
   for (const cc of ['clang++', 'g++']) {
@@ -144,8 +144,8 @@ test('client: ping then request over a fake CommBus', { skip }, async () => {
 
 test('client: reports a missing module quickly instead of hanging', { skip }, async () => {
   // A fresh module state is needed, so load a second copy of the bundle.
-  delete require.cache[require.resolve('../PackageSources/PusherSpikes/PusherSpikes.js')];
-  const PS2 = require('../PackageSources/PusherSpikes/PusherSpikes.js');
+  delete require.cache[require.resolve('../PackageSources/PushPlanner/PushPlanner.js')];
+  const PS2 = require('../PackageSources/PushPlanner/PushPlanner.js');
   globalThis.RegisterCommBusListener = () => ({ on: () => {}, callWasm: () => Promise.resolve() });
   try {
     await assert.rejects(PS2.wasmTaxi.ping(200), /no reply from the taxi module/);

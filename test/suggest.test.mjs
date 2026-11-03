@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { scenarios } from './tools/suggest-scenarios.mjs';
 const require = createRequire(import.meta.url);
-const PS = require('../PackageSources/PusherSpikes/PusherSpikes.js');
+const PS = require('../PackageSources/PushPlanner/PushPlanner.js');
 const G = PS.geo;
 
 // An aircraft at the origin facing north; taxiway "A" runs east-west 60 m behind it (south); link "LINK 1" joins at the east end.
@@ -145,4 +145,33 @@ test('taxi extract keeps the raw type and name that the suggester needs', () => 
   const lane = ex.items.find((i) => i.rawType === 4);
   assert.equal(lane.rawName, '');
   assert.ok(Array.isArray(PS.suggest.suggest(ex.items, { lat: -43.4905, lon: 172.5295, hdgDeg: 45 })));
+});
+
+test('suggest: no compass-pointing options, lanes only when no taxiway option, and each option reports its arc', () => {
+  const sc = scenarios(G);
+  let sawAny = false;
+  for (const [name, mk] of Object.entries(sc.layouts)) {
+    for (const hdg of sc.headings) {
+      const layout = mk();
+      // feed the layout back through the extracted-item shape the app uses
+      const items = layout.paths.map((p) => ({ rawName: p.name, rawType: p.type, category: p.type === 3 ? 'Parking connector' : 'Taxiway', points: p.points, widthM: p.widthM }));
+      const list = PS.suggest.suggest(items, { lat: sc.ref[0], lon: sc.ref[1], hdgDeg: hdg }, layout.parking);
+      list.forEach((s) => {
+        sawAny = true;
+        assert.ok(s.title.indexOf(', pointing ') < 0, name + '@' + hdg + ': ' + s.title);
+        assert.equal(typeof s.tightestRadiusM, 'number');
+        assert.ok(s.detail.indexOf('Tightest arc') >= 0);
+      });
+      if (list.some((s) => s.group === 'taxiway')) assert.ok(list.every((s) => s.group === 'taxiway'), name + '@' + hdg + ': lanes/links only when there is no taxiway option');
+    }
+  }
+  assert.ok(sawAny);
+});
+
+test('suggest: the arc filter keeps options with a decent arc and falls back rather than offering nothing', () => {
+  // straight back to a taxiway 60 m behind: a clean straight push, so it passes the filter
+  const list = PS.suggest.suggest(taxiwayA(), own);
+  const back = list.find((s) => s.title === 'Straight back to taxiway A');
+  assert.ok(back && back.tightestRadiusM >= 32 && back.maxStartOffDeg <= 45);
+  list.forEach((s) => assert.ok(s.tightestRadiusM >= 32 && s.maxStartOffDeg <= 45, s.title + ' arc ' + s.tightestRadiusM + ' start off ' + s.maxStartOffDeg));
 });

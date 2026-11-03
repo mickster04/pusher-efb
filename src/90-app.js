@@ -117,7 +117,7 @@ PS.buildShell = function (root) {
 };
 
 PS.createViewClass = function (sdk) {
-  return class PusherSpikesView extends sdk.DisplayComponent {
+  return class PushPlannerView extends sdk.DisplayComponent {
     constructor(props) {
       super(props);
       this.rootRef = sdk.FSComponent.createRef();
@@ -138,7 +138,7 @@ PS.createViewClass = function (sdk) {
         PS.log('app', PS.APP_NAME + ' ' + PS.VERSION + ' view rendered');
       } catch (e) {
         PS.log('app', 'shell failed: ' + PS.errText(e));
-        root.textContent = 'Pusher Spikes failed to start: ' + PS.errText(e);
+        root.textContent = 'Push Planner failed to start: ' + PS.errText(e);
       }
     }
     // EFB lifecycle hooks (names per the open-source sample; unverified against the SDK docs).
@@ -172,7 +172,7 @@ PS.registerApp = function () {
   var View = PS.createViewClass(sdk);
   var BASE_URL = 'coui://html_ui/efb_ui/efb_apps/' + PS.INTERNAL_NAME;
 
-  class PusherSpikesApp {
+  class PushPlannerApp {
     constructor() {
       this.available = sdk.Subject.create(true);
       this.BootMode = 0;     // AppBootMode.COLD
@@ -213,7 +213,7 @@ PS.registerApp = function () {
   }
 
   // use() throws until the EFB has handed over its bus; the caller retries.
-  efb.use(PusherSpikesApp);
+  efb.use(PushPlannerApp);
   return true;
 };
 

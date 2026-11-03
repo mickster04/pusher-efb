@@ -37,8 +37,8 @@ It also links `MSFS_WasmVersions.a`, `libc`, `libc++`, `libc++abi` and `libclang
 
 ### After either build
 
-1. Rebuild the package with the Project Editor (`PusherEfbSpikesProject.xml`). The package definition copies `PackageSources/modules/` to the package's `modules/` folder.
-2. Copy the package to the Community folder (for MSFS 2024 this was `...\LocalCache\Packages\Community2024\pusher-efb-spikes`) and **restart the sim**: modules load only at start-up.
+1. Rebuild the package with the Project Editor (`PushPlannerProject.xml`). The package definition copies `PackageSources/modules/` to the package's `modules/` folder.
+2. Copy the package to the Community folder (for MSFS 2024 this was `...\LocalCache\Packages\Community2024\push-planner`) and **restart the sim**: modules load only at start-up.
 3. In the sim log look for `WASM: Module path is ...pushertaxi.wasm`, then `loaded` and `initialized`, then `[PusherTaxi] module_init`. In the EFB, page 3 **Check taxi module** should say found.
 
 Sim load errors seen and what they mean: `Error getting indirect function table` (add `--export-table`), `Error get malloc function pointer` (export `malloc`). The sim's other warnings for optional exports (`get_pages_state`, `mallinfo` and similar) are harmless.

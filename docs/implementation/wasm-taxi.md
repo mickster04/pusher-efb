@@ -43,6 +43,6 @@ Documented at the top of `src/05-wasm-taxi.js`. Messages are small JSON strings 
 
 ## Next steps once it runs in the sim
 
-1. Record the module console lines (`[PusherTaxi] ...`) and the page's log in `spike-app.md`.
+1. Record the module console lines (`[PusherTaxi] ...`) and the page's log in `feasibility-findings.md`.
 2. Check parking labels and path counts against an airport you know.
 3. If it works, feed `taxiSuggest.ts` (from the original app) with the layout to restore pushback suggestions (requirement E3).

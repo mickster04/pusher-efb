@@ -2,7 +2,7 @@
 <AssetPackage Version="0.1.0">
 	<ItemSettings>
 		<ContentType>MISC</ContentType>
-		<Title>Pusher Spikes (EFB)</Title>
+		<Title>Push Planner (EFB)</Title>
 		<Manufacturer/>
 		<Creator>Pusher</Creator>
 	</ItemSettings>
@@ -17,18 +17,18 @@
 			<Flags>
 				<FSXCompatibility>false</FSXCompatibility>
 			</Flags>
-			<AssetDir>PackageDefinitions\pusher-efb-spikes\ContentInfo</AssetDir>
-			<OutputDir>ContentInfo\pusher-efb-spikes</OutputDir>
+			<AssetDir>PackageDefinitions\push-planner\ContentInfo</AssetDir>
+			<OutputDir>ContentInfo\push-planner</OutputDir>
 		</AssetGroup>
-		<AssetGroup Name="efb_apps_pusherspikes">
+		<AssetGroup Name="efb_apps_pushplanner">
 			<Type Version="0">Copy</Type>
 			<Flags>
 				<FSXCompatibility>false</FSXCompatibility>
 			</Flags>
-			<AssetDir>PackageSources\PusherSpikes\</AssetDir>
-			<OutputDir>.\html_ui\efb_ui\efb_apps\PusherSpikes\</OutputDir>
+			<AssetDir>PackageSources\PushPlanner\</AssetDir>
+			<OutputDir>.\html_ui\efb_ui\efb_apps\PushPlanner\</OutputDir>
 		</AssetGroup>
-		<AssetGroup Name="modules_pusherspikes">
+		<AssetGroup Name="modules_pushplanner">
 			<Type Version="0">Copy</Type>
 			<Flags>
 				<FSXCompatibility>false</FSXCompatibility>

@@ -1,6 +1,6 @@
 # App design: Plan and Push tabs
 
-Replaces the spike pages. The spikes are on the `spikes-app` branch; what they proved is in `spike-app.md`, `efb-platform-notes.md` and `wasm-taxi.md`.
+Replaces the earlier feasibility app, which is on the `spikes-app` branch; what they proved is in `feasibility-findings.md`, `efb-platform-notes.md` and `wasm-taxi.md`.
 
 ## Plan tab (built; browser harness and unit tests only, not yet run in the sim)
 

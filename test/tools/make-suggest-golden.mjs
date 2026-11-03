@@ -16,7 +16,7 @@ for (const f of ['planDraft.ts', 'mapGeo.ts', 'taxiSuggest.ts']) {
 writeFileSync(join(tmp, 'api.ts'), 'export {};\n'); writeFileSync(join(tmp, 'types.ts'), 'export {};\n'); writeFileSync(join(tmp, 'package.json'), '{"type":"module"}');
 copyFileSync(join(here, 'suggest-scenarios.mjs'), join(tmp, 'suggest-scenarios.mjs'));
 const require = createRequire(import.meta.url);
-const bundle = join(here, '..', '..', 'PackageSources', 'PusherSpikes', 'PusherSpikes.js');
+const bundle = join(here, '..', '..', 'PackageSources', 'PushPlanner', 'PushPlanner.js');
 writeFileSync(join(tmp, 'run.mjs'), `
 import { createRequire } from 'node:module';
 import { writeFileSync } from 'node:fs';

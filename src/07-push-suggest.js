@@ -161,6 +161,7 @@ PS.suggest = (function () {
     if (!ok(hit.lat, hit.lon, hdg)) return null;
     var wp = { id: 'wp-taxi-' + nextId() + '-back', label: 'End position', lat: hit.lat, lon: hit.lon, seq: 0, terminal: true, headingDeg: hdg, headingUser: false, drive: 'auto' };
     return {
+      group: key === LANE_KEY ? 'lane' : (key && isLinkName(key) ? 'link' : 'taxiway'), kind: 'straight',
       id: 'taxi-straight-' + (key === LANE_KEY ? 'lane' : hit.name.replace(/\s+/g, '')) + '-' + Math.round(hit.lat * 1e5),
       title: key === LANE_KEY ? 'Straight back to the apron lane' : (key && isLinkName(key) ? 'Straight back to ' + hit.name : 'Straight back to taxiway ' + hit.name),
       detail: Math.round(hit.t) + ' m straight back; the nose stays ' + pad3(hdg) + '°',
@@ -437,7 +438,7 @@ PS.suggest = (function () {
         if (!seen[skey]) {
           seen[skey] = true;
           out.push({
-            id: 'taxi-conn-' + skey, title: 'Straight back to the end of the stand connector',
+            group: 'connector', kind: 'straight', id: 'taxi-conn-' + skey, title: 'Straight back to the end of the stand connector',
             detail: Math.round(straightEv.costM) + " m of push to where the stand's lead-in meets the taxiway (no named taxiway here, so this is a guess); the nose stays " + pad3(straightHdg) + '°',
             waypoints: P.ensureTerminal([{ id: 'wp-taxi-' + nextId() + '-back', label: 'End position', lat: cur[0], lon: cur[1], seq: 0, terminal: true, headingDeg: straightHdg, headingUser: false, drive: 'auto' }])
           });
@@ -454,7 +455,7 @@ PS.suggest = (function () {
           var t = evaluateWithTurn(acNow, cur[0], cur[1], hdg);
           if (t) {
             out.push({
-              id: 'taxi-conn-' + key, title: 'End of the stand connector, facing ' + compass(hdg),
+              group: 'connector', kind: 'along', id: 'taxi-conn-' + key, title: 'End of the stand connector, facing ' + compass(hdg),
               detail: Math.round(t.costM) + " m of push to where the stand's lead-in meets the taxiway (no named taxiway here, so this is a guess); heading " + pad3(hdg) + '°' + (t.pinAdded ? ', with a turnaround pin to get lined up' : ', curving in to line up'),
               waypoints: t.waypoints
             });
@@ -610,6 +611,7 @@ PS.suggest = (function () {
       var key = c.name === LANE_KEY ? 'lane' : (c.name || 'x').replace(/\s+/g, '');
       var wps = c.turn ? c.turn.waypoints : P.ensureTerminal([{ id: 'wp-taxi-' + nextId() + '-' + hdg, label: 'End position', lat: c.lat, lon: c.lon, seq: 0, terminal: true, headingDeg: hdg, headingUser: !c.clean, drive: 'auto' }]);
       return {
+        group: kindOf(c.name), kind: c.title && c.title.indexOf(', pointing ') >= 0 ? 'pointing' : 'along',
         id: 'taxi-' + key + '-' + hdg + '-' + Math.round(c.lat * 1e5),
         title: c.title || (groupTitle(c.name) + ', facing ' + compass(hdg) + (c.clean ? '' : ' (tight)')),
         detail: c.detail || (Math.round(c.costM) + ' m of push; ends on the centreline heading ' + pad3(hdg) + '° along it' + (c.turn ? (c.turn.pinAdded ? ', with a turnaround pin to get lined up' : ', curving in to line up') : '') + (c.clean ? '' : '. The tug may not manage this one: no cleaner end point found')),
@@ -636,6 +638,9 @@ PS.suggest = (function () {
       len += P.pathLengthM(g.points);
       if (!warning) warning = P.segmentWarning(g);
     });
+    var minR = Infinity, maxOff = 0;
+    segs.forEach(function (g) { if (g.tightestRadiusM < minR) minR = g.tightestRadiusM; if (g.startOffDeg > maxOff) maxOff = g.startOffDeg; });
+    s.tightestRadiusM = minR === Infinity ? P.PATH_TURN_RADIUS_M : minR; s.maxStartOffDeg = maxOff;
     s.segments = segs; s.route = route; s.lengthM = len; s.warning = warning;
     s.facingDeg = segs.length ? wrap360(segs[segs.length - 1].endHdgDeg) : wrap360(ac.hdgDeg);
     s.pins = s.waypoints.map(function (w) { return [w.lat, w.lon]; });
@@ -643,10 +648,28 @@ PS.suggest = (function () {
   }
 
   // items: PS.taxi.extract items; ac: { lat, lon, hdgDeg }; parking: PS.taxi.extract parking. Returns decorated suggestions.
+  // Differences from the original's list, chosen after trying it in the sim:
+  //  - compass-pointing options ("Taxiway A, pointing north") are dropped: the along-the-taxiway options are what is wanted;
+  //  - apron lanes and links are only offered when no named taxiway has an option;
+  //  - an option whose tightest arc is under MIN_ARC_RADIUS_M, or whose first stretch starts more than MAX_START_OFF_DEG off the aircraft's
+  //    axis, is left out (the planner accepts down to 60% of the tug radius, which draws as a cramped arc). If that would leave nothing,
+  //    the unfiltered list (minus pointing) is used so there is still something to pick.
+  var MIN_ARC_RADIUS_M = 32;
+  var MAX_START_OFF_DEG = 45;
+  function filterOptions(all) {
+    var nonPointing = all.filter(function (s) { return s.kind !== 'pointing'; });
+    var good = nonPointing.filter(function (s) { return s.tightestRadiusM >= MIN_ARC_RADIUS_M && s.maxStartOffDeg <= MAX_START_OFF_DEG; });
+    var pool = good.length ? good : nonPointing;
+    var onTaxiway = pool.some(function (s) { return s.group === 'taxiway'; });
+    return onTaxiway ? pool.filter(function (s) { return s.group === 'taxiway'; }) : pool;
+  }
   function suggest(items, ac, parking) {
     if (!ac || typeof ac.lat !== 'number' || typeof ac.lon !== 'number') return [];
     var list = suggestPushbacks(layoutFrom(items, parking), { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg || 0 });
-    return list.map(function (s) { return decorate(s, { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg || 0 }); });
+    var all = list.map(function (s) { return decorate(s, { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg || 0 }); });
+    var kept = filterOptions(all);
+    kept.forEach(function (s) { s.detail += '. Tightest arc ' + Math.round(s.tightestRadiusM) + ' m (tug turns at ' + P.PATH_TURN_RADIUS_M + ' m)'; });
+    return kept;
   }
 
   return { suggest: suggest, suggestPushbacks: suggestPushbacks, layoutFrom: layoutFrom, currentStand: currentStand, compass: compass,

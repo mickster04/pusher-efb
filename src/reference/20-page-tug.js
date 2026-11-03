@@ -1,4 +1,4 @@
-// Spike 2: can the tug be driven from JS? Per-tick writes of PUSHBACK WAIT / VELOCITY BODY Z / ROTATION VELOCITY BODY Y
+// Tug drive test: can the tug be driven from JS? Per-tick writes of PUSHBACK WAIT / VELOCITY BODY Z / ROTATION VELOCITY BODY Y
 // (what the original app does). Moves the aircraft: hard run-time limit, stops on hide, pause and close.
 // Steering by the KEY_TUG_HEADING event is offered alongside, because turning by rotation write was not working.
 
