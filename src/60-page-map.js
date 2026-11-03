@@ -326,7 +326,18 @@ PS.pages.push({
     }
 
     // ---- drawing ----
+    // draw() never throws: an error is shown under the plot and logged once, and the redraw timers keep going.
+    var lastDrawAt = 0, lastDrawErr = '';
     function draw() {
+      lastDrawAt = Date.now();
+      try { drawPlot(); }
+      catch (e) {
+        var m = PS.errText(e);
+        infoLine.textContent = 'Plot draw error: ' + m;
+        if (m !== lastDrawErr) { lastDrawErr = m; log('plot draw failed: ' + m); }
+      }
+    }
+    function drawPlot() {
       var g = canvas.getContext && canvas.getContext('2d');
       if (!g) { infoLine.textContent = 'Canvas 2D not available.'; return; }
       var c = ownOrReference(), own = c.own;
@@ -458,7 +469,7 @@ PS.pages.push({
     var el = h('div', { class: 'ps-page' },
       ui.panel('Plot (runways, taxiways, AI aircraft, pins and suggested pushes; no imagery)',
         h('div', { class: 'ps-row' }, ui.field('Range', plotRange.el), pinModeBtn,
-          ui.button('Undo pin', undoPin, 'ps-ghost'), ui.button('Clear pins', clearPins, 'ps-ghost')),
+          ui.button('Undo pin', undoPin, 'ps-ghost'), ui.button('Clear pins', clearPins, 'ps-ghost'), ui.button('Refresh', function () { draw(); }, 'ps-ghost')),
         canvas, infoLine, contactLine,
         ui.note('North is up, centred on the aircraft. Pin mode on: tap to drop pins, drag a pin to move it. Pin mode off: tap an aircraft to read its details. Orange = taxiway, grey-blue = runway, red = AI aircraft, teal = suggested push end points, white = your pins.')),
       ui.panel('Pins', pinList),
@@ -471,17 +482,23 @@ PS.pages.push({
         ui.note('Looking for: whether the sim\'s own map can be shown in an EFB app, and whether we can draw taxiways, pins and the aircraft on top of it. Not mounted automatically any more; press Mount.')),
       ui.panel('Log', ui.logBox(['map', 'traffic']))
     );
+    el.addEventListener('click', function () { setTimeout(draw, 0); setTimeout(draw, 400); });
+    var frameHook = function () { if (Date.now() - lastDrawAt > 450) draw(); };
     return {
       el: el,
       onShow: function () {
+        // Redraw triggers: the interval (started first, so a failing first draw cannot stop it), the EFB's per-frame update, and any click.
+        if (timer !== null) clearInterval(timer);
+        timer = setInterval(draw, 500);
+        if (PS.frameHooks.indexOf(frameHook) < 0) PS.frameHooks.push(frameHook);
         renderPins(); renderSuggestions();
-        draw(); timer = setInterval(draw, 500);
+        draw();
         if (!PS.state.taxi && !airportLoading) {
           airportLoading = true;
           PS.facility.loadNearestIntoState().then(null, function (e) { log('could not load airport data: ' + PS.errText(e)); });
         }
       },
-      onHide: function () { if (timer !== null) { clearInterval(timer); timer = null; } if (bingTimer !== null) { clearInterval(bingTimer); bingTimer = null; } drag = null; }
+      onHide: function () { var fi = PS.frameHooks.indexOf(frameHook); if (fi >= 0) PS.frameHooks.splice(fi, 1); if (timer !== null) { clearInterval(timer); timer = null; } if (bingTimer !== null) { clearInterval(bingTimer); bingTimer = null; } drag = null; }
     };
   }
 });

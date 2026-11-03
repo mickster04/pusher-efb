@@ -203,7 +203,11 @@ PS.hbStop = function () {
   if (PS.hb.timer !== null) { clearInterval(PS.hb.timer); PS.hb.timer = null; }
   PS.hb.rafOn = false;
 };
-PS.hbFrame = function () { PS.hb.frames++; };
+PS.frameHooks = [];   // called on every EFB onUpdate (while the app is visible); pages use it as a second redraw trigger
+PS.hbFrame = function () {
+  PS.hb.frames++;
+  for (var i = 0; i < PS.frameHooks.length; i++) { try { PS.frameHooks[i](); } catch (e) { /* a hook must not break the update loop */ } }
+};
 PS.hbPause = function () {
   var hb = PS.hb;
   if (hb.paused) return;

@@ -7,7 +7,7 @@
 .ps-nav { display: flex; flex-wrap: wrap; background: #0e151b; padding: 0 10px 8px; }
 .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid #2a3a47; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; }
 .ps-navbtn.on { background: #f0a830; color: #131c24; border-color: #f0a830; font-weight: bold; }
-.ps-body { position: relative; flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 14px 24px; }
+.ps-body { position: relative; flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding: 12px 14px 24px; }
 .ps-footer { padding: 5px 14px; background: #0b1116; color: #7f93a4; font-size: 12px; white-space: nowrap; overflow: hidden; }
 
 .ps-panel { background: #1b2630; border: 1px solid #2a3a47; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
@@ -80,3 +80,12 @@
 .ps-pinrow { padding: 4px 0; border-bottom: 1px solid #222f3a; font-size: 13px; }
 .ps-pinrow .ps-btn { margin-left: 10px; }
 .ps-pinrow.on { background: #2a2f1a; }
+
+/* Scroll bars drawn explicitly and always shown: the sim's browser did not show its default ones. */
+.ps-body::-webkit-scrollbar { width: 18px; }
+.ps-body::-webkit-scrollbar-track { background: #0b1116; }
+.ps-body::-webkit-scrollbar-thumb { background: #5b7184; border-radius: 9px; border: 3px solid #0b1116; min-height: 40px; }
+.ps-body::-webkit-scrollbar-thumb:hover { background: #f0a830; }
+.ps-log::-webkit-scrollbar, .ps-tablewrap::-webkit-scrollbar { width: 12px; height: 12px; }
+.ps-log::-webkit-scrollbar-track, .ps-tablewrap::-webkit-scrollbar-track { background: #0b1116; }
+.ps-log::-webkit-scrollbar-thumb, .ps-tablewrap::-webkit-scrollbar-thumb { background: #5b7184; border-radius: 6px; }
