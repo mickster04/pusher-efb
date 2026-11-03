@@ -971,6 +971,38 @@ PS.routeLegs = function (start, pins) {
   return { legs: legs, totalM: total };
 };
 
+// Tap calibration: samples are taps aimed at known spots on the canvas. Each sample { exp: [x, y] (where it was aimed, canvas pixels),
+// rect: [x, y] (where the client position against the canvas rectangle put it), off: [x, y] or null (from offsetX/offsetY) }.
+// For each way of measuring, fit  expected = scale * measured + shift  per axis by least squares. Returns { best, rect, offset }, each
+// { method, ax, bx, ay, by, rms, n } (rms: the residual in canvas pixels after the fit), best being the measure that fits better.
+PS.fitTapCalibration = function (samples) {
+  function fit1(m, e) {
+    var n = m.length, sm = 0, se = 0, smm = 0, sme = 0, i;
+    for (i = 0; i < n; i++) { sm += m[i]; se += e[i]; smm += m[i] * m[i]; sme += m[i] * e[i]; }
+    var den = n * smm - sm * sm, a = Math.abs(den) < 1e-9 ? 1 : (n * sme - sm * se) / den;
+    if (!isFinite(a) || a < 0.5 || a > 2) a = 1;     // a wild scale is a sign of a bad tap, not a real one
+    var b = (se - a * sm) / n, sse = 0;
+    for (i = 0; i < n; i++) { var r = a * m[i] + b - e[i]; sse += r * r; }
+    return { a: a, b: b, sse: sse };
+  }
+  function measure(key, name) {
+    var mx = [], my = [], ex = [], ey = [];
+    samples.forEach(function (s) { var v = s[key]; if (!v) return; mx.push(v[0]); my.push(v[1]); ex.push(s.exp[0]); ey.push(s.exp[1]); });
+    if (mx.length < 2) return null;
+    var fx = fit1(mx, ex), fy = fit1(my, ey);
+    return { method: name, ax: fx.a, bx: fx.b, ay: fy.a, by: fy.b, rms: Math.sqrt((fx.sse + fy.sse) / (2 * mx.length)), n: mx.length };
+  }
+  var rect = measure('rect', 'rect'), offset = measure('off', 'offset'), hit = measure('hit', 'hit');
+  // Lowest residual wins; within half a pixel, the measure that needs the smaller correction (its raw reading was already closer to right).
+  function correction(m) { return Math.abs(m.ax - 1) * 900 + Math.abs(m.ay - 1) * 540 + Math.abs(m.bx) + Math.abs(m.by); }
+  var best = null;
+  [rect, offset, hit].forEach(function (m) {
+    if (!m) return;
+    if (!best || m.rms < best.rms - 0.5 || (m.rms <= best.rms + 0.5 && correction(m) < correction(best))) best = m;
+  });
+  return { best: best, rect: rect, offset: offset, hit: hit };
+};
+
 /* ---- 06-route-planner.js ---- */
 // Route planner: a port of the original app's planned-route code (apps/windows/src/mapGeo.ts, "Planned route" to the end), which mirrors
 // the bridge's FilletPath planner (bridge/Constants.cs). It answers "what line does the tug follow through these pins, in which direction
@@ -2327,7 +2359,8 @@ PS.pages.push({
   create: function (ctx) {
     var ui = PS.ui, h = PS.h;
     var PLOT_STEPS = [100, 200, 300, 500, 1000, 2000, 3000];
-    var HANDLE_PX = 42;          // how far behind the tail the heading handle sits
+    var HANDLE_PX = 58;          // how far behind the tail the heading handle sits
+    var HANDLE_HIT_PX = 36;      // how close a press has to be to the handle (canvas pixels; the plot is shown scaled down, so about 3/4 of this on screen)
     var canvas = h('canvas', { class: 'ps-canvas', width: '900', height: '540' });
     var plotRange = ui.stepper(PLOT_STEPS, 300, function () { draw('action'); }, 'plan');
     var infoLine = h('div', { class: 'ps-kv', text: '' });
@@ -2360,6 +2393,11 @@ PS.pages.push({
       return [(e.clientX - r.left) * canvas.width / (r.width || canvas.width), (e.clientY - r.top) * canvas.height / (r.height || canvas.height)];
     }
     function pxDist(a, b) { var dx = a[0] - b[0], dy = a[1] - b[1]; return Math.sqrt(dx * dx + dy * dy); }
+    function distToSegment(p, a, b) {
+      var dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy;
+      var t = l2 < 1e-9 ? 0 : Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2));
+      return pxDist(p, [a[0] + t * dx, a[1] + t * dy]);
+    }
 
     // ---------------- diagnostics: what triggers each redraw and whether the plot really changes ----------------
     var lastDrawAt = 0, lastDrawErr = '';
@@ -2418,8 +2456,10 @@ PS.pages.push({
     //   resize: reassigning canvas.width reallocates the backing store (the whole plot is repainted every draw anyway);
     //   flush:  reading one pixel back forces any queued drawing to complete;
     //   style:  alternating the canvas opacity by 0.1% marks it as changed for the compositor.
-    var NUDGE_MODES = ['all', 'resize', 'flush', 'style', 'off'];
-    var nudgeMode = 'all', nudgeFlip = false;
+    // 'style' is the one that made the page update correctly in the sim, so it is the default (the others read the canvas back or reallocate
+    // it every draw, which costs more); the button still cycles through them.
+    var NUDGE_MODES = ['style', 'all', 'resize', 'flush', 'off'];
+    var nudgeMode = 'style', nudgeFlip = false;
     function nudgeBefore() { if (nudgeMode === 'all' || nudgeMode === 'resize') { var w0 = canvas.width; canvas.width = w0; } }
     function nudgeAfter() {
       if (nudgeMode === 'off') return;
@@ -2525,10 +2565,69 @@ PS.pages.push({
     // worked out two ways and logged: from the event's client position against the canvas rectangle, and (mouse events) from offsetX/offsetY,
     // which is relative to the canvas itself and is not thrown off if the EFB's panel is scaled or shifted. The offset method is used when
     // there is one. A calibration (tap the middle of the green aircraft once) corrects any constant error that is left.
-    var cal = { dx: 0, dy: 0 };
-    var calibrating = false;
+    var CAL_NONE = { method: 'auto', ax: 1, bx: 0, ay: 1, by: 0, rms: 0 };
+    var cal = CAL_NONE;
+    var hover = null, showCross = true, lastHoverDraw = 0, hoverLogs = 0;   // the cursor cross: where the app thinks the pointer is, live
+    var calibrating = false, calSamples = [];
+    function calTargets() { var w = canvas.width, h2 = canvas.height, m = 55; return [[m, m], [w - m, m], [w - m, h2 - m], [m, h2 - m], [w / 2, h2 * 0.2]]; }
     var lastPress = null;     // { p: [x, y], at } for the marker drawn where the app thinks the tap was
-    try { var saved = JSON.parse(window.localStorage.getItem('pushplanner.tapcal') || 'null'); if (saved && isFinite(saved.dx) && isFinite(saved.dy)) cal = { dx: saved.dx, dy: saved.dy }; } catch (e0) { /* storage may be unavailable */ }
+    try { var saved = JSON.parse(window.localStorage.getItem('pushplanner.tapcal2') || 'null'); if (saved && isFinite(saved.ax) && isFinite(saved.bx) && isFinite(saved.ay) && isFinite(saved.by)) cal = saved; } catch (e0) { /* storage may be unavailable */ }
+    // ---- the canvas's real position in event space, found by hit-testing ----
+    // document.elementFromPoint() asks the browser which element is at a point, so scanning it over the viewport finds where the canvas really
+    // is for events, whatever scaling or zoom the EFB applies to the page. Only trusted when the whole canvas is in view (a clipped canvas
+    // would give a box that is too small); scroll the whole plot into view and press Scan canvas.
+    var hitBox = null;
+    function scanHitRegion() {
+      if (typeof document.elementFromPoint !== 'function') return { ok: false, why: 'elementFromPoint is not available' };
+      var iw = window.innerWidth, ih = window.innerHeight, step = 20, x, y, minx = 1e9, miny = 1e9, maxx = -1, maxy = -1, count = 0, t0 = Date.now();
+      function hit(px, py) { return document.elementFromPoint(px, py) === canvas; }
+      for (y = 2; y < ih; y += step) { for (x = 2; x < iw; x += step) { if (hit(x, y)) { count++; if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y; } } }
+      if (!count) return { ok: false, why: 'the canvas was not hit anywhere in the ' + iw + 'x' + ih + ' viewport (scrolled out of view?)' };
+      // Refine each edge to 1 px by bisecting between the last miss and the first hit along a line through the box.
+      var midx = Math.round((minx + maxx) / 2), midy = Math.round((miny + maxy) / 2);
+      function edge(fromHit, toMiss, test) { var lo = fromHit, hi = toMiss; while (Math.abs(hi - lo) > 1) { var m = Math.round((lo + hi) / 2); if (test(m)) lo = m; else hi = m; } return lo; }
+      var left = edge(minx, Math.max(0, minx - step), function (v) { return hit(v, midy); });
+      var right = edge(maxx, Math.min(iw - 1, maxx + step), function (v) { return hit(v, midy); });
+      var top = edge(miny, Math.max(0, miny - step), function (v) { return hit(midx, v); });
+      var bottom = edge(maxy, Math.min(ih - 1, maxy + step), function (v) { return hit(midx, v); });
+      // Is an edge a real edge of the canvas, or where the scroll area (or the window) cuts it off? Just beyond a real edge is more of the page
+      // (inside the scroll area); just beyond a cut is outside it (the header or footer, or nothing).
+      function insideBody(el) { while (el) { if (el.className && String(el.className).indexOf('ps-body') >= 0) return true; el = el.parentNode; } return false; }
+      var cut = [];
+      if (top <= 1 || !insideBody(document.elementFromPoint(midx, top - 2))) cut.push('top');
+      if (bottom >= ih - 2 || !insideBody(document.elementFromPoint(midx, bottom + 3))) cut.push('bottom');
+      if (left <= 1 || !insideBody(document.elementFromPoint(left - 2, midy))) cut.push('left');
+      if (right >= iw - 2 || !insideBody(document.elementFromPoint(right + 3, midy))) cut.push('right');
+      return { ok: true, left: left, top: top, right: right + 1, bottom: bottom + 1, count: count, ms: Date.now() - t0, cut: cut, touchesViewport: cut.length > 0, iw: iw, ih: ih };
+    }
+    function describeEnvironment() {
+      var out = [];
+      var r = canvas.getBoundingClientRect();
+      out.push('window inner ' + window.innerWidth + 'x' + window.innerHeight + ', outer ' + window.outerWidth + 'x' + window.outerHeight + ', dpr ' + window.devicePixelRatio + ', screen ' + (window.screen ? window.screen.width + 'x' + window.screen.height : '?') + ', documentElement client ' + document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight);
+      out.push('canvas: backing ' + canvas.width + 'x' + canvas.height + ', client ' + canvas.clientWidth + 'x' + canvas.clientHeight + ', offset ' + canvas.offsetWidth + 'x' + canvas.offsetHeight + ' at ' + canvas.offsetLeft + ',' + canvas.offsetTop + ', rect ' + r.width.toFixed(1) + 'x' + r.height.toFixed(1) + ' at ' + r.left.toFixed(1) + ',' + r.top.toFixed(1));
+      var n = canvas, depth = 0, items = [];
+      while (n && n.nodeType === 1 && depth < 14) {
+        var cs = window.getComputedStyle ? window.getComputedStyle(n) : null;
+        if (cs) {
+          var tf = cs.transform || cs.webkitTransform || 'none', zm = cs.zoom, ov = cs.overflowX + '/' + cs.overflowY;
+          var nr = n.getBoundingClientRect();
+          items.push((n.tagName || '?').toLowerCase() + (n.className ? '.' + String(n.className).split(' ')[0] : '') + ' ' + Math.round(nr.width) + 'x' + Math.round(nr.height) + (tf && tf !== 'none' ? ' transform=' + tf : '') + (zm && zm !== '1' && zm !== 'normal' ? ' zoom=' + zm : '') + (ov !== 'visible/visible' ? ' overflow=' + ov : ''));
+        }
+        n = n.parentNode; depth++;
+      }
+      out.push('ancestors (canvas outwards): ' + items.join(' < '));
+      return out;
+    }
+    function scanAndReport(why) {
+      describeEnvironment().forEach(function (l) { log('environment (' + why + '): ' + l); });
+      var res = scanHitRegion(), r = canvas.getBoundingClientRect();
+      if (!res.ok) { hitBox = null; log('hit-test scan: ' + res.why); return res; }
+      var bw = res.right - res.left, bh = res.bottom - res.top;
+      log('hit-test scan: the canvas is hit from ' + res.left + ',' + res.top + ' to ' + res.right + ',' + res.bottom + ' (' + bw + 'x' + bh + ', ' + res.count + ' points, ' + res.ms + ' ms); getBoundingClientRect says ' + r.left.toFixed(0) + ',' + r.top.toFixed(0) + ' ' + r.width.toFixed(0) + 'x' + r.height.toFixed(0) + (res.cut.length ? '. The canvas is cut off at its ' + res.cut.join(' and ') + ' (scrolled out of view or clipped), so this box is too small to use: scroll the whole plot into view and scan again' : '. Whole canvas in view'));
+      // The hit box is only usable as a measure when the canvas is wholly in view.
+      hitBox = res.touchesViewport ? null : { left: res.left, top: res.top, width: bw, height: bh };
+      return res;
+    }
     function rawOf(e) {
       var touch = !!((e.changedTouches && e.changedTouches.length) || (e.touches && e.touches.length));
       var t = touch ? (e.changedTouches && e.changedTouches.length ? e.changedTouches[0] : e.touches[0]) : e;
@@ -2536,26 +2635,40 @@ PS.pages.push({
       var sx = canvas.width / (r.width || canvas.width), sy = canvas.height / (r.height || canvas.height);
       var rectPt = [(t.clientX - r.left) * sx, (t.clientY - r.top) * sy], offPt = null;
       if (!touch && typeof e.offsetX === 'number' && e.target === canvas) offPt = [e.offsetX * canvas.width / (canvas.clientWidth || canvas.width), e.offsetY * canvas.height / (canvas.clientHeight || canvas.height)];
-      return { touch: touch, t: t, r: r, rectPt: rectPt, offPt: offPt, base: offPt || rectPt };
+      var hitPt = hitBox ? [(t.clientX - hitBox.left) * canvas.width / hitBox.width, (t.clientY - hitBox.top) * canvas.height / hitBox.height] : null;
+      return { touch: touch, t: t, r: r, rectPt: rectPt, offPt: offPt, hitPt: hitPt, base: offPt || rectPt };
     }
+    function measured(o) { return cal.method === 'rect' ? o.rectPt : (cal.method === 'hit' ? (o.hitPt || o.offPt || o.rectPt) : (o.offPt || o.rectPt)); }
     function pointOf(e) {
       var o = rawOf(e);
       inp.lastRaw = o;
-      return [o.base[0] + cal.dx, o.base[1] + cal.dy];
+      var m = measured(o);
+      return [cal.ax * m[0] + cal.bx, cal.ay * m[1] + cal.by];
     }
-    function logPress(p) {
+    function logPress(p, force) {
       var o = inp.lastRaw;
-      if (!o || inp.presses > 10) return;
+      if (!o || (inp.presses > 10 && !force)) return;
       var b = document.querySelector ? document.querySelector('.ps-body') : null;
       log('press raw: client ' + Math.round(o.t.clientX) + ',' + Math.round(o.t.clientY) + (typeof o.t.pageX === 'number' ? ' page ' + Math.round(o.t.pageX) + ',' + Math.round(o.t.pageY) : '') + (typeof o.t.screenX === 'number' ? ' screen ' + Math.round(o.t.screenX) + ',' + Math.round(o.t.screenY) : '') +
         (o.offPt ? ' offset ' + Math.round(o.t.offsetX) + ',' + Math.round(o.t.offsetY) : '') + ' | canvas rect left ' + Math.round(o.r.left) + ' top ' + Math.round(o.r.top) + ' size ' + Math.round(o.r.width) + 'x' + Math.round(o.r.height) +
         ' (css ' + canvas.clientWidth + 'x' + canvas.clientHeight + ', backing ' + canvas.width + 'x' + canvas.height + ') | window ' + window.innerWidth + 'x' + window.innerHeight + ' dpr ' + window.devicePixelRatio + (b ? ' bodyScrollTop ' + Math.round(b.scrollTop) : '') +
-        ' | canvas px by rect ' + Math.round(o.rectPt[0]) + ',' + Math.round(o.rectPt[1]) + (o.offPt ? ' by offset ' + Math.round(o.offPt[0]) + ',' + Math.round(o.offPt[1]) : '') + ' | used ' + Math.round(p[0]) + ',' + Math.round(p[1]) + ' (calibration ' + Math.round(cal.dx) + ',' + Math.round(cal.dy) + ')');
+        ' | canvas px by rect ' + Math.round(o.rectPt[0]) + ',' + Math.round(o.rectPt[1]) + (o.offPt ? ' by offset ' + Math.round(o.offPt[0]) + ',' + Math.round(o.offPt[1]) : '') + ' | used ' + Math.round(p[0]) + ',' + Math.round(p[1]) + ' (calibration: ' + cal.method + ', x*' + cal.ax.toFixed(3) + '+' + Math.round(cal.bx) + ', y*' + cal.ay.toFixed(3) + '+' + Math.round(cal.by) + ')');
     }
-    function setCalibration(dx, dy) {
-      cal = { dx: dx, dy: dy };
-      try { window.localStorage.setItem('pushplanner.tapcal', JSON.stringify(cal)); } catch (e1) { /* not saved, still applied this session */ }
-      calLine.textContent = 'Tap calibration: ' + (dx === 0 && dy === 0 ? 'none' : Math.round(dx) + ' px across, ' + Math.round(dy) + ' px down (canvas pixels)') + '.';
+    function setCalibration(c) {
+      cal = c;
+      try { window.localStorage.setItem('pushplanner.tapcal2', JSON.stringify(cal)); } catch (e1) { /* not saved, still applied this session */ }
+      var none = cal.method === 'auto' && cal.ax === 1 && cal.bx === 0 && cal.ay === 1 && cal.by === 0;
+      calLine.textContent = none ? 'Tap calibration: none.' : 'Tap calibration: measuring by ' + cal.method + ', across x' + cal.ax.toFixed(3) + ' ' + (cal.bx >= 0 ? '+' : '') + Math.round(cal.bx) + ' px, down x' + cal.ay.toFixed(3) + ' ' + (cal.by >= 0 ? '+' : '') + Math.round(cal.by) + ' px (fit error ' + cal.rms.toFixed(1) + ' px).';
+    }
+    function finishCalibration() {
+      var fit = PS.fitTapCalibration(calSamples);
+      calibrating = false; calBtn.textContent = 'Calibrate taps (5 spots)';
+      ['rect', 'offset', 'hit'].forEach(function (k) {
+        var f = fit[k];
+        log('calibration fit by ' + k + ': ' + (f ? 'across x' + f.ax.toFixed(3) + ' ' + f.bx.toFixed(1) + ' px, down x' + f.ay.toFixed(3) + ' ' + f.by.toFixed(1) + ' px, residual ' + f.rms.toFixed(1) + ' px over ' + f.n + ' taps' : 'not available'));
+      });
+      if (fit.best) { setCalibration(fit.best); log('calibration applied: ' + calLine.textContent); }
+      calSamples = [];
     }
     function recentTouch() { return Date.now() - inp.lastTouchAt < 800; }
 
@@ -2564,18 +2677,21 @@ PS.pages.push({
       logPress(p);
       lastPress = { p: p, at: Date.now() };
       if (calibrating) {
-        // The tap was aimed at the middle of the green aircraft, which is the middle of the canvas: whatever it landed away from that is the error.
-        var b = inp.lastRaw ? inp.lastRaw.base : p;
-        setCalibration(canvas.width / 2 - b[0], canvas.height / 2 - b[1]);
-        calibrating = false; calBtn.textContent = 'Calibrate taps';
-        log('tap calibration set: ' + Math.round(cal.dx) + ', ' + Math.round(cal.dy) + ' canvas px (tapped ' + Math.round(b[0]) + ',' + Math.round(b[1]) + ', aimed at ' + canvas.width / 2 + ',' + canvas.height / 2 + ')');
-        drag = null; planChanged(); return;
+        // A calibration tap: aimed at the next target spot; record where the two measures put it and move on. It never places a pin.
+        var tgts = calTargets(), tgt = tgts[calSamples.length], raw = inp.lastRaw;
+        lastPress = { p: raw.base, at: Date.now() };
+        calSamples.push({ exp: tgt, rect: raw.rectPt, off: raw.offPt, hit: raw.hitPt });
+        logPress(p, true);
+        log('calibration tap ' + calSamples.length + ' of ' + tgts.length + ' aimed at canvas ' + Math.round(tgt[0]) + ',' + Math.round(tgt[1]) + ': by rect ' + Math.round(raw.rectPt[0]) + ',' + Math.round(raw.rectPt[1]) + (raw.offPt ? ', by offset ' + Math.round(raw.offPt[0]) + ',' + Math.round(raw.offPt[1]) : ''));
+        if (calSamples.length >= tgts.length) finishCalibration();
+        drag = null; draw('action'); return;
       }
       if (!lastView) { log('press ignored: the plot has not been drawn yet'); return; }
       var sel = PS.plan.selected();
       if (sel >= 0) {
-        var hp = handlePx(sel);
-        if (hp && pxDist(hp, p) <= (touch ? 26 : 16)) { drag = { kind: 'handle', idx: sel, sx: p[0], sy: p[1], moved: false, touch: touch }; if (inp.presses <= 12) log('press on the heading handle of pin ' + (sel + 1)); return; }
+        var hp = handlePx(sel), sq0 = lastView.toPx(PS.plan.list()[sel].lat, PS.plan.list()[sel].lon);
+        // The handle, or the stem joining it to the pin (beyond the pin's own marker), takes the press.
+        if (hp && (pxDist(hp, p) <= (touch ? HANDLE_HIT_PX + 10 : HANDLE_HIT_PX) || (pxDist(sq0, p) > 26 && distToSegment(p, sq0, hp) <= 14))) { drag = { kind: 'handle', idx: sel, sx: p[0], sy: p[1], moved: false, touch: touch }; if (inp.presses <= 12) log('press on the heading handle of pin ' + (sel + 1)); return; }
       }
       var hit = PS.nearestPin(lastView, PS.plan.list(), p[0], p[1], touch ? 30 : 22);
       if (hit >= 0) { PS.plan.select(hit); drag = { kind: 'pin', idx: hit, sx: p[0], sy: p[1], moved: false, touch: touch }; if (inp.presses <= 12) log('press on pin ' + (hit + 1)); planChanged(); return; }
@@ -2628,7 +2744,18 @@ PS.pages.push({
     });
     // Mouse: the same handlers, ignoring the mouse events a browser emulates after a touch.
     canvas.addEventListener('mousedown', function (e) { var p = pointOf(e); note('mousedown', p); if (recentTouch()) return; inputDown(p, false); });
-    canvas.addEventListener('mousemove', function (e) { if (recentTouch()) return; if (drag) note('mousemove', null); inputMove(pointOf(e)); });
+    canvas.addEventListener('mousemove', function (e) {
+      if (recentTouch()) return;
+      if (drag) note('mousemove', null);
+      var pp = pointOf(e);
+      hover = { p: pp, at: Date.now(), m: inp.lastRaw ? { rect: inp.lastRaw.rectPt, off: inp.lastRaw.offPt, hit: inp.lastRaw.hitPt } : null };
+      if (hoverLogs < 4 && inp.lastRaw) {
+        hoverLogs++;
+        log('hover raw: client ' + Math.round(inp.lastRaw.t.clientX) + ',' + Math.round(inp.lastRaw.t.clientY) + (inp.lastRaw.offPt ? ' offset ' + Math.round(inp.lastRaw.t.offsetX) + ',' + Math.round(inp.lastRaw.t.offsetY) : '') + ' | rect left ' + Math.round(inp.lastRaw.r.left) + ' top ' + Math.round(inp.lastRaw.r.top) + ' | canvas px by rect ' + Math.round(inp.lastRaw.rectPt[0]) + ',' + Math.round(inp.lastRaw.rectPt[1]) + (inp.lastRaw.offPt ? ' by offset ' + Math.round(inp.lastRaw.offPt[0]) + ',' + Math.round(inp.lastRaw.offPt[1]) : '') + ' | used ' + Math.round(pp[0]) + ',' + Math.round(pp[1]));
+      }
+      if (showCross && Date.now() - lastHoverDraw > 80) { lastHoverDraw = Date.now(); draw('action'); }
+      inputMove(pp);
+    });
     canvas.addEventListener('mouseup', function (e) { var p = pointOf(e); note('mouseup', p); if (recentTouch()) return; inputUp(p); });
     canvas.addEventListener('mouseleave', function () { if (!recentTouch()) drag = null; });
     // Pointer events: counted only, to learn whether the EFB sends them (the mouse and touch handlers above do the work).
@@ -2650,21 +2777,15 @@ PS.pages.push({
         sugBox.appendChild(ui.note('No suggestions: no named taxiway, link or lane is within reach where the tail points, or the taxi module supplied no paths (' + t.items.length + ' items loaded). You can still drop pins by hand.'));
         return;
       }
-      var cur = selectedSuggestion();
-      if (cur) {
-        sugBox.appendChild(h('div', { class: 'ps-row' },
-          ui.button('Use as my plan', function () {
-            PS.plan.setAll(cur.waypoints);
-            log('plan set from suggestion "' + cur.title + '" (' + PS.plan.count() + ' pin(s))');
-            sug.selectedId = null; renderSuggestions(); planChanged();
-          }),
-          ui.button('Hide route', function () { sug.selectedId = null; renderSuggestions(); draw('action'); }, 'ps-ghost')));
-      }
       sug.list.forEach(function (s, i) {
         sugBox.appendChild(h('button', { type: 'button', class: 'ps-sug' + (s.id === sug.selectedId ? ' on' : ''), onclick: function () {
-          sug.selectedId = s.id === sug.selectedId ? null : s.id;
-          log('suggestion ' + (i + 1) + (sug.selectedId ? ' shown: ' : ' hidden: ') + s.title + ' (' + Math.round(s.lengthM) + ' m)');
-          renderSuggestions(); draw('action');
+          if (s.id === sug.selectedId) { sug.selectedId = null; log('suggestion ' + (i + 1) + ' deselected (its pins stay in the plan; use Clear pins to remove them)'); renderSuggestions(); draw('action'); return; }
+          // Choosing a suggestion makes it the plan: any pins placed by hand that are not part of it are removed.
+          var before = PS.plan.count();
+          PS.plan.setAll(s.waypoints);
+          sug.selectedId = s.id;
+          log('suggestion ' + (i + 1) + ' chosen as the plan: ' + s.title + ' (' + Math.round(s.lengthM) + ' m, ' + PS.plan.count() + ' pin(s)); replaced ' + before + ' earlier pin(s)');
+          renderSuggestions(); planChanged();
         } }, h('div', { class: 'ps-sug-title', text: (i + 1) + '. ' + s.title + '  (' + PS.fmt.dist(s.lengthM) + ')' }), h('div', { class: 'ps-sug-detail', text: s.detail })));
       });
     }
@@ -2793,7 +2914,7 @@ PS.pages.push({
         g.fillStyle = '#34d2c8'; g.beginPath(); g.arc(q[0], q[1], 7, 0, Math.PI * 2); g.fill();
         g.fillStyle = '#0f171e'; g.fillText(String(i + 1), q[0] - (i > 8 ? 6 : 3), q[1] + 4);
       });
-      if (chosen) {
+      if (chosen && PS.plan.count() === 0) {
         chevrons(g, strokePath(g, chosen.route, view, '#34d2c8', 4), '#0f171e');
         var ep = chosen.pins[chosen.pins.length - 1], eq = view.toPx(ep[0], ep[1]);
         drawAircraftMarker(g, eq[0], eq[1], chosen.facingDeg, 'rgba(52,210,200,0.35)', '#34d2c8', 1);
@@ -2818,8 +2939,9 @@ PS.pages.push({
           g.strokeStyle = '#ffe14d'; g.lineWidth = 3; g.beginPath(); g.arc(sq[0], sq[1], 25, 0, Math.PI * 2); g.stroke();
           if (hp) {
             g.lineWidth = 2; g.beginPath(); g.moveTo(sq[0], sq[1]); g.lineTo(hp[0], hp[1]); g.stroke();
-            g.fillStyle = '#ffe14d'; g.beginPath(); g.arc(hp[0], hp[1], 10, 0, Math.PI * 2); g.fill();
-            g.strokeStyle = '#0b1116'; g.lineWidth = 2; g.beginPath(); g.arc(hp[0], hp[1], 10, 0, Math.PI * 2); g.stroke();
+            g.fillStyle = '#ffe14d'; g.beginPath(); g.arc(hp[0], hp[1], 15, 0, Math.PI * 2); g.fill();
+            g.strokeStyle = '#0b1116'; g.lineWidth = 2; g.beginPath(); g.arc(hp[0], hp[1], 15, 0, Math.PI * 2); g.stroke();
+            g.fillStyle = '#0b1116'; g.font = 'bold 11px Arial'; g.fillText('turn', hp[0] - 12, hp[1] + 4);
           }
           g.lineWidth = 1;
         }
@@ -2849,7 +2971,31 @@ PS.pages.push({
         g.strokeStyle = '#00e5ff'; g.lineWidth = 2; g.beginPath(); g.arc(lastPress.p[0], lastPress.p[1], 9, 0, Math.PI * 2); g.moveTo(lastPress.p[0] - 14, lastPress.p[1]); g.lineTo(lastPress.p[0] + 14, lastPress.p[1]);
         g.moveTo(lastPress.p[0], lastPress.p[1] - 14); g.lineTo(lastPress.p[0], lastPress.p[1] + 14); g.stroke(); g.lineWidth = 1;
       }
-      if (calibrating) { g.fillStyle = '#ffe14d'; g.font = 'bold 15px Arial'; g.fillText('Tap the middle of the green aircraft', view.cx - 110, view.cy - 40); }
+      if (showCross && hover && Date.now() - hover.at < 4000) {
+        // One cross per way of measuring the pointer: R = against getBoundingClientRect, O = from offsetX/offsetY, H = against the hit-test box.
+        // Whichever sits under the real cursor (also in the far corners) is the right one; white is what the page is actually using.
+        var arms = hover.m ? [['R', hover.m.rect, '#ff5c5c'], ['O', hover.m.off, '#4cd18a'], ['H', hover.m.hit, '#e56bff']] : [];
+        g.font = 'bold 12px Arial'; g.lineWidth = 2;
+        arms.forEach(function (a) {
+          if (!a[1]) return;
+          g.strokeStyle = a[2]; g.beginPath(); g.moveTo(a[1][0] - 10, a[1][1]); g.lineTo(a[1][0] + 10, a[1][1]); g.moveTo(a[1][0], a[1][1] - 10); g.lineTo(a[1][0], a[1][1] + 10); g.stroke();
+          g.fillStyle = a[2]; g.fillText(a[0], a[1][0] + 8, a[1][1] - 8);
+        });
+        g.strokeStyle = '#ffffff'; g.lineWidth = 1; g.beginPath(); g.moveTo(hover.p[0] - 14, hover.p[1]); g.lineTo(hover.p[0] + 14, hover.p[1]); g.moveTo(hover.p[0], hover.p[1] - 14); g.lineTo(hover.p[0], hover.p[1] + 14); g.stroke();
+      }
+      if (calibrating) {
+        var tg = calTargets();
+        g.font = 'bold 16px Arial';
+        tg.forEach(function (t, i) {
+          var done = i < calSamples.length, cur = i === calSamples.length;
+          g.lineWidth = cur ? 5 : 3; g.strokeStyle = done ? '#4cd18a' : (cur ? '#ffe14d' : '#00e5ff');
+          g.beginPath(); g.arc(t[0], t[1], cur ? 26 : 20, 0, Math.PI * 2); g.moveTo(t[0] - 34, t[1]); g.lineTo(t[0] + 34, t[1]); g.moveTo(t[0], t[1] - 34); g.lineTo(t[0], t[1] + 34); g.stroke();
+          g.font = 'bold 22px Arial'; g.fillStyle = done ? '#4cd18a' : (cur ? '#ffe14d' : '#00e5ff'); g.fillText(String(i + 1), t[0] + 30, t[1] - 24);
+        });
+        g.lineWidth = 1; g.fillStyle = '#ffe14d'; g.font = 'bold 17px Arial';
+        g.fillText('Calibration: tap the centre of target ' + Math.min(calSamples.length + 1, tg.length) + ' of ' + tg.length + ' (yellow)', view.cx - 215, 105);
+        g.font = '13px Arial'; g.fillText('Scroll so the whole plot is on screen first. Taps do not place pins now.', view.cx - 215, 128);
+      }
 
       var age = T.lastAt ? ((Date.now() - T.lastAt) / 1000).toFixed(1) + ' s ago' : 'never';
       infoLine.textContent = (c.live ? 'Own position live. ' : 'Own position: reference point (sim not readable). ') + 'Range ' + PS.fmt.dist(range) + '. Taxi items drawn: ' + drawn +
@@ -2865,17 +3011,24 @@ PS.pages.push({
     }
 
     // ---------------- page ----------------
-    var repaintBtn = ui.button('Repaint: all', function () {
+    var repaintBtn = ui.button('Repaint: style', function () {
       nudgeMode = NUDGE_MODES[(NUDGE_MODES.indexOf(nudgeMode) + 1) % NUDGE_MODES.length];
       repaintBtn.textContent = 'Repaint: ' + nudgeMode;
       log('repaint nudge mode set to ' + nudgeMode);
       draw('manual');
     }, 'ps-ghost');
-    calBtn = ui.button('Calibrate taps', function () {
-      calibrating = !calibrating; calBtn.textContent = calibrating ? 'Cancel calibration' : 'Calibrate taps';
-      log(calibrating ? 'tap calibration started: tap the middle of the green aircraft' : 'tap calibration cancelled'); draw('action');
+    calBtn = ui.button('Calibrate taps (5 spots)', function () {
+      calibrating = !calibrating; calSamples = [];
+      calBtn.textContent = calibrating ? 'Cancel calibration' : 'Calibrate taps (5 spots)';
+      log(calibrating ? 'tap calibration started: tap the five numbered spots in order' : 'tap calibration cancelled'); draw('action');
     }, 'ps-small ps-ghost');
-    setCalibration(cal.dx, cal.dy);
+    function chooseMeasure(m) {
+      if (m === 'hit' && !hitBox) { log('Use H: no hit-test box yet (scroll the whole plot into view and press Scan canvas first)'); calLine.textContent = 'H needs a scan with the whole plot in view first.'; return; }
+      setCalibration({ method: m, ax: 1, bx: 0, ay: 1, by: 0, rms: 0 });
+      log('tap measure chosen by you: ' + m); draw('action');
+    }
+    var crossBtn = ui.button('Cursor cross: on', function () { showCross = !showCross; crossBtn.textContent = 'Cursor cross: ' + (showCross ? 'on' : 'off'); draw('action'); }, 'ps-small ps-ghost');
+    setCalibration(cal);
     addBtn = ui.button('Add pins: ON (tap the plot)', function () { setAddMode(!addMode); });
     setAddMode(true);
 
@@ -2887,12 +3040,15 @@ PS.pages.push({
           ui.button('Refresh', function () { draw('manual'); }, 'ps-ghost'),
           repaintBtn),
         canvas, infoLine, contactLine,
-        h('div', { class: 'ps-row' }, calBtn, ui.button('Reset calibration', function () { setCalibration(0, 0); log('tap calibration reset'); draw('action'); }, 'ps-small ps-ghost'), calLine),
-        ui.note('North is up, centred on the aircraft. Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it. White route = push back, blue = drive forward, red = the tug may not manage that leg. Teal = suggested push.')),
+        h('div', { class: 'ps-row' }, ui.button('Scan canvas', function () { scanAndReport('asked'); draw('action'); }, 'ps-small ps-ghost'),
+          ui.button('Use R', function () { chooseMeasure('rect'); }, 'ps-small ps-ghost'), ui.button('Use O', function () { chooseMeasure('offset'); }, 'ps-small ps-ghost'),
+          ui.button('Use H', function () { chooseMeasure('hit'); }, 'ps-small ps-ghost'), ui.button('Use auto', function () { chooseMeasure('auto'); }, 'ps-small ps-ghost')),
+        h('div', { class: 'ps-row' }, calBtn, crossBtn, ui.button('Reset calibration', function () { setCalibration(CAL_NONE); log('tap calibration reset'); draw('action'); }, 'ps-small ps-ghost'), calLine),
+        ui.note('Three crosses follow your cursor: R (red), O (green) and H (magenta) are three ways of measuring where it is, and white is the one in use. Move to the corners of the plot and see which letter stays under the real cursor, then press Use R, Use O or Use H. (H needs the whole plot in view and Scan canvas first.) If none do, use Calibrate taps. North is up, centred on the aircraft. Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it. White route = push back, blue = drive forward, red = the tug may not manage that leg. Teal = suggested push.')),
       ui.panel('Route', routeBox),
       ui.panel('Suggested pushes', airportLine, sugBox,
         h('div', { class: 'ps-row' }, ui.button('Reload airport data', function () { loadAirport('asked'); }, 'ps-small ps-ghost')),
-        ui.note('From the original app\'s suggester, planned with the same tug turn radius. Only options the tug can make without a warning are offered. Pick one to see it, then use it as your plan.')),
+        ui.note('From the original app\'s suggester, planned with the same tug turn radius. Only options the tug can make without a warning are offered. Pick one and it becomes your plan, replacing any pins you placed; then adjust it with pins of your own.')),
       ui.panel('Pins', pinList),
       ui.panel('Refresh diagnostics (send these back if the plot does not refresh)', diagBox,
         h('div', { class: 'ps-row' }, ui.button('Copy diagnostics', function () {
@@ -2922,6 +3078,7 @@ PS.pages.push({
         log('plan page shown: canvas ' + canvas.width + 'x' + canvas.height + ', document.hidden=' + (typeof document !== 'undefined' ? document.hidden : '?') + ', setInterval=' + typeof setInterval + ', requestAnimationFrame=' + typeof requestAnimationFrame);
         renderedPlan = null; renderSuggestions();
         draw('show');
+        setTimeout(function () { try { scanAndReport('on opening'); } catch (e2) { log('environment scan failed: ' + PS.errText(e2)); } }, 1500);
         if (!PS.state.taxi && !airportLoading) loadAirport('on opening');
       },
       onHide: function () {

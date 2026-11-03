@@ -36,3 +36,35 @@ PS.routeLegs = function (start, pins) {
   }
   return { legs: legs, totalM: total };
 };
+
+// Tap calibration: samples are taps aimed at known spots on the canvas. Each sample { exp: [x, y] (where it was aimed, canvas pixels),
+// rect: [x, y] (where the client position against the canvas rectangle put it), off: [x, y] or null (from offsetX/offsetY) }.
+// For each way of measuring, fit  expected = scale * measured + shift  per axis by least squares. Returns { best, rect, offset }, each
+// { method, ax, bx, ay, by, rms, n } (rms: the residual in canvas pixels after the fit), best being the measure that fits better.
+PS.fitTapCalibration = function (samples) {
+  function fit1(m, e) {
+    var n = m.length, sm = 0, se = 0, smm = 0, sme = 0, i;
+    for (i = 0; i < n; i++) { sm += m[i]; se += e[i]; smm += m[i] * m[i]; sme += m[i] * e[i]; }
+    var den = n * smm - sm * sm, a = Math.abs(den) < 1e-9 ? 1 : (n * sme - sm * se) / den;
+    if (!isFinite(a) || a < 0.5 || a > 2) a = 1;     // a wild scale is a sign of a bad tap, not a real one
+    var b = (se - a * sm) / n, sse = 0;
+    for (i = 0; i < n; i++) { var r = a * m[i] + b - e[i]; sse += r * r; }
+    return { a: a, b: b, sse: sse };
+  }
+  function measure(key, name) {
+    var mx = [], my = [], ex = [], ey = [];
+    samples.forEach(function (s) { var v = s[key]; if (!v) return; mx.push(v[0]); my.push(v[1]); ex.push(s.exp[0]); ey.push(s.exp[1]); });
+    if (mx.length < 2) return null;
+    var fx = fit1(mx, ex), fy = fit1(my, ey);
+    return { method: name, ax: fx.a, bx: fx.b, ay: fy.a, by: fy.b, rms: Math.sqrt((fx.sse + fy.sse) / (2 * mx.length)), n: mx.length };
+  }
+  var rect = measure('rect', 'rect'), offset = measure('off', 'offset'), hit = measure('hit', 'hit');
+  // Lowest residual wins; within half a pixel, the measure that needs the smaller correction (its raw reading was already closer to right).
+  function correction(m) { return Math.abs(m.ax - 1) * 900 + Math.abs(m.ay - 1) * 540 + Math.abs(m.bx) + Math.abs(m.by); }
+  var best = null;
+  [rect, offset, hit].forEach(function (m) {
+    if (!m) return;
+    if (!best || m.rms < best.rms - 0.5 || (m.rms <= best.rms + 0.5 && correction(m) < correction(best))) best = m;
+  });
+  return { best: best, rect: rect, offset: offset, hit: hit };
+};
