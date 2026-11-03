@@ -12,7 +12,8 @@ PS.planner = (function () {
   var M_PER_DEG = 111320;
 
   // Keep these in sync with PathTurnRadiusM / Fillet* in bridge/Constants.cs (and mapGeo.ts).
-  var PATH_TURN_RADIUS_M = 40;
+  var PATH_TURN_RADIUS_M = 40;      // the usual planned radius (the tug's radius at its steering limit is about 15-17 m: 30.5 / rotation setting)
+  var turnRadiusM = PATH_TURN_RADIUS_M;   // the radius in use; the plan tries smaller ones when a corner is too cramped for this one (setRadius)
   var FILLET_MAX_LEG_FRACTION = 0.5;
   var FILLET_MIN_DEFLECTION_DEG = 2;
   var FILLET_SMOOTH_TANGENT_M = 15;   // a light bend is spread over at least this much run each side
@@ -174,7 +175,7 @@ PS.planner = (function () {
   // Returns [{ sign (-1 reverse, +1 forward), points, endHdgDeg, pinIdx, startOffDeg, tightestRadiusM }]
   function plannedRouteSegments(origin, waypoints, advanced, radiusM, firstLegBias) {
     if (advanced === undefined) advanced = false;
-    if (radiusM === undefined) radiusM = PATH_TURN_RADIUS_M;
+    if (radiusM === undefined) radiusM = turnRadiusM;
     if (firstLegBias === undefined) firstLegBias = true;
     var pins = [];
     waypoints.forEach(function (w, idx) {
@@ -236,7 +237,7 @@ PS.planner = (function () {
 
   // Why the tug may not manage a segment, or null when it should. The route is still driven; this only warns.
   function segmentWarning(seg, radiusM, opts) {
-    if (radiusM === undefined) radiusM = PATH_TURN_RADIUS_M;
+    if (radiusM === undefined) radiusM = turnRadiusM;
     var why = [];
     if (seg.tightestRadiusM < radiusM * TIGHT_ARC_FRACTION) {
       why.push('its tightest turn is about ' + Math.round(seg.tightestRadiusM) + ' m radius, but the tug needs ' + radiusM + ' m');
@@ -255,7 +256,7 @@ PS.planner = (function () {
   // What a planned route really costs to drive: its length, plus a turn-radius arc for each degree a leg starts off the aircraft's axis.
   function driveCostM(segs) {
     var t = 0;
-    segs.forEach(function (sg) { t += pathLengthM(sg.points) + PATH_TURN_RADIUS_M * (sg.startOffDeg * Math.PI / 180); });
+    segs.forEach(function (sg) { t += pathLengthM(sg.points) + turnRadiusM * (sg.startOffDeg * Math.PI / 180); });
     return t;
   }
 
@@ -356,7 +357,7 @@ PS.planner = (function () {
   }
 
   return {
-    PATH_TURN_RADIUS_M: PATH_TURN_RADIUS_M, TURNAROUND_PIN_LABEL: TURNAROUND_PIN_LABEL, MIN_LEAD_IN_M: MIN_LEAD_IN_M, MAX_LEAD_IN_M: MAX_LEAD_IN_M,
+    PATH_TURN_RADIUS_M: PATH_TURN_RADIUS_M, getRadius: function () { return turnRadiusM; }, setRadius: function (r) { turnRadiusM = r; }, TURNAROUND_PIN_LABEL: TURNAROUND_PIN_LABEL, MIN_LEAD_IN_M: MIN_LEAD_IN_M, MAX_LEAD_IN_M: MAX_LEAD_IN_M,
     filletPath: filletPath, plannedRouteSegments: plannedRouteSegments, segmentWarning: segmentWarning, pathLengthM: pathLengthM, pathTurnDeg: pathTurnDeg,
     plannedPinHeadings: plannedPinHeadings, addHelperPinIfNeeded: addHelperPinIfNeeded, withTurnaroundPin: withTurnaroundPin, ensureTerminal: ensureTerminal
   };

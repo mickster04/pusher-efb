@@ -2,7 +2,7 @@
 (function () {
 'use strict';
 var PS = {};
-PS.CSS = ".ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: #131c24; color: #dfe7ee; font: 15px/1.35 Arial, sans-serif; } .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; } .ps-header { padding: 10px 16px 6px; background: #0e151b; } .ps-title { font-size: 20px; font-weight: bold; color: #f0a830; margin-right: 12px; } .ps-sub { color: #8aa0b2; font-size: 13px; } .ps-nav { display: flex; flex-wrap: wrap; background: #0e151b; padding: 0 10px 8px; } .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid #2a3a47; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-navbtn.on { background: #f0a830; color: #131c24; border-color: #f0a830; font-weight: bold; } .ps-body { position: relative; flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding: 12px 14px 24px; } .ps-footer { padding: 5px 14px; background: #0b1116; color: #7f93a4; font-size: 12px; white-space: nowrap; overflow: hidden; } .ps-panel { background: #1b2630; border: 1px solid #2a3a47; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; } .ps-panel-title { font-weight: bold; margin-bottom: 8px; color: #f0a830; } .ps-note { color: #93a7b8; font-size: 13px; margin-top: 8px; } .ps-note.warn { color: #ffd37a; } .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; } .ps-row > * { margin: 0 10px 8px 0; } .ps-field { display: block; } .ps-field-label { display: block; font-size: 12px; color: #8aa0b2; margin-bottom: 3px; } .ps-input { padding: 9px 10px; border: 1px solid #3a4d5c; border-radius: 6px; background: #0f171e; color: #e8f0f6; font-size: 15px; min-width: 120px; box-sizing: border-box; } .ps-check { display: block; padding: 8px 0; font-size: 14px; color: #cfd9e2; } .ps-btn { padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #2a3a47; color: #eef4f8; font-size: 15px; } .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; } .ps-btn.ps-warn { background: #7a5a14; border-color: #f0a830; } .ps-btn.ps-danger { background: #8a2230; border-color: #ff5c6c; font-weight: bold; } .ps-btn.ps-ghost { background: transparent; } .ps-toggle { display: flex; flex-wrap: wrap; } .ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-toggle-btn.on { background: #f0a830; color: #131c24; font-weight: bold; } .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; } .ps-pill.ok { background: #1d5a3a; color: #bff0d4; } .ps-pill.bad { background: #5a2a2a; color: #ffc9c9; } .ps-kv { font-size: 13px; color: #b9c8d4; margin-bottom: 6px; white-space: pre-wrap; } .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: #0f171e; font-size: 14px; word-wrap: break-word; } .ps-result.ok { border-left: 4px solid #4cd18a; } .ps-result.bad { border-left: 4px solid #ff6b6b; color: #ffd0d0; } .ps-mono { font-family: Consolas, monospace; font-size: 13px; } .ps-tablewrap { overflow-x: auto; } .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; } .ps-table th { text-align: left; color: #8aa0b2; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid #2a3a47; } .ps-table td { padding: 5px 8px; border-bottom: 1px solid #222f3a; } .ps-val { font-family: Consolas, monospace; color: #9fe3bd; word-break: break-all; } .ps-val.bad { color: #ff9d9d; } .ps-table tr.ps-hot td { background: #4a2a1a; } .ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: #0b1116; border-radius: 6px; color: #b9c8d4; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; } .ps-raw { max-height: 260px; } .ps-logwrap .ps-btn { margin-top: 6px; } .ps-canvas { display: block; max-width: 100%; border-radius: 8px; background: #0f171e; touch-action: none; -ms-touch-action: none; -webkit-user-select: none; user-select: none; } .ps-mount { margin-top: 8px; min-height: 0; } .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; } .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: #243442; border: 2px solid #f0a830; box-shadow: 0 4px 14px rgba(0,0,0,.5); } .ps-toast-brake { border-color: #ff6b6b; } .ps-toast-warn { border-color: #ffd37a; } .ps-toast-info { border-color: #5aa8e0; } .ps-toast-title { font-weight: bold; font-size: 16px; } .ps-toast-msg { margin: 4px 0 8px; color: #dfe7ee; } .ps-toast-actions .ps-btn { margin-right: 8px; } .ps-headbtn { float: right; padding: 8px 14px; font-size: 14px; background: #7a5a14; border: 1px solid #f0a830; border-radius: 8px; color: #fff; } .ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; } .ps-overlay-bar { margin-bottom: 8px; } .ps-overlay-bar .ps-btn { margin-left: 10px; } .ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: #0b1116; color: #cfd9e2; border: 1px solid #3a4d5c; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; } .ps-stepper { display: flex; align-items: center; } .ps-stepper .ps-btn { margin: 0 8px 0 0; } .ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-weight: bold; color: #f0a830; } .ps-canvas.ps-pinmode { cursor: crosshair; outline: 2px solid #f0a830; } .ps-sug { display: block; width: 100%; text-align: left; margin: 0 0 6px 0; padding: 9px 12px; border: 1px solid #3a4d5c; border-radius: 8px; background: #1b2630; color: #dfe7ee; font-size: 14px; } .ps-sug.on { border-color: #34d2c8; background: #173a3e; } .ps-sug-title { font-weight: bold; } .ps-sug-detail { color: #93a7b8; font-size: 12px; } .ps-pinrow { padding: 4px 0; border-bottom: 1px solid #222f3a; font-size: 13px; } .ps-pinrow .ps-btn { margin-left: 10px; } .ps-pinrow.on { background: #2a2f1a; } .ps-body::-webkit-scrollbar { width: 18px; } .ps-body::-webkit-scrollbar-track { background: #0b1116; } .ps-body::-webkit-scrollbar-thumb { background: #5b7184; border-radius: 9px; border: 3px solid #0b1116; min-height: 40px; } .ps-body::-webkit-scrollbar-thumb:hover { background: #f0a830; } .ps-log::-webkit-scrollbar, .ps-tablewrap::-webkit-scrollbar { width: 12px; height: 12px; } .ps-log::-webkit-scrollbar-track, .ps-tablewrap::-webkit-scrollbar-track { background: #0b1116; } .ps-log::-webkit-scrollbar-thumb, .ps-tablewrap::-webkit-scrollbar-thumb { background: #5b7184; border-radius: 6px; }";
+PS.CSS = ".ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: #131c24; color: #dfe7ee; font: 15px/1.35 Arial, sans-serif; } .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; } .ps-header { padding: 10px 16px 6px; background: #0e151b; } .ps-title { font-size: 20px; font-weight: bold; color: #f0a830; margin-right: 12px; } .ps-sub { color: #8aa0b2; font-size: 13px; } .ps-nav { display: flex; flex-wrap: wrap; background: #0e151b; padding: 0 10px 8px; } .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid #2a3a47; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-navbtn.on { background: #f0a830; color: #131c24; border-color: #f0a830; font-weight: bold; } .ps-body { position: relative; flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding: 12px 14px 24px; } .ps-footer { padding: 5px 14px; background: #0b1116; color: #7f93a4; font-size: 12px; white-space: nowrap; overflow: hidden; } .ps-panel { background: #1b2630; border: 1px solid #2a3a47; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; } .ps-panel-title { font-weight: bold; margin-bottom: 8px; color: #f0a830; } .ps-note { color: #93a7b8; font-size: 13px; margin-top: 8px; } .ps-note.warn { color: #ffd37a; } .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; } .ps-row > * { margin: 0 10px 8px 0; } .ps-field { display: block; } .ps-field-label { display: block; font-size: 12px; color: #8aa0b2; margin-bottom: 3px; } .ps-input { padding: 9px 10px; border: 1px solid #3a4d5c; border-radius: 6px; background: #0f171e; color: #e8f0f6; font-size: 15px; min-width: 120px; box-sizing: border-box; } .ps-check { display: block; padding: 8px 0; font-size: 14px; color: #cfd9e2; } .ps-btn { padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #2a3a47; color: #eef4f8; font-size: 15px; } .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; } .ps-btn.ps-warn { background: #7a5a14; border-color: #f0a830; } .ps-btn.ps-danger { background: #8a2230; border-color: #ff5c6c; font-weight: bold; } .ps-btn.ps-ghost { background: transparent; } .ps-toggle { display: flex; flex-wrap: wrap; } .ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-toggle-btn.on { background: #f0a830; color: #131c24; font-weight: bold; } .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; } .ps-pill.ok { background: #1d5a3a; color: #bff0d4; } .ps-pill.bad { background: #5a2a2a; color: #ffc9c9; } .ps-kv { font-size: 13px; color: #b9c8d4; margin-bottom: 6px; white-space: pre-wrap; } .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: #0f171e; font-size: 14px; word-wrap: break-word; } .ps-result.ok { border-left: 4px solid #4cd18a; } .ps-result.bad { border-left: 4px solid #ff6b6b; color: #ffd0d0; } .ps-mono { font-family: Consolas, monospace; font-size: 13px; } .ps-tablewrap { overflow-x: auto; } .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; } .ps-table th { text-align: left; color: #8aa0b2; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid #2a3a47; } .ps-table td { padding: 5px 8px; border-bottom: 1px solid #222f3a; } .ps-val { font-family: Consolas, monospace; color: #9fe3bd; word-break: break-all; } .ps-val.bad { color: #ff9d9d; } .ps-table tr.ps-hot td { background: #4a2a1a; } .ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: #0b1116; border-radius: 6px; color: #b9c8d4; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; } .ps-raw { max-height: 260px; } .ps-logwrap .ps-btn { margin-top: 6px; } .ps-canvas { display: block; border-radius: 8px; background: #0f171e; touch-action: none; -ms-touch-action: none; -webkit-user-select: none; user-select: none; } .ps-mount { margin-top: 8px; min-height: 0; } .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; } .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: #243442; border: 2px solid #f0a830; box-shadow: 0 4px 14px rgba(0,0,0,.5); } .ps-toast-brake { border-color: #ff6b6b; } .ps-toast-warn { border-color: #ffd37a; } .ps-toast-info { border-color: #5aa8e0; } .ps-toast-title { font-weight: bold; font-size: 16px; } .ps-toast-msg { margin: 4px 0 8px; color: #dfe7ee; } .ps-toast-actions .ps-btn { margin-right: 8px; } .ps-headbtn { float: right; padding: 8px 14px; font-size: 14px; background: #7a5a14; border: 1px solid #f0a830; border-radius: 8px; color: #fff; } .ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; } .ps-overlay-bar { margin-bottom: 8px; } .ps-overlay-bar .ps-btn { margin-left: 10px; } .ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: #0b1116; color: #cfd9e2; border: 1px solid #3a4d5c; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; } .ps-stepper { display: flex; align-items: center; } .ps-stepper .ps-btn { margin: 0 8px 0 0; } .ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-weight: bold; color: #f0a830; } .ps-canvas.ps-pinmode { cursor: crosshair; outline: 2px solid #f0a830; } .ps-sug { display: block; width: 100%; text-align: left; margin: 0 0 6px 0; padding: 9px 12px; border: 1px solid #3a4d5c; border-radius: 8px; background: #1b2630; color: #dfe7ee; font-size: 14px; } .ps-sug.on { border-color: #34d2c8; background: #173a3e; } .ps-sug-title { font-weight: bold; } .ps-sug-detail { color: #93a7b8; font-size: 12px; } .ps-pinrow { padding: 4px 0; border-bottom: 1px solid #222f3a; font-size: 13px; } .ps-pinrow .ps-btn { margin-left: 10px; } .ps-pinrow.on { background: #2a2f1a; } .ps-body::-webkit-scrollbar { width: 18px; } .ps-body::-webkit-scrollbar-track { background: #0b1116; } .ps-body::-webkit-scrollbar-thumb { background: #5b7184; border-radius: 9px; border: 3px solid #0b1116; min-height: 40px; } .ps-body::-webkit-scrollbar-thumb:hover { background: #f0a830; } .ps-log::-webkit-scrollbar, .ps-tablewrap::-webkit-scrollbar { width: 12px; height: 12px; } .ps-log::-webkit-scrollbar-track, .ps-tablewrap::-webkit-scrollbar-track { background: #0b1116; } .ps-log::-webkit-scrollbar-thumb, .ps-tablewrap::-webkit-scrollbar-thumb { background: #5b7184; border-radius: 6px; }";
 /* ---- 00-core.js ---- */
 // Core: constants, sim access wrappers, logging, DOM helper, heartbeat, toasts.
 // Nothing here touches the DOM or starts timers at load time (so node tests can load the bundle).
@@ -667,21 +667,23 @@ PS.ui = {
   },
   // Zoom control: [-] current range [+] over a list of numeric steps (metres). Not built on ui.select, so it does not depend on
   // highlight state, and each press is logged (tag = log channel) so a session log shows whether presses arrive at all.
-  stepper: function (steps, value, onchange, tag) {
+  stepper: function (steps, value, onchange, tag, labels, fmt) {
+    labels = labels || ['Zoom in  -', 'Zoom out  +'];
+    fmt = fmt || PS.fmt.dist;
     var idx = Math.max(0, steps.indexOf(value));
-    var label = PS.h('span', { class: 'ps-step-label', text: PS.fmt.dist(steps[idx]) });
+    var label = PS.h('span', { class: 'ps-step-label', text: fmt(steps[idx]) });
     function go(delta) {
       var next = Math.max(0, Math.min(steps.length - 1, idx + delta));
-      if (tag) PS.log(tag, 'range button pressed (' + (delta < 0 ? 'zoom in' : 'zoom out') + '): ' + PS.fmt.dist(steps[idx]) + ' -> ' + PS.fmt.dist(steps[next]));
+      if (tag) PS.log(tag, 'button pressed (' + labels[delta < 0 ? 0 : 1] + '): ' + fmt(steps[idx]) + ' -> ' + fmt(steps[next]));
       if (next === idx) return;
-      idx = next; label.textContent = PS.fmt.dist(steps[idx]);
+      idx = next; label.textContent = fmt(steps[idx]);
       if (onchange) onchange(steps[idx]);
     }
     var el = PS.h('div', { class: 'ps-stepper' },
-      PS.ui.button('Zoom in  -', function () { go(-1); }),
+      PS.ui.button(labels[0], function () { go(-1); }),
       label,
-      PS.ui.button('Zoom out  +', function () { go(1); }));
-    return { el: el, get: function () { return steps[idx]; }, set: function (v) { idx = Math.max(0, steps.indexOf(v)); label.textContent = PS.fmt.dist(steps[idx]); } };
+      PS.ui.button(labels[1], function () { go(1); }));
+    return { el: el, get: function () { return steps[idx]; }, set: function (v2) { idx = Math.max(0, steps.indexOf(v2)); label.textContent = fmt(steps[idx]); } };
   },
   // Segmented toggle. options: [{value,label}], returns { el, get(), set(v) }
   toggle: function (options, value, onchange) {
@@ -1018,7 +1020,8 @@ PS.planner = (function () {
   var M_PER_DEG = 111320;
 
   // Keep these in sync with PathTurnRadiusM / Fillet* in bridge/Constants.cs (and mapGeo.ts).
-  var PATH_TURN_RADIUS_M = 40;
+  var PATH_TURN_RADIUS_M = 40;      // the usual planned radius (the tug's radius at its steering limit is about 15-17 m: 30.5 / rotation setting)
+  var turnRadiusM = PATH_TURN_RADIUS_M;   // the radius in use; the plan tries smaller ones when a corner is too cramped for this one (setRadius)
   var FILLET_MAX_LEG_FRACTION = 0.5;
   var FILLET_MIN_DEFLECTION_DEG = 2;
   var FILLET_SMOOTH_TANGENT_M = 15;   // a light bend is spread over at least this much run each side
@@ -1180,7 +1183,7 @@ PS.planner = (function () {
   // Returns [{ sign (-1 reverse, +1 forward), points, endHdgDeg, pinIdx, startOffDeg, tightestRadiusM }]
   function plannedRouteSegments(origin, waypoints, advanced, radiusM, firstLegBias) {
     if (advanced === undefined) advanced = false;
-    if (radiusM === undefined) radiusM = PATH_TURN_RADIUS_M;
+    if (radiusM === undefined) radiusM = turnRadiusM;
     if (firstLegBias === undefined) firstLegBias = true;
     var pins = [];
     waypoints.forEach(function (w, idx) {
@@ -1242,7 +1245,7 @@ PS.planner = (function () {
 
   // Why the tug may not manage a segment, or null when it should. The route is still driven; this only warns.
   function segmentWarning(seg, radiusM, opts) {
-    if (radiusM === undefined) radiusM = PATH_TURN_RADIUS_M;
+    if (radiusM === undefined) radiusM = turnRadiusM;
     var why = [];
     if (seg.tightestRadiusM < radiusM * TIGHT_ARC_FRACTION) {
       why.push('its tightest turn is about ' + Math.round(seg.tightestRadiusM) + ' m radius, but the tug needs ' + radiusM + ' m');
@@ -1261,7 +1264,7 @@ PS.planner = (function () {
   // What a planned route really costs to drive: its length, plus a turn-radius arc for each degree a leg starts off the aircraft's axis.
   function driveCostM(segs) {
     var t = 0;
-    segs.forEach(function (sg) { t += pathLengthM(sg.points) + PATH_TURN_RADIUS_M * (sg.startOffDeg * Math.PI / 180); });
+    segs.forEach(function (sg) { t += pathLengthM(sg.points) + turnRadiusM * (sg.startOffDeg * Math.PI / 180); });
     return t;
   }
 
@@ -1362,7 +1365,7 @@ PS.planner = (function () {
   }
 
   return {
-    PATH_TURN_RADIUS_M: PATH_TURN_RADIUS_M, TURNAROUND_PIN_LABEL: TURNAROUND_PIN_LABEL, MIN_LEAD_IN_M: MIN_LEAD_IN_M, MAX_LEAD_IN_M: MAX_LEAD_IN_M,
+    PATH_TURN_RADIUS_M: PATH_TURN_RADIUS_M, getRadius: function () { return turnRadiusM; }, setRadius: function (r) { turnRadiusM = r; }, TURNAROUND_PIN_LABEL: TURNAROUND_PIN_LABEL, MIN_LEAD_IN_M: MIN_LEAD_IN_M, MAX_LEAD_IN_M: MAX_LEAD_IN_M,
     filletPath: filletPath, plannedRouteSegments: plannedRouteSegments, segmentWarning: segmentWarning, pathLengthM: pathLengthM, pathTurnDeg: pathTurnDeg,
     plannedPinHeadings: plannedPinHeadings, addHelperPinIfNeeded: addHelperPinIfNeeded, withTurnaroundPin: withTurnaroundPin, ensureTerminal: ensureTerminal
   };
@@ -2061,6 +2064,13 @@ PS.plan = (function () {
   var selected = -1;
   var seq = 0;
   var cache = { key: '', value: null };
+  // Turn radius. The tug's radius is 30.5 / rotation setting metres whatever its speed (the yaw rate is tied to the speed), so slowing down
+  // does not tighten an arc by itself; it only shrinks the lag and overshoot the steering has to correct. The original plans at 40 m, which
+  // needs rotation 0.76 of a limit of about 1.8 to 2.0, leaving room for corrections; at 26 m it once ran wide, when the steering limits were
+  // lower than they are now. So the plan uses 40 m, and where a corner is too cramped for that it tries smaller radii, down to
+  // minRadiusM (a setting), taking the first that plans without a warning.
+  var turn = { radiusM: P.PATH_TURN_RADIUS_M, minRadiusM: 26 };
+  function setMinRadius(m) { turn.minRadiusM = Math.max(10, Math.min(turn.radiusM, m)); changed(); }
 
   function newId() { seq++; return 'pin-' + Date.now() + '-' + seq; }
   function copyPin(w) {
@@ -2110,31 +2120,55 @@ PS.plan = (function () {
     return G.normDeg(G.deg(Math.atan2(pinX - handleX, -(pinY - handleY))));
   }
 
+  // One plan at a given turn radius: the effective waypoints (with any turnaround pin), legs, warnings and the line to draw.
+  function planAt(origin, radius) {
+    var prev = P.getRadius();
+    P.setRadius(radius);
+    try {
+      var o = { lat: origin.lat, lon: origin.lon, hdgDeg: origin.hdgDeg };
+      var r = P.withTurnaroundPin(o, P.ensureTerminal(pins));
+      var segs = P.plannedRouteSegments(o, r.waypoints);
+      var out = { radiusM: radius, waypoints: r.waypoints, turnaroundAdded: r.added, info: r.info, segments: segs, legs: [], warnings: [], totalM: 0, route: [[origin.lat, origin.lon]] };
+      segs.forEach(function (g, n) {
+        var len = P.pathLengthM(g.points), warn = P.segmentWarning(g, radius);
+        out.legs.push({ sign: g.sign, lengthM: len, endHdgDeg: g.endHdgDeg, warning: warn, pinIdx: g.pinIdx, tightestRadiusM: g.tightestRadiusM });
+        out.totalM += len;
+        if (warn) out.warnings.push('Leg ' + (n + 1) + ': ' + warn);
+        g.points.forEach(function (pt, i) { if (!(i === 0 && out.route.length > 1)) out.route.push(pt); });
+      });
+      return out;
+    } finally { P.setRadius(prev); }
+  }
+
   // The planned route for the pins, from the aircraft. origin: { lat, lon, hdgDeg }.
-  // Returns { empty, waypoints (with any turnaround pin), segments, route ([[lat, lon], ...] from the aircraft), items, legs, totalM, warnings, turnaroundAdded, info }
+  // Returns { empty, waypoints (with any turnaround pin), segments, route ([[lat, lon], ...] from the aircraft), items, legs, totalM, warnings,
+  //           turnaroundAdded, info, radiusM (the turn radius planned with), adapted (a tighter one than usual was needed) }
   // items: one per effective waypoint { wp, userIndex (-1 for a planner-added pin), headingDeg (the nose there), turnaround }.
   function evaluate(origin) {
     var key = JSON.stringify([pins.map(function (w) { return [w.id, w.lat, w.lon, w.headingDeg, w.headingUser, w.leadInM]; }),
-      origin.lat.toFixed(6), origin.lon.toFixed(6), Math.round(origin.hdgDeg)]);
+      origin.lat.toFixed(6), origin.lon.toFixed(6), Math.round(origin.hdgDeg), turn.radiusM, turn.minRadiusM]);
     if (cache.key === key && cache.value) return cache.value;
-    var res = { empty: pins.length === 0, waypoints: [], segments: [], route: [[origin.lat, origin.lon]], items: [], legs: [], totalM: 0, warnings: [], turnaroundAdded: false, info: '' };
+    var res = { empty: pins.length === 0, waypoints: [], segments: [], route: [[origin.lat, origin.lon]], items: [], legs: [], totalM: 0, warnings: [], turnaroundAdded: false, info: '', radiusM: turn.radiusM, adapted: false };
     if (pins.length) {
-      var o = { lat: origin.lat, lon: origin.lon, hdgDeg: origin.hdgDeg };
-      var r = P.withTurnaroundPin(o, P.ensureTerminal(pins));
-      res.waypoints = r.waypoints; res.turnaroundAdded = r.added; res.info = r.info;
-      res.segments = P.plannedRouteSegments(o, r.waypoints);
-      var headings = P.plannedPinHeadings(res.segments, r.waypoints);
-      res.items = r.waypoints.map(function (w, idx) {
+      var best = planAt(origin, turn.radiusM);
+      if (best.warnings.length && turn.minRadiusM < turn.radiusM - 0.5) {
+        // Too cramped at the usual radius: step the radius down (about 12% at a time) to the tightest allowed, taking the first that is clean.
+        var radii = [];
+        for (var rr = turn.radiusM * 0.88; rr > turn.minRadiusM + 0.5; rr *= 0.88) radii.push(rr);
+        radii.push(turn.minRadiusM);
+        for (var i = 0; i < radii.length; i++) {
+          var t = planAt(origin, radii[i]);
+          if (!t.warnings.length) { best = t; break; }
+        }
+      }
+      res.waypoints = best.waypoints; res.turnaroundAdded = best.turnaroundAdded; res.info = best.info; res.segments = best.segments;
+      res.legs = best.legs; res.warnings = best.warnings; res.totalM = best.totalM; res.route = best.route;
+      res.radiusM = best.radiusM; res.adapted = best.radiusM < turn.radiusM - 0.5;
+      var headings = P.plannedPinHeadings(res.segments, res.waypoints);
+      res.items = res.waypoints.map(function (w, idx) {
         var ui = -1;
         for (var k = 0; k < pins.length; k++) { if (pins[k].id === w.id) { ui = k; break; } }
         return { wp: w, userIndex: ui, headingDeg: w.headingUser && w.headingDeg !== null && w.headingDeg !== undefined ? w.headingDeg : headings[idx], turnaround: w.label === P.TURNAROUND_PIN_LABEL };
-      });
-      res.segments.forEach(function (g, n) {
-        var len = P.pathLengthM(g.points), warn = P.segmentWarning(g);
-        res.legs.push({ sign: g.sign, lengthM: len, endHdgDeg: g.endHdgDeg, warning: warn, pinIdx: g.pinIdx });
-        res.totalM += len;
-        if (warn) res.warnings.push('Leg ' + (n + 1) + ': ' + warn);
-        g.points.forEach(function (pt, i) { if (!(i === 0 && res.route.length > 1)) res.route.push(pt); });
       });
     }
     cache.key = key; cache.value = res;
@@ -2145,7 +2179,8 @@ PS.plan = (function () {
     list: function () { return pins; }, count: function () { return pins.length; },
     selected: function () { return selected; }, select: select,
     add: add, move: move, remove: remove, clear: clear, setHeading: setHeading, resetHeading: resetHeading, setAll: setAll,
-    headingFromHandle: headingFromHandle, evaluate: evaluate
+    headingFromHandle: headingFromHandle, evaluate: evaluate,
+    turn: function () { return turn; }, setMinRadius: setMinRadius
   };
 })();
 
@@ -2360,7 +2395,7 @@ PS.pages.push({
     var ui = PS.ui, h = PS.h;
     var PLOT_STEPS = [100, 200, 300, 500, 1000, 2000, 3000];
     var HANDLE_PX = 58;          // how far behind the tail the heading handle sits
-    var HANDLE_HIT_PX = 36;      // how close a press has to be to the handle (canvas pixels; the plot is shown scaled down, so about 3/4 of this on screen)
+    var HANDLE_HIT_PX = 36;      // how close a press has to be to the handle (canvas pixels, which are screen pixels now that the canvas is not scaled)
     var canvas = h('canvas', { class: 'ps-canvas', width: '900', height: '540' });
     var plotRange = ui.stepper(PLOT_STEPS, 300, function () { draw('action'); }, 'plan');
     var infoLine = h('div', { class: 'ps-kv', text: '' });
@@ -2381,6 +2416,28 @@ PS.pages.push({
     var sug = { list: [], selectedId: null, key: '', at: 0, logged: false, tookMs: 0 };
 
     function log(msg) { PS.log('plan', msg); }
+
+    // ---- the canvas is sized so its pixels and its on-screen size are the same ----
+    // In the sim the plot was drawn at its full backing size (900x540) but shown in a smaller box (CSS shrank it to fit): only the top-left
+    // part of the drawing was visible, and every tap was converted using a scale that the drawing did not have, so errors grew away from the
+    // top-left corner. All three tap measures agreed with each other, which pointed at the drawing, not the pointer. So the canvas is never
+    // scaled by CSS now: its backing size is set from the room available and its CSS size is set to exactly the same number of pixels.
+    var FIT_ASPECT = 0.6, FIT_MIN_W = 420, FIT_MAX_W = 900, lastFitKey = '';
+    function fitCanvas() {
+      var parent = canvas.parentNode, body = document.querySelector ? document.querySelector('.ps-body') : null;
+      var availW = parent ? parent.clientWidth - 34 : FIT_MAX_W;
+      if (!(availW > 0)) return;                                  // not laid out yet (page hidden)
+      var availH = body ? body.clientHeight - 150 : 640;          // leave room for the toolbar rows above the plot
+      var w = Math.floor(Math.min(FIT_MAX_W, availW, availH / FIT_ASPECT));
+      if (w < FIT_MIN_W) w = Math.min(FIT_MIN_W, Math.floor(availW));
+      var h = Math.round(w * FIT_ASPECT);
+      var key = w + 'x' + h;
+      if (key === lastFitKey && canvas.width === w && canvas.height === h) return;
+      lastFitKey = key; hitBox = null;
+      canvas.width = w; canvas.height = h;
+      canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+      log('canvas sized to ' + key + ' px with no CSS scaling (room: ' + Math.floor(availW) + ' wide, ' + Math.floor(availH) + ' high)');
+    }
     function ownOrReference() {
       var o = PS.readOwn();
       if (o) return { own: o, live: true };
@@ -2531,6 +2588,9 @@ PS.pages.push({
         routeBox.appendChild(ui.note('No route yet. Tap the plot to drop pins (Add pins is on), or pick a suggested push below. The last pin is where the aircraft ends up; rotate it with the handle behind it.'));
         return;
       }
+      routeBox.appendChild(h('div', { class: 'ps-kv', text: plan.adapted
+        ? 'Turn radius: ' + Math.round(plan.radiusM) + ' m. A corner was too cramped for the usual ' + Math.round(PS.plan.turn().radiusM) + ' m, so the plan tightened its turns (down to ' + Math.round(PS.plan.turn().minRadiusM) + ' m allowed).'
+        : 'Turn radius: ' + Math.round(plan.radiusM) + ' m (the tug can turn tighter, about 15 to 17 m, but the plan leaves room for steering corrections).' }));
       routeBox.appendChild(h('div', { class: 'ps-result ' + (plan.warnings.length ? 'bad' : 'ok'),
         text: PS.fmt.dist(plan.totalM) + ' in ' + plan.legs.length + ' leg(s)' + (plan.turnaroundAdded ? ', with a turnaround pin added by the planner' : '') + (plan.warnings.length ? '. The tug may not manage it (see below)' : '. Plans without a warning') }));
       plan.legs.forEach(function (l, n) {
@@ -2567,11 +2627,12 @@ PS.pages.push({
     // there is one. A calibration (tap the middle of the green aircraft once) corrects any constant error that is left.
     var CAL_NONE = { method: 'auto', ax: 1, bx: 0, ay: 1, by: 0, rms: 0 };
     var cal = CAL_NONE;
-    var hover = null, showCross = true, lastHoverDraw = 0, hoverLogs = 0;   // the cursor cross: where the app thinks the pointer is, live
+    var hover = null, showCross = true, lastHoverDraw = 0, hoverLogs = 0;
+    var pan = { x: 0, y: 0 };   // how far the view's centre is from the aircraft, metres east and north (drag empty map to change it)   // the cursor cross: where the app thinks the pointer is, live
     var calibrating = false, calSamples = [];
     function calTargets() { var w = canvas.width, h2 = canvas.height, m = 55; return [[m, m], [w - m, m], [w - m, h2 - m], [m, h2 - m], [w / 2, h2 * 0.2]]; }
     var lastPress = null;     // { p: [x, y], at } for the marker drawn where the app thinks the tap was
-    try { var saved = JSON.parse(window.localStorage.getItem('pushplanner.tapcal2') || 'null'); if (saved && isFinite(saved.ax) && isFinite(saved.bx) && isFinite(saved.ay) && isFinite(saved.by)) cal = saved; } catch (e0) { /* storage may be unavailable */ }
+    try { var saved = JSON.parse(window.localStorage.getItem('pushplanner.tapcal3') || 'null'); if (saved && isFinite(saved.ax) && isFinite(saved.bx) && isFinite(saved.ay) && isFinite(saved.by)) cal = saved; } catch (e0) { /* storage may be unavailable */ }
     // ---- the canvas's real position in event space, found by hit-testing ----
     // document.elementFromPoint() asks the browser which element is at a point, so scanning it over the viewport finds where the canvas really
     // is for events, whatever scaling or zoom the EFB applies to the page. Only trusted when the whole canvas is in view (a clipped canvas
@@ -2604,7 +2665,7 @@ PS.pages.push({
       var out = [];
       var r = canvas.getBoundingClientRect();
       out.push('window inner ' + window.innerWidth + 'x' + window.innerHeight + ', outer ' + window.outerWidth + 'x' + window.outerHeight + ', dpr ' + window.devicePixelRatio + ', screen ' + (window.screen ? window.screen.width + 'x' + window.screen.height : '?') + ', documentElement client ' + document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight);
-      out.push('canvas: backing ' + canvas.width + 'x' + canvas.height + ', client ' + canvas.clientWidth + 'x' + canvas.clientHeight + ', offset ' + canvas.offsetWidth + 'x' + canvas.offsetHeight + ' at ' + canvas.offsetLeft + ',' + canvas.offsetTop + ', rect ' + r.width.toFixed(1) + 'x' + r.height.toFixed(1) + ' at ' + r.left.toFixed(1) + ',' + r.top.toFixed(1));
+      out.push('canvas: backing ' + canvas.width + 'x' + canvas.height + ', css style ' + (canvas.style.width || 'none') + ' x ' + (canvas.style.height || 'none') + ', client ' + canvas.clientWidth + 'x' + canvas.clientHeight + ', offset ' + canvas.offsetWidth + 'x' + canvas.offsetHeight + ' at ' + canvas.offsetLeft + ',' + canvas.offsetTop + ', rect ' + r.width.toFixed(1) + 'x' + r.height.toFixed(1) + ' at ' + r.left.toFixed(1) + ',' + r.top.toFixed(1));
       var n = canvas, depth = 0, items = [];
       while (n && n.nodeType === 1 && depth < 14) {
         var cs = window.getComputedStyle ? window.getComputedStyle(n) : null;
@@ -2625,7 +2686,8 @@ PS.pages.push({
       var bw = res.right - res.left, bh = res.bottom - res.top;
       log('hit-test scan: the canvas is hit from ' + res.left + ',' + res.top + ' to ' + res.right + ',' + res.bottom + ' (' + bw + 'x' + bh + ', ' + res.count + ' points, ' + res.ms + ' ms); getBoundingClientRect says ' + r.left.toFixed(0) + ',' + r.top.toFixed(0) + ' ' + r.width.toFixed(0) + 'x' + r.height.toFixed(0) + (res.cut.length ? '. The canvas is cut off at its ' + res.cut.join(' and ') + ' (scrolled out of view or clipped), so this box is too small to use: scroll the whole plot into view and scan again' : '. Whole canvas in view'));
       // The hit box is only usable as a measure when the canvas is wholly in view.
-      hitBox = res.touchesViewport ? null : { left: res.left, top: res.top, width: bw, height: bh };
+      // Kept relative to the canvas rectangle (not as screen positions), so it stays right when the page scrolls.
+      hitBox = res.cut.length ? null : { dx: res.left - r.left, dy: res.top - r.top, width: bw, height: bh };
       return res;
     }
     function rawOf(e) {
@@ -2635,7 +2697,7 @@ PS.pages.push({
       var sx = canvas.width / (r.width || canvas.width), sy = canvas.height / (r.height || canvas.height);
       var rectPt = [(t.clientX - r.left) * sx, (t.clientY - r.top) * sy], offPt = null;
       if (!touch && typeof e.offsetX === 'number' && e.target === canvas) offPt = [e.offsetX * canvas.width / (canvas.clientWidth || canvas.width), e.offsetY * canvas.height / (canvas.clientHeight || canvas.height)];
-      var hitPt = hitBox ? [(t.clientX - hitBox.left) * canvas.width / hitBox.width, (t.clientY - hitBox.top) * canvas.height / hitBox.height] : null;
+      var hitPt = hitBox ? [(t.clientX - (r.left + hitBox.dx)) * canvas.width / hitBox.width, (t.clientY - (r.top + hitBox.dy)) * canvas.height / hitBox.height] : null;
       return { touch: touch, t: t, r: r, rectPt: rectPt, offPt: offPt, hitPt: hitPt, base: offPt || rectPt };
     }
     function measured(o) { return cal.method === 'rect' ? o.rectPt : (cal.method === 'hit' ? (o.hitPt || o.offPt || o.rectPt) : (o.offPt || o.rectPt)); }
@@ -2656,7 +2718,7 @@ PS.pages.push({
     }
     function setCalibration(c) {
       cal = c;
-      try { window.localStorage.setItem('pushplanner.tapcal2', JSON.stringify(cal)); } catch (e1) { /* not saved, still applied this session */ }
+      try { window.localStorage.setItem('pushplanner.tapcal3', JSON.stringify(cal)); } catch (e1) { /* not saved, still applied this session */ }
       var none = cal.method === 'auto' && cal.ax === 1 && cal.bx === 0 && cal.ay === 1 && cal.by === 0;
       calLine.textContent = none ? 'Tap calibration: none.' : 'Tap calibration: measuring by ' + cal.method + ', across x' + cal.ax.toFixed(3) + ' ' + (cal.bx >= 0 ? '+' : '') + Math.round(cal.bx) + ' px, down x' + cal.ay.toFixed(3) + ' ' + (cal.by >= 0 ? '+' : '') + Math.round(cal.by) + ' px (fit error ' + cal.rms.toFixed(1) + ' px).';
     }
@@ -2695,7 +2757,7 @@ PS.pages.push({
       }
       var hit = PS.nearestPin(lastView, PS.plan.list(), p[0], p[1], touch ? 30 : 22);
       if (hit >= 0) { PS.plan.select(hit); drag = { kind: 'pin', idx: hit, sx: p[0], sy: p[1], moved: false, touch: touch }; if (inp.presses <= 12) log('press on pin ' + (hit + 1)); planChanged(); return; }
-      drag = { kind: 'none', idx: -1, sx: p[0], sy: p[1], moved: false, touch: touch };
+      drag = { kind: 'none', idx: -1, sx: p[0], sy: p[1], moved: false, touch: touch, panX: pan.x, panY: pan.y, scale: lastView.scale };
     }
     function inputMove(p) {
       if (!drag || !lastView) return;
@@ -2705,6 +2767,11 @@ PS.pages.push({
       if (drag.kind === 'handle') {
         var pins = PS.plan.list(), q = lastView.toPx(pins[drag.idx].lat, pins[drag.idx].lon);
         PS.plan.setHeading(drag.idx, PS.plan.headingFromHandle(q[0], q[1], p[0], p[1]));
+        draw('action');
+      } else if (drag.kind === 'none' && drag.moved) {
+        // Dragging empty map moves the map with the pointer: the view's centre goes the other way.
+        pan.x = drag.panX - (p[0] - drag.sx) / drag.scale;
+        pan.y = drag.panY + (p[1] - drag.sy) / drag.scale;
         draw('action');
       } else if (drag.kind === 'pin' && drag.moved) {
         var ll = lastView.fromPx(p[0], p[1]);
@@ -2717,7 +2784,8 @@ PS.pages.push({
       var d = drag; drag = null;
       if (d.kind === 'handle') { dropSuggestionPreview(); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); planChanged(); return; }
       if (d.kind === 'pin') { if (d.moved) { dropSuggestionPreview(); log('pin ' + (d.idx + 1) + ' moved'); planChanged(); } return; }
-      if (d.moved || !lastView) return;
+      if (d.moved) { log('map panned to ' + Math.round(pan.x) + ' m east, ' + Math.round(pan.y) + ' m north of the aircraft'); return; }
+      if (!lastView) return;
       if (addMode) { var ll = lastView.fromPx(p[0], p[1]); addPin(ll[0], ll[1]); return; }
       // Add pins off: pick the nearest aircraft to read its details, or clear the selection.
       var best = null, bestD = 16;
@@ -2858,11 +2926,14 @@ PS.pages.push({
     function drawPlot() {
       var g = canvas.getContext && canvas.getContext('2d');
       if (!g) { infoLine.textContent = 'Canvas 2D not available.'; return; }
+      fitCanvas();
       var c = ownOrReference(), own = c.own;
       lastOwn = own;
       var w = canvas.width, hgt = canvas.height, range = plotRange.get();
-      var view = PS.plotView(w, hgt, own, range);
+      var centre = pan.x || pan.y ? PS.geo.fromXY(own.lat, own.lon, pan.x, pan.y) : [own.lat, own.lon];
+      var view = PS.plotView(w, hgt, { lat: centre[0], lon: centre[1] }, range);
       lastView = view;
+      var ownPx = view.toPx(own.lat, own.lon);
       refreshSuggestions(own);
       var plan = PS.plan.evaluate(own);
       lastPlan = plan;
@@ -2871,8 +2942,8 @@ PS.pages.push({
       g.fillStyle = '#0f171e'; g.fillRect(0, 0, w, hgt);
       g.lineWidth = 1; g.strokeStyle = '#2a3a47'; g.fillStyle = '#6f8294'; g.font = '11px Arial';
       [0.25, 0.5, 0.75, 1].forEach(function (f) {
-        g.beginPath(); g.arc(view.cx, view.cy, range * f * view.scale, 0, Math.PI * 2); g.stroke();
-        g.fillText(PS.fmt.dist(range * f), view.cx + 4, view.cy - range * f * view.scale + 12);
+        g.beginPath(); g.arc(ownPx[0], ownPx[1], range * f * view.scale, 0, Math.PI * 2); g.stroke();
+        g.fillText(PS.fmt.dist(range * f), ownPx[0] + 4, ownPx[1] - range * f * view.scale + 12);
       });
       g.fillStyle = '#8aa0b2'; g.font = 'bold 12px Arial'; g.fillText('N', 8, 16);
 
@@ -2965,7 +3036,7 @@ PS.pages.push({
       });
 
       // Own aircraft, pointing along its heading.
-      drawAircraftMarker(g, view.cx, view.cy, own.hdgDeg, '#4cd18a', '#0b1116', 1.1);
+      drawAircraftMarker(g, ownPx[0], ownPx[1], own.hdgDeg, '#4cd18a', '#0b1116', 1.1);
       // Where the app thinks the last tap landed (for a few seconds), so any offset from where it was really tapped is visible.
       if (lastPress && Date.now() - lastPress.at < 5000) {
         g.strokeStyle = '#00e5ff'; g.lineWidth = 2; g.beginPath(); g.arc(lastPress.p[0], lastPress.p[1], 9, 0, Math.PI * 2); g.moveTo(lastPress.p[0] - 14, lastPress.p[1]); g.lineTo(lastPress.p[0] + 14, lastPress.p[1]);
@@ -2993,12 +3064,12 @@ PS.pages.push({
           g.font = 'bold 22px Arial'; g.fillStyle = done ? '#4cd18a' : (cur ? '#ffe14d' : '#00e5ff'); g.fillText(String(i + 1), t[0] + 30, t[1] - 24);
         });
         g.lineWidth = 1; g.fillStyle = '#ffe14d'; g.font = 'bold 17px Arial';
-        g.fillText('Calibration: tap the centre of target ' + Math.min(calSamples.length + 1, tg.length) + ' of ' + tg.length + ' (yellow)', view.cx - 215, 105);
-        g.font = '13px Arial'; g.fillText('Scroll so the whole plot is on screen first. Taps do not place pins now.', view.cx - 215, 128);
+        g.fillText('Calibration: tap the centre of target ' + Math.min(calSamples.length + 1, tg.length) + ' of ' + tg.length + ' (yellow)', Math.max(8, view.cx - 215), 105);
+        g.font = '13px Arial'; g.fillText('Scroll so the whole plot is on screen first. Taps do not place pins now.', Math.max(8, view.cx - 215), 128);
       }
 
       var age = T.lastAt ? ((Date.now() - T.lastAt) / 1000).toFixed(1) + ' s ago' : 'never';
-      infoLine.textContent = (c.live ? 'Own position live. ' : 'Own position: reference point (sim not readable). ') + 'Range ' + PS.fmt.dist(range) + '. Taxi items drawn: ' + drawn +
+      infoLine.textContent = (c.live ? 'Own position live. ' : 'Own position: reference point (sim not readable). ') + 'Range ' + PS.fmt.dist(range) + (pan.x || pan.y ? '. Map moved ' + PS.fmt.dist(Math.sqrt(pan.x * pan.x + pan.y * pan.y)) + ' from the aircraft (Recentre brings it back)' : '') + '. Taxi items drawn: ' + drawn +
         '. AI aircraft in view: ' + inView + ' of ' + contacts.length + ' (listener updated ' + age + ')' + (taxi && taxi.icao ? '. Airport ' + taxi.icao + '.' : '. No airport data yet.');
       var sc = null;
       for (var k = 0; k < contacts.length; k++) { if (contacts[k].id === selectedContact) sc = contacts[k]; }
@@ -3011,6 +3082,13 @@ PS.pages.push({
     }
 
     // ---------------- page ----------------
+    var TIGHT_STEPS = [18, 22, 26, 30, 34, 40];
+    try { var savedTight = Number(window.localStorage.getItem('pushplanner.tightest')); if (savedTight >= 10 && savedTight <= 40) PS.plan.setMinRadius(savedTight); } catch (e3) { /* storage may be unavailable */ }
+    var tightest = ui.stepper(TIGHT_STEPS, TIGHT_STEPS.indexOf(Math.round(PS.plan.turn().minRadiusM)) >= 0 ? Math.round(PS.plan.turn().minRadiusM) : 26, function (v) {
+      PS.plan.setMinRadius(v);
+      try { window.localStorage.setItem('pushplanner.tightest', String(v)); } catch (e4) { /* not saved */ }
+      log('tightest allowed turn radius set to ' + v + ' m'); planChanged();
+    }, 'plan', ['Tighter  -', 'Looser  +'], function (v) { return v + ' m'; });
     var repaintBtn = ui.button('Repaint: style', function () {
       nudgeMode = NUDGE_MODES[(NUDGE_MODES.indexOf(nudgeMode) + 1) % NUDGE_MODES.length];
       repaintBtn.textContent = 'Repaint: ' + nudgeMode;
@@ -3037,6 +3115,7 @@ PS.pages.push({
         h('div', { class: 'ps-row' }, ui.field('Range', plotRange.stepperEl || plotRange.el), addBtn,
           ui.button('Undo pin', function () { if (PS.plan.count()) deletePin(PS.plan.count() - 1); }, 'ps-ghost'),
           ui.button('Clear pins', function () { PS.plan.clear(); log('pins cleared'); planChanged(); }, 'ps-ghost'),
+          ui.button('Recentre', function () { pan.x = 0; pan.y = 0; log('map recentred on the aircraft'); draw('action'); }, 'ps-ghost'),
           ui.button('Refresh', function () { draw('manual'); }, 'ps-ghost'),
           repaintBtn),
         canvas, infoLine, contactLine,
@@ -3044,8 +3123,8 @@ PS.pages.push({
           ui.button('Use R', function () { chooseMeasure('rect'); }, 'ps-small ps-ghost'), ui.button('Use O', function () { chooseMeasure('offset'); }, 'ps-small ps-ghost'),
           ui.button('Use H', function () { chooseMeasure('hit'); }, 'ps-small ps-ghost'), ui.button('Use auto', function () { chooseMeasure('auto'); }, 'ps-small ps-ghost')),
         h('div', { class: 'ps-row' }, calBtn, crossBtn, ui.button('Reset calibration', function () { setCalibration(CAL_NONE); log('tap calibration reset'); draw('action'); }, 'ps-small ps-ghost'), calLine),
-        ui.note('Three crosses follow your cursor: R (red), O (green) and H (magenta) are three ways of measuring where it is, and white is the one in use. Move to the corners of the plot and see which letter stays under the real cursor, then press Use R, Use O or Use H. (H needs the whole plot in view and Scan canvas first.) If none do, use Calibrate taps. North is up, centred on the aircraft. Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it. White route = push back, blue = drive forward, red = the tug may not manage that leg. Teal = suggested push.')),
-      ui.panel('Route', routeBox),
+        ui.note('Drag empty map to move it; tap a pin to select it. Three crosses follow your cursor: R (red), O (green) and H (magenta) are three ways of measuring where it is, and white is the one in use. Move to the corners of the plot and see which letter stays under the real cursor, then press Use R, Use O or Use H. (H needs the whole plot in view and Scan canvas first.) If none do, use Calibrate taps. North is up, centred on the aircraft. Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it. White route = push back, blue = drive forward, red = the tug may not manage that leg. Teal = suggested push.')),
+      ui.panel('Route', h('div', { class: 'ps-row' }, ui.field('Tightest turn the plan may use', tightest.el)), routeBox),
       ui.panel('Suggested pushes', airportLine, sugBox,
         h('div', { class: 'ps-row' }, ui.button('Reload airport data', function () { loadAirport('asked'); }, 'ps-small ps-ghost')),
         ui.note('From the original app\'s suggester, planned with the same tug turn radius. Only options the tug can make without a warning are offered. Pick one and it becomes your plan, replacing any pins you placed; then adjust it with pins of your own.')),
@@ -3076,6 +3155,7 @@ PS.pages.push({
         diagTimer = setInterval(diagTick, 1000);
         if (PS.frameHooks.indexOf(frameHook) < 0) PS.frameHooks.push(frameHook);
         log('plan page shown: canvas ' + canvas.width + 'x' + canvas.height + ', document.hidden=' + (typeof document !== 'undefined' ? document.hidden : '?') + ', setInterval=' + typeof setInterval + ', requestAnimationFrame=' + typeof requestAnimationFrame);
+        lastFitKey = ''; fitCanvas();
         renderedPlan = null; renderSuggestions();
         draw('show');
         setTimeout(function () { try { scanAndReport('on opening'); } catch (e2) { log('environment scan failed: ' + PS.errText(e2)); } }, 1500);

@@ -11,6 +11,13 @@ PS.plan = (function () {
   var selected = -1;
   var seq = 0;
   var cache = { key: '', value: null };
+  // Turn radius. The tug's radius is 30.5 / rotation setting metres whatever its speed (the yaw rate is tied to the speed), so slowing down
+  // does not tighten an arc by itself; it only shrinks the lag and overshoot the steering has to correct. The original plans at 40 m, which
+  // needs rotation 0.76 of a limit of about 1.8 to 2.0, leaving room for corrections; at 26 m it once ran wide, when the steering limits were
+  // lower than they are now. So the plan uses 40 m, and where a corner is too cramped for that it tries smaller radii, down to
+  // minRadiusM (a setting), taking the first that plans without a warning.
+  var turn = { radiusM: P.PATH_TURN_RADIUS_M, minRadiusM: 26 };
+  function setMinRadius(m) { turn.minRadiusM = Math.max(10, Math.min(turn.radiusM, m)); changed(); }
 
   function newId() { seq++; return 'pin-' + Date.now() + '-' + seq; }
   function copyPin(w) {
@@ -60,31 +67,55 @@ PS.plan = (function () {
     return G.normDeg(G.deg(Math.atan2(pinX - handleX, -(pinY - handleY))));
   }
 
+  // One plan at a given turn radius: the effective waypoints (with any turnaround pin), legs, warnings and the line to draw.
+  function planAt(origin, radius) {
+    var prev = P.getRadius();
+    P.setRadius(radius);
+    try {
+      var o = { lat: origin.lat, lon: origin.lon, hdgDeg: origin.hdgDeg };
+      var r = P.withTurnaroundPin(o, P.ensureTerminal(pins));
+      var segs = P.plannedRouteSegments(o, r.waypoints);
+      var out = { radiusM: radius, waypoints: r.waypoints, turnaroundAdded: r.added, info: r.info, segments: segs, legs: [], warnings: [], totalM: 0, route: [[origin.lat, origin.lon]] };
+      segs.forEach(function (g, n) {
+        var len = P.pathLengthM(g.points), warn = P.segmentWarning(g, radius);
+        out.legs.push({ sign: g.sign, lengthM: len, endHdgDeg: g.endHdgDeg, warning: warn, pinIdx: g.pinIdx, tightestRadiusM: g.tightestRadiusM });
+        out.totalM += len;
+        if (warn) out.warnings.push('Leg ' + (n + 1) + ': ' + warn);
+        g.points.forEach(function (pt, i) { if (!(i === 0 && out.route.length > 1)) out.route.push(pt); });
+      });
+      return out;
+    } finally { P.setRadius(prev); }
+  }
+
   // The planned route for the pins, from the aircraft. origin: { lat, lon, hdgDeg }.
-  // Returns { empty, waypoints (with any turnaround pin), segments, route ([[lat, lon], ...] from the aircraft), items, legs, totalM, warnings, turnaroundAdded, info }
+  // Returns { empty, waypoints (with any turnaround pin), segments, route ([[lat, lon], ...] from the aircraft), items, legs, totalM, warnings,
+  //           turnaroundAdded, info, radiusM (the turn radius planned with), adapted (a tighter one than usual was needed) }
   // items: one per effective waypoint { wp, userIndex (-1 for a planner-added pin), headingDeg (the nose there), turnaround }.
   function evaluate(origin) {
     var key = JSON.stringify([pins.map(function (w) { return [w.id, w.lat, w.lon, w.headingDeg, w.headingUser, w.leadInM]; }),
-      origin.lat.toFixed(6), origin.lon.toFixed(6), Math.round(origin.hdgDeg)]);
+      origin.lat.toFixed(6), origin.lon.toFixed(6), Math.round(origin.hdgDeg), turn.radiusM, turn.minRadiusM]);
     if (cache.key === key && cache.value) return cache.value;
-    var res = { empty: pins.length === 0, waypoints: [], segments: [], route: [[origin.lat, origin.lon]], items: [], legs: [], totalM: 0, warnings: [], turnaroundAdded: false, info: '' };
+    var res = { empty: pins.length === 0, waypoints: [], segments: [], route: [[origin.lat, origin.lon]], items: [], legs: [], totalM: 0, warnings: [], turnaroundAdded: false, info: '', radiusM: turn.radiusM, adapted: false };
     if (pins.length) {
-      var o = { lat: origin.lat, lon: origin.lon, hdgDeg: origin.hdgDeg };
-      var r = P.withTurnaroundPin(o, P.ensureTerminal(pins));
-      res.waypoints = r.waypoints; res.turnaroundAdded = r.added; res.info = r.info;
-      res.segments = P.plannedRouteSegments(o, r.waypoints);
-      var headings = P.plannedPinHeadings(res.segments, r.waypoints);
-      res.items = r.waypoints.map(function (w, idx) {
+      var best = planAt(origin, turn.radiusM);
+      if (best.warnings.length && turn.minRadiusM < turn.radiusM - 0.5) {
+        // Too cramped at the usual radius: step the radius down (about 12% at a time) to the tightest allowed, taking the first that is clean.
+        var radii = [];
+        for (var rr = turn.radiusM * 0.88; rr > turn.minRadiusM + 0.5; rr *= 0.88) radii.push(rr);
+        radii.push(turn.minRadiusM);
+        for (var i = 0; i < radii.length; i++) {
+          var t = planAt(origin, radii[i]);
+          if (!t.warnings.length) { best = t; break; }
+        }
+      }
+      res.waypoints = best.waypoints; res.turnaroundAdded = best.turnaroundAdded; res.info = best.info; res.segments = best.segments;
+      res.legs = best.legs; res.warnings = best.warnings; res.totalM = best.totalM; res.route = best.route;
+      res.radiusM = best.radiusM; res.adapted = best.radiusM < turn.radiusM - 0.5;
+      var headings = P.plannedPinHeadings(res.segments, res.waypoints);
+      res.items = res.waypoints.map(function (w, idx) {
         var ui = -1;
         for (var k = 0; k < pins.length; k++) { if (pins[k].id === w.id) { ui = k; break; } }
         return { wp: w, userIndex: ui, headingDeg: w.headingUser && w.headingDeg !== null && w.headingDeg !== undefined ? w.headingDeg : headings[idx], turnaround: w.label === P.TURNAROUND_PIN_LABEL };
-      });
-      res.segments.forEach(function (g, n) {
-        var len = P.pathLengthM(g.points), warn = P.segmentWarning(g);
-        res.legs.push({ sign: g.sign, lengthM: len, endHdgDeg: g.endHdgDeg, warning: warn, pinIdx: g.pinIdx });
-        res.totalM += len;
-        if (warn) res.warnings.push('Leg ' + (n + 1) + ': ' + warn);
-        g.points.forEach(function (pt, i) { if (!(i === 0 && res.route.length > 1)) res.route.push(pt); });
       });
     }
     cache.key = key; cache.value = res;
@@ -95,6 +126,7 @@ PS.plan = (function () {
     list: function () { return pins; }, count: function () { return pins.length; },
     selected: function () { return selected; }, select: select,
     add: add, move: move, remove: remove, clear: clear, setHeading: setHeading, resetHeading: resetHeading, setAll: setAll,
-    headingFromHandle: headingFromHandle, evaluate: evaluate
+    headingFromHandle: headingFromHandle, evaluate: evaluate,
+    turn: function () { return turn; }, setMinRadius: setMinRadius
   };
 })();

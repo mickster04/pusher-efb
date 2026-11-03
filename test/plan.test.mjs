@@ -124,3 +124,58 @@ test('tap calibration: recovers a shift and a scale, and prefers the measure tha
   const bad = PS.fitTapCalibration([{ exp: [0, 0], rect: [100, 100], off: null }, { exp: [10, 10], rect: [100.001, 100.001], off: null }]);
   assert.equal(bad.best.ax, 1);
 });
+
+// ---- turn radius ----
+const own0 = { lat: -43.49, lon: 172.53, hdgDeg: 0 };
+function cornerRadius(len1, len2, deflectionDeg, requested) {
+  const a = [own0.lat, own0.lon], b = G.offset(a[0], a[1], 0, len1), c = G.offset(b[0], b[1], deflectionDeg, len2);
+  const stats = { minRadiusM: requested };
+  PS.planner.filletPath([a, b, c], requested, stats);
+  return stats.minRadiusM;
+}
+
+test('minimum radius curve: an arc has the requested radius unless the legs are too short, then the legs limit it', () => {
+  // 90 degree corner between two end legs: the tangent length equals the radius, and a leg ending the route can be used whole
+  [[200, 200], [100, 100], [60, 60], [40, 40]].forEach(([a, b]) => assert.ok(Math.abs(cornerRadius(a, b, 90, 40) - 40) < 0.3, 'legs ' + a + '/' + b));
+  assert.ok(Math.abs(cornerRadius(30, 30, 90, 40) - 30) < 0.3, 'legs of 30 m limit the arc to 30 m');
+  assert.ok(Math.abs(cornerRadius(20, 20, 90, 40) - 20) < 0.3, 'legs of 20 m limit the arc to 20 m');
+  // asking for a smaller radius gives it, down to what the legs allow
+  assert.ok(Math.abs(cornerRadius(40, 40, 90, 26) - 26) < 0.3);
+  assert.ok(Math.abs(cornerRadius(20, 20, 90, 26) - 20) < 0.3);
+  // a gentle bend is spread over at least 15 m each side, so its radius is larger than requested, never smaller
+  assert.ok(cornerRadius(100, 100, 20, 40) >= 40 - 0.01);
+});
+
+test('minimum radius curve: a cramped corner warns at the usual radius and plans cleanly when the plan may tighten', () => {
+  const P = PS.planner;
+  assert.equal(P.getRadius(), P.PATH_TURN_RADIUS_M, 'default radius');
+  // an end pin 30 m behind the aircraft and 40 m to one side
+  const bp = G.offset(own0.lat, own0.lon, 180, 30), p = G.offset(bp[0], bp[1], 90, 40);
+  plan.clear(); plan.add(p[0], p[1]);
+  plan.setMinRadius(40);                         // never tighter than the usual radius
+  const strict = plan.evaluate(own0);
+  assert.ok(strict.warnings.length > 0 && strict.radiusM === 40 && strict.adapted === false, 'warns at 40 m: ' + strict.warnings.join(' | '));
+  plan.setMinRadius(26);
+  const adapted = plan.evaluate(own0);
+  assert.deepEqual(adapted.warnings, [], 'clean once it may tighten');
+  assert.ok(adapted.adapted && adapted.radiusM < 40 && adapted.radiusM >= 26, 'radius used ' + adapted.radiusM);
+  adapted.legs.forEach((l) => assert.ok(l.tightestRadiusM >= 0.6 * adapted.radiusM - 0.01, 'tightest arc ' + l.tightestRadiusM + ' of ' + adapted.radiusM));
+  assert.equal(P.getRadius(), P.PATH_TURN_RADIUS_M, 'the global radius is put back after planning');
+  plan.clear(); plan.setMinRadius(26);
+});
+
+test('minimum radius curve: a corner too tight even at the tightest allowed radius still warns, at the usual radius', () => {
+  const p = G.offset(own0.lat, own0.lon, 90, 10);     // 10 m beside the aircraft: no radius the tug could use gets there
+  plan.clear(); plan.add(p[0], p[1]); plan.setHeading(0, 180);
+  plan.setMinRadius(26);
+  const r = plan.evaluate(own0);
+  assert.ok(r.warnings.length > 0 || r.turnaroundAdded || r.legs.length > 1, 'a hairpin right beside the aircraft is not made to look fine');
+  assert.ok(!r.adapted || r.warnings.length === 0, 'it only claims to have tightened if that made it clean');
+  plan.clear();
+});
+
+test('minimum radius curve: the tightest setting is kept between 10 m and the usual radius', () => {
+  plan.setMinRadius(3); assert.equal(plan.turn().minRadiusM, 10);
+  plan.setMinRadius(90); assert.equal(plan.turn().minRadiusM, plan.turn().radiusM);
+  plan.setMinRadius(26); assert.equal(plan.turn().minRadiusM, 26);
+});

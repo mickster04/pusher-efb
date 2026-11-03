@@ -37,21 +37,23 @@ PS.ui = {
   },
   // Zoom control: [-] current range [+] over a list of numeric steps (metres). Not built on ui.select, so it does not depend on
   // highlight state, and each press is logged (tag = log channel) so a session log shows whether presses arrive at all.
-  stepper: function (steps, value, onchange, tag) {
+  stepper: function (steps, value, onchange, tag, labels, fmt) {
+    labels = labels || ['Zoom in  -', 'Zoom out  +'];
+    fmt = fmt || PS.fmt.dist;
     var idx = Math.max(0, steps.indexOf(value));
-    var label = PS.h('span', { class: 'ps-step-label', text: PS.fmt.dist(steps[idx]) });
+    var label = PS.h('span', { class: 'ps-step-label', text: fmt(steps[idx]) });
     function go(delta) {
       var next = Math.max(0, Math.min(steps.length - 1, idx + delta));
-      if (tag) PS.log(tag, 'range button pressed (' + (delta < 0 ? 'zoom in' : 'zoom out') + '): ' + PS.fmt.dist(steps[idx]) + ' -> ' + PS.fmt.dist(steps[next]));
+      if (tag) PS.log(tag, 'button pressed (' + labels[delta < 0 ? 0 : 1] + '): ' + fmt(steps[idx]) + ' -> ' + fmt(steps[next]));
       if (next === idx) return;
-      idx = next; label.textContent = PS.fmt.dist(steps[idx]);
+      idx = next; label.textContent = fmt(steps[idx]);
       if (onchange) onchange(steps[idx]);
     }
     var el = PS.h('div', { class: 'ps-stepper' },
-      PS.ui.button('Zoom in  -', function () { go(-1); }),
+      PS.ui.button(labels[0], function () { go(-1); }),
       label,
-      PS.ui.button('Zoom out  +', function () { go(1); }));
-    return { el: el, get: function () { return steps[idx]; }, set: function (v) { idx = Math.max(0, steps.indexOf(v)); label.textContent = PS.fmt.dist(steps[idx]); } };
+      PS.ui.button(labels[1], function () { go(1); }));
+    return { el: el, get: function () { return steps[idx]; }, set: function (v2) { idx = Math.max(0, steps.indexOf(v2)); label.textContent = fmt(steps[idx]); } };
   },
   // Segmented toggle. options: [{value,label}], returns { el, get(), set(v) }
   toggle: function (options, value, onchange) {
