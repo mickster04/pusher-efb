@@ -2,7 +2,7 @@
 (function () {
 'use strict';
 var PS = {};
-PS.CSS = ".ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: #131c24; color: #dfe7ee; font: 15px/1.35 Arial, sans-serif; } .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; } .ps-header { padding: 10px 16px 6px; background: #0e151b; } .ps-title { font-size: 20px; font-weight: bold; color: #f0a830; margin-right: 12px; } .ps-sub { color: #8aa0b2; font-size: 13px; } .ps-nav { display: flex; flex-wrap: wrap; background: #0e151b; padding: 0 10px 8px; } .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid #2a3a47; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-navbtn.on { background: #f0a830; color: #131c24; border-color: #f0a830; font-weight: bold; } .ps-body { position: relative; flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding: 12px 14px 24px; } .ps-footer { padding: 5px 14px; background: #0b1116; color: #7f93a4; font-size: 12px; white-space: nowrap; overflow: hidden; } .ps-panel { background: #1b2630; border: 1px solid #2a3a47; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; } .ps-panel-title { font-weight: bold; margin-bottom: 8px; color: #f0a830; } .ps-note { color: #93a7b8; font-size: 13px; margin-top: 8px; } .ps-note.warn { color: #ffd37a; } .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; } .ps-row > * { margin: 0 10px 8px 0; } .ps-field { display: block; } .ps-field-label { display: block; font-size: 12px; color: #8aa0b2; margin-bottom: 3px; } .ps-input { padding: 9px 10px; border: 1px solid #3a4d5c; border-radius: 6px; background: #0f171e; color: #e8f0f6; font-size: 15px; min-width: 120px; box-sizing: border-box; } .ps-check { display: block; padding: 8px 0; font-size: 14px; color: #cfd9e2; } .ps-btn { padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #2a3a47; color: #eef4f8; font-size: 15px; } .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; } .ps-btn.ps-warn { background: #7a5a14; border-color: #f0a830; } .ps-btn.ps-danger { background: #8a2230; border-color: #ff5c6c; font-weight: bold; } .ps-btn.ps-ghost { background: transparent; } .ps-toggle { display: flex; flex-wrap: wrap; } .ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-toggle-btn.on { background: #f0a830; color: #131c24; font-weight: bold; } .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; } .ps-pill.ok { background: #1d5a3a; color: #bff0d4; } .ps-pill.bad { background: #5a2a2a; color: #ffc9c9; } .ps-kv { font-size: 13px; color: #b9c8d4; margin-bottom: 6px; white-space: pre-wrap; } .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: #0f171e; font-size: 14px; word-wrap: break-word; } .ps-result.ok { border-left: 4px solid #4cd18a; } .ps-result.bad { border-left: 4px solid #ff6b6b; color: #ffd0d0; } .ps-mono { font-family: Consolas, monospace; font-size: 13px; } .ps-tablewrap { overflow-x: auto; } .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; } .ps-table th { text-align: left; color: #8aa0b2; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid #2a3a47; } .ps-table td { padding: 5px 8px; border-bottom: 1px solid #222f3a; } .ps-val { font-family: Consolas, monospace; color: #9fe3bd; word-break: break-all; } .ps-val.bad { color: #ff9d9d; } .ps-table tr.ps-hot td { background: #4a2a1a; } .ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: #0b1116; border-radius: 6px; color: #b9c8d4; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; } .ps-raw { max-height: 260px; } .ps-logwrap .ps-btn { margin-top: 6px; } .ps-canvas { display: block; max-width: 100%; border-radius: 8px; background: #0f171e; touch-action: none; -ms-touch-action: none; -webkit-user-select: none; user-select: none; } .ps-mount { margin-top: 8px; min-height: 0; } .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; } .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: #243442; border: 2px solid #f0a830; box-shadow: 0 4px 14px rgba(0,0,0,.5); } .ps-toast-brake { border-color: #ff6b6b; } .ps-toast-warn { border-color: #ffd37a; } .ps-toast-info { border-color: #5aa8e0; } .ps-toast-title { font-weight: bold; font-size: 16px; } .ps-toast-msg { margin: 4px 0 8px; color: #dfe7ee; } .ps-toast-actions .ps-btn { margin-right: 8px; } .ps-headbtn { float: right; padding: 8px 14px; font-size: 14px; background: #7a5a14; border: 1px solid #f0a830; border-radius: 8px; color: #fff; } .ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; } .ps-overlay-bar { margin-bottom: 8px; } .ps-overlay-bar .ps-btn { margin-left: 10px; } .ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: #0b1116; color: #cfd9e2; border: 1px solid #3a4d5c; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; } .ps-stepper { display: flex; align-items: center; } .ps-stepper .ps-btn { margin: 0 8px 0 0; } .ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-weight: bold; color: #f0a830; } .ps-canvas.ps-pinmode { cursor: crosshair; border: 2px solid #f0a830; } .ps-sug { display: block; width: 100%; text-align: left; margin: 0 0 6px 0; padding: 9px 12px; border: 1px solid #3a4d5c; border-radius: 8px; background: #1b2630; color: #dfe7ee; font-size: 14px; } .ps-sug.on { border-color: #34d2c8; background: #173a3e; } .ps-sug-title { font-weight: bold; } .ps-sug-detail { color: #93a7b8; font-size: 12px; } .ps-pinrow { padding: 4px 0; border-bottom: 1px solid #222f3a; font-size: 13px; } .ps-pinrow .ps-btn { margin-left: 10px; } .ps-pinrow.on { background: #2a2f1a; } .ps-body::-webkit-scrollbar { width: 18px; } .ps-body::-webkit-scrollbar-track { background: #0b1116; } .ps-body::-webkit-scrollbar-thumb { background: #5b7184; border-radius: 9px; border: 3px solid #0b1116; min-height: 40px; } .ps-body::-webkit-scrollbar-thumb:hover { background: #f0a830; } .ps-log::-webkit-scrollbar, .ps-tablewrap::-webkit-scrollbar { width: 12px; height: 12px; } .ps-log::-webkit-scrollbar-track, .ps-tablewrap::-webkit-scrollbar-track { background: #0b1116; } .ps-log::-webkit-scrollbar-thumb, .ps-tablewrap::-webkit-scrollbar-thumb { background: #5b7184; border-radius: 6px; }";
+PS.CSS = ".ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: #131c24; color: #dfe7ee; font: 15px/1.35 Arial, sans-serif; } .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; } .ps-header { padding: 10px 16px 6px; background: #0e151b; } .ps-title { font-size: 20px; font-weight: bold; color: #f0a830; margin-right: 12px; } .ps-sub { color: #8aa0b2; font-size: 13px; } .ps-nav { display: flex; flex-wrap: wrap; background: #0e151b; padding: 0 10px 8px; } .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid #2a3a47; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-navbtn.on { background: #f0a830; color: #131c24; border-color: #f0a830; font-weight: bold; } .ps-body { position: relative; flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding: 12px 14px 24px; } .ps-footer { padding: 5px 14px; background: #0b1116; color: #7f93a4; font-size: 12px; white-space: nowrap; overflow: hidden; } .ps-panel { background: #1b2630; border: 1px solid #2a3a47; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; } .ps-panel-title { font-weight: bold; margin-bottom: 8px; color: #f0a830; } .ps-note { color: #93a7b8; font-size: 13px; margin-top: 8px; } .ps-note.warn { color: #ffd37a; } .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; } .ps-row > * { margin: 0 10px 8px 0; } .ps-field { display: block; } .ps-field-label { display: block; font-size: 12px; color: #8aa0b2; margin-bottom: 3px; } .ps-input { padding: 9px 10px; border: 1px solid #3a4d5c; border-radius: 6px; background: #0f171e; color: #e8f0f6; font-size: 15px; min-width: 120px; box-sizing: border-box; } .ps-check { display: block; padding: 8px 0; font-size: 14px; color: #cfd9e2; } .ps-btn { padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #2a3a47; color: #eef4f8; font-size: 15px; } .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; } .ps-btn.ps-warn { background: #7a5a14; border-color: #f0a830; } .ps-btn.ps-danger { background: #8a2230; border-color: #ff5c6c; font-weight: bold; } .ps-btn.ps-ghost { background: transparent; } .ps-toggle { display: flex; flex-wrap: wrap; } .ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-toggle-btn.on { background: #f0a830; color: #131c24; font-weight: bold; } .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; } .ps-pill.ok { background: #1d5a3a; color: #bff0d4; } .ps-pill.bad { background: #5a2a2a; color: #ffc9c9; } .ps-kv { font-size: 13px; color: #b9c8d4; margin-bottom: 6px; white-space: pre-wrap; } .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: #0f171e; font-size: 14px; word-wrap: break-word; } .ps-result.ok { border-left: 4px solid #4cd18a; } .ps-result.bad { border-left: 4px solid #ff6b6b; color: #ffd0d0; } .ps-mono { font-family: Consolas, monospace; font-size: 13px; } .ps-tablewrap { overflow-x: auto; } .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; } .ps-table th { text-align: left; color: #8aa0b2; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid #2a3a47; } .ps-table td { padding: 5px 8px; border-bottom: 1px solid #222f3a; } .ps-val { font-family: Consolas, monospace; color: #9fe3bd; word-break: break-all; } .ps-val.bad { color: #ff9d9d; } .ps-table tr.ps-hot td { background: #4a2a1a; } .ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: #0b1116; border-radius: 6px; color: #b9c8d4; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; } .ps-raw { max-height: 260px; } .ps-logwrap .ps-btn { margin-top: 6px; } .ps-canvas { display: block; max-width: 100%; border-radius: 8px; background: #0f171e; touch-action: none; -ms-touch-action: none; -webkit-user-select: none; user-select: none; } .ps-mount { margin-top: 8px; min-height: 0; } .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; } .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: #243442; border: 2px solid #f0a830; box-shadow: 0 4px 14px rgba(0,0,0,.5); } .ps-toast-brake { border-color: #ff6b6b; } .ps-toast-warn { border-color: #ffd37a; } .ps-toast-info { border-color: #5aa8e0; } .ps-toast-title { font-weight: bold; font-size: 16px; } .ps-toast-msg { margin: 4px 0 8px; color: #dfe7ee; } .ps-toast-actions .ps-btn { margin-right: 8px; } .ps-headbtn { float: right; padding: 8px 14px; font-size: 14px; background: #7a5a14; border: 1px solid #f0a830; border-radius: 8px; color: #fff; } .ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; } .ps-overlay-bar { margin-bottom: 8px; } .ps-overlay-bar .ps-btn { margin-left: 10px; } .ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: #0b1116; color: #cfd9e2; border: 1px solid #3a4d5c; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; } .ps-stepper { display: flex; align-items: center; } .ps-stepper .ps-btn { margin: 0 8px 0 0; } .ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-weight: bold; color: #f0a830; } .ps-canvas.ps-pinmode { cursor: crosshair; outline: 2px solid #f0a830; } .ps-sug { display: block; width: 100%; text-align: left; margin: 0 0 6px 0; padding: 9px 12px; border: 1px solid #3a4d5c; border-radius: 8px; background: #1b2630; color: #dfe7ee; font-size: 14px; } .ps-sug.on { border-color: #34d2c8; background: #173a3e; } .ps-sug-title { font-weight: bold; } .ps-sug-detail { color: #93a7b8; font-size: 12px; } .ps-pinrow { padding: 4px 0; border-bottom: 1px solid #222f3a; font-size: 13px; } .ps-pinrow .ps-btn { margin-left: 10px; } .ps-pinrow.on { background: #2a2f1a; } .ps-body::-webkit-scrollbar { width: 18px; } .ps-body::-webkit-scrollbar-track { background: #0b1116; } .ps-body::-webkit-scrollbar-thumb { background: #5b7184; border-radius: 9px; border: 3px solid #0b1116; min-height: 40px; } .ps-body::-webkit-scrollbar-thumb:hover { background: #f0a830; } .ps-log::-webkit-scrollbar, .ps-tablewrap::-webkit-scrollbar { width: 12px; height: 12px; } .ps-log::-webkit-scrollbar-track, .ps-tablewrap::-webkit-scrollbar-track { background: #0b1116; } .ps-log::-webkit-scrollbar-thumb, .ps-tablewrap::-webkit-scrollbar-thumb { background: #5b7184; border-radius: 6px; }";
 /* ---- 00-core.js ---- */
 // Core: constants, sim access wrappers, logging, DOM helper, heartbeat, toasts.
 // Nothing here touches the DOM or starts timers at load time (so node tests can load the bundle).
@@ -2336,6 +2336,8 @@ PS.pages.push({
     var pinList = h('div');
     var sugBox = h('div');
     var airportLine = h('div', { class: 'ps-kv', text: '' });
+    var calLine = h('div', { class: 'ps-kv', text: '' });
+    var calBtn = null;
     var addBtn = null;
     var addMode = true;
     var timer = null;
@@ -2388,8 +2390,9 @@ PS.pages.push({
         'draws: ' + diag.draws + ' (timer ' + diag.counts.timer + ', frame ' + diag.counts.frame + ', click ' + diag.counts.click + ', manual ' + diag.counts.manual + ', show ' + diag.counts.show + ', action ' + diag.counts.action + '); errors ' + diag.errors,
         'draw time: avg ' + (diag.draws ? (diag.msSum / diag.draws).toFixed(1) : '0') + ' ms (of which the canvas pixel check ' + (diag.pixRuns ? (diag.pixMs / diag.pixRuns).toFixed(1) : '0') + ' ms), max ' + diag.msMax + ' ms; longest gap between draws ' + diag.gapMax + ' ms; last draw ' + (lastDrawAt ? ((now - lastDrawAt) / 1000).toFixed(1) + ' s ago' : 'never'),
         'redraw timer: ' + diag.timerTicks + ' ticks (longest gap ' + diag.timerGapMax + ' ms); frame hook calls ' + diag.frameCalls + '; page clicks ' + diag.clicks + '; canvas mouse events ' + diag.mouse,
+        'repaint nudge mode: ' + nudgeMode + ' (all = resize + flush + style)',
         'input events on the canvas: ' + (Object.keys(inp.counts).map(function (k) { return k + ' ' + inp.counts[k]; }).join(', ') || 'none yet') + '; presses handled ' + inp.presses,
-        'draws where the plot inputs changed: ' + diag.inChanged + ' of ' + diag.draws + '; where the canvas pixels changed: ' + diag.pxChanged + ' of ' + (diag.pxSamples || 0) + ' sampled (every 4th draw)',
+        'draws where the plot inputs changed: ' + diag.inChanged + ' of ' + diag.draws + '; where the canvas pixels changed: ' + diag.pxChanged + ' of ' + (diag.pxSamples || 0) + ' sampled (every 4th draw, in the all and flush repaint modes only)',
         'canvas ' + canvas.width + 'x' + canvas.height + ', shown ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' at (' + Math.round(r.left) + ', ' + Math.round(r.top) + ')',
         'own ' + (o ? o.lat.toFixed(6) + ', ' + o.lon.toFixed(6) + ', hdg ' + Math.round(o.hdgDeg) : 'unknown') + '; contacts ' + cs.length + '; traffic replies ' + T.calls + ', last reply ' + (T.lastAt ? ((now - T.lastAt) / 1000).toFixed(1) + ' s ago' : 'never') + (T.error ? ', error: ' + T.error : ''),
         'airport ' + (PS.state.taxi ? PS.state.taxi.icao + ' (' + PS.state.taxi.items.length + ' items)' : 'not loaded') + '; suggestions ' + sug.list.length + ' (last run ' + sug.tookMs + ' ms); pins ' + PS.plan.count(),
@@ -2409,12 +2412,28 @@ PS.pages.push({
       log('refresh summary: ' + since + ' draw(s) in the last 5 s' + (since === 0 ? ' - NO REDRAWS' : '') + ' (timer ' + diag.counts.timer + ' frame ' + diag.counts.frame + ' click ' + diag.counts.click + ' total); redraw timer ticks ' + diag.timerTicks + ', frame hook calls ' + diag.frameCalls +
         ', inputs changed ' + diag.inChanged + '/' + diag.draws + ', pixels changed ' + diag.pxChanged + '/' + (diag.pxSamples || 0) + ' sampled, traffic replies ' + PS.airTraffic.calls + ', errors ' + diag.errors + ', hidden=' + (typeof document !== 'undefined' ? document.hidden : '?'));
     }
+    // ---- forcing the sim's browser to put the canvas on screen ----
+    // The canvas was drawn (the diagnostics say so) but only showed after the page was scrolled away and back: the sim does not repaint a
+    // canvas by itself. Three nudges are tried after every draw, and the mode can be switched on the page to find which one is needed:
+    //   resize: reassigning canvas.width reallocates the backing store (the whole plot is repainted every draw anyway);
+    //   flush:  reading one pixel back forces any queued drawing to complete;
+    //   style:  alternating the canvas opacity by 0.1% marks it as changed for the compositor.
+    var NUDGE_MODES = ['all', 'resize', 'flush', 'style', 'off'];
+    var nudgeMode = 'all', nudgeFlip = false;
+    function nudgeBefore() { if (nudgeMode === 'all' || nudgeMode === 'resize') { var w0 = canvas.width; canvas.width = w0; } }
+    function nudgeAfter() {
+      if (nudgeMode === 'off') return;
+      try {
+        if (nudgeMode === 'all' || nudgeMode === 'flush') canvas.getContext('2d').getImageData(0, 0, 1, 1);
+        if (nudgeMode === 'all' || nudgeMode === 'style') { nudgeFlip = !nudgeFlip; canvas.style.opacity = nudgeFlip ? '0.999' : '1'; }
+      } catch (e) { /* a nudge must never break the draw */ }
+    }
     // draw() never throws: an error is shown under the plot and logged once, and the redraw triggers keep going.
     function draw(src) {
       src = typeof src === 'string' ? src : 'action';
       var t0 = Date.now(), gap = lastDrawAt ? t0 - lastDrawAt : 0, err = '';
       lastDrawAt = t0;
-      try { drawPlot(); }
+      try { nudgeBefore(); drawPlot(); nudgeAfter(); if (typeof requestAnimationFrame === 'function') requestAnimationFrame(nudgeAfter); }
       catch (e) {
         err = PS.errText(e);
         infoLine.textContent = 'Plot draw error: ' + err;
@@ -2427,7 +2446,8 @@ PS.pages.push({
         diag.msSum += ms; if (ms > diag.msMax) diag.msMax = ms; if (gap > diag.gapMax) diag.gapMax = gap;
         var sig = inputsSig(o, cs), inC = sig !== diag.sig; diag.sig = sig; if (inC) diag.inChanged++;
         // The pixel check reads the whole canvas back, which costs several ms, so it runs on every 4th draw only (changes are counted against those).
-        var sampled = diag.draws % 4 === 1, pxC = false;
+        // Only in the modes that read the canvas back anyway: a readback forces a flush, which would hide what 'style', 'resize' and 'off' do.
+        var sampled = diag.draws % 4 === 1 && (nudgeMode === 'all' || nudgeMode === 'flush'), pxC = false;
         if (sampled) { var pix = pixelSig(); pxC = pix !== diag.pix; diag.pix = pix; diag.pxSamples = (diag.pxSamples || 0) + 1; if (pxC) diag.pxChanged++; }
         diag.ring.push({ t: t0, src: src, gap: gap, ms: ms, inC: inC, pxC: pxC, n: cs.length, replies: PS.airTraffic.calls, lat: o.lat, lon: o.lon, hdg: o.hdgDeg, err: err });
         if (diag.ring.length > 60) diag.ring.shift();
@@ -2442,7 +2462,10 @@ PS.pages.push({
       canvas.className = 'ps-canvas' + (on ? ' ps-pinmode' : '');
     }
     function planChanged() { renderedPlan = null; draw('action'); }
+    // Editing the plan by hand takes over from any suggestion that was being previewed, so its route is taken off the plot.
+    function dropSuggestionPreview() { if (sug.selectedId) { sug.selectedId = null; renderSuggestions(); } }
     function addPin(lat, lon) {
+      dropSuggestionPreview();
       var i = PS.plan.add(lat, lon);
       log('pin ' + (i + 1) + ' added at ' + lat.toFixed(6) + ', ' + lon.toFixed(6));
       planChanged();
@@ -2498,16 +2521,56 @@ PS.pages.push({
       inp.counts[type] = (inp.counts[type] || 0) + 1;
       if (inp.counts[type] <= 3) log('input event ' + type + ' #' + inp.counts[type] + (p ? ' at canvas ' + Math.round(p[0]) + ', ' + Math.round(p[1]) : ''));
     }
-    function pointOf(e) {
-      var t = e;
-      if (e.changedTouches && e.changedTouches.length) t = e.changedTouches[0]; else if (e.touches && e.touches.length) t = e.touches[0];
+    // Where a tap lands on the canvas, in canvas pixels. Pins were landing about 100 m north of where they were tapped, so the position is
+    // worked out two ways and logged: from the event's client position against the canvas rectangle, and (mouse events) from offsetX/offsetY,
+    // which is relative to the canvas itself and is not thrown off if the EFB's panel is scaled or shifted. The offset method is used when
+    // there is one. A calibration (tap the middle of the green aircraft once) corrects any constant error that is left.
+    var cal = { dx: 0, dy: 0 };
+    var calibrating = false;
+    var lastPress = null;     // { p: [x, y], at } for the marker drawn where the app thinks the tap was
+    try { var saved = JSON.parse(window.localStorage.getItem('pushplanner.tapcal') || 'null'); if (saved && isFinite(saved.dx) && isFinite(saved.dy)) cal = { dx: saved.dx, dy: saved.dy }; } catch (e0) { /* storage may be unavailable */ }
+    function rawOf(e) {
+      var touch = !!((e.changedTouches && e.changedTouches.length) || (e.touches && e.touches.length));
+      var t = touch ? (e.changedTouches && e.changedTouches.length ? e.changedTouches[0] : e.touches[0]) : e;
       var r = canvas.getBoundingClientRect();
-      return [(t.clientX - r.left) * canvas.width / (r.width || canvas.width), (t.clientY - r.top) * canvas.height / (r.height || canvas.height)];
+      var sx = canvas.width / (r.width || canvas.width), sy = canvas.height / (r.height || canvas.height);
+      var rectPt = [(t.clientX - r.left) * sx, (t.clientY - r.top) * sy], offPt = null;
+      if (!touch && typeof e.offsetX === 'number' && e.target === canvas) offPt = [e.offsetX * canvas.width / (canvas.clientWidth || canvas.width), e.offsetY * canvas.height / (canvas.clientHeight || canvas.height)];
+      return { touch: touch, t: t, r: r, rectPt: rectPt, offPt: offPt, base: offPt || rectPt };
+    }
+    function pointOf(e) {
+      var o = rawOf(e);
+      inp.lastRaw = o;
+      return [o.base[0] + cal.dx, o.base[1] + cal.dy];
+    }
+    function logPress(p) {
+      var o = inp.lastRaw;
+      if (!o || inp.presses > 10) return;
+      var b = document.querySelector ? document.querySelector('.ps-body') : null;
+      log('press raw: client ' + Math.round(o.t.clientX) + ',' + Math.round(o.t.clientY) + (typeof o.t.pageX === 'number' ? ' page ' + Math.round(o.t.pageX) + ',' + Math.round(o.t.pageY) : '') + (typeof o.t.screenX === 'number' ? ' screen ' + Math.round(o.t.screenX) + ',' + Math.round(o.t.screenY) : '') +
+        (o.offPt ? ' offset ' + Math.round(o.t.offsetX) + ',' + Math.round(o.t.offsetY) : '') + ' | canvas rect left ' + Math.round(o.r.left) + ' top ' + Math.round(o.r.top) + ' size ' + Math.round(o.r.width) + 'x' + Math.round(o.r.height) +
+        ' (css ' + canvas.clientWidth + 'x' + canvas.clientHeight + ', backing ' + canvas.width + 'x' + canvas.height + ') | window ' + window.innerWidth + 'x' + window.innerHeight + ' dpr ' + window.devicePixelRatio + (b ? ' bodyScrollTop ' + Math.round(b.scrollTop) : '') +
+        ' | canvas px by rect ' + Math.round(o.rectPt[0]) + ',' + Math.round(o.rectPt[1]) + (o.offPt ? ' by offset ' + Math.round(o.offPt[0]) + ',' + Math.round(o.offPt[1]) : '') + ' | used ' + Math.round(p[0]) + ',' + Math.round(p[1]) + ' (calibration ' + Math.round(cal.dx) + ',' + Math.round(cal.dy) + ')');
+    }
+    function setCalibration(dx, dy) {
+      cal = { dx: dx, dy: dy };
+      try { window.localStorage.setItem('pushplanner.tapcal', JSON.stringify(cal)); } catch (e1) { /* not saved, still applied this session */ }
+      calLine.textContent = 'Tap calibration: ' + (dx === 0 && dy === 0 ? 'none' : Math.round(dx) + ' px across, ' + Math.round(dy) + ' px down (canvas pixels)') + '.';
     }
     function recentTouch() { return Date.now() - inp.lastTouchAt < 800; }
 
     function inputDown(p, touch) {
       diag.mouse++; inp.presses++; inp.lastPoint = p;
+      logPress(p);
+      lastPress = { p: p, at: Date.now() };
+      if (calibrating) {
+        // The tap was aimed at the middle of the green aircraft, which is the middle of the canvas: whatever it landed away from that is the error.
+        var b = inp.lastRaw ? inp.lastRaw.base : p;
+        setCalibration(canvas.width / 2 - b[0], canvas.height / 2 - b[1]);
+        calibrating = false; calBtn.textContent = 'Calibrate taps';
+        log('tap calibration set: ' + Math.round(cal.dx) + ', ' + Math.round(cal.dy) + ' canvas px (tapped ' + Math.round(b[0]) + ',' + Math.round(b[1]) + ', aimed at ' + canvas.width / 2 + ',' + canvas.height / 2 + ')');
+        drag = null; planChanged(); return;
+      }
       if (!lastView) { log('press ignored: the plot has not been drawn yet'); return; }
       var sel = PS.plan.selected();
       if (sel >= 0) {
@@ -2536,8 +2599,8 @@ PS.pages.push({
     function inputUp(p) {
       if (!drag) return;
       var d = drag; drag = null;
-      if (d.kind === 'handle') { log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); planChanged(); return; }
-      if (d.kind === 'pin') { if (d.moved) { log('pin ' + (d.idx + 1) + ' moved'); planChanged(); } return; }
+      if (d.kind === 'handle') { dropSuggestionPreview(); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); planChanged(); return; }
+      if (d.kind === 'pin') { if (d.moved) { dropSuggestionPreview(); log('pin ' + (d.idx + 1) + ' moved'); planChanged(); } return; }
       if (d.moved || !lastView) return;
       if (addMode) { var ll = lastView.fromPx(p[0], p[1]); addPin(ll[0], ll[1]); return; }
       // Add pins off: pick the nearest aircraft to read its details, or clear the selection.
@@ -2631,7 +2694,7 @@ PS.pages.push({
       airportLine.textContent = 'Loading airport data' + (why ? ' (' + why + ')' : '') + '...';
       return PS.facility.loadNearestIntoState().then(function (icao) {
         airportLoading = false; sug.key = ''; airportLine.textContent = 'Airport ' + icao + ' loaded: ' + PS.state.taxi.items.length + ' runway/path item(s), ' + PS.state.taxi.parking.length + ' stand(s).';
-        renderSuggestions();
+        renderSuggestions(); draw('action');
       }, function (e) { airportLoading = false; airportLine.textContent = 'Could not load airport data: ' + PS.errText(e); log('could not load airport data: ' + PS.errText(e)); });
     }
 
@@ -2781,6 +2844,12 @@ PS.pages.push({
 
       // Own aircraft, pointing along its heading.
       drawAircraftMarker(g, view.cx, view.cy, own.hdgDeg, '#4cd18a', '#0b1116', 1.1);
+      // Where the app thinks the last tap landed (for a few seconds), so any offset from where it was really tapped is visible.
+      if (lastPress && Date.now() - lastPress.at < 5000) {
+        g.strokeStyle = '#00e5ff'; g.lineWidth = 2; g.beginPath(); g.arc(lastPress.p[0], lastPress.p[1], 9, 0, Math.PI * 2); g.moveTo(lastPress.p[0] - 14, lastPress.p[1]); g.lineTo(lastPress.p[0] + 14, lastPress.p[1]);
+        g.moveTo(lastPress.p[0], lastPress.p[1] - 14); g.lineTo(lastPress.p[0], lastPress.p[1] + 14); g.stroke(); g.lineWidth = 1;
+      }
+      if (calibrating) { g.fillStyle = '#ffe14d'; g.font = 'bold 15px Arial'; g.fillText('Tap the middle of the green aircraft', view.cx - 110, view.cy - 40); }
 
       var age = T.lastAt ? ((Date.now() - T.lastAt) / 1000).toFixed(1) + ' s ago' : 'never';
       infoLine.textContent = (c.live ? 'Own position live. ' : 'Own position: reference point (sim not readable). ') + 'Range ' + PS.fmt.dist(range) + '. Taxi items drawn: ' + drawn +
@@ -2796,6 +2865,17 @@ PS.pages.push({
     }
 
     // ---------------- page ----------------
+    var repaintBtn = ui.button('Repaint: all', function () {
+      nudgeMode = NUDGE_MODES[(NUDGE_MODES.indexOf(nudgeMode) + 1) % NUDGE_MODES.length];
+      repaintBtn.textContent = 'Repaint: ' + nudgeMode;
+      log('repaint nudge mode set to ' + nudgeMode);
+      draw('manual');
+    }, 'ps-ghost');
+    calBtn = ui.button('Calibrate taps', function () {
+      calibrating = !calibrating; calBtn.textContent = calibrating ? 'Cancel calibration' : 'Calibrate taps';
+      log(calibrating ? 'tap calibration started: tap the middle of the green aircraft' : 'tap calibration cancelled'); draw('action');
+    }, 'ps-small ps-ghost');
+    setCalibration(cal.dx, cal.dy);
     addBtn = ui.button('Add pins: ON (tap the plot)', function () { setAddMode(!addMode); });
     setAddMode(true);
 
@@ -2804,8 +2884,10 @@ PS.pages.push({
         h('div', { class: 'ps-row' }, ui.field('Range', plotRange.stepperEl || plotRange.el), addBtn,
           ui.button('Undo pin', function () { if (PS.plan.count()) deletePin(PS.plan.count() - 1); }, 'ps-ghost'),
           ui.button('Clear pins', function () { PS.plan.clear(); log('pins cleared'); planChanged(); }, 'ps-ghost'),
-          ui.button('Refresh', function () { draw('manual'); }, 'ps-ghost')),
+          ui.button('Refresh', function () { draw('manual'); }, 'ps-ghost'),
+          repaintBtn),
         canvas, infoLine, contactLine,
+        h('div', { class: 'ps-row' }, calBtn, ui.button('Reset calibration', function () { setCalibration(0, 0); log('tap calibration reset'); draw('action'); }, 'ps-small ps-ghost'), calLine),
         ui.note('North is up, centred on the aircraft. Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it. White route = push back, blue = drive forward, red = the tug may not manage that leg. Teal = suggested push.')),
       ui.panel('Route', routeBox),
       ui.panel('Suggested pushes', airportLine, sugBox,

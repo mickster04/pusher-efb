@@ -72,7 +72,7 @@
 .ps-stepper { display: flex; align-items: center; }
 .ps-stepper .ps-btn { margin: 0 8px 0 0; }
 .ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-weight: bold; color: #f0a830; }
-.ps-canvas.ps-pinmode { cursor: crosshair; border: 2px solid #f0a830; }
+.ps-canvas.ps-pinmode { cursor: crosshair; outline: 2px solid #f0a830; }
 .ps-sug { display: block; width: 100%; text-align: left; margin: 0 0 6px 0; padding: 9px 12px; border: 1px solid #3a4d5c; border-radius: 8px; background: #1b2630; color: #dfe7ee; font-size: 14px; }
 .ps-sug.on { border-color: #34d2c8; background: #173a3e; }
 .ps-sug-title { font-weight: bold; }
