@@ -65,6 +65,38 @@
   };
   window.msfssdk = { DisplayComponent: DisplayComponent, FSComponent: FSComponent, Subject: Subject };
 
+  // Facility loader: nearest search finds NZCH, and getFacility returns it with one runway (runways only, like the real sim).
+  window.msfssdk.FacilityType = { Airport: 'A' };
+  window.msfssdk.FacilitySearchType = { Airport: 0 };
+  window.msfssdk.FacilityRepository = { getRepository: function () { return {}; } };
+  window.msfssdk.FacilityLoader = function () {
+    return {
+      startNearestSearchSession: function () {
+        return Promise.resolve({ searchNearest: function () { return Promise.resolve({ added: ['A      NZCH '] }); } });
+      },
+      getFacility: function () {
+        return Promise.resolve({ icao: 'A      NZCH ', lat: -43.4894, lon: 172.5344,
+          runways: [{ designation: '02/20', latitude: -43.4890, longitude: 172.5320, direction: 20, length: 3000, width: 45 }] });
+      }
+    };
+  };
+  // AI traffic: a few aircraft taxiing around the player, moving each time the listener is called (like GET_AIR_TRAFFIC).
+  var trafficT0 = Date.now();
+  window.RegisterViewListener = function (name, cb) {
+    setTimeout(function () { if (cb) cb(); }, 0);
+    return {
+      call: function () {
+        var t = (Date.now() - trafficT0) / 1000;
+        function at(id, name, dN, dE, hdg) { return { uId: id, name: name, lat: -43.4890 + dN / 111320, lon: 172.5375 + dE / (111320 * Math.cos(43.489 * Math.PI / 180)), alt: 10, heading: hdg, isOnGround: true }; }
+        return Promise.resolve([
+          at(1, 'MOCK-A320', 40 + t * 2, -80 + 0, 0),
+          at(2, 'MOCK-B738', 10, 120 - t * 3, 270),
+          at(3, 'MOCK-E190', -90, 30 + t, 90)
+        ]);
+      }
+    };
+  };
+
 
   // Mock of the taxi WASM module over the CommBus. Replies come from harness/taxi-sample.txt, which is real output of the
   // C++ core (wasm/test/gen_sample.cpp). Set window.__noTaxiModule = true to simulate the module not being installed.

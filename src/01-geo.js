@@ -29,6 +29,10 @@ PS.geo = (function () {
       y: rad(lat - refLat) * R
     };
   }
+  // Inverse of toXY: the lat/lon of a point x metres east and y metres north of the reference.
+  function fromXY(refLat, refLon, x, y) {
+    return [refLat + deg(y / R), refLon + deg(x / (R * Math.cos(rad(refLat))))];
+  }
   function offset(lat, lon, brgDeg, distM) {
     var b = rad(brgDeg);
     var dLat = distM * Math.cos(b) / R;
@@ -70,7 +74,7 @@ PS.geo = (function () {
 
   return {
     KT_TO_MS: KT_TO_MS, rad: rad, deg: deg, normDeg: normDeg, angleDiff: angleDiff,
-    distanceM: distanceM, bearingDeg: bearingDeg, toXY: toXY, offset: offset,
+    distanceM: distanceM, bearingDeg: bearingDeg, toXY: toXY, fromXY: fromXY, offset: offset,
     polylineLengthM: polylineLengthM, nearestOnPolyline: nearestOnPolyline
   };
 })();

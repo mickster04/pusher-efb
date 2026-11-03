@@ -83,6 +83,8 @@ PS.taxi = (function () {
         res.items.push({
           name: name !== undefined && name !== '' ? String(name) : '(unnamed)',
           category: category(pick(t, ['type', 'category', 'surface'])),
+          rawType: pick(t, ['type']),
+          rawName: name !== undefined ? String(name).trim() : '',
           lengthM: pts.length > 1 ? G.polylineLengthM(pts) : num(pick(t, ['length', 'lengthM'])),
           widthM: num(pick(t, ['widthM', 'width'])),
           headingDeg: null,

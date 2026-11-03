@@ -6,7 +6,7 @@ PS.APP_NAME = 'Pusher Spikes';
 PS.INTERNAL_NAME = 'PusherSpikes';
 PS.pages = [];
 PS.closeHooks = [];   // called when the view closes or pauses (e.g. stop the tug)
-PS.state = { taxi: null, contacts: [], notificationManager: null, bus: null };
+PS.state = { taxi: null, contacts: [], pins: [], notificationManager: null, bus: null };
 
 PS.global = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : {});
 

@@ -34,6 +34,7 @@ PS.airTraffic = {
       T.busy = false; T.calls++;
       if (!data || typeof data.length !== 'number') { T.error = 'GET_AIR_TRAFFIC returned ' + typeof data; return; }
       T.error = '';
+      T.lastAt = Date.now();
       T.entries = data.length;
       if (!T.loggedShape && data.length) {
         T.loggedShape = true;

@@ -35,6 +35,24 @@ PS.ui = {
     });
     return t.el;
   },
+  // Zoom control: [-] current range [+] over a list of numeric steps (metres). Not built on ui.select, so it does not depend on
+  // highlight state, and each press is logged (tag = log channel) so a session log shows whether presses arrive at all.
+  stepper: function (steps, value, onchange, tag) {
+    var idx = Math.max(0, steps.indexOf(value));
+    var label = PS.h('span', { class: 'ps-step-label', text: PS.fmt.dist(steps[idx]) });
+    function go(delta) {
+      var next = Math.max(0, Math.min(steps.length - 1, idx + delta));
+      if (tag) PS.log(tag, 'range button pressed (' + (delta < 0 ? 'zoom in' : 'zoom out') + '): ' + PS.fmt.dist(steps[idx]) + ' -> ' + PS.fmt.dist(steps[next]));
+      if (next === idx) return;
+      idx = next; label.textContent = PS.fmt.dist(steps[idx]);
+      if (onchange) onchange(steps[idx]);
+    }
+    var el = PS.h('div', { class: 'ps-stepper' },
+      PS.ui.button('Zoom in  -', function () { go(-1); }),
+      label,
+      PS.ui.button('Zoom out  +', function () { go(1); }));
+    return { el: el, get: function () { return steps[idx]; }, set: function (v) { idx = Math.max(0, steps.indexOf(v)); label.textContent = PS.fmt.dist(steps[idx]); } };
+  },
   // Segmented toggle. options: [{value,label}], returns { el, get(), set(v) }
   toggle: function (options, value, onchange) {
     var current = value;

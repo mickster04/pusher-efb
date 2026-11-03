@@ -11,7 +11,7 @@ A single MSFS 2024 EFB app with six pages, each answering a feasibility question
 3. **Taxiways**: finds the nearest airport, loads its runways from the facility API and its taxi paths and parking from the **taxi WASM module** (see below), and lists named taxiways, runways and connectors with category, length, width, and nearest distance and bearing. Raw data panel, a **Check taxi module** button, and an offline sample for reviewing the table.
 4. **Traffic**: discovers candidate AI traffic APIs and lists contacts with distance, bearing, relative bearing, altitude difference, speed, closing speed and time to closest approach. Simulated-contacts button for reviewing the table.
 5. **Notifications**: in-tablet toasts with action buttons (release brake, set brake with two actions, distance left with Pause/Resume, traffic hold with Ignore), and a probe of the EFB's notification manager.
-6. **Map**: probes for the sim's built-in map components, tries to mount one, and draws a baseline plot with no imagery (aircraft, range rings, taxiways, contacts).
+6. **Map**: the main view is a north-up plot (no imagery) centred on the aircraft: runways, named taxiways, parking, AI aircraft (read live from the sim), **pins** you drop and drag, and **suggested pushes** drawn as routes. Zoom buttons set the range. The sim's built-in map is kept below it for reference (not very useful) and is only mounted on request.
 
 Each page has a log with a Copy button. After a sim session, paste the logs back so results can be recorded in [docs/implementation/spike-app.md](docs/implementation/spike-app.md).
 
