@@ -64,3 +64,71 @@ test('theme: colour maths', () => {
   assert.equal(T.parse('red'), null);
   assert.ok(T.contrast('#000000', '#ffffff') > 20);
 });
+
+test('theme files: valid ones add or replace themes, bad ones are reported and ignored', () => {
+  const before = T.THEMES.length;
+  const good = JSON.stringify({ id: 'file-test', name: 'File test', note: 'from a file', colours: { bg: '#102030', text: '#eeeeee', accent: '#ff8800', panel: '#203040' } });
+  const replace = JSON.stringify({ id: 'klm', name: 'KLM (edited)', colours: { bg: '#001122', text: '#ffffff', accent: '#00ccff' } });
+  const r = T.ingest([
+    { file: 'file-test.json', text: good },
+    { file: 'klm.json', text: replace },
+    { file: 'broken.json', text: '{nope' },
+    { file: 'noid.json', text: JSON.stringify({ name: 'x', colours: { bg: '#000', text: '#fff' } }) },
+    { file: 'nobg.json', text: JSON.stringify({ id: 'nobg', colours: { accent: '#fff', text: '#fff', panel: '#000' } }) },
+    { file: 'missing.json', error: 'could not be read (status 404)' }
+  ]);
+  assert.equal(r.added, 1); assert.equal(r.replaced, 1);
+  assert.equal(r.failed.length, 4, r.failed.map((f) => f.file + ': ' + f.why).join('; '));
+  assert.equal(T.THEMES.length, before + 1);
+  assert.equal(T.byId('klm').name, 'KLM (edited)'); assert.equal(T.byId('klm').fromFile, true);
+  T.select('file-test');
+  assert.equal(T.c('bg'), '#102030'); assert.equal(T.c('accent'), '#ff8800');
+  assert.ok(T.derive(T.fillRoles(T.byId('file-test').p)).panelHi, 'the rest of the palette is filled in');
+  T.select('default');
+});
+
+test('theme files: the presets in the package folder are the ones built in, and an exported theme is a valid file', () => {
+  const fs = require('node:fs');
+  const dir = new URL('../PackageSources/PushPlanner/themes/', import.meta.url);
+  const index = JSON.parse(fs.readFileSync(new URL('index.json', dir), 'utf8'));
+  assert.ok(index.themes.length >= 15);
+  let empties = 0;
+  index.themes.forEach((id) => {
+    const t = JSON.parse(fs.readFileSync(new URL(id + '.json', dir), 'utf8'));
+    if (t.empty) { empties++; return; }
+    assert.equal(T.validateThemeFile(t), '', id);
+    assert.equal(T.byId(id).id, id);
+  });
+  assert.equal(empties, 8, 'eight free slots to put a theme in');
+  const exported = JSON.parse(T.exportText());
+  assert.equal(T.validateThemeFile(exported), '', 'the copied theme can be saved straight as a theme file');
+});
+
+test('theme files: an empty slot is skipped quietly, and a slot that has been filled in loads', () => {
+  const slot = (n) => JSON.stringify({ id: 'user' + n, name: 'User theme ' + n, empty: true });
+  const filled = JSON.stringify({ id: 'my-green', name: 'My green', colours: { bg: '#102010', text: '#e0ffe0', accent: '#44dd44', panel: '#183018' } });
+  const r = T.ingest([{ file: 'user1.json', text: slot(1) }, { file: 'user2.json', text: filled }, { file: 'user3.json', text: slot(3) }]);
+  assert.equal(r.empty, 2); assert.equal(r.added, 1); assert.equal(r.failed.length, 0);
+  assert.equal(T.byId('my-green').name, 'My green');
+  assert.ok(!T.THEMES.some((th) => th.id === 'user1'), 'an empty slot is not a theme');
+  T.select('default');
+});
+
+test('theme slots: saving keeps the colours in use as a theme in that slot, and clearing takes it away', () => {
+  T.select('klm'); T.setColour('accent', '#ff8800');
+  assert.equal(T.saveSlot(3, '  My orange KLM  '), true);
+  assert.equal(T.slotInfo(3).name, 'My orange KLM'); assert.ok(T.slotInfo(3).filled);
+  assert.equal(T.selectedId(), 'slot3', 'it switches to the saved slot');
+  assert.equal(T.c('accent'), '#ff8800'); assert.equal(T.isChanged('accent'), false, 'the change is now part of the theme');
+  assert.ok(T.THEMES.some((t) => t.id === 'slot3' && t.fromSlot === 3), 'listed with the others');
+  T.select('default'); T.select('slot3');
+  assert.equal(T.c('accent'), '#ff8800', 'and picking it again gives the same colours');
+  assert.equal(T.saveSlot(9, 'x'), false, 'only slots 1 to 8');
+  assert.equal(T.saveSlot(1, ''), true); assert.equal(T.slotInfo(1).name, 'My theme', 'a blank name gets a default');
+  assert.equal(T.clearSlot(3), true);
+  assert.ok(!T.THEMES.some((t) => t.id === 'slot3'));
+  assert.equal(T.selectedId(), 'slot1', 'clearing a slot that is not in use leaves the choice alone');
+  T.clearSlot(1);
+  assert.equal(T.selectedId(), T.THEMES[0].id, 'clearing the slot in use falls back to the first theme');
+  T.select('default');
+});

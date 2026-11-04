@@ -144,22 +144,22 @@ PS.clear = function (el) { while (el.firstChild) el.removeChild(el.firstChild); 
 // ---- formatting ----
 PS.fmt = {
   num: function (v, dp) {
-    if (typeof v !== 'number' || !isFinite(v)) return '—';
+    if (typeof v !== 'number' || !isFinite(v)) return '-';
     return v.toFixed(dp === undefined ? 2 : dp);
   },
   value: function (v) {
-    if (v === undefined || v === null) return '—';
+    if (v === undefined || v === null) return '-';
     if (typeof v === 'number') return isFinite(v) ? String(Math.round(v * 10000) / 10000) : String(v);
     if (typeof v === 'boolean') return v ? 'true' : 'false';
     if (typeof v === 'object') { try { return JSON.stringify(v); } catch (e) { return String(v); } }
     return String(v);
   },
   dist: function (m) {
-    if (typeof m !== 'number' || !isFinite(m)) return '—';
+    if (typeof m !== 'number' || !isFinite(m)) return '-';
     return m >= 1000 ? (m / 1000).toFixed(2) + ' km' : Math.round(m) + ' m';
   },
   seconds: function (s) {
-    if (typeof s !== 'number' || !isFinite(s)) return '—';
+    if (typeof s !== 'number' || !isFinite(s)) return '-';
     return s >= 120 ? Math.round(s / 60) + ' min' : Math.round(s) + ' s';
   }
 };

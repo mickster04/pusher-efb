@@ -1,0 +1,23 @@
+{
+ "id": "sia",
+ "name": "Singapore Airlines",
+ "note": "Navy and gold",
+ "colours": {
+  "bg": "#031637",
+  "bgDeep": "#020e24",
+  "panel": "#072a63",
+  "border": "#1a4690",
+  "text": "#ffffff",
+  "textDim": "#a8b9d8",
+  "accent": "#f99f1c",
+  "accentText": "#031637",
+  "button": "#10388a",
+  "buttonText": "#ffffff",
+  "input": "#02112b",
+  "good": "#4cd18a",
+  "warn": "#ffd37a",
+  "bad": "#ff6677",
+  "accent2": "#f9c46a",
+  "routeFwd": "#7fb6ff"
+ }
+}

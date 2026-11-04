@@ -47,66 +47,11 @@ PS.theme = (function () {
   function contrast(a, b) { var la = luminance(a), lb = luminance(b); return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05); }
 
   // ---- the themes ----
-  // Page roles are required; map roles are optional (filled from the page roles).
-  var THEMES = [
-    { id: 'default', name: 'Push Planner', note: 'The original dark theme with amber', p: {
-      bg: '#131c24', bgDeep: '#0e151b', panel: '#1b2630', border: '#2a3a47', text: '#dfe7ee', textDim: '#8aa0b2', accent: '#f0a830', accentText: '#131c24',
-      button: '#2a3a47', buttonText: '#eef4f8', input: '#0f171e', good: '#4cd18a', warn: '#ffd37a', bad: '#ff5c6c', accent2: '#34d2c8',
-      runway: '#8aa3b8', pathOther: '#4d6275', routeBack: '#ffffff', routeFwd: '#5aa8ff', routeDone: '#4d6275', pin: '#e8f0f6', pinEnd: '#ff9f43', traffic: '#ff5c5c', handle: '#ffe14d', outline: '#0b1116', mapText: '#6f8294' } },
-    { id: 'contrast', name: 'High contrast', note: 'Black and white with strong colours', p: {
-      bg: '#000000', bgDeep: '#000000', panel: '#0c0c0c', border: '#8a8a8a', text: '#ffffff', textDim: '#d2d2d2', accent: '#ffd400', accentText: '#000000',
-      button: '#262626', buttonText: '#ffffff', input: '#000000', good: '#00ff7f', warn: '#ffd400', bad: '#ff4545', accent2: '#00e5ff', routeFwd: '#4da6ff', mapGrid: '#6a6a6a', mapText: '#d2d2d2', outline: '#000000' } },
-    { id: 'night', name: 'Night (red)', note: 'Dim reds that keep night vision', p: {
-      bg: '#0c0202', bgDeep: '#070101', panel: '#170505', border: '#421212', text: '#e8665a', textDim: '#b04a40', accent: '#ff3b2f', accentText: '#120000',
-      button: '#2b0c0c', buttonText: '#ff8a7a', input: '#080101', good: '#d9803a', warn: '#ffa060', bad: '#ff2a2a', accent2: '#c0392b',
-      routeBack: '#ff9a8a', routeFwd: '#c0392b', routeDone: '#5a2420', runway: '#b4574c', pathOther: '#5a2420', pin: '#ff8a7a', pinEnd: '#ffa060', traffic: '#ff6a5a', handle: '#ffa060', outline: '#060000' } },
-    { id: 'day', name: 'Daylight', note: 'Light, for a bright cockpit', p: {
-      bg: '#eef2f6', bgDeep: '#d9e1e8', panel: '#ffffff', border: '#c0ccd6', text: '#1b2630', textDim: '#566678', accent: '#c46a00', accentText: '#ffffff',
-      button: '#e1e8ee', buttonText: '#1b2630', input: '#f7f9fb', good: '#17854e', warn: '#8f6200', bad: '#c62f3d', accent2: '#0e8f89',
-      mapBg: '#f7f9fb', mapGrid: '#c0ccd6', mapText: '#566678', taxiway: '#c46a00', runway: '#566678', pathOther: '#9aa8b4', routeBack: '#1b2630', routeFwd: '#1565c0', routeBad: '#c62f3d',
-      routeDone: '#a3b0bb', aircraft: '#17854e', pin: '#1b2630', pinEnd: '#e06a00', traffic: '#c62f3d', handle: '#b8860b', outline: '#ffffff' } },
-
-    { id: 'delta', name: 'Delta', note: 'Navy and red', p: {
-      bg: '#0a1f3c', bgDeep: '#06142a', panel: '#0f2b52', border: '#1d4580', text: '#f2f5f9', textDim: '#9db2cf', accent: '#e01933', accentText: '#ffffff',
-      button: '#16376a', buttonText: '#ffffff', input: '#081a33', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6677', accent2: '#7fb6ff', routeFwd: '#6fb0ff', taxiway: '#e01933' } },
-    { id: 'ba', name: 'British Airways', note: 'Speedbird navy, red and silver', p: {
-      bg: '#06132e', bgDeep: '#040d20', panel: '#0c2152', border: '#1f4290', text: '#f4f6fb', textDim: '#a7b6d4', accent: '#eb2226', accentText: '#ffffff',
-      button: '#12306b', buttonText: '#ffffff', input: '#050f26', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6a6e', accent2: '#c8ccd4', taxiway: '#d6d9e0', routeFwd: '#7aa8ff' } },
-    { id: 'lufthansa', name: 'Lufthansa', note: 'Deep blue with the crane yellow', p: {
-      bg: '#0a1544', bgDeep: '#060e30', panel: '#102060', border: '#263d8c', text: '#f5f6fb', textDim: '#a6b0d8', accent: '#ffad00', accentText: '#05164d',
-      button: '#1a2c7c', buttonText: '#ffffff', input: '#080f36', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6677', accent2: '#ffad00', routeFwd: '#7fb0ff' } },
-    { id: 'airnz', name: 'Air New Zealand', note: 'Black and white with koru teal', p: {
-      bg: '#0d0d0d', bgDeep: '#000000', panel: '#1a1a1a', border: '#3c3c3c', text: '#ffffff', textDim: '#a8a8a8', accent: '#1fb5ac', accentText: '#000000',
-      button: '#2a2a2a', buttonText: '#ffffff', input: '#080808', good: '#4cd18a', warn: '#ffd37a', bad: '#ff5c6c', accent2: '#8be0da', taxiway: '#1fb5ac', routeFwd: '#6fc4ff' } },
-    { id: 'eurowings', name: 'Eurowings', note: 'Aubergine and magenta', p: {
-      bg: '#1d0a2e', bgDeep: '#14061f', panel: '#2b1243', border: '#4b2472', text: '#fbf4fa', textDim: '#c4a4d0', accent: '#e6007e', accentText: '#ffffff',
-      button: '#3e1b5e', buttonText: '#ffffff', input: '#120519', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6a8a', accent2: '#ff7ac0', taxiway: '#ff7ac0', routeFwd: '#8fb4ff' } },
-
-    { id: 'qantas', name: 'Qantas', note: 'Kangaroo red on black', p: {
-      bg: '#0e0e10', bgDeep: '#070708', panel: '#1b1b1f', border: '#3d2c2f', text: '#ffffff', textDim: '#b3a9aa', accent: '#e40000', accentText: '#ffffff',
-      button: '#2b2224', buttonText: '#ffffff', input: '#09090a', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6a5a', accent2: '#ffffff', taxiway: '#ff5a4a', routeFwd: '#6fb0ff' } },
-    { id: 'emirates', name: 'Emirates', note: 'Charcoal, red and gold', p: {
-      bg: '#1a1614', bgDeep: '#100d0c', panel: '#272120', border: '#4d4136', text: '#f6f1ea', textDim: '#b9ab98', accent: '#d71921', accentText: '#ffffff',
-      button: '#372e2b', buttonText: '#ffffff', input: '#120f0e', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6a6e', accent2: '#c9a56a', taxiway: '#c9a56a', routeFwd: '#7ab6ff' } },
-    { id: 'klm', name: 'KLM', note: 'Royal blue and sky blue', p: {
-      bg: '#04204a', bgDeep: '#021632', panel: '#0a3068', border: '#1b5aa8', text: '#ffffff', textDim: '#a9c7e8', accent: '#00a1de', accentText: '#00203f',
-      button: '#14407f', buttonText: '#ffffff', input: '#031a3c', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6677', accent2: '#7fd6ff', taxiway: '#00a1de', routeFwd: '#9ad4ff' } },
-    { id: 'sia', name: 'Singapore Airlines', note: 'Navy and gold', p: {
-      bg: '#031637', bgDeep: '#020e24', panel: '#072a63', border: '#1a4690', text: '#ffffff', textDim: '#a8b9d8', accent: '#f99f1c', accentText: '#031637',
-      button: '#10388a', buttonText: '#ffffff', input: '#02112b', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6677', accent2: '#f9c46a', routeFwd: '#7fb6ff' } },
-    { id: 'airfrance', name: 'Air France', note: 'Navy with the tricolour red', p: {
-      bg: '#00163d', bgDeep: '#000e29', panel: '#00255a', border: '#143f82', text: '#ffffff', textDim: '#a9b9d8', accent: '#e1000f', accentText: '#ffffff',
-      button: '#0c3478', buttonText: '#ffffff', input: '#00112f', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6a74', accent2: '#6aa0ff', taxiway: '#ff4a55', routeFwd: '#7fb0ff' } },
-    { id: 'ryanair', name: 'Ryanair', note: 'Bright blue and yellow', p: {
-      bg: '#05205f', bgDeep: '#031542', panel: '#0a3180', border: '#2050b4', text: '#ffffff', textDim: '#b3c4ee', accent: '#f1c933', accentText: '#05205f',
-      button: '#144098', buttonText: '#ffffff', input: '#041a50', good: '#4cd18a', warn: '#f1c933', bad: '#ff6677', accent2: '#f1c933', routeFwd: '#8dc0ff' } },
-    { id: 'easyjet', name: 'easyJet', note: 'Charcoal and orange', p: {
-      bg: '#1c1c1c', bgDeep: '#111111', panel: '#2a2a2a', border: '#474747', text: '#ffffff', textDim: '#b5b5b5', accent: '#ff6600', accentText: '#111111',
-      button: '#3a3a3a', buttonText: '#ffffff', input: '#131313', good: '#4cd18a', warn: '#ffd37a', bad: '#ff5c6c', accent2: '#ffa466', taxiway: '#ff6600', routeFwd: '#6fb0ff' } },
-    { id: 'qatar', name: 'Qatar Airways', note: 'Burgundy and muted gold', p: {
-      bg: '#2a0415', bgDeep: '#1c020e', panel: '#3d0a24', border: '#6b1a3f', text: '#f7eef2', textDim: '#c9a5b5', accent: '#c8a165', accentText: '#2a0415',
-      button: '#541030', buttonText: '#ffffff', input: '#1f030f', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6a8a', accent2: '#e6c991', taxiway: '#c8a165', routeFwd: '#8fb4ff' } }
-  ];
+  // Page roles are required; map roles are optional (filled from the page roles). The presets are the JSON files in src/themes/ (built into the bundle as
+  // PS.BUILTIN_THEMES, so there is always a set to use) and the same files are shipped in the package, where loadFiles() reads them at run time.
+  function fromFileShape(t) { return { id: t.id, name: t.name, note: t.note || '', p: t.colours || {}, fromFile: false }; }
+  var THEMES = (PS.BUILTIN_THEMES || []).map(fromFileShape);
+  if (!THEMES.length) THEMES.push({ id: 'default', name: 'Push Planner', note: '', p: { bg: '#131c24', text: '#dfe7ee', accent: '#f0a830' } });
 
   // Fill in the roles a theme left out, from the ones it set.
   function fillRoles(p) {
@@ -135,7 +80,8 @@ PS.theme = (function () {
     return t;
   }
 
-  function byId(id) { for (var i = 0; i < THEMES.length; i++) { if (THEMES[i].id === id) return THEMES[i]; } return THEMES[0]; }
+  function find(id) { for (var i = 0; i < THEMES.length; i++) { if (THEMES[i].id === id) return THEMES[i]; } return null; }
+  function byId(id) { return find(id) || THEMES[0]; }
 
   // ---- the chosen theme and the user's own colours on top of it ----
   var state = { id: 'default', custom: {} };
@@ -147,7 +93,7 @@ PS.theme = (function () {
     try {
       var saved = JSON.parse(window.localStorage.getItem(KEY) || 'null');
       if (saved && typeof saved === 'object') {
-        if (typeof saved.id === 'string') state.id = byId(saved.id).id;
+        if (typeof saved.id === 'string') state.id = saved.id;     // kept even if it is not known yet: it may be a theme file still to be read
         if (saved.custom && typeof saved.custom === 'object') { for (var k in saved.custom) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(saved.custom[k])) state.custom[k] = normalise(saved.custom[k]); } }
       }
     } catch (e) { /* defaults */ }
@@ -173,6 +119,123 @@ PS.theme = (function () {
     for (var i = 0; i < listeners.length; i++) { try { listeners[i](current); } catch (e) { /* a listener must not break the others */ } }
   }
 
+  // ---- slots: your own themes, kept in the app's own storage ----
+  // The page cannot write into the package's files (user1.json ...), so "Save to slot n" keeps the theme in the app's storage; it shows up in the Themes
+  // tab like any other and survives restarts. SLOT_COUNT matches the user1.json to user8.json files, which stay the way to bring a theme in from a file.
+  var SLOT_KEY = 'pushplanner.themeslots', SLOT_COUNT = 8;
+  var slots = {};
+  function loadSlots() {
+    try {
+      var saved = JSON.parse(window.localStorage.getItem(SLOT_KEY) || '{}');
+      for (var n = 1; n <= SLOT_COUNT; n++) {
+        var e = saved[n];
+        if (e && typeof e === 'object' && e.colours && typeof e.colours === 'object' && isHex(e.colours.bg) && isHex(e.colours.text)) {
+          var cols = {}, k;
+          for (k in e.colours) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(e.colours[k])) cols[k] = normalise(e.colours[k]); }
+          slots[n] = { name: typeof e.name === 'string' && e.name ? e.name.slice(0, 30) : 'Slot ' + n, colours: cols };
+        }
+      }
+    } catch (e) { /* none saved */ }
+  }
+  function saveSlots() { try { window.localStorage.setItem(SLOT_KEY, JSON.stringify(slots)); } catch (e) { /* kept for this session only */ } }
+  // The saved slots as entries at the end of THEMES (rebuilt whenever they or the file themes change).
+  function refreshSlots() {
+    for (var i = THEMES.length - 1; i >= 0; i--) { if (THEMES[i].fromSlot) THEMES.splice(i, 1); }
+    for (var n = 1; n <= SLOT_COUNT; n++) {
+      if (slots[n]) THEMES.push({ id: 'slot' + n, name: slots[n].name, note: 'Saved in slot ' + n, p: slots[n].colours, fromFile: false, fromSlot: n });
+    }
+  }
+
+  // ---- theme files in the package ----
+  // The package ships the presets as files (themes/index.json lists them) which are read here when the app starts: what is in them wins over the built-in
+  // copy of the same id, and a file with a new id adds a theme. So a theme can be added or changed by editing the files, no rebuild of the app.
+  // A theme file is { "id": "my-theme", "name": "My theme", "note": "...", "colours": { "bg": "#112233", ... } } (roles as on the My colours tab; leave out
+  // the ones you do not care about). It needs a valid bg and text at least. index.json is { "themes": ["id", ...] } (an entry may also be "file.json").
+  var files = { state: 'idle', names: [], empty: 0, base: '', listed: 0, loaded: 0, added: 0, replaced: 0, failed: [], at: 0 };
+  var ID_RE = /^[a-z0-9][a-z0-9_-]{0,40}$/i;
+
+  function validateThemeFile(t) {
+    if (!t || typeof t !== 'object') return 'not an object';
+    if (typeof t.id !== 'string' || !ID_RE.test(t.id)) return 'needs an "id" of letters, digits, - or _';
+    var cols = t.colours || t.colors;
+    if (!cols || typeof cols !== 'object') return 'needs a "colours" object';
+    var n = 0, k;
+    for (k in cols) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(cols[k])) n++; }
+    if (!isHex(cols.bg) || !isHex(cols.text)) return 'needs a valid "bg" and "text" colour';
+    return n < 3 ? 'has hardly any valid colours' : '';
+  }
+  // list: [{ file, text }] (text is the file's contents, or error is set). Returns { added, replaced, failed: [{ file, why }] }.
+  function ingest(list) {
+    var res = { added: 0, replaced: 0, empty: 0, failed: [] };
+    list.forEach(function (it) {
+      if (it.error) { res.failed.push({ file: it.file, why: it.error }); return; }
+      var t;
+      try { t = JSON.parse(it.text); } catch (e) { res.failed.push({ file: it.file, why: 'not valid JSON' }); return; }
+      if (t && t.empty === true) { res.empty++; return; }        // a free slot (user1.json ...): nothing to load yet
+      var why = validateThemeFile(t);
+      if (why) { res.failed.push({ file: it.file, why: why }); return; }
+      var cols = {}, k, src = t.colours || t.colors;
+      for (k in src) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(src[k])) cols[k] = normalise(src[k]); }
+      var entry = { id: t.id, name: typeof t.name === 'string' && t.name ? t.name : t.id, note: typeof t.note === 'string' ? t.note : '', p: cols, fromFile: true }, existing = find(t.id);
+      if (existing) { THEMES[THEMES.indexOf(existing)] = entry; res.replaced++; } else { THEMES.push(entry); res.added++; }
+    });
+    refreshSlots();
+    return res;
+  }
+  function themeBase() { return PS.global.__themeBase || ('coui://html_ui/efb_ui/efb_apps/' + PS.INTERNAL_NAME + '/themes'); }
+  function httpGet(url, cb) {
+    var done = false;
+    function finish(err, text) { if (done) return; done = true; cb(err, text); }
+    try {
+      var x = new XMLHttpRequest();
+      x.open('GET', url + (url.indexOf('?') < 0 ? '?' : '&') + 't=' + Date.now(), true);
+      x.onreadystatechange = function () {
+        if (x.readyState !== 4) return;
+        var ok = (x.status === 200 || x.status === 0) && typeof x.responseText === 'string' && x.responseText.length > 0;
+        finish(ok ? null : 'could not be read (status ' + x.status + ')', x.responseText);
+      };
+      x.onerror = function () { finish('could not be read (network error)'); };
+      x.send();
+      setTimeout(function () { finish('timed out'); }, 6000);
+    } catch (e) { finish(PS.errText ? PS.errText(e) : String(e)); }
+  }
+  function loadFiles(done) {
+    if (typeof XMLHttpRequest === 'undefined') { files.state = 'failed'; files.failed = [{ file: 'index.json', why: 'no XMLHttpRequest here' }]; if (done) done(files); return; }
+    files = { state: 'loading', names: [], empty: 0, base: themeBase(), listed: 0, loaded: 0, added: 0, replaced: 0, failed: [], at: Date.now() };
+    PS.log('theme', 'reading theme files from ' + files.base + '/index.json');
+    httpGet(files.base + '/index.json', function (err, text) {
+      var names = null;
+      if (!err) { try { var idx = JSON.parse(text); if (idx && Array.isArray(idx.themes)) names = idx.themes; else err = 'has no "themes" list'; } catch (e) { err = 'is not valid JSON'; } }
+      if (err || !names) {
+        files.state = 'failed'; files.failed = [{ file: 'index.json', why: err || 'empty' }];
+        PS.log('theme', 'theme files not read: index.json ' + files.failed[0].why + ' (the built-in themes are used)');
+        notify(done); return;
+      }
+      files.listed = names.length; files.names = names.slice();
+      var got = [], left = names.length;
+      if (!left) { finishLoad(got, done); return; }
+      names.forEach(function (n, i) {
+        var file = String(n).replace(/\.json$/i, '') + '.json';
+        httpGet(files.base + '/' + file, function (e2, t2) {
+          got[i] = e2 ? { file: file, error: e2 } : { file: file, text: t2 };
+          if (--left === 0) finishLoad(got, done);
+        });
+      });
+    });
+  }
+  function finishLoad(got, done) {
+    var r = ingest(got);
+    files.empty = r.empty; files.loaded = got.length - r.failed.length - r.empty; files.added = r.added; files.replaced = r.replaced; files.failed = r.failed; files.state = 'done';
+    PS.log('theme', 'index.json names ' + files.names.length + ' theme(s): ' + files.names.join(', '));
+    PS.log('theme', 'theme files: ' + files.loaded + ' of ' + (files.listed - files.empty) + ' read, ' + files.empty + ' free slot(s) (' + r.added + ' new, ' + r.replaced + ' replaced the built-in)' + (r.failed.length ? '; failed: ' + r.failed.map(function (f) { return f.file + ' ' + f.why; }).join(', ') : ''));
+    // the saved theme may be one of the files: look again now they are in (and fall back if it is gone)
+    if (!find(state.id)) { PS.log('theme', 'the saved theme "' + state.id + '" is not available: using ' + THEMES[0].name); state.id = THEMES[0].id; state.custom = {}; save(); }
+    notify(done);
+  }
+  function notify(done) { apply(); if (done) done(files); }
+
+  loadSlots();
+  refreshSlots();
   load();
   resolve();
 
@@ -184,7 +247,28 @@ PS.theme = (function () {
     c: function (role) { return (current || resolve())[role] || '#ff00ff'; },
     all: function () { return current || resolve(); },
     state: function () { return state; },
-    selectedId: function () { return state.id; },
+    SLOT_COUNT: SLOT_COUNT,
+    slotInfo: function (n) { var e = slots[n]; return { n: n, filled: !!e, name: e ? e.name : '' }; },
+    // Keep the colours in use now as slot n (name is trimmed to 30 characters), and switch to it.
+    saveSlot: function (n, name) {
+      n = Number(n);
+      if (!(n >= 1 && n <= SLOT_COUNT)) return false;
+      var nm = String(name || '').replace(/^\s+|\s+$/g, '').slice(0, 30) || 'My theme';
+      slots[n] = { name: nm, colours: palette() };
+      saveSlots(); refreshSlots();
+      state.id = 'slot' + n; state.custom = {}; save(); apply();
+      return true;
+    },
+    clearSlot: function (n) {
+      n = Number(n);
+      if (!slots[n]) return false;
+      delete slots[n]; saveSlots(); refreshSlots();
+      if (state.id === 'slot' + n) { state.id = THEMES[0].id; state.custom = {}; save(); }
+      apply();
+      return true;
+    },
+    loadFiles: loadFiles, ingest: ingest, validateThemeFile: validateThemeFile, fileStatus: function () { return files; }, themeBase: themeBase,
+    selectedId: function () { return find(state.id) ? state.id : THEMES[0].id; },
     // The theme's own colour for a role (ignoring the user's changes), to reset to.
     themeColour: function (role) { return palette(state.id, {})[role]; },
     isChanged: function (role) { return state.custom[role] !== undefined; },
@@ -196,7 +280,7 @@ PS.theme = (function () {
     resetAll: function () { state.custom = {}; save(); apply(); },
     onChange: function (fn) { listeners.push(fn); },
     // A theme as text to share, and back. Only roles that differ from the base theme are written.
-    exportText: function () { return JSON.stringify({ app: 'PushPlanner', theme: state.id, colours: palette() }, null, 1); },
+    exportText: function () { return JSON.stringify({ app: 'PushPlanner', id: 'my-theme', name: 'My theme', note: 'Saved from Push Planner', theme: state.id, colours: palette() }, null, 1); },
     importText: function (text) {
       var data;
       try { data = JSON.parse(text); } catch (e) { return { ok: false, why: 'That is not valid JSON.' }; }
@@ -205,7 +289,7 @@ PS.theme = (function () {
       var next = {}, n = 0, k;
       for (k in cols) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(cols[k])) { next[k] = normalise(cols[k]); n++; } }
       if (!n) return { ok: false, why: 'None of the colours in it are ones this app knows.' };
-      if (data.theme && typeof data.theme === 'string') state.id = byId(data.theme).id;
+      if (data.theme && typeof data.theme === 'string' && find(data.theme)) state.id = data.theme;
       state.custom = next; save(); apply();
       return { ok: true, count: n };
     },

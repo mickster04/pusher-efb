@@ -56,9 +56,9 @@ PS.ui = {
     fmt = fmt || PS.fmt.dist;
     var idx = Math.max(0, steps.indexOf(value));
     var label = PS.h('span', { class: 'ps-step-label', text: fmt(steps[idx]) });
-    function go(delta, which) {
+    function go(delta, which, how) {
       var next = Math.max(0, Math.min(steps.length - 1, idx + delta));
-      if (tag) PS.log(tag, 'button pressed (' + labels[which] + '): ' + fmt(steps[idx]) + ' -> ' + fmt(steps[next]));
+      if (tag) PS.log(tag, (how || 'button pressed (' + labels[which] + ')') + ': ' + fmt(steps[idx]) + ' -> ' + fmt(steps[next]));
       if (next === idx) return;
       idx = next; label.textContent = fmt(steps[idx]);
       if (onchange) onchange(steps[idx]);
@@ -67,7 +67,35 @@ PS.ui = {
       zoomIcons ? PS.ui.iconButton('zoomOut', '', function () { go(1, 0); }) : PS.ui.button(labels[0], function () { go(invert ? 1 : -1, 0); }),
       label,
       zoomIcons ? PS.ui.iconButton('zoomIn', '', function () { go(-1, 1); }) : PS.ui.button(labels[1], function () { go(invert ? -1 : 1, 1); }));
-    return { el: el, get: function () { return steps[idx]; }, set: function (v2) { idx = Math.max(0, steps.indexOf(v2)); label.textContent = fmt(steps[idx]); } };
+    // zoom(+1) zooms in (a smaller range, for a stepper made with `invert`), zoom(-1) zooms out: for the mouse wheel
+    return { el: el, zoom: function (dir, how) { go(dir > 0 ? -1 : 1, dir > 0 ? 1 : 0, how); }, get: function () { return steps[idx]; }, set: function (v2) { idx = Math.max(0, steps.indexOf(v2)); label.textContent = fmt(steps[idx]); } };
+  },
+  // Mouse wheel and trackpad scrolling turned into zoom steps: a notch (about 100) is one step, small trackpad deltas add up to one. Returns a function
+  // (deltaY, deltaMode) -> -1 (scroll up: zoom in), +1 (scroll down: zoom out) or 0 for no step yet.
+  wheelAccum: function () {
+    var acc = 0, NOTCH = 50;
+    return function (deltaY, deltaMode) {
+      var d = Number(deltaY) || 0;
+      if (deltaMode === 1) d *= 33; else if (deltaMode === 2) d *= 400;     // lines or pages
+      acc += d;
+      if (acc <= -NOTCH) { acc = 0; return -1; }
+      if (acc >= NOTCH) { acc = 0; return 1; }
+      return 0;
+    };
+  },
+  // Zoom with the wheel over `el` (a canvas): cb(dir, event) with dir +1 = zoom in, -1 = zoom out. The page does not scroll while the pointer is over it.
+  wheelZoom: function (el, cb) {
+    var accum = PS.ui.wheelAccum(), sawWheel = false, logged = false;
+    function handle(e, deltaY, mode) {
+      if (e.preventDefault) e.preventDefault();
+      if (e.stopPropagation) e.stopPropagation();
+      if (!logged) { logged = true; PS.log('ui', 'map wheel event received (deltaY ' + Math.round(deltaY) + ', mode ' + mode + '): zooming with the wheel works here'); }
+      var step = accum(deltaY, mode);
+      if (step) cb(-step, e);
+    }
+    el.addEventListener('wheel', function (e) { sawWheel = true; handle(e, e.deltaY, e.deltaMode); }, false);
+    // older engines only send mousewheel (wheelDelta is the other way round and in steps of 120); skip it once real wheel events arrive
+    el.addEventListener('mousewheel', function (e) { if (!sawWheel) handle(e, -(e.wheelDelta || 0) * 0.8, 0); }, false);
   },
   // Segmented toggle. options: [{value,label}], returns { el, get(), set(v) }
   toggle: function (options, value, onchange) {

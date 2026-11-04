@@ -1,0 +1,24 @@
+{
+ "id": "delta",
+ "name": "Delta",
+ "note": "Navy and red",
+ "colours": {
+  "bg": "#0a1f3c",
+  "bgDeep": "#06142a",
+  "panel": "#0f2b52",
+  "border": "#1d4580",
+  "text": "#f2f5f9",
+  "textDim": "#9db2cf",
+  "accent": "#e01933",
+  "accentText": "#ffffff",
+  "button": "#16376a",
+  "buttonText": "#ffffff",
+  "input": "#081a33",
+  "good": "#4cd18a",
+  "warn": "#ffd37a",
+  "bad": "#ff6677",
+  "accent2": "#7fb6ff",
+  "routeFwd": "#6fb0ff",
+  "taxiway": "#e01933"
+ }
+}

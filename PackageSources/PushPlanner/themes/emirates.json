@@ -1,0 +1,24 @@
+{
+ "id": "emirates",
+ "name": "Emirates",
+ "note": "Charcoal, red and gold",
+ "colours": {
+  "bg": "#1a1614",
+  "bgDeep": "#100d0c",
+  "panel": "#272120",
+  "border": "#4d4136",
+  "text": "#f6f1ea",
+  "textDim": "#b9ab98",
+  "accent": "#d71921",
+  "accentText": "#ffffff",
+  "button": "#372e2b",
+  "buttonText": "#ffffff",
+  "input": "#120f0e",
+  "good": "#4cd18a",
+  "warn": "#ffd37a",
+  "bad": "#ff6a6e",
+  "accent2": "#c9a56a",
+  "taxiway": "#c9a56a",
+  "routeFwd": "#7ab6ff"
+ }
+}

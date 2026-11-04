@@ -1,0 +1,24 @@
+{
+ "id": "eurowings",
+ "name": "Eurowings",
+ "note": "Aubergine and magenta",
+ "colours": {
+  "bg": "#1d0a2e",
+  "bgDeep": "#14061f",
+  "panel": "#2b1243",
+  "border": "#4b2472",
+  "text": "#fbf4fa",
+  "textDim": "#c4a4d0",
+  "accent": "#e6007e",
+  "accentText": "#ffffff",
+  "button": "#3e1b5e",
+  "buttonText": "#ffffff",
+  "input": "#120519",
+  "good": "#4cd18a",
+  "warn": "#ffd37a",
+  "bad": "#ff6a8a",
+  "accent2": "#ff7ac0",
+  "taxiway": "#ff7ac0",
+  "routeFwd": "#8fb4ff"
+ }
+}

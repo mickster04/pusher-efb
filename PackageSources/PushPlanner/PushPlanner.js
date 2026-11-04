@@ -2,8 +2,9 @@
 (function () {
 'use strict';
 var PS = {};
-PS.CSS = ".ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: @bg@; color: @text@; font: 15px/1.35 Arial, sans-serif; } .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; } .ps-header { padding: 10px 16px 6px; background: @bgDeep@; } .ps-title { font-size: 20px; font-weight: bold; color: @accent@; margin-right: 12px; } .ps-sub { color: @textDim@; font-size: 13px; } .ps-nav { display: flex; flex-wrap: wrap; background: @bgDeep@; padding: 0 10px 8px; } .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid @border@; border-radius: 8px; background: @panel@; color: @text2@; font-size: 15px; } .ps-navbtn.on { background: @accent@; color: @accentText@; border-color: @accent@; font-weight: bold; } .ps-body { position: relative; flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding: 12px 14px 24px; } .ps-footer { padding: 5px 14px; background: @bgDeeper@; color: @dim4@; font-size: 12px; white-space: nowrap; overflow: hidden; } .ps-panel { background: @panel@; border: 1px solid @border@; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; } .ps-panel-title { font-weight: bold; margin-bottom: 8px; color: @accent@; } .ps-note { color: @dim2@; font-size: 13px; margin-top: 8px; } .ps-note.warn { color: @warn@; } .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; } .ps-row > * { margin: 0 10px 8px 0; } .ps-field { display: block; } .ps-field-label { display: block; font-size: 12px; color: @textDim@; margin-bottom: 3px; } .ps-input { padding: 9px 10px; border: 1px solid @border2@; border-radius: 6px; background: @input@; color: @text@; font-size: 15px; min-width: 120px; box-sizing: border-box; } .ps-check { display: block; padding: 8px 0; font-size: 14px; color: @text2@; } .ps-btn { padding: 11px 16px; border: 1px solid @border2@; border-radius: 8px; background: @button@; color: @buttonText@; font-size: 15px; } .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; } .ps-btn.ps-warn { background: @accentDeep@; border-color: @accent@; } .ps-btn.ps-danger { background: @badDeep@; border-color: @bad@; font-weight: bold; } .ps-btn.ps-ghost { background: transparent; } .ps-toggle { display: flex; flex-wrap: wrap; } .ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text2@; font-size: 15px; } .ps-toggle-btn.on { background: @accent@; color: @accentText@; font-weight: bold; } .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; } .ps-pill.ok { background: @goodDeep@; color: @goodSoft@; } .ps-pill.bad { background: @badDeeper@; color: @badSoft@; } .ps-kv { font-size: 13px; color: @dim3@; margin-bottom: 6px; white-space: pre-wrap; } .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: @input@; font-size: 14px; word-wrap: break-word; } .ps-result.ok { border-left: 4px solid @good@; } .ps-result.bad { border-left: 4px solid @bad@; color: @badSoft@; } .ps-mono { font-family: Consolas, monospace; font-size: 13px; } .ps-tablewrap { overflow-x: auto; } .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; } .ps-table th { text-align: left; color: @textDim@; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid @border@; } .ps-table td { padding: 5px 8px; border-bottom: 1px solid @borderSoft@; } .ps-val { font-family: Consolas, monospace; color: @goodSoft@; word-break: break-all; } .ps-val.bad { color: @badSoft@; } .ps-table tr.ps-hot td { background: @accentDeeper@; } .ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: @bgDeeper@; border-radius: 6px; color: @dim3@; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; } .ps-raw { max-height: 260px; } .ps-logwrap .ps-btn { margin-top: 6px; } .ps-canvas { display: block; border-radius: 8px; background: @input@; touch-action: none; -ms-touch-action: none; -webkit-user-select: none; user-select: none; } .ps-mount { margin-top: 8px; min-height: 0; } .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; } .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: @panelHi@; border: 2px solid @accent@; box-shadow: 0 4px 14px rgba(0,0,0,.5); } .ps-toast-brake { border-color: @bad@; } .ps-toast-warn { border-color: @warn@; } .ps-toast-info { border-color: @routeFwd@; } .ps-toast-title { font-weight: bold; font-size: 16px; } .ps-toast-msg { margin: 4px 0 8px; color: @text@; } .ps-toast-actions .ps-btn { margin-right: 8px; } .ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; } .ps-overlay-bar { margin-bottom: 8px; } .ps-overlay-bar .ps-btn { margin-left: 10px; } .ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: @bgDeeper@; color: @text2@; border: 1px solid @border2@; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; } .ps-stepper { display: flex; align-items: center; } .ps-stepper .ps-btn { margin: 0 8px 0 0; } .ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-weight: bold; color: @accent@; } .ps-canvas.ps-pinmode { cursor: crosshair; outline: 2px solid @accent@; } .ps-sug { display: block; width: 100%; text-align: left; margin: 0 0 6px 0; padding: 9px 12px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text@; font-size: 14px; } .ps-sug.on { border-color: @accent2@; background: @accent2Deep@; } .ps-sug-title { font-weight: bold; } .ps-sug-detail { color: @dim2@; font-size: 12px; } .ps-pinrow { padding: 4px 0; border-bottom: 1px solid @borderSoft@; font-size: 13px; } .ps-pinrow .ps-btn { margin-left: 10px; } .ps-pinrow.on { background: @accentFaint@; } .ps-body::-webkit-scrollbar { width: 18px; } .ps-body::-webkit-scrollbar-track { background: @bgDeeper@; } .ps-body::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 9px; border: 3px solid @bgDeeper@; min-height: 40px; } .ps-body::-webkit-scrollbar-thumb:hover { background: @accent@; } .ps-log::-webkit-scrollbar, .ps-tablewrap::-webkit-scrollbar { width: 12px; height: 12px; } .ps-log::-webkit-scrollbar-track, .ps-tablewrap::-webkit-scrollbar-track { background: @bgDeeper@; } .ps-log::-webkit-scrollbar-thumb, .ps-tablewrap::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 6px; } .ps-big { font-size: 34px; font-weight: bold; color: @accent@; margin: 2px 0 6px; } .ps-bar { height: 14px; background: @bgDeeper@; border-radius: 7px; overflow: hidden; margin: 6px 0 10px; border: 1px solid @border@; } .ps-bar > div { height: 100%; background: @accent2@; } .ps-btn:disabled { opacity: 0.4; } .ps-compact .ps-btn { padding: 5px 10px; font-size: 13px; } .ps-compact .ps-step-label { font-size: 14px; min-width: 56px; margin: 0 8px 0 2px; } .ps-help { position: relative; display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border: 1px solid @dim5@; border-radius: 12px; color: @dim3@; font-size: 14px; font-weight: bold; cursor: default; } .ps-help-pop { position: fixed; left: 8%; right: 8%; top: 130px; z-index: 60; background: @bgDeep@; border: 1px solid @accent@; border-radius: 10px; padding: 12px 16px; text-align: left; font-weight: normal; box-shadow: 0 4px 24px rgba(0,0,0,0.6); pointer-events: none; } .ps-help-title { color: @accent@; font-weight: bold; margin-bottom: 6px; } .ps-help-line { color: @text2@; font-size: 13px; margin-bottom: 5px; } .ps-toprow { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 8px; } .ps-toprow > * { margin: 0 8px 6px 0; } .ps-toprow .ps-spacer { flex: 1; min-width: 8px; margin: 0; } .ps-toprow .ps-right { display: flex; align-items: center; margin-right: 0; } .ps-toprow .ps-right > * { margin-left: 8px; margin-right: 0; } .ps-toprow .ps-btn, .ps-compact .ps-btn { padding: 6px 12px; font-size: 13px; } .ps-toprow .ps-stepper .ps-btn { margin: 0 6px 0 0; } .ps-toprow .ps-step-label { font-size: 14px; min-width: 54px; margin: 0 8px 0 2px; } .ps-cols { display: block; } .ps-landscape .ps-cols { display: flex; align-items: flex-start; } .ps-landscape .ps-col-main { flex: 3; min-width: 0; } .ps-landscape .ps-col-side { flex: 2; min-width: 0; margin-left: 14px; } .ps-landscape .ps-col-first { order: -1; } .ps-btnrow { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 6px; } .ps-btnrow > * { margin: 0 8px 8px 0; } .ps-btn:disabled { opacity: 0.38; } .ps-pinrow { padding: 6px 0; } .ps-pindesc { margin-bottom: 4px; } .ps-pinbtns { margin-bottom: 0; } .ps-pinbtns > * { margin: 0 8px 0 0; } .ps-pinrow .ps-btn { margin-left: 0; } .ps-btn, .ps-toggle-btn, .ps-navbtn { font-family: Arial, sans-serif; } .ps-pairbtns { display: inline-block; } .ps-pairbtns .ps-btn { margin: 0 8px 0 0; } .ps-icon { vertical-align: middle; } .ps-iconbtn { display: inline-flex; align-items: center; } .ps-iconbtn .ps-iconbtn-label { margin-left: 6px; } .ps-themegrid { display: flex; flex-wrap: wrap; } .ps-themecard { width: 150px; margin: 0 10px 10px 0; padding: 8px; border: 2px solid @border@; border-radius: 12px; background: @panel@; color: @text@; text-align: center; } .ps-themecard.on { border-color: @accent@; background: @panelHi@; } .ps-themecard svg { display: block; margin: 0 auto 6px; } .ps-themename { font-size: 14px; font-weight: bold; } .ps-themenote { font-size: 11px; color: @textDim@; margin-top: 2px; } .ps-colgroup { margin: 12px 0 6px; font-weight: bold; color: @accent@; } .ps-colrow { display: flex; align-items: center; padding: 4px 0; border-bottom: 1px solid @borderSoft@; } .ps-colrow.changed { background: @accentFaint@; } .ps-collabel { flex: 1; font-size: 14px; } .ps-colswatch { width: 44px; height: 28px; margin: 0 10px; border: 2px solid @border2@; border-radius: 6px; } .ps-hex { width: 96px; min-width: 96px; margin-right: 10px; padding: 5px 8px; font-size: 14px; } .ps-cgrid { display: flex; flex-wrap: wrap; padding: 8px 0 10px; } .ps-cswatch { width: 30px; height: 26px; margin: 0 3px 3px 0; border: 1px solid @border@; border-radius: 4px; } .ps-import { display: block; width: 100%; height: 70px; margin: 10px 0 6px; font-size: 12px; } .ps-ip { stroke: @buttonText@; fill: none; } .ps-ipf { fill: @buttonText@; stroke: none; } .ps-icon { flex: none; } .ps-btn.ps-requested { border-color: @accent@; color: @accent@; } .ps-btn.ps-requested .ps-ip { stroke: @accent@; }";
+PS.CSS = ".ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: @bg@; color: @text@; font: 15px/1.35 Arial, sans-serif; } .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; } .ps-header { padding: 10px 16px 6px; background: @bgDeep@; } .ps-title { font-size: 20px; font-weight: bold; color: @accent@; margin-right: 12px; } .ps-sub { color: @textDim@; font-size: 13px; } .ps-nav { display: flex; flex-wrap: wrap; background: @bgDeep@; padding: 0 10px 8px; } .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid @border@; border-radius: 8px; background: @panel@; color: @text2@; font-size: 15px; } .ps-navbtn.on { background: @accent@; color: @accentText@; border-color: @accent@; font-weight: bold; } .ps-body { position: relative; flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding: 12px 14px 24px; } .ps-footer { padding: 5px 14px; background: @bgDeeper@; color: @dim4@; font-size: 12px; white-space: nowrap; overflow: hidden; } .ps-panel { background: @panel@; border: 1px solid @border@; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; } .ps-panel-title { font-weight: bold; margin-bottom: 8px; color: @accent@; } .ps-note { color: @dim2@; font-size: 13px; margin-top: 8px; } .ps-note.warn { color: @warn@; } .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; } .ps-row > * { margin: 0 10px 8px 0; } .ps-field { display: block; } .ps-field-label { display: block; font-size: 12px; color: @textDim@; margin-bottom: 3px; } .ps-input { padding: 9px 10px; border: 1px solid @border2@; border-radius: 6px; background: @input@; color: @text@; font-size: 15px; min-width: 120px; box-sizing: border-box; } .ps-check { display: block; padding: 8px 0; font-size: 14px; color: @text2@; } .ps-btn { padding: 11px 16px; border: 1px solid @border2@; border-radius: 8px; background: @button@; color: @buttonText@; font-size: 15px; } .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; } .ps-btn.ps-warn { background: @accentDeep@; border-color: @accent@; } .ps-btn.ps-danger { background: @badDeep@; border-color: @bad@; font-weight: bold; } .ps-btn.ps-ghost { background: transparent; } .ps-toggle { display: flex; flex-wrap: wrap; } .ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text2@; font-size: 15px; } .ps-toggle-btn.on { background: @accent@; color: @accentText@; font-weight: bold; } .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; } .ps-pill.ok { background: @goodDeep@; color: @goodSoft@; } .ps-pill.bad { background: @badDeeper@; color: @badSoft@; } .ps-kv { font-size: 13px; color: @dim3@; margin-bottom: 6px; white-space: pre-wrap; } .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: @input@; font-size: 14px; word-wrap: break-word; } .ps-result.ok { border-left: 4px solid @good@; } .ps-result.bad { border-left: 4px solid @bad@; color: @badSoft@; } .ps-mono { font-family: Consolas, monospace; font-size: 13px; } .ps-tablewrap { overflow-x: auto; } .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; } .ps-table th { text-align: left; color: @textDim@; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid @border@; } .ps-table td { padding: 5px 8px; border-bottom: 1px solid @borderSoft@; } .ps-val { font-family: Consolas, monospace; color: @goodSoft@; word-break: break-all; } .ps-val.bad { color: @badSoft@; } .ps-table tr.ps-hot td { background: @accentDeeper@; } .ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: @bgDeeper@; border-radius: 6px; color: @dim3@; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; } .ps-raw { max-height: 260px; } .ps-logwrap .ps-btn { margin-top: 6px; } .ps-canvas { display: block; border-radius: 8px; background: @input@; touch-action: none; -ms-touch-action: none; -webkit-user-select: none; user-select: none; } .ps-mount { margin-top: 8px; min-height: 0; } .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; } .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: @panelHi@; border: 2px solid @accent@; box-shadow: 0 4px 14px rgba(0,0,0,.5); } .ps-toast-brake { border-color: @bad@; } .ps-toast-warn { border-color: @warn@; } .ps-toast-info { border-color: @routeFwd@; } .ps-toast-title { font-weight: bold; font-size: 16px; } .ps-toast-msg { margin: 4px 0 8px; color: @text@; } .ps-toast-actions .ps-btn { margin-right: 8px; } .ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; } .ps-overlay-bar { margin-bottom: 8px; } .ps-overlay-bar .ps-btn { margin-left: 10px; } .ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: @bgDeeper@; color: @text2@; border: 1px solid @border2@; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; } .ps-stepper { display: flex; align-items: center; } .ps-stepper .ps-btn { margin: 0 8px 0 0; } .ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-weight: bold; color: @accent@; } .ps-canvas.ps-pinmode { cursor: crosshair; outline: 2px solid @accent@; } .ps-sug { display: block; width: 100%; text-align: left; margin: 0 0 6px 0; padding: 9px 12px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text@; font-size: 14px; } .ps-sug.on { border-color: @accent2@; background: @accent2Deep@; } .ps-sug-title { font-weight: bold; } .ps-sug-detail { color: @dim2@; font-size: 12px; } .ps-pinrow { padding: 4px 0; border-bottom: 1px solid @borderSoft@; font-size: 13px; } .ps-pinrow .ps-btn { margin-left: 10px; } .ps-pinrow.on { background: @accentFaint@; } .ps-body::-webkit-scrollbar { width: 18px; } .ps-body::-webkit-scrollbar-track { background: @bgDeeper@; } .ps-body::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 9px; border: 3px solid @bgDeeper@; min-height: 40px; } .ps-body::-webkit-scrollbar-thumb:hover { background: @accent@; } .ps-log::-webkit-scrollbar, .ps-tablewrap::-webkit-scrollbar { width: 12px; height: 12px; } .ps-log::-webkit-scrollbar-track, .ps-tablewrap::-webkit-scrollbar-track { background: @bgDeeper@; } .ps-log::-webkit-scrollbar-thumb, .ps-tablewrap::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 6px; } .ps-big { font-size: 34px; font-weight: bold; color: @accent@; margin: 2px 0 6px; } .ps-bar { height: 14px; background: @bgDeeper@; border-radius: 7px; overflow: hidden; margin: 6px 0 10px; border: 1px solid @border@; } .ps-bar > div { height: 100%; background: @accent2@; } .ps-btn:disabled { opacity: 0.4; } .ps-compact .ps-btn { padding: 5px 10px; font-size: 13px; } .ps-compact .ps-step-label { font-size: 14px; min-width: 56px; margin: 0 8px 0 2px; } .ps-help { position: relative; display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border: 1px solid @dim5@; border-radius: 12px; color: @dim3@; font-size: 14px; font-weight: bold; cursor: default; } .ps-help-pop { position: fixed; left: 8%; right: 8%; top: 130px; z-index: 60; background: @bgDeep@; border: 1px solid @accent@; border-radius: 10px; padding: 12px 16px; text-align: left; font-weight: normal; box-shadow: 0 4px 24px rgba(0,0,0,0.6); pointer-events: none; } .ps-help-title { color: @accent@; font-weight: bold; margin-bottom: 6px; } .ps-help-line { color: @text2@; font-size: 13px; margin-bottom: 5px; } .ps-toprow { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 8px; } .ps-toprow > * { margin: 0 8px 6px 0; } .ps-toprow .ps-spacer { flex: 1; min-width: 8px; margin: 0; } .ps-toprow .ps-right { display: flex; align-items: center; margin-right: 0; } .ps-toprow .ps-right > * { margin-left: 8px; margin-right: 0; } .ps-toprow .ps-btn, .ps-compact .ps-btn { padding: 6px 12px; font-size: 13px; } .ps-toprow .ps-stepper .ps-btn { margin: 0 6px 0 0; } .ps-toprow .ps-step-label { font-size: 14px; min-width: 54px; margin: 0 8px 0 2px; } .ps-cols { display: block; } .ps-landscape .ps-cols { display: flex; align-items: flex-start; } .ps-landscape .ps-col-main { flex: 3; min-width: 0; } .ps-landscape .ps-col-side { flex: 2; min-width: 0; margin-left: 14px; } .ps-landscape .ps-col-first { order: -1; } .ps-btnrow { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 6px; } .ps-btnrow > * { margin: 0 8px 8px 0; } .ps-btn:disabled { opacity: 0.38; } .ps-pinrow { padding: 6px 0; } .ps-pindesc { margin-bottom: 4px; } .ps-pinbtns { margin-bottom: 0; } .ps-pinbtns > * { margin: 0 8px 0 0; } .ps-pinrow .ps-btn { margin-left: 0; } .ps-btn, .ps-toggle-btn, .ps-navbtn { font-family: Arial, sans-serif; } .ps-pairbtns { display: inline-block; } .ps-pairbtns .ps-btn { margin: 0 8px 0 0; } .ps-icon { vertical-align: middle; } .ps-iconbtn { display: inline-flex; align-items: center; } .ps-iconbtn .ps-iconbtn-label { margin-left: 6px; } .ps-themegrid { display: flex; flex-wrap: wrap; } .ps-themecard { width: 150px; margin: 0 10px 10px 0; padding: 8px; border: 2px solid @border@; border-radius: 12px; background: @panel@; color: @text@; text-align: center; } .ps-themecard.on { border-color: @accent@; background: @panelHi@; } .ps-themecard svg { display: block; margin: 0 auto 6px; } .ps-themename { font-size: 14px; font-weight: bold; } .ps-themenote { font-size: 11px; color: @textDim@; margin-top: 2px; } .ps-colgroup { margin: 12px 0 6px; font-weight: bold; color: @accent@; } .ps-colrow { display: flex; align-items: center; padding: 4px 0; border-bottom: 1px solid @borderSoft@; } .ps-colrow.changed { background: @accentFaint@; } .ps-collabel { flex: 1; font-size: 14px; } .ps-colswatch { width: 44px; height: 28px; margin: 0 10px; border: 2px solid @border2@; border-radius: 6px; } .ps-hex { width: 96px; min-width: 96px; margin-right: 10px; padding: 5px 8px; font-size: 14px; } .ps-cgrid { display: flex; flex-wrap: wrap; padding: 8px 0 10px; } .ps-cswatch { width: 30px; height: 26px; margin: 0 3px 3px 0; border: 1px solid @border@; border-radius: 4px; } .ps-import { display: block; width: 100%; height: 70px; margin: 10px 0 6px; font-size: 12px; } .ps-ip { stroke: @buttonText@; fill: none; } .ps-ipf { fill: @buttonText@; stroke: none; } .ps-icon { flex: none; } .ps-btn.ps-requested { border-color: @accent@; color: @accent@; } .ps-btn.ps-requested .ps-ip { stroke: @accent@; } .ps-themename-input { width: 260px; } .ps-slotbtn { width: 118px; height: 46px; padding: 4px 8px; text-align: left; box-sizing: border-box; overflow: hidden; } .ps-slotnum { display: block; font-size: 13px; font-weight: bold; } .ps-slotname { display: block; font-size: 11px; color: @textDim@; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; } .ps-slotbtn.on { border-color: @accent@; }";
 PS.ICONS = {"arrowDown":["M12 5v14","M5 12l7 7 7-7"],"arrowLeft":["M19 12H5","M12 5l-7 7 7 7"],"arrowRight":["M5 12h14","M12 5l7 7-7 7"],"arrowUp":["M12 19V5","M5 12l7-7 7 7"],"baggage":["M5 7h14a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z","M9 7V4h6v3","M9 11v6","M15 11v6"],"brake":["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z","M10 16V8h3a2.5 2.5 0 0 1 0 5h-3"],"catering":["M7 3v8","M4 3v5a3 3 0 0 0 6 0V3","M7 11v10","M17 21V3","M17 3c-2 2-3 5-3 8h3"],"check":["M5 13l4 4 10-10"],"chevDown":["M6 9l6 6 6-6"],"chevLeft":["M15 6l-6 6 6 6"],"chevRight":["M9 6l6 6-6 6"],"chevUp":["M6 15l6-6 6 6"],"cross":["M6 6l12 12","M18 6L6 18"],"flag":["M5 21V4","M5 4h12l-2 4 2 4H5"],"fuel":["M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16","M3 21h12","M6 8h6","M14 9l3 2v6a1.5 1.5 0 0 0 3 0V9l-3-3"],"gear":["M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z","M12 2v3","M12 19v3","M2 12h3","M19 12h3","M5 5l2 2","M17 17l2 2","M19 5l-2 2","M7 17l-2 2"],"help":["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z","M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7","M12 17v.5"],"home":["M3 11l9-8 9 8","M5 10v10h5v-6h4v6h5V10"],"info":["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z","M12 11v6","M12 7.5v.5"],"jetbridge":["M2 5v14","M2 10h11","M2 15h11","M13 8h5a3 3 0 0 1 0 8h-5z"],"list":["M8 6h13","M8 12h13","M8 18h13","M3 6h.5","M3 12h.5","M3 18h.5"],"minus":["M5 12h14"],"pause":["#M7 5h4v14H7z","#M13 5h4v14h-4z"],"pin":["M12 21s-6-6-6-11a6 6 0 0 1 12 0c0 5-6 11-6 11z","M12 8a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"],"plane":["#M12 2l2 7 8 4v2l-8-1.5-.5 5 2.5 1.5V22l-4-1-4 1v-1.5l2.5-1.5-.5-5L2 15v-2l8-4z"],"play":["#M8 5l11 7-11 7z"],"plus":["M12 5v14","M5 12h14"],"power":["M9 3v5","M15 3v5","M6 8h12v3a6 6 0 0 1-12 0z","M12 17v4"],"redo":["M15 14l5-5-5-5","M20 9H10a6 6 0 0 0 0 12h3"],"stop":["#M6 6h12v12H6z"],"swap":["M7 4l-4 4 4 4","M3 8h14","M17 20l4-4-4-4","M21 16H7"],"target":["M12 3v4","M12 17v4","M3 12h4","M17 12h4","M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"],"trash":["M4 7h16","M9 7V4h6v3","M6 7l1 13h10l1-13","M10 11v6","M14 11v6"],"tug":["M3 16h18","M5 16V9h8l3 3v4","M7 19a1.5 1.5 0 1 0 0 .1","M17 19a1.5 1.5 0 1 0 0 .1"],"turnRound":["M20 12a8 8 0 1 1-2.5-5.8","M20 4v5h-5"],"undo":["M9 14L4 9l5-5","M4 9h10a6 6 0 0 1 0 12h-3"],"warning":["M12 3l10 18H2z","M12 10v5","M12 18v.5"],"zoomIn":["M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z","M21 21l-5-5","M8 11h6","M11 8v6"],"zoomOut":["M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z","M21 21l-5-5","M8 11h6"]};
+PS.BUILTIN_THEMES = [{"id":"default","name":"Push Planner","note":"The original dark theme with amber","colours":{"bg":"#131c24","bgDeep":"#0e151b","panel":"#1b2630","border":"#2a3a47","text":"#dfe7ee","textDim":"#8aa0b2","accent":"#f0a830","accentText":"#131c24","button":"#2a3a47","buttonText":"#eef4f8","input":"#0f171e","good":"#4cd18a","warn":"#ffd37a","bad":"#ff5c6c","accent2":"#34d2c8","runway":"#8aa3b8","pathOther":"#4d6275","routeBack":"#ffffff","routeFwd":"#5aa8ff","routeDone":"#4d6275","pin":"#e8f0f6","pinEnd":"#ff9f43","traffic":"#ff5c5c","handle":"#ffe14d","outline":"#0b1116","mapText":"#6f8294"}},{"id":"contrast","name":"High contrast","note":"Black and white with strong colours","colours":{"bg":"#000000","bgDeep":"#000000","panel":"#0c0c0c","border":"#8a8a8a","text":"#ffffff","textDim":"#d2d2d2","accent":"#ffd400","accentText":"#000000","button":"#262626","buttonText":"#ffffff","input":"#000000","good":"#00ff7f","warn":"#ffd400","bad":"#ff4545","accent2":"#00e5ff","routeFwd":"#4da6ff","mapGrid":"#6a6a6a","mapText":"#d2d2d2","outline":"#000000"}},{"id":"night","name":"Night (red)","note":"Dim reds that keep night vision","colours":{"bg":"#0c0202","bgDeep":"#070101","panel":"#170505","border":"#421212","text":"#e8665a","textDim":"#b04a40","accent":"#ff3b2f","accentText":"#120000","button":"#2b0c0c","buttonText":"#ff8a7a","input":"#080101","good":"#d9803a","warn":"#ffa060","bad":"#ff2a2a","accent2":"#c0392b","routeBack":"#ff9a8a","routeFwd":"#c0392b","routeDone":"#5a2420","runway":"#b4574c","pathOther":"#5a2420","pin":"#ff8a7a","pinEnd":"#ffa060","traffic":"#ff6a5a","handle":"#ffa060","outline":"#060000"}},{"id":"day","name":"Daylight","note":"Light, for a bright cockpit","colours":{"bg":"#eef2f6","bgDeep":"#d9e1e8","panel":"#ffffff","border":"#c0ccd6","text":"#1b2630","textDim":"#566678","accent":"#c46a00","accentText":"#ffffff","button":"#e1e8ee","buttonText":"#1b2630","input":"#f7f9fb","good":"#17854e","warn":"#8f6200","bad":"#c62f3d","accent2":"#0e8f89","mapBg":"#f7f9fb","mapGrid":"#c0ccd6","mapText":"#566678","taxiway":"#c46a00","runway":"#566678","pathOther":"#9aa8b4","routeBack":"#1b2630","routeFwd":"#1565c0","routeBad":"#c62f3d","routeDone":"#a3b0bb","aircraft":"#17854e","pin":"#1b2630","pinEnd":"#e06a00","traffic":"#c62f3d","handle":"#b8860b","outline":"#ffffff"}},{"id":"delta","name":"Delta","note":"Navy and red","colours":{"bg":"#0a1f3c","bgDeep":"#06142a","panel":"#0f2b52","border":"#1d4580","text":"#f2f5f9","textDim":"#9db2cf","accent":"#e01933","accentText":"#ffffff","button":"#16376a","buttonText":"#ffffff","input":"#081a33","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677","accent2":"#7fb6ff","routeFwd":"#6fb0ff","taxiway":"#e01933"}},{"id":"ba","name":"British Airways","note":"Speedbird navy, red and silver","colours":{"bg":"#06132e","bgDeep":"#040d20","panel":"#0c2152","border":"#1f4290","text":"#f4f6fb","textDim":"#a7b6d4","accent":"#eb2226","accentText":"#ffffff","button":"#12306b","buttonText":"#ffffff","input":"#050f26","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a6e","accent2":"#c8ccd4","taxiway":"#d6d9e0","routeFwd":"#7aa8ff"}},{"id":"lufthansa","name":"Lufthansa","note":"Deep blue with the crane yellow","colours":{"bg":"#0a1544","bgDeep":"#060e30","panel":"#102060","border":"#263d8c","text":"#f5f6fb","textDim":"#a6b0d8","accent":"#ffad00","accentText":"#05164d","button":"#1a2c7c","buttonText":"#ffffff","input":"#080f36","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677","accent2":"#ffad00","routeFwd":"#7fb0ff"}},{"id":"airnz","name":"Air New Zealand","note":"Black and white with koru teal","colours":{"bg":"#0d0d0d","bgDeep":"#000000","panel":"#1a1a1a","border":"#3c3c3c","text":"#ffffff","textDim":"#a8a8a8","accent":"#1fb5ac","accentText":"#000000","button":"#2a2a2a","buttonText":"#ffffff","input":"#080808","good":"#4cd18a","warn":"#ffd37a","bad":"#ff5c6c","accent2":"#8be0da","taxiway":"#1fb5ac","routeFwd":"#6fc4ff"}},{"id":"eurowings","name":"Eurowings","note":"Aubergine and magenta","colours":{"bg":"#1d0a2e","bgDeep":"#14061f","panel":"#2b1243","border":"#4b2472","text":"#fbf4fa","textDim":"#c4a4d0","accent":"#e6007e","accentText":"#ffffff","button":"#3e1b5e","buttonText":"#ffffff","input":"#120519","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a8a","accent2":"#ff7ac0","taxiway":"#ff7ac0","routeFwd":"#8fb4ff"}},{"id":"qantas","name":"Qantas","note":"Kangaroo red on black","colours":{"bg":"#0e0e10","bgDeep":"#070708","panel":"#1b1b1f","border":"#3d2c2f","text":"#ffffff","textDim":"#b3a9aa","accent":"#e40000","accentText":"#ffffff","button":"#2b2224","buttonText":"#ffffff","input":"#09090a","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a5a","accent2":"#ffffff","taxiway":"#ff5a4a","routeFwd":"#6fb0ff"}},{"id":"emirates","name":"Emirates","note":"Charcoal, red and gold","colours":{"bg":"#1a1614","bgDeep":"#100d0c","panel":"#272120","border":"#4d4136","text":"#f6f1ea","textDim":"#b9ab98","accent":"#d71921","accentText":"#ffffff","button":"#372e2b","buttonText":"#ffffff","input":"#120f0e","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a6e","accent2":"#c9a56a","taxiway":"#c9a56a","routeFwd":"#7ab6ff"}},{"id":"klm","name":"KLM","note":"Royal blue and sky blue","colours":{"bg":"#04204a","bgDeep":"#021632","panel":"#0a3068","border":"#1b5aa8","text":"#ffffff","textDim":"#a9c7e8","accent":"#00a1de","accentText":"#00203f","button":"#14407f","buttonText":"#ffffff","input":"#031a3c","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677","accent2":"#7fd6ff","taxiway":"#00a1de","routeFwd":"#9ad4ff"}},{"id":"sia","name":"Singapore Airlines","note":"Navy and gold","colours":{"bg":"#031637","bgDeep":"#020e24","panel":"#072a63","border":"#1a4690","text":"#ffffff","textDim":"#a8b9d8","accent":"#f99f1c","accentText":"#031637","button":"#10388a","buttonText":"#ffffff","input":"#02112b","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677","accent2":"#f9c46a","routeFwd":"#7fb6ff"}},{"id":"airfrance","name":"Air France","note":"Navy with the tricolour red","colours":{"bg":"#00163d","bgDeep":"#000e29","panel":"#00255a","border":"#143f82","text":"#ffffff","textDim":"#a9b9d8","accent":"#e1000f","accentText":"#ffffff","button":"#0c3478","buttonText":"#ffffff","input":"#00112f","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a74","accent2":"#6aa0ff","taxiway":"#ff4a55","routeFwd":"#7fb0ff"}},{"id":"ryanair","name":"Ryanair","note":"Bright blue and yellow","colours":{"bg":"#05205f","bgDeep":"#031542","panel":"#0a3180","border":"#2050b4","text":"#ffffff","textDim":"#b3c4ee","accent":"#f1c933","accentText":"#05205f","button":"#144098","buttonText":"#ffffff","input":"#041a50","good":"#4cd18a","warn":"#f1c933","bad":"#ff6677","accent2":"#f1c933","routeFwd":"#8dc0ff"}},{"id":"easyjet","name":"easyJet","note":"Charcoal and orange","colours":{"bg":"#1c1c1c","bgDeep":"#111111","panel":"#2a2a2a","border":"#474747","text":"#ffffff","textDim":"#b5b5b5","accent":"#ff6600","accentText":"#111111","button":"#3a3a3a","buttonText":"#ffffff","input":"#131313","good":"#4cd18a","warn":"#ffd37a","bad":"#ff5c6c","accent2":"#ffa466","taxiway":"#ff6600","routeFwd":"#6fb0ff"}},{"id":"qatar","name":"Qatar Airways","note":"Burgundy and muted gold","colours":{"bg":"#2a0415","bgDeep":"#1c020e","panel":"#3d0a24","border":"#6b1a3f","text":"#f7eef2","textDim":"#c9a5b5","accent":"#c8a165","accentText":"#2a0415","button":"#541030","buttonText":"#ffffff","input":"#1f030f","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a8a","accent2":"#e6c991","taxiway":"#c8a165","routeFwd":"#8fb4ff"}}];
 /* ---- core/core.js ---- */
 // Core: constants, sim access wrappers, logging, DOM helper, heartbeat, toasts.
 // Nothing here touches the DOM or starts timers at load time (so node tests can load the bundle).
@@ -151,22 +152,22 @@ PS.clear = function (el) { while (el.firstChild) el.removeChild(el.firstChild); 
 // ---- formatting ----
 PS.fmt = {
   num: function (v, dp) {
-    if (typeof v !== 'number' || !isFinite(v)) return '—';
+    if (typeof v !== 'number' || !isFinite(v)) return '-';
     return v.toFixed(dp === undefined ? 2 : dp);
   },
   value: function (v) {
-    if (v === undefined || v === null) return '—';
+    if (v === undefined || v === null) return '-';
     if (typeof v === 'number') return isFinite(v) ? String(Math.round(v * 10000) / 10000) : String(v);
     if (typeof v === 'boolean') return v ? 'true' : 'false';
     if (typeof v === 'object') { try { return JSON.stringify(v); } catch (e) { return String(v); } }
     return String(v);
   },
   dist: function (m) {
-    if (typeof m !== 'number' || !isFinite(m)) return '—';
+    if (typeof m !== 'number' || !isFinite(m)) return '-';
     return m >= 1000 ? (m / 1000).toFixed(2) + ' km' : Math.round(m) + ' m';
   },
   seconds: function (s) {
-    if (typeof s !== 'number' || !isFinite(s)) return '—';
+    if (typeof s !== 'number' || !isFinite(s)) return '-';
     return s >= 120 ? Math.round(s / 60) + ' min' : Math.round(s) + ' s';
   }
 };
@@ -630,66 +631,11 @@ PS.theme = (function () {
   function contrast(a, b) { var la = luminance(a), lb = luminance(b); return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05); }
 
   // ---- the themes ----
-  // Page roles are required; map roles are optional (filled from the page roles).
-  var THEMES = [
-    { id: 'default', name: 'Push Planner', note: 'The original dark theme with amber', p: {
-      bg: '#131c24', bgDeep: '#0e151b', panel: '#1b2630', border: '#2a3a47', text: '#dfe7ee', textDim: '#8aa0b2', accent: '#f0a830', accentText: '#131c24',
-      button: '#2a3a47', buttonText: '#eef4f8', input: '#0f171e', good: '#4cd18a', warn: '#ffd37a', bad: '#ff5c6c', accent2: '#34d2c8',
-      runway: '#8aa3b8', pathOther: '#4d6275', routeBack: '#ffffff', routeFwd: '#5aa8ff', routeDone: '#4d6275', pin: '#e8f0f6', pinEnd: '#ff9f43', traffic: '#ff5c5c', handle: '#ffe14d', outline: '#0b1116', mapText: '#6f8294' } },
-    { id: 'contrast', name: 'High contrast', note: 'Black and white with strong colours', p: {
-      bg: '#000000', bgDeep: '#000000', panel: '#0c0c0c', border: '#8a8a8a', text: '#ffffff', textDim: '#d2d2d2', accent: '#ffd400', accentText: '#000000',
-      button: '#262626', buttonText: '#ffffff', input: '#000000', good: '#00ff7f', warn: '#ffd400', bad: '#ff4545', accent2: '#00e5ff', routeFwd: '#4da6ff', mapGrid: '#6a6a6a', mapText: '#d2d2d2', outline: '#000000' } },
-    { id: 'night', name: 'Night (red)', note: 'Dim reds that keep night vision', p: {
-      bg: '#0c0202', bgDeep: '#070101', panel: '#170505', border: '#421212', text: '#e8665a', textDim: '#b04a40', accent: '#ff3b2f', accentText: '#120000',
-      button: '#2b0c0c', buttonText: '#ff8a7a', input: '#080101', good: '#d9803a', warn: '#ffa060', bad: '#ff2a2a', accent2: '#c0392b',
-      routeBack: '#ff9a8a', routeFwd: '#c0392b', routeDone: '#5a2420', runway: '#b4574c', pathOther: '#5a2420', pin: '#ff8a7a', pinEnd: '#ffa060', traffic: '#ff6a5a', handle: '#ffa060', outline: '#060000' } },
-    { id: 'day', name: 'Daylight', note: 'Light, for a bright cockpit', p: {
-      bg: '#eef2f6', bgDeep: '#d9e1e8', panel: '#ffffff', border: '#c0ccd6', text: '#1b2630', textDim: '#566678', accent: '#c46a00', accentText: '#ffffff',
-      button: '#e1e8ee', buttonText: '#1b2630', input: '#f7f9fb', good: '#17854e', warn: '#8f6200', bad: '#c62f3d', accent2: '#0e8f89',
-      mapBg: '#f7f9fb', mapGrid: '#c0ccd6', mapText: '#566678', taxiway: '#c46a00', runway: '#566678', pathOther: '#9aa8b4', routeBack: '#1b2630', routeFwd: '#1565c0', routeBad: '#c62f3d',
-      routeDone: '#a3b0bb', aircraft: '#17854e', pin: '#1b2630', pinEnd: '#e06a00', traffic: '#c62f3d', handle: '#b8860b', outline: '#ffffff' } },
-
-    { id: 'delta', name: 'Delta', note: 'Navy and red', p: {
-      bg: '#0a1f3c', bgDeep: '#06142a', panel: '#0f2b52', border: '#1d4580', text: '#f2f5f9', textDim: '#9db2cf', accent: '#e01933', accentText: '#ffffff',
-      button: '#16376a', buttonText: '#ffffff', input: '#081a33', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6677', accent2: '#7fb6ff', routeFwd: '#6fb0ff', taxiway: '#e01933' } },
-    { id: 'ba', name: 'British Airways', note: 'Speedbird navy, red and silver', p: {
-      bg: '#06132e', bgDeep: '#040d20', panel: '#0c2152', border: '#1f4290', text: '#f4f6fb', textDim: '#a7b6d4', accent: '#eb2226', accentText: '#ffffff',
-      button: '#12306b', buttonText: '#ffffff', input: '#050f26', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6a6e', accent2: '#c8ccd4', taxiway: '#d6d9e0', routeFwd: '#7aa8ff' } },
-    { id: 'lufthansa', name: 'Lufthansa', note: 'Deep blue with the crane yellow', p: {
-      bg: '#0a1544', bgDeep: '#060e30', panel: '#102060', border: '#263d8c', text: '#f5f6fb', textDim: '#a6b0d8', accent: '#ffad00', accentText: '#05164d',
-      button: '#1a2c7c', buttonText: '#ffffff', input: '#080f36', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6677', accent2: '#ffad00', routeFwd: '#7fb0ff' } },
-    { id: 'airnz', name: 'Air New Zealand', note: 'Black and white with koru teal', p: {
-      bg: '#0d0d0d', bgDeep: '#000000', panel: '#1a1a1a', border: '#3c3c3c', text: '#ffffff', textDim: '#a8a8a8', accent: '#1fb5ac', accentText: '#000000',
-      button: '#2a2a2a', buttonText: '#ffffff', input: '#080808', good: '#4cd18a', warn: '#ffd37a', bad: '#ff5c6c', accent2: '#8be0da', taxiway: '#1fb5ac', routeFwd: '#6fc4ff' } },
-    { id: 'eurowings', name: 'Eurowings', note: 'Aubergine and magenta', p: {
-      bg: '#1d0a2e', bgDeep: '#14061f', panel: '#2b1243', border: '#4b2472', text: '#fbf4fa', textDim: '#c4a4d0', accent: '#e6007e', accentText: '#ffffff',
-      button: '#3e1b5e', buttonText: '#ffffff', input: '#120519', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6a8a', accent2: '#ff7ac0', taxiway: '#ff7ac0', routeFwd: '#8fb4ff' } },
-
-    { id: 'qantas', name: 'Qantas', note: 'Kangaroo red on black', p: {
-      bg: '#0e0e10', bgDeep: '#070708', panel: '#1b1b1f', border: '#3d2c2f', text: '#ffffff', textDim: '#b3a9aa', accent: '#e40000', accentText: '#ffffff',
-      button: '#2b2224', buttonText: '#ffffff', input: '#09090a', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6a5a', accent2: '#ffffff', taxiway: '#ff5a4a', routeFwd: '#6fb0ff' } },
-    { id: 'emirates', name: 'Emirates', note: 'Charcoal, red and gold', p: {
-      bg: '#1a1614', bgDeep: '#100d0c', panel: '#272120', border: '#4d4136', text: '#f6f1ea', textDim: '#b9ab98', accent: '#d71921', accentText: '#ffffff',
-      button: '#372e2b', buttonText: '#ffffff', input: '#120f0e', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6a6e', accent2: '#c9a56a', taxiway: '#c9a56a', routeFwd: '#7ab6ff' } },
-    { id: 'klm', name: 'KLM', note: 'Royal blue and sky blue', p: {
-      bg: '#04204a', bgDeep: '#021632', panel: '#0a3068', border: '#1b5aa8', text: '#ffffff', textDim: '#a9c7e8', accent: '#00a1de', accentText: '#00203f',
-      button: '#14407f', buttonText: '#ffffff', input: '#031a3c', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6677', accent2: '#7fd6ff', taxiway: '#00a1de', routeFwd: '#9ad4ff' } },
-    { id: 'sia', name: 'Singapore Airlines', note: 'Navy and gold', p: {
-      bg: '#031637', bgDeep: '#020e24', panel: '#072a63', border: '#1a4690', text: '#ffffff', textDim: '#a8b9d8', accent: '#f99f1c', accentText: '#031637',
-      button: '#10388a', buttonText: '#ffffff', input: '#02112b', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6677', accent2: '#f9c46a', routeFwd: '#7fb6ff' } },
-    { id: 'airfrance', name: 'Air France', note: 'Navy with the tricolour red', p: {
-      bg: '#00163d', bgDeep: '#000e29', panel: '#00255a', border: '#143f82', text: '#ffffff', textDim: '#a9b9d8', accent: '#e1000f', accentText: '#ffffff',
-      button: '#0c3478', buttonText: '#ffffff', input: '#00112f', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6a74', accent2: '#6aa0ff', taxiway: '#ff4a55', routeFwd: '#7fb0ff' } },
-    { id: 'ryanair', name: 'Ryanair', note: 'Bright blue and yellow', p: {
-      bg: '#05205f', bgDeep: '#031542', panel: '#0a3180', border: '#2050b4', text: '#ffffff', textDim: '#b3c4ee', accent: '#f1c933', accentText: '#05205f',
-      button: '#144098', buttonText: '#ffffff', input: '#041a50', good: '#4cd18a', warn: '#f1c933', bad: '#ff6677', accent2: '#f1c933', routeFwd: '#8dc0ff' } },
-    { id: 'easyjet', name: 'easyJet', note: 'Charcoal and orange', p: {
-      bg: '#1c1c1c', bgDeep: '#111111', panel: '#2a2a2a', border: '#474747', text: '#ffffff', textDim: '#b5b5b5', accent: '#ff6600', accentText: '#111111',
-      button: '#3a3a3a', buttonText: '#ffffff', input: '#131313', good: '#4cd18a', warn: '#ffd37a', bad: '#ff5c6c', accent2: '#ffa466', taxiway: '#ff6600', routeFwd: '#6fb0ff' } },
-    { id: 'qatar', name: 'Qatar Airways', note: 'Burgundy and muted gold', p: {
-      bg: '#2a0415', bgDeep: '#1c020e', panel: '#3d0a24', border: '#6b1a3f', text: '#f7eef2', textDim: '#c9a5b5', accent: '#c8a165', accentText: '#2a0415',
-      button: '#541030', buttonText: '#ffffff', input: '#1f030f', good: '#4cd18a', warn: '#ffd37a', bad: '#ff6a8a', accent2: '#e6c991', taxiway: '#c8a165', routeFwd: '#8fb4ff' } }
-  ];
+  // Page roles are required; map roles are optional (filled from the page roles). The presets are the JSON files in src/themes/ (built into the bundle as
+  // PS.BUILTIN_THEMES, so there is always a set to use) and the same files are shipped in the package, where loadFiles() reads them at run time.
+  function fromFileShape(t) { return { id: t.id, name: t.name, note: t.note || '', p: t.colours || {}, fromFile: false }; }
+  var THEMES = (PS.BUILTIN_THEMES || []).map(fromFileShape);
+  if (!THEMES.length) THEMES.push({ id: 'default', name: 'Push Planner', note: '', p: { bg: '#131c24', text: '#dfe7ee', accent: '#f0a830' } });
 
   // Fill in the roles a theme left out, from the ones it set.
   function fillRoles(p) {
@@ -718,7 +664,8 @@ PS.theme = (function () {
     return t;
   }
 
-  function byId(id) { for (var i = 0; i < THEMES.length; i++) { if (THEMES[i].id === id) return THEMES[i]; } return THEMES[0]; }
+  function find(id) { for (var i = 0; i < THEMES.length; i++) { if (THEMES[i].id === id) return THEMES[i]; } return null; }
+  function byId(id) { return find(id) || THEMES[0]; }
 
   // ---- the chosen theme and the user's own colours on top of it ----
   var state = { id: 'default', custom: {} };
@@ -730,7 +677,7 @@ PS.theme = (function () {
     try {
       var saved = JSON.parse(window.localStorage.getItem(KEY) || 'null');
       if (saved && typeof saved === 'object') {
-        if (typeof saved.id === 'string') state.id = byId(saved.id).id;
+        if (typeof saved.id === 'string') state.id = saved.id;     // kept even if it is not known yet: it may be a theme file still to be read
         if (saved.custom && typeof saved.custom === 'object') { for (var k in saved.custom) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(saved.custom[k])) state.custom[k] = normalise(saved.custom[k]); } }
       }
     } catch (e) { /* defaults */ }
@@ -756,6 +703,123 @@ PS.theme = (function () {
     for (var i = 0; i < listeners.length; i++) { try { listeners[i](current); } catch (e) { /* a listener must not break the others */ } }
   }
 
+  // ---- slots: your own themes, kept in the app's own storage ----
+  // The page cannot write into the package's files (user1.json ...), so "Save to slot n" keeps the theme in the app's storage; it shows up in the Themes
+  // tab like any other and survives restarts. SLOT_COUNT matches the user1.json to user8.json files, which stay the way to bring a theme in from a file.
+  var SLOT_KEY = 'pushplanner.themeslots', SLOT_COUNT = 8;
+  var slots = {};
+  function loadSlots() {
+    try {
+      var saved = JSON.parse(window.localStorage.getItem(SLOT_KEY) || '{}');
+      for (var n = 1; n <= SLOT_COUNT; n++) {
+        var e = saved[n];
+        if (e && typeof e === 'object' && e.colours && typeof e.colours === 'object' && isHex(e.colours.bg) && isHex(e.colours.text)) {
+          var cols = {}, k;
+          for (k in e.colours) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(e.colours[k])) cols[k] = normalise(e.colours[k]); }
+          slots[n] = { name: typeof e.name === 'string' && e.name ? e.name.slice(0, 30) : 'Slot ' + n, colours: cols };
+        }
+      }
+    } catch (e) { /* none saved */ }
+  }
+  function saveSlots() { try { window.localStorage.setItem(SLOT_KEY, JSON.stringify(slots)); } catch (e) { /* kept for this session only */ } }
+  // The saved slots as entries at the end of THEMES (rebuilt whenever they or the file themes change).
+  function refreshSlots() {
+    for (var i = THEMES.length - 1; i >= 0; i--) { if (THEMES[i].fromSlot) THEMES.splice(i, 1); }
+    for (var n = 1; n <= SLOT_COUNT; n++) {
+      if (slots[n]) THEMES.push({ id: 'slot' + n, name: slots[n].name, note: 'Saved in slot ' + n, p: slots[n].colours, fromFile: false, fromSlot: n });
+    }
+  }
+
+  // ---- theme files in the package ----
+  // The package ships the presets as files (themes/index.json lists them) which are read here when the app starts: what is in them wins over the built-in
+  // copy of the same id, and a file with a new id adds a theme. So a theme can be added or changed by editing the files, no rebuild of the app.
+  // A theme file is { "id": "my-theme", "name": "My theme", "note": "...", "colours": { "bg": "#112233", ... } } (roles as on the My colours tab; leave out
+  // the ones you do not care about). It needs a valid bg and text at least. index.json is { "themes": ["id", ...] } (an entry may also be "file.json").
+  var files = { state: 'idle', names: [], empty: 0, base: '', listed: 0, loaded: 0, added: 0, replaced: 0, failed: [], at: 0 };
+  var ID_RE = /^[a-z0-9][a-z0-9_-]{0,40}$/i;
+
+  function validateThemeFile(t) {
+    if (!t || typeof t !== 'object') return 'not an object';
+    if (typeof t.id !== 'string' || !ID_RE.test(t.id)) return 'needs an "id" of letters, digits, - or _';
+    var cols = t.colours || t.colors;
+    if (!cols || typeof cols !== 'object') return 'needs a "colours" object';
+    var n = 0, k;
+    for (k in cols) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(cols[k])) n++; }
+    if (!isHex(cols.bg) || !isHex(cols.text)) return 'needs a valid "bg" and "text" colour';
+    return n < 3 ? 'has hardly any valid colours' : '';
+  }
+  // list: [{ file, text }] (text is the file's contents, or error is set). Returns { added, replaced, failed: [{ file, why }] }.
+  function ingest(list) {
+    var res = { added: 0, replaced: 0, empty: 0, failed: [] };
+    list.forEach(function (it) {
+      if (it.error) { res.failed.push({ file: it.file, why: it.error }); return; }
+      var t;
+      try { t = JSON.parse(it.text); } catch (e) { res.failed.push({ file: it.file, why: 'not valid JSON' }); return; }
+      if (t && t.empty === true) { res.empty++; return; }        // a free slot (user1.json ...): nothing to load yet
+      var why = validateThemeFile(t);
+      if (why) { res.failed.push({ file: it.file, why: why }); return; }
+      var cols = {}, k, src = t.colours || t.colors;
+      for (k in src) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(src[k])) cols[k] = normalise(src[k]); }
+      var entry = { id: t.id, name: typeof t.name === 'string' && t.name ? t.name : t.id, note: typeof t.note === 'string' ? t.note : '', p: cols, fromFile: true }, existing = find(t.id);
+      if (existing) { THEMES[THEMES.indexOf(existing)] = entry; res.replaced++; } else { THEMES.push(entry); res.added++; }
+    });
+    refreshSlots();
+    return res;
+  }
+  function themeBase() { return PS.global.__themeBase || ('coui://html_ui/efb_ui/efb_apps/' + PS.INTERNAL_NAME + '/themes'); }
+  function httpGet(url, cb) {
+    var done = false;
+    function finish(err, text) { if (done) return; done = true; cb(err, text); }
+    try {
+      var x = new XMLHttpRequest();
+      x.open('GET', url + (url.indexOf('?') < 0 ? '?' : '&') + 't=' + Date.now(), true);
+      x.onreadystatechange = function () {
+        if (x.readyState !== 4) return;
+        var ok = (x.status === 200 || x.status === 0) && typeof x.responseText === 'string' && x.responseText.length > 0;
+        finish(ok ? null : 'could not be read (status ' + x.status + ')', x.responseText);
+      };
+      x.onerror = function () { finish('could not be read (network error)'); };
+      x.send();
+      setTimeout(function () { finish('timed out'); }, 6000);
+    } catch (e) { finish(PS.errText ? PS.errText(e) : String(e)); }
+  }
+  function loadFiles(done) {
+    if (typeof XMLHttpRequest === 'undefined') { files.state = 'failed'; files.failed = [{ file: 'index.json', why: 'no XMLHttpRequest here' }]; if (done) done(files); return; }
+    files = { state: 'loading', names: [], empty: 0, base: themeBase(), listed: 0, loaded: 0, added: 0, replaced: 0, failed: [], at: Date.now() };
+    PS.log('theme', 'reading theme files from ' + files.base + '/index.json');
+    httpGet(files.base + '/index.json', function (err, text) {
+      var names = null;
+      if (!err) { try { var idx = JSON.parse(text); if (idx && Array.isArray(idx.themes)) names = idx.themes; else err = 'has no "themes" list'; } catch (e) { err = 'is not valid JSON'; } }
+      if (err || !names) {
+        files.state = 'failed'; files.failed = [{ file: 'index.json', why: err || 'empty' }];
+        PS.log('theme', 'theme files not read: index.json ' + files.failed[0].why + ' (the built-in themes are used)');
+        notify(done); return;
+      }
+      files.listed = names.length; files.names = names.slice();
+      var got = [], left = names.length;
+      if (!left) { finishLoad(got, done); return; }
+      names.forEach(function (n, i) {
+        var file = String(n).replace(/\.json$/i, '') + '.json';
+        httpGet(files.base + '/' + file, function (e2, t2) {
+          got[i] = e2 ? { file: file, error: e2 } : { file: file, text: t2 };
+          if (--left === 0) finishLoad(got, done);
+        });
+      });
+    });
+  }
+  function finishLoad(got, done) {
+    var r = ingest(got);
+    files.empty = r.empty; files.loaded = got.length - r.failed.length - r.empty; files.added = r.added; files.replaced = r.replaced; files.failed = r.failed; files.state = 'done';
+    PS.log('theme', 'index.json names ' + files.names.length + ' theme(s): ' + files.names.join(', '));
+    PS.log('theme', 'theme files: ' + files.loaded + ' of ' + (files.listed - files.empty) + ' read, ' + files.empty + ' free slot(s) (' + r.added + ' new, ' + r.replaced + ' replaced the built-in)' + (r.failed.length ? '; failed: ' + r.failed.map(function (f) { return f.file + ' ' + f.why; }).join(', ') : ''));
+    // the saved theme may be one of the files: look again now they are in (and fall back if it is gone)
+    if (!find(state.id)) { PS.log('theme', 'the saved theme "' + state.id + '" is not available: using ' + THEMES[0].name); state.id = THEMES[0].id; state.custom = {}; save(); }
+    notify(done);
+  }
+  function notify(done) { apply(); if (done) done(files); }
+
+  loadSlots();
+  refreshSlots();
   load();
   resolve();
 
@@ -767,7 +831,28 @@ PS.theme = (function () {
     c: function (role) { return (current || resolve())[role] || '#ff00ff'; },
     all: function () { return current || resolve(); },
     state: function () { return state; },
-    selectedId: function () { return state.id; },
+    SLOT_COUNT: SLOT_COUNT,
+    slotInfo: function (n) { var e = slots[n]; return { n: n, filled: !!e, name: e ? e.name : '' }; },
+    // Keep the colours in use now as slot n (name is trimmed to 30 characters), and switch to it.
+    saveSlot: function (n, name) {
+      n = Number(n);
+      if (!(n >= 1 && n <= SLOT_COUNT)) return false;
+      var nm = String(name || '').replace(/^\s+|\s+$/g, '').slice(0, 30) || 'My theme';
+      slots[n] = { name: nm, colours: palette() };
+      saveSlots(); refreshSlots();
+      state.id = 'slot' + n; state.custom = {}; save(); apply();
+      return true;
+    },
+    clearSlot: function (n) {
+      n = Number(n);
+      if (!slots[n]) return false;
+      delete slots[n]; saveSlots(); refreshSlots();
+      if (state.id === 'slot' + n) { state.id = THEMES[0].id; state.custom = {}; save(); }
+      apply();
+      return true;
+    },
+    loadFiles: loadFiles, ingest: ingest, validateThemeFile: validateThemeFile, fileStatus: function () { return files; }, themeBase: themeBase,
+    selectedId: function () { return find(state.id) ? state.id : THEMES[0].id; },
     // The theme's own colour for a role (ignoring the user's changes), to reset to.
     themeColour: function (role) { return palette(state.id, {})[role]; },
     isChanged: function (role) { return state.custom[role] !== undefined; },
@@ -779,7 +864,7 @@ PS.theme = (function () {
     resetAll: function () { state.custom = {}; save(); apply(); },
     onChange: function (fn) { listeners.push(fn); },
     // A theme as text to share, and back. Only roles that differ from the base theme are written.
-    exportText: function () { return JSON.stringify({ app: 'PushPlanner', theme: state.id, colours: palette() }, null, 1); },
+    exportText: function () { return JSON.stringify({ app: 'PushPlanner', id: 'my-theme', name: 'My theme', note: 'Saved from Push Planner', theme: state.id, colours: palette() }, null, 1); },
     importText: function (text) {
       var data;
       try { data = JSON.parse(text); } catch (e) { return { ok: false, why: 'That is not valid JSON.' }; }
@@ -788,7 +873,7 @@ PS.theme = (function () {
       var next = {}, n = 0, k;
       for (k in cols) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(cols[k])) { next[k] = normalise(cols[k]); n++; } }
       if (!n) return { ok: false, why: 'None of the colours in it are ones this app knows.' };
-      if (data.theme && typeof data.theme === 'string') state.id = byId(data.theme).id;
+      if (data.theme && typeof data.theme === 'string' && find(data.theme)) state.id = data.theme;
       state.custom = next; save(); apply();
       return { ok: true, count: n };
     },
@@ -930,9 +1015,9 @@ PS.ui = {
     fmt = fmt || PS.fmt.dist;
     var idx = Math.max(0, steps.indexOf(value));
     var label = PS.h('span', { class: 'ps-step-label', text: fmt(steps[idx]) });
-    function go(delta, which) {
+    function go(delta, which, how) {
       var next = Math.max(0, Math.min(steps.length - 1, idx + delta));
-      if (tag) PS.log(tag, 'button pressed (' + labels[which] + '): ' + fmt(steps[idx]) + ' -> ' + fmt(steps[next]));
+      if (tag) PS.log(tag, (how || 'button pressed (' + labels[which] + ')') + ': ' + fmt(steps[idx]) + ' -> ' + fmt(steps[next]));
       if (next === idx) return;
       idx = next; label.textContent = fmt(steps[idx]);
       if (onchange) onchange(steps[idx]);
@@ -941,7 +1026,35 @@ PS.ui = {
       zoomIcons ? PS.ui.iconButton('zoomOut', '', function () { go(1, 0); }) : PS.ui.button(labels[0], function () { go(invert ? 1 : -1, 0); }),
       label,
       zoomIcons ? PS.ui.iconButton('zoomIn', '', function () { go(-1, 1); }) : PS.ui.button(labels[1], function () { go(invert ? -1 : 1, 1); }));
-    return { el: el, get: function () { return steps[idx]; }, set: function (v2) { idx = Math.max(0, steps.indexOf(v2)); label.textContent = fmt(steps[idx]); } };
+    // zoom(+1) zooms in (a smaller range, for a stepper made with `invert`), zoom(-1) zooms out: for the mouse wheel
+    return { el: el, zoom: function (dir, how) { go(dir > 0 ? -1 : 1, dir > 0 ? 1 : 0, how); }, get: function () { return steps[idx]; }, set: function (v2) { idx = Math.max(0, steps.indexOf(v2)); label.textContent = fmt(steps[idx]); } };
+  },
+  // Mouse wheel and trackpad scrolling turned into zoom steps: a notch (about 100) is one step, small trackpad deltas add up to one. Returns a function
+  // (deltaY, deltaMode) -> -1 (scroll up: zoom in), +1 (scroll down: zoom out) or 0 for no step yet.
+  wheelAccum: function () {
+    var acc = 0, NOTCH = 50;
+    return function (deltaY, deltaMode) {
+      var d = Number(deltaY) || 0;
+      if (deltaMode === 1) d *= 33; else if (deltaMode === 2) d *= 400;     // lines or pages
+      acc += d;
+      if (acc <= -NOTCH) { acc = 0; return -1; }
+      if (acc >= NOTCH) { acc = 0; return 1; }
+      return 0;
+    };
+  },
+  // Zoom with the wheel over `el` (a canvas): cb(dir, event) with dir +1 = zoom in, -1 = zoom out. The page does not scroll while the pointer is over it.
+  wheelZoom: function (el, cb) {
+    var accum = PS.ui.wheelAccum(), sawWheel = false, logged = false;
+    function handle(e, deltaY, mode) {
+      if (e.preventDefault) e.preventDefault();
+      if (e.stopPropagation) e.stopPropagation();
+      if (!logged) { logged = true; PS.log('ui', 'map wheel event received (deltaY ' + Math.round(deltaY) + ', mode ' + mode + '): zooming with the wheel works here'); }
+      var step = accum(deltaY, mode);
+      if (step) cb(-step, e);
+    }
+    el.addEventListener('wheel', function (e) { sawWheel = true; handle(e, e.deltaY, e.deltaMode); }, false);
+    // older engines only send mousewheel (wheelDelta is the other way round and in steps of 120); skip it once real wheel events arrive
+    el.addEventListener('mousewheel', function (e) { if (!sawWheel) handle(e, -(e.wheelDelta || 0) * 0.8, 0); }, false);
   },
   // Segmented toggle. options: [{value,label}], returns { el, get(), set(v) }
   toggle: function (options, value, onchange) {
@@ -1705,10 +1818,10 @@ PS.planner = (function () {
     }
     // A single run that turns through most of a circle or more is a loop, however wide its arcs.
     var turned = pathTurnDeg(seg.points);
-    if (turned > LOOP_TURN_DEG) why.push('its path turns ' + Math.round(turned) + '° in total, which is a loop');
+    if (turned > LOOP_TURN_DEG) why.push('its path turns ' + Math.round(turned) + ' deg in total, which is a loop');
     // A leg that starts from a standstill has to swing out if it starts well off the axis.
     if (!(opts && opts.ignoreStartOff) && seg.startOffDeg > HARD_START_OFF_DEG) {
-      why.push('it starts ' + Math.round(seg.startOffDeg) + '° away from the way the aircraft is pointing');
+      why.push('it starts ' + Math.round(seg.startOffDeg) + ' deg away from the way the aircraft is pointing');
     }
     if (!why.length) return null;
     return 'The tug may not be able to make this ' + (seg.sign < 0 ? 'push back' : 'forward') + ' manoeuvre: ' + why.join(' and ') + '. Move a pin further away, or shorten the final straight with the heading handle.';
@@ -2013,7 +2126,7 @@ PS.suggest = (function () {
   // ---- junctions ----
   // Where other taxiways, links or lanes meet the one being pushed to. An aircraft stopped inside a junction (its triangle) blocks it, so end points
   // within JUNCTION_CLEAR_M of one are penalised in the ranking, which moves the end beyond the junction when that costs a little more push.
-  var JUNCTION_JOIN_M = 6, JUNCTION_CLEAR_M = 35, JUNCTION_PEN = 1.5;
+  var JUNCTION_JOIN_M = 6, JUNCTION_CLEAR_M = 35, JUNCTION_PEN = 3, JUNCTION_HARD_M = 18;   // inside JUNCTION_HARD_M is dropped when there are other options
   function junctionsFor(layout, name) {
     layout.junctionCache = layout.junctionCache || {};
     if (layout.junctionCache[name]) return layout.junctionCache[name];
@@ -2084,7 +2197,7 @@ PS.suggest = (function () {
       group: key === LANE_KEY ? 'lane' : (key && isLinkName(key) ? 'link' : 'taxiway'), kind: 'straight',
       id: 'taxi-straight-' + (key === LANE_KEY ? 'lane' : hit.name.replace(/\s+/g, '')) + '-' + Math.round(hit.lat * 1e5),
       title: key === LANE_KEY ? 'Straight back to the apron lane' : (key && isLinkName(key) ? 'Straight back to ' + hit.name : 'Straight back to taxiway ' + hit.name),
-      detail: Math.round(hit.t) + ' m straight back; the nose stays ' + pad3(hdg) + '°',
+      detail: Math.round(hit.t) + ' m straight back; the nose stays ' + pad3(hdg) + ' deg',
       waypoints: P.ensureTerminal([wp])
     };
   }
@@ -2222,7 +2335,7 @@ PS.suggest = (function () {
           turn: { waypoints: wps, costM: cost, pinAdded: false },
           title: groupTitle(name) + ', facing ' + compass(h) + (v.clearOf ? ', clear of ' + v.clearOf : ''),
           detail: Math.round(cost) + ' m: straight back to ' + groupWhere(name) + ', then ' + v.d + ' m along it' + (pins.length > 2 ? ' (round its bend' + (pins.length > 3 ? 's' : '') + ')' : '') +
-            (v.clearOf ? ', ending beyond ' + v.clearOf + " so the link isn't blocked" : '') + '; ends facing ' + pad3(h) + '°'
+            (v.clearOf ? ', ending beyond ' + v.clearOf + " so the link isn't blocked" : '') + '; ends facing ' + pad3(h) + ' deg'
         });
       });
     });
@@ -2253,7 +2366,7 @@ PS.suggest = (function () {
           if (!best || t.costM < best.costM) {
             best = { name: name, lat: ll[0], lon: ll[1], hdg: opp, costM: t.costM, arrivalOffDeg: 0, clean: true, pathOk: true, turn: t,
               title: groupTitle(name) + ', facing ' + compass(Math.round(opp)),
-              detail: Math.round(t.costM) + ' m of push; ends on the centreline heading ' + pad3(Math.round(opp)) + '° along it' + (t.pinAdded ? ', with a turnaround pin to get lined up' : ', curving in to line up') };
+              detail: Math.round(t.costM) + ' m of push; ends on the centreline heading ' + pad3(Math.round(opp)) + ' deg along it' + (t.pinAdded ? ', with a turnaround pin to get lined up' : ', curving in to line up') };
           }
           break;
         }
@@ -2286,7 +2399,7 @@ PS.suggest = (function () {
           if (!best || t.costM < best.costM) {
             best = { name: name, lat: ll[0], lon: ll[1], hdg: hdg, costM: t.costM, arrivalOffDeg: 0, clean: true, pathOk: true, turn: t,
               title: groupTitle(name) + ', pointing ' + compass(hdg),
-              detail: Math.round(t.costM) + ' m: back to ' + groupWhere(name) + ', ending on it turned to point ' + compass(hdg) + ' (' + Math.round(Math.abs(wrap180(hdg - ac.hdgDeg))) + '° from the nose)' + (t.pinAdded ? ', with a turnaround pin' : '') };
+              detail: Math.round(t.costM) + ' m: back to ' + groupWhere(name) + ', ending on it turned to point ' + compass(hdg) + ' (' + Math.round(Math.abs(wrap180(hdg - ac.hdgDeg))) + ' deg from the nose)' + (t.pinAdded ? ', with a turnaround pin' : '') };
           }
           break;      // the longest straight that plans for this position
         }
@@ -2359,7 +2472,7 @@ PS.suggest = (function () {
           seen[skey] = true;
           out.push({
             group: 'connector', kind: 'straight', id: 'taxi-conn-' + skey, title: 'Straight back to the end of the stand connector',
-            detail: Math.round(straightEv.costM) + " m of push to where the stand's lead-in meets the taxiway (no named taxiway here, so this is a guess); the nose stays " + pad3(straightHdg) + '°',
+            detail: Math.round(straightEv.costM) + " m of push to where the stand's lead-in meets the taxiway (no named taxiway here, so this is a guess); the nose stays " + pad3(straightHdg) + ' deg',
             waypoints: P.ensureTerminal([{ id: 'wp-taxi-' + nextId() + '-back', label: 'End position', lat: cur[0], lon: cur[1], seq: 0, terminal: true, headingDeg: straightHdg, headingUser: false, drive: 'auto' }])
           });
         }
@@ -2376,7 +2489,7 @@ PS.suggest = (function () {
           if (t) {
             out.push({
               group: 'connector', kind: 'along', id: 'taxi-conn-' + key, title: 'End of the stand connector, facing ' + compass(hdg),
-              detail: Math.round(t.costM) + " m of push to where the stand's lead-in meets the taxiway (no named taxiway here, so this is a guess); heading " + pad3(hdg) + '°' + (t.pinAdded ? ', with a turnaround pin to get lined up' : ', curving in to line up'),
+              detail: Math.round(t.costM) + " m of push to where the stand's lead-in meets the taxiway (no named taxiway here, so this is a guess); heading " + pad3(hdg) + ' deg' + (t.pinAdded ? ', with a turnaround pin to get lined up' : ', curving in to line up'),
               waypoints: t.waypoints
             });
           }
@@ -2433,6 +2546,7 @@ PS.suggest = (function () {
     names.forEach(function (name) {
       // Best end pin per direction along this taxiway: the cheapest clean one, else the least bad.
       var bestClean = {}, bestAny = {}, misses = [];
+      var honourStats = {};      // per direction: how many end points were checked with the heading set, and how many of them plan cleanly (for the log)
       var cleanOrder = [], anyOrder = [];   // first-insertion order of each map (the original's Map iterates in that order, objects would sort numeric keys)
       function dirKeyOf(c) { return dirKeyOfHdg(c.hdg); }
       var junctions = junctionsFor(layout, name);
@@ -2469,26 +2583,35 @@ PS.suggest = (function () {
       uniq(misses.map(dirKeyOf)).forEach(function (dirKey) {
         if (bestClean[dirKey]) return;
         var cands = misses.filter(function (c) { return dirKeyOf(c) === dirKey && c.pathOk; }).sort(function (x, y) { return x.costM - y.costM; });
+        var rest = misses.filter(function (c) { return dirKeyOf(c) === dirKey && !c.pathOk; });
         // First the cheap check on every end point: does a pin here, with its heading set, plan cleanly with no turnaround pin? (The cost ordering above
         // is of the plain route, which can be far off the one that honours the heading, so all of them are checked.)
-        var originNow = { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg }, direct = null;
-        cands.forEach(function (c) {
+        var originNow = { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg }, direct = null, okCount = 0, checked = cands.length;
+        function consider(c) {
           var hp = honourPlan(originNow, c.lat, c.lon, c.hdg);
+          if (hp) okCount++;
           if (hp && (!direct || hp.costM + junctionPenalty(c.junctionM) < direct.turn.costM + junctionPenalty(direct.junctionM))) direct = extend(c, { costM: hp.costM, arrivalOffDeg: 0, clean: true, pathOk: true, turn: { waypoints: hp.waypoints, costM: hp.costM, pinAdded: false, radiusM: hp.radiusM } });
-        });
-        if (direct) { cleanOrder.push(dirKey); bestClean[dirKey] = direct; return; }
+        }
+        cands.forEach(consider);
+        // End points whose plain route (with no heading set) is poor are looked at only as a way out of a junction, or as a last resort: a pin placed by
+        // hand with its heading set can reach spots the plain route cannot, and these can be clear of the junction.
+        function useDirect() { honourStats[dirKey] = { checked: checked, ok: okCount }; cleanOrder.push(dirKey); bestClean[dirKey] = direct; }
+        if (direct && typeof direct.junctionM === 'number' && direct.junctionM < JUNCTION_CLEAR_M) { checked += rest.length; rest.forEach(consider); }
+        if (direct) { useDirect(); return; }
         var tries = cands.slice(0, TURN_TRIES);
         var bestTurn = null;
         tries.forEach(function (c) {
           var t = evaluateWithTurn(ac, c.lat, c.lon, c.hdg);
           if (t && (!bestTurn || t.costM + junctionPenalty(c.junctionM) < bestTurn.turn.costM + junctionPenalty(bestTurn.junctionM))) bestTurn = extend(c, { costM: t.costM, arrivalOffDeg: 0, clean: true, pathOk: true, turn: t });
         });
-        if (bestTurn) { cleanOrder.push(dirKey); bestClean[dirKey] = bestTurn; }
+        if (bestTurn) { honourStats[dirKey] = { checked: checked, ok: okCount }; cleanOrder.push(dirKey); bestClean[dirKey] = bestTurn; return; }
+        checked += rest.length; rest.forEach(consider);
+        if (direct) useDirect(); else honourStats[dirKey] = { checked: checked, ok: okCount };
       });
       // For the log: per direction, what the sampled end points gave (so a missing option can be explained).
       for (var dk = 0; dk < 8; dk++) {
         var dc = bestClean[dk], da = bestAny[dk], dm = misses.filter(function (c) { return dirKeyOf(c) === dk; }).length;
-        lastDiag.push(groupWhere(name) + ' ' + COMPASS[dk] + ': ' + (dc ? 'clean end point, ' + Math.round(dc.costM) + ' m' + (dc.turn ? ' (curving in' + (dc.turn.pinAdded ? ', turnaround pin' : '') + ', radius ' + Math.round(dc.turn.radiusM || 0) + ' m)' : '')
+        lastDiag.push(groupWhere(name) + ' ' + COMPASS[dk] + ': ' + (dc ? 'clean end point, ' + Math.round(dc.costM) + ' m' + (dc.turn ? ' (curving in' + (dc.turn.pinAdded ? ', turnaround pin' : '') + ', radius ' + Math.round(dc.turn.radiusM || 0) + ' m)' : '') + (typeof dc.junctionM === 'number' && isFinite(dc.junctionM) ? ', ' + Math.round(dc.junctionM) + ' m from the nearest junction' : '') + (honourStats[dk] ? ' [of ' + honourStats[dk].checked + ' end points checked with the heading set, ' + honourStats[dk].ok + ' plan cleanly]' : '')
           : (da ? 'no clean end point; the nearest arrives ' + Math.round(da.arrivalOffDeg) + ' deg off the heading (' + (da.pathOk ? 'path ok' : 'path warns') + '), ' + dm + ' tried with the heading honoured: none workable' : 'no end point on it faces this way within reach')));
       }
       // Push back to the taxiway then along it comes first: per direction the cheapest plain one, and the cheapest that is clear of a link.
@@ -2543,8 +2666,9 @@ PS.suggest = (function () {
         .sort(function (x, y) { return x.score - y.score; })
         .slice(0, limit);
     }
-    // (Room for the compass-pointing options too: they take slots here but are never shown, and must not crowd out a real option.)
-    var namedChosen = pick('taxiway', straightHit ? straightHit.t : undefined, 9);
+    // (No tight cap: a cap of 9 once cut a valid south-facing end on F when taxiway L36 and its many directions filled the list. The filters after this
+    // - arcs, start angle, end spacing, junctions, at most two pointing options - are what keep the list short.)
+    var namedChosen = pick('taxiway', straightHit ? straightHit.t : undefined, MAX_TAXIWAY_CANDIDATES);
     var laneChosen = pick('lane', laneHit ? laneHit.t : undefined, 2);
     var linkChosen = pick('link', linkHit ? linkHit.t : undefined, 4);
 
@@ -2552,12 +2676,12 @@ PS.suggest = (function () {
       var c = o.cand;
       var hdg = Math.round(wrap360(c.hdg));
       var key = c.name === LANE_KEY ? 'lane' : (c.name || 'x').replace(/\s+/g, '');
-      var wps = c.turn ? c.turn.waypoints : P.ensureTerminal([{ id: 'wp-taxi-' + nextId() + '-' + hdg, label: 'End position', lat: c.lat, lon: c.lon, seq: 0, terminal: true, headingDeg: hdg, headingUser: !c.clean, drive: 'auto' }]);
+      var wps = c.turn ? c.turn.waypoints : P.ensureTerminal([{ id: 'wp-taxi-' + nextId() + '-' + hdg, label: 'End position', lat: c.lat, lon: c.lon, seq: 0, terminal: true, headingDeg: hdg, headingUser: true, drive: 'auto' }]);
       return {
         group: kindOf(c.name), kind: c.title && c.title.indexOf(', pointing ') >= 0 ? 'pointing' : 'along',
         id: 'taxi-' + key + '-' + hdg + '-' + Math.round(c.lat * 1e5),
         title: c.title || (groupTitle(c.name) + ', facing ' + compass(hdg) + (c.clean ? '' : ' (tight)')),
-        detail: c.detail || (Math.round(c.costM) + ' m of push; ends on the centreline heading ' + pad3(hdg) + '° along it' + (c.turn ? (c.turn.pinAdded ? ', with a turnaround pin to get lined up' : ', curving in to line up') : '') + (c.clean ? '' : '. The tug may not manage this one: no cleaner end point found')),
+        detail: c.detail || (Math.round(c.costM) + ' m of push; ends on the centreline heading ' + pad3(hdg) + ' deg along it' + (c.turn ? (c.turn.pinAdded ? ', with a turnaround pin to get lined up' : ', curving in to line up') : '') + (c.clean ? '' : '. The tug may not manage this one: no cleaner end point found')),
         waypoints: wps, junctionM: c.junctionM
       };
     }
@@ -2608,6 +2732,7 @@ PS.suggest = (function () {
   //  - an option whose tightest arc is under MIN_ARC_RADIUS_M, or whose first stretch starts more than MAX_START_OFF_DEG off the aircraft's
   //    axis, is left out (the planner accepts down to 60% of the tug radius, which draws as a cramped arc). If that would leave nothing,
   //    the unfiltered list (minus pointing) is used so there is still something to pick.
+  var MAX_TAXIWAY_CANDIDATES = 60;  // candidates carried forward to the filters
   var MAX_END_HEADING_OFF_DEG = 20; // a suggestion has to end facing within this of what its title says
   var MIN_END_SEP_M = 12;          // suggestions have to end at least this far apart
   var MIN_ARC_RADIUS_M = 32;       // the most the Settings value counts for; used when it is not available
@@ -2660,6 +2785,12 @@ PS.suggest = (function () {
       if (clash) f.dropped.push({ s: sg, why: 'it ends within ' + MIN_END_SEP_M + ' m of "' + clash.title + '"' }); else spaced.push(sg);
     });
     kept = spaced;
+    // An end point right inside a junction (its triangle) is dropped, as long as that leaves a choice.
+    var outside = kept.filter(function (sg) { return !(typeof sg.junctionM === 'number' && sg.junctionM < JUNCTION_HARD_M); });
+    if (outside.length >= 2 && outside.length < kept.length) {
+      kept.forEach(function (sg) { if (outside.indexOf(sg) < 0) f.dropped.push({ s: sg, why: 'it ends ' + Math.round(sg.junctionM) + ' m from a junction, inside it' }); });
+      kept = outside;
+    }
     kept.forEach(function (s) { s.detail += '. Tightest arc ' + Math.round(s.tightestRadiusM) + ' m (tug turns at ' + P.PATH_TURN_RADIUS_M + ' m)'; });
     // Everything the suggester found and what became of it, for the log.
     var report = { diag: lastDiag.slice(), found: all.length, kept: kept.map(function (s) { return s.title + ' -> facing ' + Math.round(s.facingDeg) + ', ' + Math.round(s.lengthM) + ' m, ends ' + endAt(s) + junctionNote(s); }),
@@ -2772,10 +2903,10 @@ PS.plan = (function () {
     if (hasFrom) {
       travel = Math.abs(G.angleDiff(best.bearing, chord)) <= Math.abs(G.angleDiff(other, chord)) ? best.bearing : other;
       hdg = reverse ? G.normDeg(travel + 180) : travel;
-      how = (reverse ? 'reversing to it' : 'driving forward to it') + ': the line to the pin is ' + Math.round(chord) + '°, so the tug arrives travelling ' + Math.round(travel) + '° and the nose ends ' + Math.round(hdg) + '°';
+      how = (reverse ? 'reversing to it' : 'driving forward to it') + ': the line to the pin is ' + Math.round(chord) + ' deg, so the tug arrives travelling ' + Math.round(travel) + ' deg and the nose ends ' + Math.round(hdg) + ' deg';
     } else {
       hdg = Math.abs(G.angleDiff(best.bearing, refDeg)) <= Math.abs(G.angleDiff(other, refDeg)) ? best.bearing : other;
-      how = 'by the smaller turn from ' + Math.round(refDeg) + '° (no starting point given)';
+      how = 'by the smaller turn from ' + Math.round(refDeg) + ' deg (no starting point given)';
     }
     var alt = G.normDeg(hdg + 180);
     return { headingDeg: Math.round(G.normDeg(hdg)), otherDeg: Math.round(alt), refDeg: Math.round(G.normDeg(refDeg)), chordDeg: chord === null ? null : Math.round(chord), reverse: reverse, how: how, taxiwayDeg: Math.round(G.normDeg(best.bearing)), name: best.name, distM: best.distM, point: best.point };
@@ -2843,7 +2974,7 @@ PS.plan = (function () {
         var endWp = r.waypoints[r.waypoints.length - 1];
         if (!warn && n === segs.length - 1 && endWp && endWp.headingUser && endWp.headingDeg !== null && endWp.headingDeg !== undefined && isFinite(endWp.headingDeg)) {
           var offEnd = Math.abs(G.angleDiff(g.endHdgDeg, endWp.headingDeg));
-          if (offEnd > 12) warn = 'The route ends facing ' + Math.round(g.endHdgDeg) + '° but the end pin is set to ' + Math.round(endWp.headingDeg) + '°: the turn does not fit at this radius. Move the pin further away, or change its heading.';
+          if (offEnd > 12) warn = 'The route ends facing ' + Math.round(g.endHdgDeg) + ' deg but the end pin is set to ' + Math.round(endWp.headingDeg) + ' deg: the turn does not fit at this radius. Move the pin further away, or change its heading.';
         }
         out.legs.push({ sign: g.sign, lengthM: len, endHdgDeg: g.endHdgDeg, warning: warn, pinIdx: g.pinIdx, tightestRadiusM: g.tightestRadiusM });
         out.totalM += len;
@@ -2862,18 +2993,18 @@ PS.plan = (function () {
     if (sig === lastLogged) return;
     lastLogged = sig;
     var legs = res.legs.map(function (l, n) {
-      return 'leg ' + (n + 1) + ' ' + (l.sign < 0 ? 'back' : 'forward') + ' ' + Math.round(l.lengthM) + ' m, ends ' + Math.round(l.endHdgDeg) + '°, tightest ' + (l.tightestRadiusM ? Math.round(l.tightestRadiusM) + ' m' : '-');
+      return 'leg ' + (n + 1) + ' ' + (l.sign < 0 ? 'back' : 'forward') + ' ' + Math.round(l.lengthM) + ' m, ends ' + Math.round(l.endHdgDeg) + ' deg, tightest ' + (l.tightestRadiusM ? Math.round(l.tightestRadiusM) + ' m' : '-');
     });
     PS.log('plan', 'route: ' + Math.round(res.totalM) + ' m, ' + res.legs.length + ' leg(s), radius ' + Math.round(res.radiusM) + ' m' + (res.adapted ? ' (tightened)' : '') + (res.turnaroundAdded ? ', turnaround pin added' : '') + ' | ' + legs.join('; '));
     res.items.forEach(function (it, k) {
       var w = it.wp, how = w.label === P.TURNAROUND_PIN_LABEL ? 'turnaround pin' : (w.headingUser ? (w.snapped ? 'snapped to ' + (w.snapName ? 'taxiway ' + w.snapName : 'an unnamed taxiway') : 'set by you') : 'auto');
-      PS.log('plan', '  pin ' + (k + 1) + ' (' + w.label + ') at ' + w.lat.toFixed(5) + ', ' + w.lon.toFixed(5) + ': heading ' + (w.headingUser ? Math.round(w.headingDeg) + '° ' : '') + '[' + how + '], planned nose ' + (it.headingDeg === null || it.headingDeg === undefined ? '?' : Math.round(it.headingDeg) + '°'));
+      PS.log('plan', '  pin ' + (k + 1) + ' (' + w.label + ') at ' + w.lat.toFixed(5) + ', ' + w.lon.toFixed(5) + ': heading ' + (w.headingUser ? Math.round(w.headingDeg) + ' deg ' : '') + '[' + how + '], planned nose ' + (it.headingDeg === null || it.headingDeg === undefined ? '?' : Math.round(it.headingDeg) + ' deg'));
     });
     if (res.turnaroundAdded && res.info) PS.log('plan', 'turnaround pin: ' + res.info);
     if (res.warnings.length) {
       res.warnings.forEach(function (w) { PS.log('plan', 'WARNING ' + w); });
-      PS.log('plan', 'pins behind the warning (aircraft at heading ' + Math.round(origin.hdgDeg) + '°): ' + res.waypoints.map(function (w, i) {
-        return (i + 1) + '=' + w.lat.toFixed(5) + ',' + w.lon.toFixed(5) + ' ' + (w.headingUser ? 'heading ' + Math.round(w.headingDeg) + '° (' + (w.snapped ? 'snapped to ' + (w.snapName ? 'taxiway ' + w.snapName : 'an unnamed taxiway') : 'set by you') + ')' : 'auto') + (w.label === P.TURNAROUND_PIN_LABEL ? ' [turnaround]' : '');
+      PS.log('plan', 'pins behind the warning (aircraft at heading ' + Math.round(origin.hdgDeg) + ' deg): ' + res.waypoints.map(function (w, i) {
+        return (i + 1) + '=' + w.lat.toFixed(5) + ',' + w.lon.toFixed(5) + ' ' + (w.headingUser ? 'heading ' + Math.round(w.headingDeg) + ' deg (' + (w.snapped ? 'snapped to ' + (w.snapName ? 'taxiway ' + w.snapName : 'an unnamed taxiway') : 'set by you') + ')' : 'auto') + (w.label === P.TURNAROUND_PIN_LABEL ? ' [turnaround]' : '');
       }).join('; '));
     } else { PS.log('plan', 'route plans without a warning'); }
   }
@@ -4269,7 +4400,7 @@ PS.pages.push({
         var m = PS.plan.snapMiss() || {};
         log('pin ' + (i + 1) + ' not snapped: ' + (m.off ? 'snapping is off in Settings' : (m.noData ? 'no airport data loaded' : (m.nearestM === null || m.nearestM === undefined ? 'no taxiway lines to snap to (' + m.items + ' items, ' + (m.usable || 0) + ' usable)' : 'the nearest taxiway line (' + (m.nearestName || 'unnamed') + ') is ' + Math.round(m.nearestM) + ' m away, over the ' + PS.plan.snapMaxM() + ' m reach'))));
       }
-      if (r) log('pin ' + (i + 1) + ' aligned with ' + (r.name ? 'taxiway ' + r.name : 'the taxiway') + ' (' + Math.round(r.distM) + ' m away, taxiway runs ' + r.taxiwayDeg + '°/' + ((r.taxiwayDeg + 180) % 360) + '°): heading ' + r.headingDeg + '° rather than ' + r.otherDeg + '°. ' + r.how + ' (was pointing ' + r.refDeg + '°). Use Flip if the other way is wanted');
+      if (r) log('pin ' + (i + 1) + ' aligned with ' + (r.name ? 'taxiway ' + r.name : 'the taxiway') + ' (' + Math.round(r.distM) + ' m away, taxiway runs ' + r.taxiwayDeg + ' deg/' + ((r.taxiwayDeg + 180) % 360) + ' deg): heading ' + r.headingDeg + ' deg rather than ' + r.otherDeg + ' deg. ' + r.how + ' (was pointing ' + r.refDeg + ' deg). Use Flip if the other way is wanted');
     }
     function deletePin(i) { PS.plan.remove(i); log('pin ' + (i + 1) + ' deleted; ' + PS.plan.count() + ' left'); planChanged(); }
     function pinHeading(i) {
@@ -4301,7 +4432,7 @@ PS.pages.push({
       pins.forEach(function (p, i) {
         var hd = pinHeading(i);
         pinList.appendChild(h('div', { class: 'ps-pinrow' + (i === sel ? ' on' : '') },
-          h('div', { class: 'ps-pindesc', text: (i === pins.length - 1 ? 'End' : 'Pin ' + (i + 1)) + ': ' + PS.fmt.dist(legs.legs[i].distM) + ' on a bearing of ' + Math.round(legs.legs[i].bearingDeg) + '°, nose ' + (hd === null ? '?' : Math.round(hd) + '°') + (p.headingUser ? ' (set by you)' : ' (auto)') }),
+          h('div', { class: 'ps-pindesc', text: (i === pins.length - 1 ? 'End' : 'Pin ' + (i + 1)) + ': ' + PS.fmt.dist(legs.legs[i].distM) + ' on a bearing of ' + Math.round(legs.legs[i].bearingDeg) + ' deg, nose ' + (hd === null ? '?' : Math.round(hd) + ' deg') + (p.headingUser ? ' (set by you)' : ' (auto)') }),
           h('div', { class: 'ps-btnrow ps-pinbtns' },
             ui.button(i === sel ? 'Selected' : 'Select', function () { PS.plan.select(i); planChanged(); }, 'ps-small ps-ghost'),
             (function () {
@@ -4310,7 +4441,7 @@ PS.pages.push({
               up.disabled = i === 0; down.disabled = i === pins.length - 1;
               return h('span', { class: 'ps-pairbtns' }, up, down);
             })(),
-            ui.iconButton('turnRound', 'Turn round', function () { var cur = pinHeading(i); if (cur !== null && cur !== undefined) { PS.plan.setHeading(i, cur); PS.plan.flip(i); log('pin ' + (i + 1) + ' flipped to ' + PS.plan.list()[i].headingDeg + '°'); planChanged(); } }, 'ps-small ps-ghost'),
+            ui.iconButton('turnRound', 'Turn round', function () { var cur = pinHeading(i); if (cur !== null && cur !== undefined) { PS.plan.setHeading(i, cur); PS.plan.flip(i); log('pin ' + (i + 1) + ' flipped to ' + PS.plan.list()[i].headingDeg + ' deg'); planChanged(); } }, 'ps-small ps-ghost'),
             p.headingUser ? ui.button('Auto heading', function () { PS.plan.resetHeading(i); log('pin ' + (i + 1) + ' heading back to auto'); planChanged(); }, 'ps-small ps-ghost') : null,
             ui.iconButton('trash', 'Delete', function () { deletePin(i); }, 'ps-small ps-ghost'))));
       });
@@ -4376,7 +4507,7 @@ PS.pages.push({
     function inputUp(p) {
       if (!drag) return;
       var d = drag; drag = null;
-      if (d.kind === 'handle') { dropSuggestionHighlight(); showList('pins', 'a pin was rotated'); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); var hs = PS.plan.snapHandle(d.idx); if (hs) log('pin ' + (d.idx + 1) + ' nose lined up with ' + (hs.name ? 'taxiway ' + hs.name : 'the taxiway') + ' (' + Math.round(hs.offDeg) + '° off): heading ' + hs.headingDeg + '°'); planChanged(); return; }
+      if (d.kind === 'handle') { dropSuggestionHighlight(); showList('pins', 'a pin was rotated'); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + ' deg'); var hs = PS.plan.snapHandle(d.idx); if (hs) log('pin ' + (d.idx + 1) + ' nose lined up with ' + (hs.name ? 'taxiway ' + hs.name : 'the taxiway') + ' (' + Math.round(hs.offDeg) + ' deg off): heading ' + hs.headingDeg + ' deg'); planChanged(); return; }
       if (d.kind === 'pin') { if (d.moved) { dropSuggestionHighlight(); showList('pins', 'a pin was moved'); log('pin ' + (d.idx + 1) + ' moved'); if (PS.plan.list()[d.idx] && (PS.plan.list()[d.idx].snapped || !PS.plan.list()[d.idx].headingUser)) snap(d.idx); planChanged(); } return; }
       if (d.moved || !lastView) return;
       // A tap on an AI aircraft reads its details; a tap anywhere else drops a pin.
@@ -4404,6 +4535,17 @@ PS.pages.push({
     canvas.addEventListener('mousemove', function (e) { if (!recentTouch()) inputMove(pointOf(e)); });
     canvas.addEventListener('mouseup', function (e) { if (!recentTouch()) inputUp(pointOf(e)); });
     canvas.addEventListener('mouseleave', function () { if (!recentTouch()) drag = null; });
+    // The wheel zooms, keeping the point under the pointer where it is (the view is re-centred by the difference).
+    ui.wheelZoom(canvas, function (dir, e) {
+      if (!lastView) return;
+      var p = pointOf(e), before = plotRange.get(), under = lastView.fromPx(p[0], p[1]);
+      plotRange.zoom(dir, 'mouse wheel');
+      if (plotRange.get() === before) return;
+      var after = lastView.fromPx(p[0], p[1]);        // the plot was redrawn at the new range around the same centre
+      var shift = PS.geo.toXY(after[0], after[1], under[0], under[1]);
+      pan.x += shift.x; pan.y += shift.y;
+      draw();
+    });
 
     // ---------------- suggested pushes ----------------
     function renderSuggestions() {
@@ -4528,7 +4670,7 @@ PS.pages.push({
       for (var k = 0; k < contacts.length; k++) { if (contacts[k].id === selectedContact) sc = contacts[k]; }
       if (sc) {
         var a = PS.traffic.analyse(own, sc);
-        contactLine.textContent = (sc.title || sc.id) + ': ' + PS.fmt.dist(a.distM) + ' away on a bearing of ' + Math.round(a.bearingDeg) + '°, ' + PS.fmt.num(sc.gsKt, 0) + ' kt, heading ' + Math.round(sc.hdgDeg || 0) + '°, closing ' + PS.fmt.num(a.closingKt, 1) + ' kt';
+        contactLine.textContent = (sc.title || sc.id) + ': ' + PS.fmt.dist(a.distM) + ' away on a bearing of ' + Math.round(a.bearingDeg) + ' deg, ' + PS.fmt.num(sc.gsKt, 0) + ' kt, heading ' + Math.round(sc.hdgDeg || 0) + ' deg, closing ' + PS.fmt.num(a.closingKt, 1) + ' kt';
       } else {
         contactLine.textContent = '';
       }
@@ -4606,6 +4748,7 @@ PS.pages.push({
     var canvas = h('canvas', { class: 'ps-canvas', width: '900', height: '540' });
     var mapRange = ui.stepper(MAP_STEPS, 100, function () { paint(); }, 'push', null, null, true);
     var timer = null, lastPaintAt = 0, lastErr = '';
+    ui.wheelZoom(canvas, function (dir) { mapRange.zoom(dir, 'mouse wheel'); });
 
     var statusBig = h('div', { class: 'ps-big', text: '' });
     var statusSub = h('div', { class: 'ps-kv', text: '' });
@@ -4828,15 +4971,22 @@ PS.colourPanel = function () {
       var tokens = T.derive(T.fillRoles(th.p));
       var card = h('button', { type: 'button', class: 'ps-themecard' + (on ? ' on' : ''), title: th.note, onclick: function () {
         T.select(th.id); PS.log('settings', 'theme: ' + th.name);
-      } }, PS.themePreview(tokens), h('div', { class: 'ps-themename', text: th.name }), h('div', { class: 'ps-themenote', text: th.note }));
+      } }, PS.themePreview(tokens), h('div', { class: 'ps-themename', text: th.name }), h('div', { class: 'ps-themenote', text: (th.fromFile ? 'file: ' : '') + th.note }));
       grid.appendChild(card);
     });
     themesBox.appendChild(grid);
-    themesBox.appendChild(ui.note('Airline themes are inspired by those liveries (approximate colours, not official). Pick one, then change any colour on the My colours tab.'));
+    themesBox.appendChild(ui.note('Airline themes are inspired by those liveries (approximate colours, not official). Pick one, then change any colour on the My colours tab and save it to a slot: slots show here too. Theme files in the package (user1.json to user8.json) show here as well.'));
+    // Theme files in the package: what was read, and a button to read them again (after editing them).
+    var fs = T.fileStatus();
+    var status = fs.state === 'loading' ? 'Reading theme files...'
+      : fs.state === 'done' ? 'Theme files: ' + fs.loaded + ' of ' + (fs.listed - fs.empty) + ' read from the package' + (fs.empty ? ', ' + fs.empty + ' free slots (user1.json to user' + fs.empty + '.json)' : '') + (fs.added ? ', ' + fs.added + ' new' : '') + (fs.failed.length ? '. Not read: ' + fs.failed.map(function (f) { return f.file + ' (' + f.why + ')'; }).join(', ') : '')
+      : fs.state === 'failed' ? 'Theme files could not be read (' + (fs.failed[0] ? fs.failed[0].file + ' ' + fs.failed[0].why : 'unknown') + '): using the built-in themes'
+      : 'Theme files not read yet';
+    themesBox.appendChild(h('div', { class: 'ps-btnrow' }, ui.iconButton('swap', 'Reload theme files', function () { T.loadFiles(); }, 'ps-small ps-ghost'), h('div', { class: 'ps-kv', text: status })));
   }
 
   // ---------- My colours ----------
-  var importArea = null, importMsg = h('div', { class: 'ps-kv', text: '' });
+  var saveMsg = h('div', { class: 'ps-kv', text: '' }), saveName = 'My theme', nameTouched = false;
   function renderCustom() {
     PS.clear(customBox);
     var warns = T.contrastWarnings();
@@ -4865,22 +5015,35 @@ PS.colourPanel = function () {
         }
       });
     });
-    // share / restore
+    // Save the colours in use to one of the slots (kept in the app's storage; they show on the Themes tab and survive restarts).
+    var cur = T.byId(T.selectedId());
+    if (cur.fromSlot && !nameTouched) saveName = cur.name;
+    customBox.appendChild(h('div', { class: 'ps-colgroup', text: 'Save these colours to a slot' }));
+    var nameInput = h('input', { type: 'text', class: 'ps-input ps-themename-input', value: saveName, placeholder: 'Theme name' });
+    nameInput.addEventListener('input', function () { saveName = nameInput.value; nameTouched = true; });
+    customBox.appendChild(h('div', { class: 'ps-btnrow' }, nameInput));
+    var slotRow = h('div', { class: 'ps-btnrow' });
+    for (var n = 1; n <= T.SLOT_COUNT; n++) {
+      (function (slot) {
+        var info = T.slotInfo(slot);
+        // Fixed-size buttons: the slot number on top and the name (cut short if long) underneath, so a long name never changes the layout.
+        var btn = h('button', { type: 'button', class: 'ps-btn ps-small ps-slotbtn' + (info.filled ? '' : ' ps-ghost') + (cur.fromSlot === slot ? ' on' : ''), title: info.filled ? info.name : 'Free slot', onclick: function () {
+          var had = T.slotInfo(slot);
+          T.saveSlot(slot, nameInput.value);
+          nameTouched = false; saveMsg.textContent = (had.filled ? 'Replaced ' : 'Saved to ') + 'slot ' + slot + ' as "' + T.slotInfo(slot).name + '".';
+          PS.log('settings', 'theme saved to slot ' + slot + ' as "' + T.slotInfo(slot).name + '"');
+        } }, h('span', { class: 'ps-slotnum', text: 'Slot ' + slot }), h('span', { class: 'ps-slotname', text: info.filled ? info.name : 'free' }));
+        slotRow.appendChild(btn);
+      })(n);
+    }
+    customBox.appendChild(slotRow);
     var actions = h('div', { class: 'ps-btnrow' },
-      ui.button('Reset all my colours', function () { T.resetAll(); PS.log('settings', 'all custom colours reset'); }, 'ps-small ps-ghost'),
-      ui.button('Copy this theme', function () {
-        var text = T.exportText(), ok = PS.ui.copyText(text);
-        importMsg.textContent = ok ? 'Theme copied: paste it somewhere to keep or share it.' : 'Select the text and copy it.';
-        if (!ok) PS.ui.showText(text, 'Theme (select all and copy)');
-      }, 'ps-small ps-ghost'));
+      ui.button('Reset all my colours', function () { T.resetAll(); PS.log('settings', 'all custom colours reset'); }, 'ps-small ps-ghost'));
+    if (cur.fromSlot) {
+      actions.appendChild(ui.button('Clear slot ' + cur.fromSlot, function () { var nn = cur.fromSlot; T.clearSlot(nn); saveMsg.textContent = 'Slot ' + nn + ' cleared.'; PS.log('settings', 'theme slot ' + nn + ' cleared'); }, 'ps-small ps-ghost'));
+    }
     customBox.appendChild(actions);
-    importArea = h('textarea', { class: 'ps-input ps-import', placeholder: 'Paste a theme here' });
-    customBox.appendChild(importArea);
-    customBox.appendChild(h('div', { class: 'ps-btnrow' }, ui.button('Use pasted theme', function () {
-      var r = T.importText(importArea.value);
-      importMsg.textContent = r.ok ? 'Applied ' + r.count + ' colours.' : r.why;
-      if (r.ok) { importArea.value = ''; PS.log('settings', 'imported a theme (' + r.count + ' colours)'); }
-    }, 'ps-small'), importMsg));
+    customBox.appendChild(saveMsg);
   }
 
   function show(which) {
@@ -5093,6 +5256,7 @@ PS.createViewClass = function (sdk) {
       if (!root || this.shell) return;
       try {
         PS.injectStyle();
+        PS.theme.loadFiles();
         PS.hbStart();
         PS.rafStart();
         this.shell = PS.buildShell(root);

@@ -73,7 +73,7 @@ PS.pages.push({
         var m = PS.plan.snapMiss() || {};
         log('pin ' + (i + 1) + ' not snapped: ' + (m.off ? 'snapping is off in Settings' : (m.noData ? 'no airport data loaded' : (m.nearestM === null || m.nearestM === undefined ? 'no taxiway lines to snap to (' + m.items + ' items, ' + (m.usable || 0) + ' usable)' : 'the nearest taxiway line (' + (m.nearestName || 'unnamed') + ') is ' + Math.round(m.nearestM) + ' m away, over the ' + PS.plan.snapMaxM() + ' m reach'))));
       }
-      if (r) log('pin ' + (i + 1) + ' aligned with ' + (r.name ? 'taxiway ' + r.name : 'the taxiway') + ' (' + Math.round(r.distM) + ' m away, taxiway runs ' + r.taxiwayDeg + '°/' + ((r.taxiwayDeg + 180) % 360) + '°): heading ' + r.headingDeg + '° rather than ' + r.otherDeg + '°. ' + r.how + ' (was pointing ' + r.refDeg + '°). Use Flip if the other way is wanted');
+      if (r) log('pin ' + (i + 1) + ' aligned with ' + (r.name ? 'taxiway ' + r.name : 'the taxiway') + ' (' + Math.round(r.distM) + ' m away, taxiway runs ' + r.taxiwayDeg + ' deg/' + ((r.taxiwayDeg + 180) % 360) + ' deg): heading ' + r.headingDeg + ' deg rather than ' + r.otherDeg + ' deg. ' + r.how + ' (was pointing ' + r.refDeg + ' deg). Use Flip if the other way is wanted');
     }
     function deletePin(i) { PS.plan.remove(i); log('pin ' + (i + 1) + ' deleted; ' + PS.plan.count() + ' left'); planChanged(); }
     function pinHeading(i) {
@@ -105,7 +105,7 @@ PS.pages.push({
       pins.forEach(function (p, i) {
         var hd = pinHeading(i);
         pinList.appendChild(h('div', { class: 'ps-pinrow' + (i === sel ? ' on' : '') },
-          h('div', { class: 'ps-pindesc', text: (i === pins.length - 1 ? 'End' : 'Pin ' + (i + 1)) + ': ' + PS.fmt.dist(legs.legs[i].distM) + ' on a bearing of ' + Math.round(legs.legs[i].bearingDeg) + '°, nose ' + (hd === null ? '?' : Math.round(hd) + '°') + (p.headingUser ? ' (set by you)' : ' (auto)') }),
+          h('div', { class: 'ps-pindesc', text: (i === pins.length - 1 ? 'End' : 'Pin ' + (i + 1)) + ': ' + PS.fmt.dist(legs.legs[i].distM) + ' on a bearing of ' + Math.round(legs.legs[i].bearingDeg) + ' deg, nose ' + (hd === null ? '?' : Math.round(hd) + ' deg') + (p.headingUser ? ' (set by you)' : ' (auto)') }),
           h('div', { class: 'ps-btnrow ps-pinbtns' },
             ui.button(i === sel ? 'Selected' : 'Select', function () { PS.plan.select(i); planChanged(); }, 'ps-small ps-ghost'),
             (function () {
@@ -114,7 +114,7 @@ PS.pages.push({
               up.disabled = i === 0; down.disabled = i === pins.length - 1;
               return h('span', { class: 'ps-pairbtns' }, up, down);
             })(),
-            ui.iconButton('turnRound', 'Turn round', function () { var cur = pinHeading(i); if (cur !== null && cur !== undefined) { PS.plan.setHeading(i, cur); PS.plan.flip(i); log('pin ' + (i + 1) + ' flipped to ' + PS.plan.list()[i].headingDeg + '°'); planChanged(); } }, 'ps-small ps-ghost'),
+            ui.iconButton('turnRound', 'Turn round', function () { var cur = pinHeading(i); if (cur !== null && cur !== undefined) { PS.plan.setHeading(i, cur); PS.plan.flip(i); log('pin ' + (i + 1) + ' flipped to ' + PS.plan.list()[i].headingDeg + ' deg'); planChanged(); } }, 'ps-small ps-ghost'),
             p.headingUser ? ui.button('Auto heading', function () { PS.plan.resetHeading(i); log('pin ' + (i + 1) + ' heading back to auto'); planChanged(); }, 'ps-small ps-ghost') : null,
             ui.iconButton('trash', 'Delete', function () { deletePin(i); }, 'ps-small ps-ghost'))));
       });
@@ -180,7 +180,7 @@ PS.pages.push({
     function inputUp(p) {
       if (!drag) return;
       var d = drag; drag = null;
-      if (d.kind === 'handle') { dropSuggestionHighlight(); showList('pins', 'a pin was rotated'); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); var hs = PS.plan.snapHandle(d.idx); if (hs) log('pin ' + (d.idx + 1) + ' nose lined up with ' + (hs.name ? 'taxiway ' + hs.name : 'the taxiway') + ' (' + Math.round(hs.offDeg) + '° off): heading ' + hs.headingDeg + '°'); planChanged(); return; }
+      if (d.kind === 'handle') { dropSuggestionHighlight(); showList('pins', 'a pin was rotated'); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + ' deg'); var hs = PS.plan.snapHandle(d.idx); if (hs) log('pin ' + (d.idx + 1) + ' nose lined up with ' + (hs.name ? 'taxiway ' + hs.name : 'the taxiway') + ' (' + Math.round(hs.offDeg) + ' deg off): heading ' + hs.headingDeg + ' deg'); planChanged(); return; }
       if (d.kind === 'pin') { if (d.moved) { dropSuggestionHighlight(); showList('pins', 'a pin was moved'); log('pin ' + (d.idx + 1) + ' moved'); if (PS.plan.list()[d.idx] && (PS.plan.list()[d.idx].snapped || !PS.plan.list()[d.idx].headingUser)) snap(d.idx); planChanged(); } return; }
       if (d.moved || !lastView) return;
       // A tap on an AI aircraft reads its details; a tap anywhere else drops a pin.
@@ -208,6 +208,17 @@ PS.pages.push({
     canvas.addEventListener('mousemove', function (e) { if (!recentTouch()) inputMove(pointOf(e)); });
     canvas.addEventListener('mouseup', function (e) { if (!recentTouch()) inputUp(pointOf(e)); });
     canvas.addEventListener('mouseleave', function () { if (!recentTouch()) drag = null; });
+    // The wheel zooms, keeping the point under the pointer where it is (the view is re-centred by the difference).
+    ui.wheelZoom(canvas, function (dir, e) {
+      if (!lastView) return;
+      var p = pointOf(e), before = plotRange.get(), under = lastView.fromPx(p[0], p[1]);
+      plotRange.zoom(dir, 'mouse wheel');
+      if (plotRange.get() === before) return;
+      var after = lastView.fromPx(p[0], p[1]);        // the plot was redrawn at the new range around the same centre
+      var shift = PS.geo.toXY(after[0], after[1], under[0], under[1]);
+      pan.x += shift.x; pan.y += shift.y;
+      draw();
+    });
 
     // ---------------- suggested pushes ----------------
     function renderSuggestions() {
@@ -332,7 +343,7 @@ PS.pages.push({
       for (var k = 0; k < contacts.length; k++) { if (contacts[k].id === selectedContact) sc = contacts[k]; }
       if (sc) {
         var a = PS.traffic.analyse(own, sc);
-        contactLine.textContent = (sc.title || sc.id) + ': ' + PS.fmt.dist(a.distM) + ' away on a bearing of ' + Math.round(a.bearingDeg) + '°, ' + PS.fmt.num(sc.gsKt, 0) + ' kt, heading ' + Math.round(sc.hdgDeg || 0) + '°, closing ' + PS.fmt.num(a.closingKt, 1) + ' kt';
+        contactLine.textContent = (sc.title || sc.id) + ': ' + PS.fmt.dist(a.distM) + ' away on a bearing of ' + Math.round(a.bearingDeg) + ' deg, ' + PS.fmt.num(sc.gsKt, 0) + ' kt, heading ' + Math.round(sc.hdgDeg || 0) + ' deg, closing ' + PS.fmt.num(a.closingKt, 1) + ' kt';
       } else {
         contactLine.textContent = '';
       }

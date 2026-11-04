@@ -65,15 +65,22 @@ PS.colourPanel = function () {
       var tokens = T.derive(T.fillRoles(th.p));
       var card = h('button', { type: 'button', class: 'ps-themecard' + (on ? ' on' : ''), title: th.note, onclick: function () {
         T.select(th.id); PS.log('settings', 'theme: ' + th.name);
-      } }, PS.themePreview(tokens), h('div', { class: 'ps-themename', text: th.name }), h('div', { class: 'ps-themenote', text: th.note }));
+      } }, PS.themePreview(tokens), h('div', { class: 'ps-themename', text: th.name }), h('div', { class: 'ps-themenote', text: (th.fromFile ? 'file: ' : '') + th.note }));
       grid.appendChild(card);
     });
     themesBox.appendChild(grid);
-    themesBox.appendChild(ui.note('Airline themes are inspired by those liveries (approximate colours, not official). Pick one, then change any colour on the My colours tab.'));
+    themesBox.appendChild(ui.note('Airline themes are inspired by those liveries (approximate colours, not official). Pick one, then change any colour on the My colours tab and save it to a slot: slots show here too. Theme files in the package (user1.json to user8.json) show here as well.'));
+    // Theme files in the package: what was read, and a button to read them again (after editing them).
+    var fs = T.fileStatus();
+    var status = fs.state === 'loading' ? 'Reading theme files...'
+      : fs.state === 'done' ? 'Theme files: ' + fs.loaded + ' of ' + (fs.listed - fs.empty) + ' read from the package' + (fs.empty ? ', ' + fs.empty + ' free slots (user1.json to user' + fs.empty + '.json)' : '') + (fs.added ? ', ' + fs.added + ' new' : '') + (fs.failed.length ? '. Not read: ' + fs.failed.map(function (f) { return f.file + ' (' + f.why + ')'; }).join(', ') : '')
+      : fs.state === 'failed' ? 'Theme files could not be read (' + (fs.failed[0] ? fs.failed[0].file + ' ' + fs.failed[0].why : 'unknown') + '): using the built-in themes'
+      : 'Theme files not read yet';
+    themesBox.appendChild(h('div', { class: 'ps-btnrow' }, ui.iconButton('swap', 'Reload theme files', function () { T.loadFiles(); }, 'ps-small ps-ghost'), h('div', { class: 'ps-kv', text: status })));
   }
 
   // ---------- My colours ----------
-  var importArea = null, importMsg = h('div', { class: 'ps-kv', text: '' });
+  var saveMsg = h('div', { class: 'ps-kv', text: '' }), saveName = 'My theme', nameTouched = false;
   function renderCustom() {
     PS.clear(customBox);
     var warns = T.contrastWarnings();
@@ -102,22 +109,35 @@ PS.colourPanel = function () {
         }
       });
     });
-    // share / restore
+    // Save the colours in use to one of the slots (kept in the app's storage; they show on the Themes tab and survive restarts).
+    var cur = T.byId(T.selectedId());
+    if (cur.fromSlot && !nameTouched) saveName = cur.name;
+    customBox.appendChild(h('div', { class: 'ps-colgroup', text: 'Save these colours to a slot' }));
+    var nameInput = h('input', { type: 'text', class: 'ps-input ps-themename-input', value: saveName, placeholder: 'Theme name' });
+    nameInput.addEventListener('input', function () { saveName = nameInput.value; nameTouched = true; });
+    customBox.appendChild(h('div', { class: 'ps-btnrow' }, nameInput));
+    var slotRow = h('div', { class: 'ps-btnrow' });
+    for (var n = 1; n <= T.SLOT_COUNT; n++) {
+      (function (slot) {
+        var info = T.slotInfo(slot);
+        // Fixed-size buttons: the slot number on top and the name (cut short if long) underneath, so a long name never changes the layout.
+        var btn = h('button', { type: 'button', class: 'ps-btn ps-small ps-slotbtn' + (info.filled ? '' : ' ps-ghost') + (cur.fromSlot === slot ? ' on' : ''), title: info.filled ? info.name : 'Free slot', onclick: function () {
+          var had = T.slotInfo(slot);
+          T.saveSlot(slot, nameInput.value);
+          nameTouched = false; saveMsg.textContent = (had.filled ? 'Replaced ' : 'Saved to ') + 'slot ' + slot + ' as "' + T.slotInfo(slot).name + '".';
+          PS.log('settings', 'theme saved to slot ' + slot + ' as "' + T.slotInfo(slot).name + '"');
+        } }, h('span', { class: 'ps-slotnum', text: 'Slot ' + slot }), h('span', { class: 'ps-slotname', text: info.filled ? info.name : 'free' }));
+        slotRow.appendChild(btn);
+      })(n);
+    }
+    customBox.appendChild(slotRow);
     var actions = h('div', { class: 'ps-btnrow' },
-      ui.button('Reset all my colours', function () { T.resetAll(); PS.log('settings', 'all custom colours reset'); }, 'ps-small ps-ghost'),
-      ui.button('Copy this theme', function () {
-        var text = T.exportText(), ok = PS.ui.copyText(text);
-        importMsg.textContent = ok ? 'Theme copied: paste it somewhere to keep or share it.' : 'Select the text and copy it.';
-        if (!ok) PS.ui.showText(text, 'Theme (select all and copy)');
-      }, 'ps-small ps-ghost'));
+      ui.button('Reset all my colours', function () { T.resetAll(); PS.log('settings', 'all custom colours reset'); }, 'ps-small ps-ghost'));
+    if (cur.fromSlot) {
+      actions.appendChild(ui.button('Clear slot ' + cur.fromSlot, function () { var nn = cur.fromSlot; T.clearSlot(nn); saveMsg.textContent = 'Slot ' + nn + ' cleared.'; PS.log('settings', 'theme slot ' + nn + ' cleared'); }, 'ps-small ps-ghost'));
+    }
     customBox.appendChild(actions);
-    importArea = h('textarea', { class: 'ps-input ps-import', placeholder: 'Paste a theme here' });
-    customBox.appendChild(importArea);
-    customBox.appendChild(h('div', { class: 'ps-btnrow' }, ui.button('Use pasted theme', function () {
-      var r = T.importText(importArea.value);
-      importMsg.textContent = r.ok ? 'Applied ' + r.count + ' colours.' : r.why;
-      if (r.ok) { importArea.value = ''; PS.log('settings', 'imported a theme (' + r.count + ' colours)'); }
-    }, 'ps-small'), importMsg));
+    customBox.appendChild(saveMsg);
   }
 
   function show(which) {

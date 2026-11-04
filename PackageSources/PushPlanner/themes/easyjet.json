@@ -1,0 +1,24 @@
+{
+ "id": "easyjet",
+ "name": "easyJet",
+ "note": "Charcoal and orange",
+ "colours": {
+  "bg": "#1c1c1c",
+  "bgDeep": "#111111",
+  "panel": "#2a2a2a",
+  "border": "#474747",
+  "text": "#ffffff",
+  "textDim": "#b5b5b5",
+  "accent": "#ff6600",
+  "accentText": "#111111",
+  "button": "#3a3a3a",
+  "buttonText": "#ffffff",
+  "input": "#131313",
+  "good": "#4cd18a",
+  "warn": "#ffd37a",
+  "bad": "#ff5c6c",
+  "accent2": "#ffa466",
+  "taxiway": "#ff6600",
+  "routeFwd": "#6fb0ff"
+ }
+}

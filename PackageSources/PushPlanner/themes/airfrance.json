@@ -1,0 +1,24 @@
+{
+ "id": "airfrance",
+ "name": "Air France",
+ "note": "Navy with the tricolour red",
+ "colours": {
+  "bg": "#00163d",
+  "bgDeep": "#000e29",
+  "panel": "#00255a",
+  "border": "#143f82",
+  "text": "#ffffff",
+  "textDim": "#a9b9d8",
+  "accent": "#e1000f",
+  "accentText": "#ffffff",
+  "button": "#0c3478",
+  "buttonText": "#ffffff",
+  "input": "#00112f",
+  "good": "#4cd18a",
+  "warn": "#ffd37a",
+  "bad": "#ff6a74",
+  "accent2": "#6aa0ff",
+  "taxiway": "#ff4a55",
+  "routeFwd": "#7fb0ff"
+ }
+}

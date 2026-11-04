@@ -175,7 +175,7 @@ PS.suggest = (function () {
   // ---- junctions ----
   // Where other taxiways, links or lanes meet the one being pushed to. An aircraft stopped inside a junction (its triangle) blocks it, so end points
   // within JUNCTION_CLEAR_M of one are penalised in the ranking, which moves the end beyond the junction when that costs a little more push.
-  var JUNCTION_JOIN_M = 6, JUNCTION_CLEAR_M = 35, JUNCTION_PEN = 1.5;
+  var JUNCTION_JOIN_M = 6, JUNCTION_CLEAR_M = 35, JUNCTION_PEN = 3, JUNCTION_HARD_M = 18;   // inside JUNCTION_HARD_M is dropped when there are other options
   function junctionsFor(layout, name) {
     layout.junctionCache = layout.junctionCache || {};
     if (layout.junctionCache[name]) return layout.junctionCache[name];
@@ -246,7 +246,7 @@ PS.suggest = (function () {
       group: key === LANE_KEY ? 'lane' : (key && isLinkName(key) ? 'link' : 'taxiway'), kind: 'straight',
       id: 'taxi-straight-' + (key === LANE_KEY ? 'lane' : hit.name.replace(/\s+/g, '')) + '-' + Math.round(hit.lat * 1e5),
       title: key === LANE_KEY ? 'Straight back to the apron lane' : (key && isLinkName(key) ? 'Straight back to ' + hit.name : 'Straight back to taxiway ' + hit.name),
-      detail: Math.round(hit.t) + ' m straight back; the nose stays ' + pad3(hdg) + '°',
+      detail: Math.round(hit.t) + ' m straight back; the nose stays ' + pad3(hdg) + ' deg',
       waypoints: P.ensureTerminal([wp])
     };
   }
@@ -384,7 +384,7 @@ PS.suggest = (function () {
           turn: { waypoints: wps, costM: cost, pinAdded: false },
           title: groupTitle(name) + ', facing ' + compass(h) + (v.clearOf ? ', clear of ' + v.clearOf : ''),
           detail: Math.round(cost) + ' m: straight back to ' + groupWhere(name) + ', then ' + v.d + ' m along it' + (pins.length > 2 ? ' (round its bend' + (pins.length > 3 ? 's' : '') + ')' : '') +
-            (v.clearOf ? ', ending beyond ' + v.clearOf + " so the link isn't blocked" : '') + '; ends facing ' + pad3(h) + '°'
+            (v.clearOf ? ', ending beyond ' + v.clearOf + " so the link isn't blocked" : '') + '; ends facing ' + pad3(h) + ' deg'
         });
       });
     });
@@ -415,7 +415,7 @@ PS.suggest = (function () {
           if (!best || t.costM < best.costM) {
             best = { name: name, lat: ll[0], lon: ll[1], hdg: opp, costM: t.costM, arrivalOffDeg: 0, clean: true, pathOk: true, turn: t,
               title: groupTitle(name) + ', facing ' + compass(Math.round(opp)),
-              detail: Math.round(t.costM) + ' m of push; ends on the centreline heading ' + pad3(Math.round(opp)) + '° along it' + (t.pinAdded ? ', with a turnaround pin to get lined up' : ', curving in to line up') };
+              detail: Math.round(t.costM) + ' m of push; ends on the centreline heading ' + pad3(Math.round(opp)) + ' deg along it' + (t.pinAdded ? ', with a turnaround pin to get lined up' : ', curving in to line up') };
           }
           break;
         }
@@ -448,7 +448,7 @@ PS.suggest = (function () {
           if (!best || t.costM < best.costM) {
             best = { name: name, lat: ll[0], lon: ll[1], hdg: hdg, costM: t.costM, arrivalOffDeg: 0, clean: true, pathOk: true, turn: t,
               title: groupTitle(name) + ', pointing ' + compass(hdg),
-              detail: Math.round(t.costM) + ' m: back to ' + groupWhere(name) + ', ending on it turned to point ' + compass(hdg) + ' (' + Math.round(Math.abs(wrap180(hdg - ac.hdgDeg))) + '° from the nose)' + (t.pinAdded ? ', with a turnaround pin' : '') };
+              detail: Math.round(t.costM) + ' m: back to ' + groupWhere(name) + ', ending on it turned to point ' + compass(hdg) + ' (' + Math.round(Math.abs(wrap180(hdg - ac.hdgDeg))) + ' deg from the nose)' + (t.pinAdded ? ', with a turnaround pin' : '') };
           }
           break;      // the longest straight that plans for this position
         }
@@ -521,7 +521,7 @@ PS.suggest = (function () {
           seen[skey] = true;
           out.push({
             group: 'connector', kind: 'straight', id: 'taxi-conn-' + skey, title: 'Straight back to the end of the stand connector',
-            detail: Math.round(straightEv.costM) + " m of push to where the stand's lead-in meets the taxiway (no named taxiway here, so this is a guess); the nose stays " + pad3(straightHdg) + '°',
+            detail: Math.round(straightEv.costM) + " m of push to where the stand's lead-in meets the taxiway (no named taxiway here, so this is a guess); the nose stays " + pad3(straightHdg) + ' deg',
             waypoints: P.ensureTerminal([{ id: 'wp-taxi-' + nextId() + '-back', label: 'End position', lat: cur[0], lon: cur[1], seq: 0, terminal: true, headingDeg: straightHdg, headingUser: false, drive: 'auto' }])
           });
         }
@@ -538,7 +538,7 @@ PS.suggest = (function () {
           if (t) {
             out.push({
               group: 'connector', kind: 'along', id: 'taxi-conn-' + key, title: 'End of the stand connector, facing ' + compass(hdg),
-              detail: Math.round(t.costM) + " m of push to where the stand's lead-in meets the taxiway (no named taxiway here, so this is a guess); heading " + pad3(hdg) + '°' + (t.pinAdded ? ', with a turnaround pin to get lined up' : ', curving in to line up'),
+              detail: Math.round(t.costM) + " m of push to where the stand's lead-in meets the taxiway (no named taxiway here, so this is a guess); heading " + pad3(hdg) + ' deg' + (t.pinAdded ? ', with a turnaround pin to get lined up' : ', curving in to line up'),
               waypoints: t.waypoints
             });
           }
@@ -595,6 +595,7 @@ PS.suggest = (function () {
     names.forEach(function (name) {
       // Best end pin per direction along this taxiway: the cheapest clean one, else the least bad.
       var bestClean = {}, bestAny = {}, misses = [];
+      var honourStats = {};      // per direction: how many end points were checked with the heading set, and how many of them plan cleanly (for the log)
       var cleanOrder = [], anyOrder = [];   // first-insertion order of each map (the original's Map iterates in that order, objects would sort numeric keys)
       function dirKeyOf(c) { return dirKeyOfHdg(c.hdg); }
       var junctions = junctionsFor(layout, name);
@@ -631,26 +632,35 @@ PS.suggest = (function () {
       uniq(misses.map(dirKeyOf)).forEach(function (dirKey) {
         if (bestClean[dirKey]) return;
         var cands = misses.filter(function (c) { return dirKeyOf(c) === dirKey && c.pathOk; }).sort(function (x, y) { return x.costM - y.costM; });
+        var rest = misses.filter(function (c) { return dirKeyOf(c) === dirKey && !c.pathOk; });
         // First the cheap check on every end point: does a pin here, with its heading set, plan cleanly with no turnaround pin? (The cost ordering above
         // is of the plain route, which can be far off the one that honours the heading, so all of them are checked.)
-        var originNow = { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg }, direct = null;
-        cands.forEach(function (c) {
+        var originNow = { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg }, direct = null, okCount = 0, checked = cands.length;
+        function consider(c) {
           var hp = honourPlan(originNow, c.lat, c.lon, c.hdg);
+          if (hp) okCount++;
           if (hp && (!direct || hp.costM + junctionPenalty(c.junctionM) < direct.turn.costM + junctionPenalty(direct.junctionM))) direct = extend(c, { costM: hp.costM, arrivalOffDeg: 0, clean: true, pathOk: true, turn: { waypoints: hp.waypoints, costM: hp.costM, pinAdded: false, radiusM: hp.radiusM } });
-        });
-        if (direct) { cleanOrder.push(dirKey); bestClean[dirKey] = direct; return; }
+        }
+        cands.forEach(consider);
+        // End points whose plain route (with no heading set) is poor are looked at only as a way out of a junction, or as a last resort: a pin placed by
+        // hand with its heading set can reach spots the plain route cannot, and these can be clear of the junction.
+        function useDirect() { honourStats[dirKey] = { checked: checked, ok: okCount }; cleanOrder.push(dirKey); bestClean[dirKey] = direct; }
+        if (direct && typeof direct.junctionM === 'number' && direct.junctionM < JUNCTION_CLEAR_M) { checked += rest.length; rest.forEach(consider); }
+        if (direct) { useDirect(); return; }
         var tries = cands.slice(0, TURN_TRIES);
         var bestTurn = null;
         tries.forEach(function (c) {
           var t = evaluateWithTurn(ac, c.lat, c.lon, c.hdg);
           if (t && (!bestTurn || t.costM + junctionPenalty(c.junctionM) < bestTurn.turn.costM + junctionPenalty(bestTurn.junctionM))) bestTurn = extend(c, { costM: t.costM, arrivalOffDeg: 0, clean: true, pathOk: true, turn: t });
         });
-        if (bestTurn) { cleanOrder.push(dirKey); bestClean[dirKey] = bestTurn; }
+        if (bestTurn) { honourStats[dirKey] = { checked: checked, ok: okCount }; cleanOrder.push(dirKey); bestClean[dirKey] = bestTurn; return; }
+        checked += rest.length; rest.forEach(consider);
+        if (direct) useDirect(); else honourStats[dirKey] = { checked: checked, ok: okCount };
       });
       // For the log: per direction, what the sampled end points gave (so a missing option can be explained).
       for (var dk = 0; dk < 8; dk++) {
         var dc = bestClean[dk], da = bestAny[dk], dm = misses.filter(function (c) { return dirKeyOf(c) === dk; }).length;
-        lastDiag.push(groupWhere(name) + ' ' + COMPASS[dk] + ': ' + (dc ? 'clean end point, ' + Math.round(dc.costM) + ' m' + (dc.turn ? ' (curving in' + (dc.turn.pinAdded ? ', turnaround pin' : '') + ', radius ' + Math.round(dc.turn.radiusM || 0) + ' m)' : '')
+        lastDiag.push(groupWhere(name) + ' ' + COMPASS[dk] + ': ' + (dc ? 'clean end point, ' + Math.round(dc.costM) + ' m' + (dc.turn ? ' (curving in' + (dc.turn.pinAdded ? ', turnaround pin' : '') + ', radius ' + Math.round(dc.turn.radiusM || 0) + ' m)' : '') + (typeof dc.junctionM === 'number' && isFinite(dc.junctionM) ? ', ' + Math.round(dc.junctionM) + ' m from the nearest junction' : '') + (honourStats[dk] ? ' [of ' + honourStats[dk].checked + ' end points checked with the heading set, ' + honourStats[dk].ok + ' plan cleanly]' : '')
           : (da ? 'no clean end point; the nearest arrives ' + Math.round(da.arrivalOffDeg) + ' deg off the heading (' + (da.pathOk ? 'path ok' : 'path warns') + '), ' + dm + ' tried with the heading honoured: none workable' : 'no end point on it faces this way within reach')));
       }
       // Push back to the taxiway then along it comes first: per direction the cheapest plain one, and the cheapest that is clear of a link.
@@ -705,8 +715,9 @@ PS.suggest = (function () {
         .sort(function (x, y) { return x.score - y.score; })
         .slice(0, limit);
     }
-    // (Room for the compass-pointing options too: they take slots here but are never shown, and must not crowd out a real option.)
-    var namedChosen = pick('taxiway', straightHit ? straightHit.t : undefined, 9);
+    // (No tight cap: a cap of 9 once cut a valid south-facing end on F when taxiway L36 and its many directions filled the list. The filters after this
+    // - arcs, start angle, end spacing, junctions, at most two pointing options - are what keep the list short.)
+    var namedChosen = pick('taxiway', straightHit ? straightHit.t : undefined, MAX_TAXIWAY_CANDIDATES);
     var laneChosen = pick('lane', laneHit ? laneHit.t : undefined, 2);
     var linkChosen = pick('link', linkHit ? linkHit.t : undefined, 4);
 
@@ -714,12 +725,12 @@ PS.suggest = (function () {
       var c = o.cand;
       var hdg = Math.round(wrap360(c.hdg));
       var key = c.name === LANE_KEY ? 'lane' : (c.name || 'x').replace(/\s+/g, '');
-      var wps = c.turn ? c.turn.waypoints : P.ensureTerminal([{ id: 'wp-taxi-' + nextId() + '-' + hdg, label: 'End position', lat: c.lat, lon: c.lon, seq: 0, terminal: true, headingDeg: hdg, headingUser: !c.clean, drive: 'auto' }]);
+      var wps = c.turn ? c.turn.waypoints : P.ensureTerminal([{ id: 'wp-taxi-' + nextId() + '-' + hdg, label: 'End position', lat: c.lat, lon: c.lon, seq: 0, terminal: true, headingDeg: hdg, headingUser: true, drive: 'auto' }]);
       return {
         group: kindOf(c.name), kind: c.title && c.title.indexOf(', pointing ') >= 0 ? 'pointing' : 'along',
         id: 'taxi-' + key + '-' + hdg + '-' + Math.round(c.lat * 1e5),
         title: c.title || (groupTitle(c.name) + ', facing ' + compass(hdg) + (c.clean ? '' : ' (tight)')),
-        detail: c.detail || (Math.round(c.costM) + ' m of push; ends on the centreline heading ' + pad3(hdg) + '° along it' + (c.turn ? (c.turn.pinAdded ? ', with a turnaround pin to get lined up' : ', curving in to line up') : '') + (c.clean ? '' : '. The tug may not manage this one: no cleaner end point found')),
+        detail: c.detail || (Math.round(c.costM) + ' m of push; ends on the centreline heading ' + pad3(hdg) + ' deg along it' + (c.turn ? (c.turn.pinAdded ? ', with a turnaround pin to get lined up' : ', curving in to line up') : '') + (c.clean ? '' : '. The tug may not manage this one: no cleaner end point found')),
         waypoints: wps, junctionM: c.junctionM
       };
     }
@@ -770,6 +781,7 @@ PS.suggest = (function () {
   //  - an option whose tightest arc is under MIN_ARC_RADIUS_M, or whose first stretch starts more than MAX_START_OFF_DEG off the aircraft's
   //    axis, is left out (the planner accepts down to 60% of the tug radius, which draws as a cramped arc). If that would leave nothing,
   //    the unfiltered list (minus pointing) is used so there is still something to pick.
+  var MAX_TAXIWAY_CANDIDATES = 60;  // candidates carried forward to the filters
   var MAX_END_HEADING_OFF_DEG = 20; // a suggestion has to end facing within this of what its title says
   var MIN_END_SEP_M = 12;          // suggestions have to end at least this far apart
   var MIN_ARC_RADIUS_M = 32;       // the most the Settings value counts for; used when it is not available
@@ -822,6 +834,12 @@ PS.suggest = (function () {
       if (clash) f.dropped.push({ s: sg, why: 'it ends within ' + MIN_END_SEP_M + ' m of "' + clash.title + '"' }); else spaced.push(sg);
     });
     kept = spaced;
+    // An end point right inside a junction (its triangle) is dropped, as long as that leaves a choice.
+    var outside = kept.filter(function (sg) { return !(typeof sg.junctionM === 'number' && sg.junctionM < JUNCTION_HARD_M); });
+    if (outside.length >= 2 && outside.length < kept.length) {
+      kept.forEach(function (sg) { if (outside.indexOf(sg) < 0) f.dropped.push({ s: sg, why: 'it ends ' + Math.round(sg.junctionM) + ' m from a junction, inside it' }); });
+      kept = outside;
+    }
     kept.forEach(function (s) { s.detail += '. Tightest arc ' + Math.round(s.tightestRadiusM) + ' m (tug turns at ' + P.PATH_TURN_RADIUS_M + ' m)'; });
     // Everything the suggester found and what became of it, for the log.
     var report = { diag: lastDiag.slice(), found: all.length, kept: kept.map(function (s) { return s.title + ' -> facing ' + Math.round(s.facingDeg) + ', ' + Math.round(s.lengthM) + ' m, ends ' + endAt(s) + junctionNote(s); }),

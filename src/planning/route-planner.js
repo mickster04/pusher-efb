@@ -277,10 +277,10 @@ PS.planner = (function () {
     }
     // A single run that turns through most of a circle or more is a loop, however wide its arcs.
     var turned = pathTurnDeg(seg.points);
-    if (turned > LOOP_TURN_DEG) why.push('its path turns ' + Math.round(turned) + '° in total, which is a loop');
+    if (turned > LOOP_TURN_DEG) why.push('its path turns ' + Math.round(turned) + ' deg in total, which is a loop');
     // A leg that starts from a standstill has to swing out if it starts well off the axis.
     if (!(opts && opts.ignoreStartOff) && seg.startOffDeg > HARD_START_OFF_DEG) {
-      why.push('it starts ' + Math.round(seg.startOffDeg) + '° away from the way the aircraft is pointing');
+      why.push('it starts ' + Math.round(seg.startOffDeg) + ' deg away from the way the aircraft is pointing');
     }
     if (!why.length) return null;
     return 'The tug may not be able to make this ' + (seg.sign < 0 ? 'push back' : 'forward') + ' manoeuvre: ' + why.join(' and ') + '. Move a pin further away, or shorten the final straight with the heading handle.';

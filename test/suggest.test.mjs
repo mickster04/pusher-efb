@@ -206,7 +206,7 @@ test('suggest: every option ends facing the way its title says', () => {
     out.forEach((s) => {
       const m = /facing ([a-z-]+)/.exec(s.title);
       if (!m || dirs[m[1]] === undefined) return;
-      assert.ok(Math.abs(G.angleDiff(s.facingDeg, dirs[m[1]])) <= 45, 'heading ' + hdg + ': "' + s.title + '" ends facing ' + Math.round(s.facingDeg));
+      assert.ok(Math.abs(G.angleDiff(s.facingDeg, dirs[m[1]])) <= 40, 'heading ' + hdg + ': "' + s.title + '" ends facing ' + Math.round(s.facingDeg));
     });
   });
 });
@@ -220,11 +220,26 @@ test('suggest: end points are kept out of junctions where the push can go a litt
   ];
   [20, 340].forEach((hdg) => {
     const out = PS.suggest.suggest(items, { lat: ref.lat, lon: ref.lon, hdgDeg: hdg }, []);
-    // (taxiway A has room to go further either way; B's only workable end for this heading is the one at the junction, so it is left out of the check)
+    // an end right inside the junction (B starts on A there) is dropped while other options remain
+    out.filter((s) => s.title.indexOf('Straight back') < 0).forEach((s) => {   // (straight back ends where the tail axis meets the taxiway, wherever that is)
+      const e = s.waypoints[s.waypoints.length - 1], q = G.toXY(ref.lat, ref.lon, e.lat, e.lon);
+      assert.ok(Math.hypot(q.x - 20, q.y - -60) >= 18, 'heading ' + hdg + ': "' + s.title + '" ends inside the junction');
+    });
     out.filter((s) => /^Taxiway A, /.test(s.title)).forEach((s) => {
       const e = s.waypoints[s.waypoints.length - 1], q = G.toXY(ref.lat, ref.lon, e.lat, e.lon);
       const toJunction = Math.hypot(q.x - 20, q.y - -60);
       assert.ok(toJunction >= 35, 'heading ' + hdg + ': "' + s.title + '" ends ' + toJunction.toFixed(0) + ' m from the junction at (20, -60)');
     });
   });
+});
+
+test('suggest: a busy layout does not push a valid option out of the list (no small cap on candidates)', () => {
+  const ref = { lat: -43.49, lon: 172.53 };
+  const xy = (x, y) => G.fromXY(ref.lat, ref.lon, x, y);
+  // five crossing taxiways near the aircraft: many directions, more than the old cap of 9 candidates
+  const lines = [['A', [-200, -70], [250, -70]], ['B', [-60, -200], [-60, 100]], ['C', [-200, -150], [150, 60]], ['D', [60, -200], [60, 100]], ['E', [-200, 40], [200, -150]]];
+  const items = lines.map(([n, a, b]) => ({ name: n, rawName: n, category: 'Taxiway', rawType: 1, points: [xy(a[0], a[1]), xy(b[0], b[1])] }));
+  const layout = PS.suggest.layoutFrom(items, []);
+  const list = PS.suggest.suggestPushbacks(layout, { lat: ref.lat, lon: ref.lon, hdgDeg: 30 });
+  assert.ok(list.length > 10, 'candidates carried forward: ' + list.length);
 });

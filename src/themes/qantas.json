@@ -1,0 +1,24 @@
+{
+ "id": "qantas",
+ "name": "Qantas",
+ "note": "Kangaroo red on black",
+ "colours": {
+  "bg": "#0e0e10",
+  "bgDeep": "#070708",
+  "panel": "#1b1b1f",
+  "border": "#3d2c2f",
+  "text": "#ffffff",
+  "textDim": "#b3a9aa",
+  "accent": "#e40000",
+  "accentText": "#ffffff",
+  "button": "#2b2224",
+  "buttonText": "#ffffff",
+  "input": "#09090a",
+  "good": "#4cd18a",
+  "warn": "#ffd37a",
+  "bad": "#ff6a5a",
+  "accent2": "#ffffff",
+  "taxiway": "#ff5a4a",
+  "routeFwd": "#6fb0ff"
+ }
+}

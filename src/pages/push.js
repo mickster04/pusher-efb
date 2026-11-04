@@ -11,6 +11,7 @@ PS.pages.push({
     var canvas = h('canvas', { class: 'ps-canvas', width: '900', height: '540' });
     var mapRange = ui.stepper(MAP_STEPS, 100, function () { paint(); }, 'push', null, null, true);
     var timer = null, lastPaintAt = 0, lastErr = '';
+    ui.wheelZoom(canvas, function (dir) { mapRange.zoom(dir, 'mouse wheel'); });
 
     var statusBig = h('div', { class: 'ps-big', text: '' });
     var statusSub = h('div', { class: 'ps-kv', text: '' });

@@ -153,6 +153,7 @@ PS.createViewClass = function (sdk) {
       if (!root || this.shell) return;
       try {
         PS.injectStyle();
+        PS.theme.loadFiles();
         PS.hbStart();
         PS.rafStart();
         this.shell = PS.buildShell(root);

@@ -158,5 +158,6 @@
     showNotification: function (n) { console.log('[mock] showNotification', JSON.stringify(n)); this.notifications.push(n); },
     clearAll: function () { this.notifications = []; }
   };
+  window.__themeBase = '/PackageSources/PushPlanner/themes';   // where this page serves the package's theme files from
   window.__sim = sim;
 })();

@@ -11,3 +11,4 @@ wasm/build/
 wasm/build.log
 PackageSources/modules/*.wasm
 logs.txt
+/user1.json

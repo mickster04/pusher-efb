@@ -97,10 +97,10 @@ PS.plan = (function () {
     if (hasFrom) {
       travel = Math.abs(G.angleDiff(best.bearing, chord)) <= Math.abs(G.angleDiff(other, chord)) ? best.bearing : other;
       hdg = reverse ? G.normDeg(travel + 180) : travel;
-      how = (reverse ? 'reversing to it' : 'driving forward to it') + ': the line to the pin is ' + Math.round(chord) + '°, so the tug arrives travelling ' + Math.round(travel) + '° and the nose ends ' + Math.round(hdg) + '°';
+      how = (reverse ? 'reversing to it' : 'driving forward to it') + ': the line to the pin is ' + Math.round(chord) + ' deg, so the tug arrives travelling ' + Math.round(travel) + ' deg and the nose ends ' + Math.round(hdg) + ' deg';
     } else {
       hdg = Math.abs(G.angleDiff(best.bearing, refDeg)) <= Math.abs(G.angleDiff(other, refDeg)) ? best.bearing : other;
-      how = 'by the smaller turn from ' + Math.round(refDeg) + '° (no starting point given)';
+      how = 'by the smaller turn from ' + Math.round(refDeg) + ' deg (no starting point given)';
     }
     var alt = G.normDeg(hdg + 180);
     return { headingDeg: Math.round(G.normDeg(hdg)), otherDeg: Math.round(alt), refDeg: Math.round(G.normDeg(refDeg)), chordDeg: chord === null ? null : Math.round(chord), reverse: reverse, how: how, taxiwayDeg: Math.round(G.normDeg(best.bearing)), name: best.name, distM: best.distM, point: best.point };
@@ -168,7 +168,7 @@ PS.plan = (function () {
         var endWp = r.waypoints[r.waypoints.length - 1];
         if (!warn && n === segs.length - 1 && endWp && endWp.headingUser && endWp.headingDeg !== null && endWp.headingDeg !== undefined && isFinite(endWp.headingDeg)) {
           var offEnd = Math.abs(G.angleDiff(g.endHdgDeg, endWp.headingDeg));
-          if (offEnd > 12) warn = 'The route ends facing ' + Math.round(g.endHdgDeg) + '° but the end pin is set to ' + Math.round(endWp.headingDeg) + '°: the turn does not fit at this radius. Move the pin further away, or change its heading.';
+          if (offEnd > 12) warn = 'The route ends facing ' + Math.round(g.endHdgDeg) + ' deg but the end pin is set to ' + Math.round(endWp.headingDeg) + ' deg: the turn does not fit at this radius. Move the pin further away, or change its heading.';
         }
         out.legs.push({ sign: g.sign, lengthM: len, endHdgDeg: g.endHdgDeg, warning: warn, pinIdx: g.pinIdx, tightestRadiusM: g.tightestRadiusM });
         out.totalM += len;
@@ -187,18 +187,18 @@ PS.plan = (function () {
     if (sig === lastLogged) return;
     lastLogged = sig;
     var legs = res.legs.map(function (l, n) {
-      return 'leg ' + (n + 1) + ' ' + (l.sign < 0 ? 'back' : 'forward') + ' ' + Math.round(l.lengthM) + ' m, ends ' + Math.round(l.endHdgDeg) + '°, tightest ' + (l.tightestRadiusM ? Math.round(l.tightestRadiusM) + ' m' : '-');
+      return 'leg ' + (n + 1) + ' ' + (l.sign < 0 ? 'back' : 'forward') + ' ' + Math.round(l.lengthM) + ' m, ends ' + Math.round(l.endHdgDeg) + ' deg, tightest ' + (l.tightestRadiusM ? Math.round(l.tightestRadiusM) + ' m' : '-');
     });
     PS.log('plan', 'route: ' + Math.round(res.totalM) + ' m, ' + res.legs.length + ' leg(s), radius ' + Math.round(res.radiusM) + ' m' + (res.adapted ? ' (tightened)' : '') + (res.turnaroundAdded ? ', turnaround pin added' : '') + ' | ' + legs.join('; '));
     res.items.forEach(function (it, k) {
       var w = it.wp, how = w.label === P.TURNAROUND_PIN_LABEL ? 'turnaround pin' : (w.headingUser ? (w.snapped ? 'snapped to ' + (w.snapName ? 'taxiway ' + w.snapName : 'an unnamed taxiway') : 'set by you') : 'auto');
-      PS.log('plan', '  pin ' + (k + 1) + ' (' + w.label + ') at ' + w.lat.toFixed(5) + ', ' + w.lon.toFixed(5) + ': heading ' + (w.headingUser ? Math.round(w.headingDeg) + '° ' : '') + '[' + how + '], planned nose ' + (it.headingDeg === null || it.headingDeg === undefined ? '?' : Math.round(it.headingDeg) + '°'));
+      PS.log('plan', '  pin ' + (k + 1) + ' (' + w.label + ') at ' + w.lat.toFixed(5) + ', ' + w.lon.toFixed(5) + ': heading ' + (w.headingUser ? Math.round(w.headingDeg) + ' deg ' : '') + '[' + how + '], planned nose ' + (it.headingDeg === null || it.headingDeg === undefined ? '?' : Math.round(it.headingDeg) + ' deg'));
     });
     if (res.turnaroundAdded && res.info) PS.log('plan', 'turnaround pin: ' + res.info);
     if (res.warnings.length) {
       res.warnings.forEach(function (w) { PS.log('plan', 'WARNING ' + w); });
-      PS.log('plan', 'pins behind the warning (aircraft at heading ' + Math.round(origin.hdgDeg) + '°): ' + res.waypoints.map(function (w, i) {
-        return (i + 1) + '=' + w.lat.toFixed(5) + ',' + w.lon.toFixed(5) + ' ' + (w.headingUser ? 'heading ' + Math.round(w.headingDeg) + '° (' + (w.snapped ? 'snapped to ' + (w.snapName ? 'taxiway ' + w.snapName : 'an unnamed taxiway') : 'set by you') + ')' : 'auto') + (w.label === P.TURNAROUND_PIN_LABEL ? ' [turnaround]' : '');
+      PS.log('plan', 'pins behind the warning (aircraft at heading ' + Math.round(origin.hdgDeg) + ' deg): ' + res.waypoints.map(function (w, i) {
+        return (i + 1) + '=' + w.lat.toFixed(5) + ',' + w.lon.toFixed(5) + ' ' + (w.headingUser ? 'heading ' + Math.round(w.headingDeg) + ' deg (' + (w.snapped ? 'snapped to ' + (w.snapName ? 'taxiway ' + w.snapName : 'an unnamed taxiway') : 'set by you') + ')' : 'auto') + (w.label === P.TURNAROUND_PIN_LABEL ? ' [turnaround]' : '');
       }).join('; '));
     } else { PS.log('plan', 'route plans without a warning'); }
   }

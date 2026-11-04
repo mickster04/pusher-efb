@@ -1,0 +1,26 @@
+{
+ "id": "contrast",
+ "name": "High contrast",
+ "note": "Black and white with strong colours",
+ "colours": {
+  "bg": "#000000",
+  "bgDeep": "#000000",
+  "panel": "#0c0c0c",
+  "border": "#8a8a8a",
+  "text": "#ffffff",
+  "textDim": "#d2d2d2",
+  "accent": "#ffd400",
+  "accentText": "#000000",
+  "button": "#262626",
+  "buttonText": "#ffffff",
+  "input": "#000000",
+  "good": "#00ff7f",
+  "warn": "#ffd400",
+  "bad": "#ff4545",
+  "accent2": "#00e5ff",
+  "routeFwd": "#4da6ff",
+  "mapGrid": "#6a6a6a",
+  "mapText": "#d2d2d2",
+  "outline": "#000000"
+ }
+}

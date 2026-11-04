@@ -1,0 +1,24 @@
+{
+ "id": "klm",
+ "name": "KLM",
+ "note": "Royal blue and sky blue",
+ "colours": {
+  "bg": "#04204a",
+  "bgDeep": "#021632",
+  "panel": "#0a3068",
+  "border": "#1b5aa8",
+  "text": "#ffffff",
+  "textDim": "#a9c7e8",
+  "accent": "#00a1de",
+  "accentText": "#00203f",
+  "button": "#14407f",
+  "buttonText": "#ffffff",
+  "input": "#031a3c",
+  "good": "#4cd18a",
+  "warn": "#ffd37a",
+  "bad": "#ff6677",
+  "accent2": "#7fd6ff",
+  "taxiway": "#00a1de",
+  "routeFwd": "#9ad4ff"
+ }
+}

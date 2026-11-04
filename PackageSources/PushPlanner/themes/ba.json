@@ -1,0 +1,24 @@
+{
+ "id": "ba",
+ "name": "British Airways",
+ "note": "Speedbird navy, red and silver",
+ "colours": {
+  "bg": "#06132e",
+  "bgDeep": "#040d20",
+  "panel": "#0c2152",
+  "border": "#1f4290",
+  "text": "#f4f6fb",
+  "textDim": "#a7b6d4",
+  "accent": "#eb2226",
+  "accentText": "#ffffff",
+  "button": "#12306b",
+  "buttonText": "#ffffff",
+  "input": "#050f26",
+  "good": "#4cd18a",
+  "warn": "#ffd37a",
+  "bad": "#ff6a6e",
+  "accent2": "#c8ccd4",
+  "taxiway": "#d6d9e0",
+  "routeFwd": "#7aa8ff"
+ }
+}

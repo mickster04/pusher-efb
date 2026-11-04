@@ -107,3 +107,14 @@ test('air traffic: our own aircraft in the list is ignored, even as it lags behi
   assert.deepEqual(out.map((c) => c.id), [3]);
   assert.equal(T.ignoreOwn([mk(4, 1)], null).length, 1, 'no own position: nothing is ignored');
 });
+
+test('wheel zoom: a notch is one step, small trackpad deltas add up, lines and pages count more', () => {
+  const a = PS.ui.wheelAccum();
+  assert.equal(a(-100, 0), -1, 'scroll up one notch: zoom in');
+  assert.equal(a(100, 0), 1, 'scroll down one notch: zoom out');
+  let steps = 0; for (let i = 0; i < 12; i++) steps += Math.abs(a(10, 0));
+  assert.equal(steps, 2, 'twelve small deltas of 10 make two steps (50 each)');
+  const b = PS.ui.wheelAccum();
+  assert.equal(b(1, 1), 0, 'a single line is 33: not yet'); assert.equal(b(1, 1), 1, 'two lines: a step');
+  assert.equal(PS.ui.wheelAccum()(1, 2), 1, 'a page is a step');
+});

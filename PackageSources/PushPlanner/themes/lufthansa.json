@@ -1,0 +1,23 @@
+{
+ "id": "lufthansa",
+ "name": "Lufthansa",
+ "note": "Deep blue with the crane yellow",
+ "colours": {
+  "bg": "#0a1544",
+  "bgDeep": "#060e30",
+  "panel": "#102060",
+  "border": "#263d8c",
+  "text": "#f5f6fb",
+  "textDim": "#a6b0d8",
+  "accent": "#ffad00",
+  "accentText": "#05164d",
+  "button": "#1a2c7c",
+  "buttonText": "#ffffff",
+  "input": "#080f36",
+  "good": "#4cd18a",
+  "warn": "#ffd37a",
+  "bad": "#ff6677",
+  "accent2": "#ffad00",
+  "routeFwd": "#7fb0ff"
+ }
+}
