@@ -157,3 +157,22 @@ test('minimum radius curve: the tightest setting is kept between 10 m and the us
   plan.setMinRadius(90); assert.equal(plan.turn().minRadiusM, plan.turn().radiusM);
   plan.setMinRadius(26); assert.equal(plan.turn().minRadiusM, 26);
 });
+
+test('snap: a pin near a taxiway takes its heading, the way that is the smaller turn, and re-snaps when moved', () => {
+  plan.clear();
+  const a = at(180, 20), b = at(180, 200);       // a taxiway running north-south, 100 m east of the aircraft
+  const e = G.offset(a[0], a[1], 90, 100), f = G.offset(b[0], b[1], 90, 100);
+  PS.state.taxi = { items: [{ name: 'A', category: 'Taxiway', points: [e, f] }, { name: '02', category: 'Runway', points: [at(90, 100), at(90, 300)] }] };
+  const p = G.offset(at(180, 80)[0], at(180, 80)[1], 90, 105);   // 5 m off the taxiway
+  const i = plan.add(p[0], p[1]);
+  let r = plan.snapPin(i, 10);                   // aircraft pointing north: pick the northbound heading
+  assert.ok(r && (r.headingDeg === 0 || r.headingDeg === 360 || r.headingDeg <= 1 || r.headingDeg >= 359), 'northbound ' + (r && r.headingDeg));
+  assert.equal(plan.list()[i].headingUser, true);
+  r = plan.snapPin(i, 170);
+  assert.ok(Math.abs(r.headingDeg - 180) <= 1, 'southbound when the nose points south');
+  const far = at(270, 300); plan.move(i, far[0], far[1]);
+  assert.equal(plan.snapPin(i, 0), null, 'nothing within reach');
+  assert.equal(plan.list()[i].headingUser, false, 'a snap that no longer applies is cleared');
+  plan.setHeading(i, 77); assert.equal(plan.list()[i].snapped, false);
+  plan.clear(); PS.state.taxi = null;
+});

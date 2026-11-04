@@ -22,6 +22,13 @@ PS.follow = (function () {
     TURN_SLOW_FULL_ALPHA_DEG: 60, MIN_TURN_FRACTION: 0.5, OFF_PATH_FRACTION: 0.6, OFF_PATH_M: 5,
     END_BRAKE_START_M: 24, END_BRAKE_MIN_FRACTION: 0.18, END_CREEP_M: 3.5, END_CREEP_FRACTION: 0.1, END_DONE_M: 0.8,
     RADIUS_SLOW_REF_M: 40,                      // arcs planned tighter than this slow the tug in proportion (the plan may tighten a cramped corner)
+    // Speed profile along a leg: a limit at each point from the path's curvature, then braking and acceleration passes so the tug is slowed in
+    // time for a curve or the stop, and speeds up no faster than is comfortable. Curve speeds are the original's (0.6 and 0.55 of its default
+    // cruise of 5 ft/s) and are kept in absolute terms, so a faster setting speeds up the straights without making curves faster than proven.
+    CURVE_BASE_FWD_FTS: 3.0, CURVE_BASE_REV_FTS: 2.75, CURVE_REF_R_M: 40,   // curve speed at a 40 m radius or wider; tighter radii are slower, to half at 20 m
+    STRAIGHT_R_M: 200, CURVE_FULL_R_M: 60,      // wider than 200 m counts as straight; tighter than 60 m gets the full curve speed
+    DECEL_MS2: 0.35, ACCEL_MS2: 0.5,            // comfortable braking and acceleration (m/s per second); the tug's own ramp (14 ft/s per s) is far quicker
+    PROFILE_DS_M: 0.5, CURV_WINDOW_M: 3, LOOK_FEATURE_M: 80,
     CUSP_STOP_FTS: 0.05, CUSP_STOP_SECONDS: 0.5, CUSP_HOLD_SECONDS: 1.0,
     LOST_CTE_M: 15, LOST_SECONDS: 3, STUCK_SECONDS: 8, STUCK_MIN_ADVANCE_M: 0.3
   };
@@ -85,6 +92,48 @@ PS.follow = (function () {
     return Math.abs(wrap180(b.tangent - a.tangent));
   }
 
+  // The speed (ft/s, magnitude) the tug should have at each half metre along a leg, and why. straightFts is the top speed on straights.
+  function buildProfile(path, reverse, straightFts) {
+    var ds = K.PROFILE_DS_M, total = path.total, n = Math.max(2, Math.ceil(total / ds) + 1), i;
+    var straight = straightFts * (reverse ? K.REVERSE_FRACTION : 1), curveBase = reverse ? K.CURVE_BASE_REV_FTS : K.CURVE_BASE_FWD_FTS;
+    var minF = K.MIN_AUTO_UNITS * K.UNITS_TO_FTS, cap = [], radius = [];
+    for (i = 0; i < n; i++) {
+      var s0 = Math.min(i * ds, total), sa = Math.max(0, s0 - K.CURV_WINDOW_M), sb = Math.min(total, s0 + K.CURV_WINDOW_M);
+      var k = sb - sa > 0.5 ? G.rad(Math.abs(wrap180(pointAt(path, sb).tangent - pointAt(path, sa).tangent))) / (sb - sa) : 0;   // rad per metre
+      var R = k > 1e-6 ? 1 / k : Infinity, v = straight;
+      if (R < K.STRAIGHT_R_M) {
+        var vc = Math.min(straight, curveBase * clamp(R / K.CURVE_REF_R_M, 0.5, 1));
+        v = straight + (vc - straight) * clamp((K.STRAIGHT_R_M - R) / (K.STRAIGHT_R_M - K.CURVE_FULL_R_M), 0, 1);
+      }
+      cap.push(Math.max(minF, v)); radius.push(R);
+    }
+    var vm = cap.map(function (f) { return f * 0.3048; });                    // metres per second for the passes
+    var floorMs = minF * 0.3048;
+    vm[n - 1] = 0;                                                            // stop at the end of the leg
+    for (i = n - 2; i >= 0; i--) vm[i] = Math.min(vm[i], Math.sqrt(vm[i + 1] * vm[i + 1] + 2 * K.DECEL_MS2 * ds));   // braking: slow in time
+    vm[0] = Math.min(vm[0], floorMs);                                         // from (nearly) rest
+    for (i = 1; i < n; i++) vm[i] = Math.min(vm[i], Math.sqrt(vm[i - 1] * vm[i - 1] + 2 * K.ACCEL_MS2 * ds));         // speeding up gently
+    for (i = 0; i < n; i++) { if (total - i * ds > K.END_DONE_M + 0.2) vm[i] = Math.max(vm[i], floorMs); }             // never slower than a crawl until the end
+    return { ds: ds, n: n, total: total, straight: straight, cap: cap, radius: radius, v: vm.map(function (m) { return m / 0.3048; }) };
+  }
+  // { v (ft/s), why } at distance s along the leg.
+  function profileAt(prof, s) {
+    var x = clamp(s / prof.ds, 0, prof.n - 1), i0 = Math.floor(x), i1 = Math.min(prof.n - 1, i0 + 1), f = x - i0;
+    var v = prof.v[i0] + (prof.v[i1] - prof.v[i0]) * f, capHere = prof.cap[i0] + (prof.cap[i1] - prof.cap[i0]) * f;
+    var kt = function (fts) { return PS.fmt.num(fts * 0.5925, 1) + ' kt'; };
+    var why;
+    if (capHere < prof.straight - 0.25) why = 'in a curve (radius ' + Math.round(prof.radius[i0]) + ' m): ' + kt(v);
+    else if (v >= prof.straight - 0.1) why = 'straight: top speed ' + kt(v);
+    else {
+      // slowing for something ahead: the next curve if there is one before the end, otherwise the stop
+      var limit = Math.min(prof.n - 1, i0 + Math.ceil(K.LOOK_FEATURE_M / prof.ds)), j, curveAt = -1;
+      for (j = i0; j <= limit; j++) { if (prof.cap[j] < prof.straight - 0.25) { curveAt = j; break; } }
+      if (curveAt >= 0 && curveAt < prof.n - 1) why = (v > prof.v[Math.min(prof.n - 1, i0 + 2)] ? 'slowing' : 'speeding up') + ' for the curve in ' + Math.round((curveAt - x) * prof.ds) + ' m: ' + kt(v);
+      else why = (v > prof.v[Math.min(prof.n - 1, i0 + 2)] ? 'slowing for the stop' : 'speeding up') + ' (' + Math.round(prof.total - s) + ' m to go): ' + kt(v);
+    }
+    return { v: v, why: why };
+  }
+
   // segments: [{ sign (-1 reverse, +1 forward), points [[lat, lon], ...], radiusM? }] from the planner. settings: { cruiseUnits }.
   // Returns a follower; call update() every tick.
   function create(segments, settings) {
@@ -92,7 +141,7 @@ PS.follow = (function () {
     var cruiseUnits = settings.cruiseUnits || 25;
     var legs = segments.map(function (sg) { return { sign: sg.sign < 0 ? -1 : 1, points: sg.points, radiusM: sg.radiusM || K.RADIUS_SLOW_REF_M }; });
     var origin = { lat: legs[0].points[0][0], lon: legs[0].points[0][1] };
-    legs.forEach(function (l) { l.path = buildPath(l.points, origin); });
+    legs.forEach(function (l) { l.path = buildPath(l.points, origin); l.prof = buildProfile(l.path, l.sign < 0, cruiseUnits * K.UNITS_TO_FTS); });
     var totalM = 0;
     legs.forEach(function (l) { totalM += l.path.total; });
 
@@ -108,7 +157,7 @@ PS.follow = (function () {
     // Returns { speedFtS (signed target), yawDegS (target nose turn rate, clockwise positive), phase, leg, legCount, remainingM, cte, alphaDeg,
     //           done, stop (a reason to stop, or ''), note }
     function update(pose, dt, speedFtS) {
-      var out = { speedFtS: 0, yawDegS: 0, phase: st.phase, leg: st.leg, legCount: legs.length, remainingM: 0, cte: 0, alphaDeg: 0, done: st.done, stop: '', note: '' };
+      var out = { why: '', speedFtS: 0, yawDegS: 0, phase: st.phase, leg: st.leg, legCount: legs.length, remainingM: 0, cte: 0, alphaDeg: 0, done: st.done, stop: '', note: '' };
       if (st.done) { out.remainingM = 0; out.phase = 'finished'; return out; }
       var leg = legs[st.leg], path = leg.path, reverse = leg.sign < 0;
       var p = G.toXY(origin.lat, origin.lon, pose.lat, pose.lon);
@@ -161,23 +210,14 @@ PS.follow = (function () {
       var kappa = 2 * Math.sin(G.rad(alpha)) / Math.max(aimDist, K.MIN_LOOK);     // 1/m, clockwise
       out.alphaDeg = alpha;
 
-      // ---- speed ----
-      var cruiseFts = cruiseUnits * K.UNITS_TO_FTS, minFts = K.MIN_AUTO_UNITS * K.UNITS_TO_FTS;
-      var mag = cruiseFts * (reverse ? K.REVERSE_FRACTION : 1);
+      // ---- speed: from the leg's profile (fast on straights, slower through curves, braking in time for curves and the stop), then slowed further
+      // only if the tug is not where it should be: pointing well away from the aim point, or off the path ----
+      var minFts = K.MIN_AUTO_UNITS * K.UNITS_TO_FTS, cruiseFts = cruiseUnits * K.UNITS_TO_FTS;
+      var pv = profileAt(leg.prof, s), mag = pv.v;
       var turnFactor = 1 - (1 - K.MIN_TURN_FRACTION) * clamp(Math.abs(alpha) / K.TURN_SLOW_FULL_ALPHA_DEG, 0, 1);
-      mag = Math.max(minFts, mag * turnFactor);
-      if (bendAhead(path, s, K.CURVE_SLOW_WITHIN_M) > K.CURVE_SLOW_BEND_DEG) mag = Math.max(minFts, Math.min(mag, cruiseFts * (reverse ? K.CURVE_REV_FRACTION : K.CURVE_FWD_FRACTION)));
-      // An arc planned tighter than the usual radius is driven slower in proportion (the same yaw rate costs less lag at low speed).
-      if (leg.radiusM < K.RADIUS_SLOW_REF_M - 0.5) mag = Math.max(minFts, mag * clamp(leg.radiusM / K.RADIUS_SLOW_REF_M, 0.5, 1));
-      if (offPath > K.OFF_PATH_M) mag = Math.max(minFts, Math.min(mag, cruiseFts * K.OFF_PATH_FRACTION));
-      // Braking onto the end of the leg.
-      if (remaining < K.END_BRAKE_START_M) {
-        var f = clamp((remaining - 4) / (K.END_BRAKE_START_M - 4), 0, 1);
-        var endMag = cruiseFts * (K.END_BRAKE_MIN_FRACTION + (1 - K.END_BRAKE_MIN_FRACTION) * f);
-        if (remaining < K.END_CREEP_M) endMag = Math.min(endMag, cruiseFts * K.END_CREEP_FRACTION);
-        mag = Math.max(minFts * 0.6, Math.min(mag, endMag));
-      }
-      out.speedFtS = (reverse ? -1 : 1) * mag;
+      if (turnFactor < 1) { mag = Math.max(minFts, mag * turnFactor); }
+      if (offPath > K.OFF_PATH_M) { mag = Math.max(minFts, Math.min(mag, cruiseFts * K.OFF_PATH_FRACTION)); pv.why = 'off the path by ' + PS.fmt.num(offPath, 1) + ' m: slowed'; }
+      out.speedFtS = (reverse ? -1 : 1) * mag; out.why = pv.why;
 
       // ---- turn rate: curvature x speed, within the steering limits, then the tug's measured response is allowed for ----
       var recovering = offPath > K.RECOVER_OFF;
@@ -205,7 +245,12 @@ PS.follow = (function () {
       return out;
     }
 
-    return { update: update, totalM: totalM, legCount: legs.length, state: st, legs: legs };
+    // A new top speed mid-push: rebuild each leg's speed profile (the position along the path is unchanged).
+    function setCruise(units) {
+      cruiseUnits = units;
+      legs.forEach(function (l) { l.prof = buildProfile(l.path, l.sign < 0, cruiseUnits * K.UNITS_TO_FTS); });
+    }
+    return { update: update, setCruise: setCruise, totalM: totalM, legCount: legs.length, state: st, legs: legs };
   }
 
   // The planner's evaluated plan (PS.plan.evaluate) as the legs the follower drives. The radius it was planned with goes with each leg.
@@ -213,5 +258,5 @@ PS.follow = (function () {
     return plan.segments.map(function (sg) { return { sign: sg.sign, points: sg.points, radiusM: plan.radiusM }; });
   }
 
-  return { create: create, K: K, buildPath: buildPath, locate: locate, pointAt: pointAt, legsFromPlan: legsFromPlan };
+  return { create: create, K: K, buildPath: buildPath, locate: locate, pointAt: pointAt, legsFromPlan: legsFromPlan, buildProfile: buildProfile, profileAt: profileAt };
 })();

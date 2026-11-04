@@ -59,7 +59,7 @@ function run(seconds, each) {
 function reset() {
   PS.push.emergencyStop('test reset'); PS.plan.clear();
   Object.assign(sim, { x: 0, y: 0, hdg: 0, velZ: 0, rotY: 0, wait: 1, attached: 0, attachAt: 0, brake: 1, ground: 1, agl: 0, lastWrite: 0, writes: [] });
-  PS.toasts.clear();
+  PS.toasts.clear(); PS.toasts.setAppOpen(false);   // push toasts only show while the app is not on screen
 }
 function withClock(start, fn) {
   mock.timers.enable({ apis: ['setInterval', 'setTimeout', 'Date'], now: start });
@@ -187,4 +187,21 @@ test('push: closing or pausing the app stops the push at once', () => {
   assert.equal(sim.velZ, 0, 'velocity zeroed');
   assert.notEqual(PS.push.view().status, 'driving');
   });
+});
+
+test('toasts: push messages are held back while the app is open, and sent to the EFB when it is not', () => {
+  const sent = [];
+  PS.state.notificationManager = { showNotification: (n) => sent.push(n) };
+  PS.toasts.clear(); PS.toasts.setAppOpen(true);
+  PS.toasts.show({ id: 'x-push', efbOnly: true, persistent: true, title: 'Pushing', message: '50 m left' });
+  assert.equal(PS.toasts.items.length, 0, 'nothing shown with the app open');
+  assert.equal(sent.length, 0);
+  PS.toasts.setAppOpen(false);
+  PS.toasts.show({ id: 'x-push', efbOnly: true, persistent: true, title: 'Pushing', message: '40 m left' });
+  PS.toasts.show({ id: 'x-push', efbOnly: true, persistent: true, title: 'Pushing', message: '30 m left' });
+  assert.equal(sent.length, 1, 'one notification per message id');
+  assert.equal(PS.toasts.items.length, 1);
+  PS.toasts.setAppOpen(true);
+  assert.equal(PS.toasts.items.length, 0, 'dropped when the app comes back');
+  PS.state.notificationManager = null; PS.toasts.setAppOpen(false);
 });

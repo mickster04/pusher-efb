@@ -142,10 +142,10 @@ PS.createViewClass = function (sdk) {
       }
     }
     // EFB lifecycle hooks (names per the open-source sample; unverified against the SDK docs).
-    onOpen() { PS.hook('onOpen'); PS.hbStart(); PS.rafStart(); }
-    onResume() { PS.hook('onResume'); PS.hbResume(); }
-    onPause() { PS.hook('onPause'); PS.hbPause(); PS.runCloseHooks('app paused'); }
-    onClose() { PS.hook('onClose'); PS.runCloseHooks('app closed'); PS.hbStop(); }
+    onOpen() { PS.hook('onOpen'); PS.toasts.setAppOpen(true); PS.hbStart(); PS.rafStart(); }
+    onResume() { PS.hook('onResume'); PS.toasts.setAppOpen(true); PS.hbResume(); }
+    onPause() { PS.hook('onPause'); PS.toasts.setAppOpen(false); PS.hbPause(); PS.runCloseHooks('app paused'); }
+    onClose() { PS.hook('onClose'); PS.toasts.setAppOpen(false); PS.runCloseHooks('app closed'); PS.hbStop(); }
     onUpdate() { PS.hook('onUpdate'); PS.hbFrame(); }
     routeGamepadInteractionEvent() { PS.hook('routeGamepadInteractionEvent'); }
     handlePageKeyAction() { PS.hook('handlePageKeyAction'); }

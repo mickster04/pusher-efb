@@ -49,9 +49,42 @@ PS.plan = (function () {
     relabel(); changed();
     selected = selected === i ? -1 : (selected > i ? selected - 1 : selected);
   }
+  // The direction of the taxiway centreline nearest (lat, lon) within maxM, as the nose heading closest to refDeg (a taxiway runs both ways, and the
+  // way with the smaller turn from where the aircraft is already pointing is the one to default to). Runways are not snapped to.
+  var SNAP_MAX_M = 35;
+  function snapAt(lat, lon, refDeg, maxM) {
+    var taxi = PS.state && PS.state.taxi, best = null;
+    if (!taxi || !taxi.items) return null;
+    taxi.items.forEach(function (it) {
+      if (!it.points || it.points.length < 2 || it.category === 'Runway') return;
+      for (var i = 1; i < it.points.length; i++) {
+        var a = it.points[i - 1], b = it.points[i];
+        var A = G.toXY(lat, lon, a[0], a[1]), B = G.toXY(lat, lon, b[0], b[1]);
+        var dx = B.x - A.x, dy = B.y - A.y, len2 = dx * dx + dy * dy;
+        if (len2 < 1) continue;
+        var t = Math.max(0, Math.min(1, -(A.x * dx + A.y * dy) / len2)), px = A.x + t * dx, py = A.y + t * dy, d = Math.sqrt(px * px + py * py);
+        if (d <= (maxM || SNAP_MAX_M) && (!best || d < best.distM)) best = { distM: d, bearing: G.bearingDeg(a[0], a[1], b[0], b[1]), name: it.name || '' };
+      }
+    });
+    if (!best) return null;
+    var other = G.normDeg(best.bearing + 180);
+    var hdg = Math.abs(G.angleDiff(best.bearing, refDeg)) <= Math.abs(G.angleDiff(other, refDeg)) ? best.bearing : other;
+    return { headingDeg: Math.round(G.normDeg(hdg)), name: best.name, distM: best.distM };
+  }
+  // Give pin i the heading of the taxiway it sits on (if there is one close by). It stays "snapped" so moving the pin re-snaps it, until the pin
+  // is rotated by hand. refDeg is where the aircraft points before this pin: the previous pin's heading, else the aircraft's own.
+  function snapPin(i, ownHdgDeg) {
+    var w = pins[i]; if (!w) return null;
+    if (PS.settings && !PS.settings.get('snap')) return null;
+    var prev = pins[i - 1], ref = prev && prev.headingUser && prev.headingDeg !== null ? prev.headingDeg : ownHdgDeg;
+    var r = snapAt(w.lat, w.lon, ref || 0);
+    if (!r) { if (w.snapped) { w.snapped = false; w.headingUser = false; w.headingDeg = null; changed(); } return null; }
+    w.headingDeg = r.headingDeg; w.headingUser = true; w.snapped = true; changed();
+    return r;
+  }
   function clear() { pins.length = 0; selected = -1; changed(); }
-  function setHeading(i, deg) { if (!pins[i]) return; pins[i].headingDeg = Math.round(G.normDeg(deg)); pins[i].headingUser = true; changed(); }
-  function resetHeading(i) { if (!pins[i]) return; pins[i].headingDeg = null; pins[i].headingUser = false; pins[i].leadInM = undefined; changed(); }
+  function setHeading(i, deg) { if (!pins[i]) return; pins[i].snapped = false; pins[i].headingDeg = Math.round(G.normDeg(deg)); pins[i].headingUser = true; changed(); }
+  function resetHeading(i) { if (!pins[i]) return; pins[i].snapped = false; pins[i].headingDeg = null; pins[i].headingUser = false; pins[i].leadInM = undefined; changed(); }
   // Replace the plan (for example with a suggestion's waypoints). Pins the planner added itself (turnaround pins) are dropped: it adds them again.
   function setAll(waypoints) {
     pins.length = 0;
@@ -87,6 +120,24 @@ PS.plan = (function () {
     } finally { P.setRadius(prev); }
   }
 
+  // Log what the planner made of the pins whenever it changes, and every warning in full with the pins that led to it.
+  var lastLogged = '';
+  function logResult(res, origin) {
+    if (res.empty) { if (lastLogged !== 'empty') { lastLogged = 'empty'; PS.log('plan', 'no pins: no route'); } return; }
+    var sig = res.warnings.join('|') + '#' + res.legs.map(function (l) { return l.sign + ':' + Math.round(l.lengthM / 5); }).join(',') + '#' + Math.round(res.radiusM) + '#' + pins.map(function (w) { return w.id + (w.headingUser ? w.headingDeg : ''); }).join(',');
+    if (sig === lastLogged) return;
+    lastLogged = sig;
+    var legs = res.legs.map(function (l, n) {
+      return 'leg ' + (n + 1) + ' ' + (l.sign < 0 ? 'back' : 'forward') + ' ' + Math.round(l.lengthM) + ' m, ends ' + Math.round(l.endHdgDeg) + '°, tightest ' + (l.tightestRadiusM ? Math.round(l.tightestRadiusM) + ' m' : '-');
+    });
+    PS.log('plan', 'route: ' + Math.round(res.totalM) + ' m, ' + res.legs.length + ' leg(s), radius ' + Math.round(res.radiusM) + ' m' + (res.adapted ? ' (tightened)' : '') + (res.turnaroundAdded ? ', turnaround pin added' : '') + ' | ' + legs.join('; '));
+    if (res.warnings.length) {
+      res.warnings.forEach(function (w) { PS.log('plan', 'WARNING ' + w); });
+      PS.log('plan', 'pins behind the warning (aircraft at heading ' + Math.round(origin.hdgDeg) + '°): ' + res.waypoints.map(function (w, i) {
+        return (i + 1) + '=' + w.lat.toFixed(5) + ',' + w.lon.toFixed(5) + ' ' + (w.headingUser ? 'heading ' + Math.round(w.headingDeg) + '° (' + (w.snapped ? 'snapped' : 'set by you') + ')' : 'auto') + (w.label === P.TURNAROUND_PIN_LABEL ? ' [turnaround]' : '');
+      }).join('; '));
+    } else { PS.log('plan', 'route plans without a warning'); }
+  }
   // The planned route for the pins, from the aircraft. origin: { lat, lon, hdgDeg }.
   // Returns { empty, waypoints (with any turnaround pin), segments, route ([[lat, lon], ...] from the aircraft), items, legs, totalM, warnings,
   //           turnaroundAdded, info, radiusM (the turn radius planned with), adapted (a tighter one than usual was needed) }
@@ -119,6 +170,7 @@ PS.plan = (function () {
       });
     }
     cache.key = key; cache.value = res;
+    logResult(res, origin);
     return res;
   }
 
@@ -126,7 +178,7 @@ PS.plan = (function () {
     list: function () { return pins; }, count: function () { return pins.length; },
     selected: function () { return selected; }, select: select,
     add: add, move: move, remove: remove, clear: clear, setHeading: setHeading, resetHeading: resetHeading, setAll: setAll,
-    headingFromHandle: headingFromHandle, evaluate: evaluate,
+    headingFromHandle: headingFromHandle, snapAt: snapAt, snapPin: snapPin, evaluate: evaluate,
     turn: function () { return turn; }, setMinRadius: setMinRadius
   };
 })();

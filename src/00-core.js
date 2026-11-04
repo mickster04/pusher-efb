@@ -6,7 +6,7 @@ PS.APP_NAME = 'Push Planner';
 PS.INTERNAL_NAME = 'PushPlanner';
 PS.pages = [];
 PS.closeHooks = [];   // called when the view closes or pauses (e.g. stop the tug)
-PS.state = { taxi: null, contacts: [], pins: [], notificationManager: null, bus: null };
+PS.state = { appOpen: true, taxi: null, contacts: [], pins: [], notificationManager: null, bus: null };
 
 PS.global = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : {});
 
@@ -231,8 +231,14 @@ PS.toasts = {
   show: function (opts) {
     var self = this;
     var id = opts.id || ('t' + (++this.seq));
+    // efbOnly: for a message that only matters while the app is not on screen (the Push tab shows the same thing). With the app open it
+    // is not shown at all; with it closed it goes to the EFB's own notifications, once per id until dismissed.
+    if (opts.efbOnly) {
+      if (PS.state.appOpen) { this.dismiss(id); return id; }
+      this.notifyEfb(id, opts);
+    }
     var item = { id: id, kind: opts.kind || 'info', title: opts.title || '', message: opts.message || '',
-      actions: opts.actions || [], persistent: !!opts.persistent, createdAt: Date.now() };
+      actions: opts.actions || [], persistent: !!opts.persistent, createdAt: Date.now(), efbOnly: !!opts.efbOnly };
     var replaced = false;
     for (var i = 0; i < this.items.length; i++) {
       if (this.items[i].id === id) { this.items[i] = item; replaced = true; }
@@ -243,6 +249,19 @@ PS.toasts = {
     }
     this.emit();
     return id;
+  },
+  sentToEfb: {},
+  notifyEfb: function (id, opts) {
+    var nm = PS.state.notificationManager;
+    if (this.sentToEfb[id] || !nm || typeof nm.showNotification !== 'function') return;
+    this.sentToEfb[id] = true;
+    try { nm.showNotification({ title: opts.title || '', description: opts.message || '', type: opts.kind === 'brake' ? 'WARNING' : 'MESSAGE', duration: opts.persistent ? 10000 : (opts.ttlMs || 6000) }); PS.log('app', 'EFB notification: ' + (opts.title || id)); }
+    catch (e) { PS.log('app', 'EFB notification failed: ' + PS.errText(e)); }
+  },
+  // The app went on or off screen: messages meant only for while it is off screen are dropped when it comes back.
+  setAppOpen: function (open) {
+    PS.state.appOpen = !!open;
+    if (open) { this.sentToEfb = {}; this.items = this.items.filter(function (t) { return !t.efbOnly; }); this.emit(); }
   },
   update: function (id, patch) {
     for (var i = 0; i < this.items.length; i++) {
@@ -255,6 +274,7 @@ PS.toasts = {
     return false;
   },
   dismiss: function (id) {
+    delete this.sentToEfb[id];
     var n = this.items.length;
     this.items = this.items.filter(function (t) { return t.id !== id; });
     if (this.items.length !== n) this.emit();

@@ -12,7 +12,7 @@ PS.APP_NAME = 'Push Planner';
 PS.INTERNAL_NAME = 'PushPlanner';
 PS.pages = [];
 PS.closeHooks = [];   // called when the view closes or pauses (e.g. stop the tug)
-PS.state = { taxi: null, contacts: [], pins: [], notificationManager: null, bus: null };
+PS.state = { appOpen: true, taxi: null, contacts: [], pins: [], notificationManager: null, bus: null };
 
 PS.global = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : {});
 
@@ -237,8 +237,14 @@ PS.toasts = {
   show: function (opts) {
     var self = this;
     var id = opts.id || ('t' + (++this.seq));
+    // efbOnly: for a message that only matters while the app is not on screen (the Push tab shows the same thing). With the app open it
+    // is not shown at all; with it closed it goes to the EFB's own notifications, once per id until dismissed.
+    if (opts.efbOnly) {
+      if (PS.state.appOpen) { this.dismiss(id); return id; }
+      this.notifyEfb(id, opts);
+    }
     var item = { id: id, kind: opts.kind || 'info', title: opts.title || '', message: opts.message || '',
-      actions: opts.actions || [], persistent: !!opts.persistent, createdAt: Date.now() };
+      actions: opts.actions || [], persistent: !!opts.persistent, createdAt: Date.now(), efbOnly: !!opts.efbOnly };
     var replaced = false;
     for (var i = 0; i < this.items.length; i++) {
       if (this.items[i].id === id) { this.items[i] = item; replaced = true; }
@@ -249,6 +255,19 @@ PS.toasts = {
     }
     this.emit();
     return id;
+  },
+  sentToEfb: {},
+  notifyEfb: function (id, opts) {
+    var nm = PS.state.notificationManager;
+    if (this.sentToEfb[id] || !nm || typeof nm.showNotification !== 'function') return;
+    this.sentToEfb[id] = true;
+    try { nm.showNotification({ title: opts.title || '', description: opts.message || '', type: opts.kind === 'brake' ? 'WARNING' : 'MESSAGE', duration: opts.persistent ? 10000 : (opts.ttlMs || 6000) }); PS.log('app', 'EFB notification: ' + (opts.title || id)); }
+    catch (e) { PS.log('app', 'EFB notification failed: ' + PS.errText(e)); }
+  },
+  // The app went on or off screen: messages meant only for while it is off screen are dropped when it comes back.
+  setAppOpen: function (open) {
+    PS.state.appOpen = !!open;
+    if (open) { this.sentToEfb = {}; this.items = this.items.filter(function (t) { return !t.efbOnly; }); this.emit(); }
   },
   update: function (id, patch) {
     for (var i = 0; i < this.items.length; i++) {
@@ -261,6 +280,7 @@ PS.toasts = {
     return false;
   },
   dismiss: function (id) {
+    delete this.sentToEfb[id];
     var n = this.items.length;
     this.items = this.items.filter(function (t) { return t.id !== id; });
     if (this.items.length !== n) this.emit();
@@ -2214,9 +2234,42 @@ PS.plan = (function () {
     relabel(); changed();
     selected = selected === i ? -1 : (selected > i ? selected - 1 : selected);
   }
+  // The direction of the taxiway centreline nearest (lat, lon) within maxM, as the nose heading closest to refDeg (a taxiway runs both ways, and the
+  // way with the smaller turn from where the aircraft is already pointing is the one to default to). Runways are not snapped to.
+  var SNAP_MAX_M = 35;
+  function snapAt(lat, lon, refDeg, maxM) {
+    var taxi = PS.state && PS.state.taxi, best = null;
+    if (!taxi || !taxi.items) return null;
+    taxi.items.forEach(function (it) {
+      if (!it.points || it.points.length < 2 || it.category === 'Runway') return;
+      for (var i = 1; i < it.points.length; i++) {
+        var a = it.points[i - 1], b = it.points[i];
+        var A = G.toXY(lat, lon, a[0], a[1]), B = G.toXY(lat, lon, b[0], b[1]);
+        var dx = B.x - A.x, dy = B.y - A.y, len2 = dx * dx + dy * dy;
+        if (len2 < 1) continue;
+        var t = Math.max(0, Math.min(1, -(A.x * dx + A.y * dy) / len2)), px = A.x + t * dx, py = A.y + t * dy, d = Math.sqrt(px * px + py * py);
+        if (d <= (maxM || SNAP_MAX_M) && (!best || d < best.distM)) best = { distM: d, bearing: G.bearingDeg(a[0], a[1], b[0], b[1]), name: it.name || '' };
+      }
+    });
+    if (!best) return null;
+    var other = G.normDeg(best.bearing + 180);
+    var hdg = Math.abs(G.angleDiff(best.bearing, refDeg)) <= Math.abs(G.angleDiff(other, refDeg)) ? best.bearing : other;
+    return { headingDeg: Math.round(G.normDeg(hdg)), name: best.name, distM: best.distM };
+  }
+  // Give pin i the heading of the taxiway it sits on (if there is one close by). It stays "snapped" so moving the pin re-snaps it, until the pin
+  // is rotated by hand. refDeg is where the aircraft points before this pin: the previous pin's heading, else the aircraft's own.
+  function snapPin(i, ownHdgDeg) {
+    var w = pins[i]; if (!w) return null;
+    if (PS.settings && !PS.settings.get('snap')) return null;
+    var prev = pins[i - 1], ref = prev && prev.headingUser && prev.headingDeg !== null ? prev.headingDeg : ownHdgDeg;
+    var r = snapAt(w.lat, w.lon, ref || 0);
+    if (!r) { if (w.snapped) { w.snapped = false; w.headingUser = false; w.headingDeg = null; changed(); } return null; }
+    w.headingDeg = r.headingDeg; w.headingUser = true; w.snapped = true; changed();
+    return r;
+  }
   function clear() { pins.length = 0; selected = -1; changed(); }
-  function setHeading(i, deg) { if (!pins[i]) return; pins[i].headingDeg = Math.round(G.normDeg(deg)); pins[i].headingUser = true; changed(); }
-  function resetHeading(i) { if (!pins[i]) return; pins[i].headingDeg = null; pins[i].headingUser = false; pins[i].leadInM = undefined; changed(); }
+  function setHeading(i, deg) { if (!pins[i]) return; pins[i].snapped = false; pins[i].headingDeg = Math.round(G.normDeg(deg)); pins[i].headingUser = true; changed(); }
+  function resetHeading(i) { if (!pins[i]) return; pins[i].snapped = false; pins[i].headingDeg = null; pins[i].headingUser = false; pins[i].leadInM = undefined; changed(); }
   // Replace the plan (for example with a suggestion's waypoints). Pins the planner added itself (turnaround pins) are dropped: it adds them again.
   function setAll(waypoints) {
     pins.length = 0;
@@ -2252,6 +2305,24 @@ PS.plan = (function () {
     } finally { P.setRadius(prev); }
   }
 
+  // Log what the planner made of the pins whenever it changes, and every warning in full with the pins that led to it.
+  var lastLogged = '';
+  function logResult(res, origin) {
+    if (res.empty) { if (lastLogged !== 'empty') { lastLogged = 'empty'; PS.log('plan', 'no pins: no route'); } return; }
+    var sig = res.warnings.join('|') + '#' + res.legs.map(function (l) { return l.sign + ':' + Math.round(l.lengthM / 5); }).join(',') + '#' + Math.round(res.radiusM) + '#' + pins.map(function (w) { return w.id + (w.headingUser ? w.headingDeg : ''); }).join(',');
+    if (sig === lastLogged) return;
+    lastLogged = sig;
+    var legs = res.legs.map(function (l, n) {
+      return 'leg ' + (n + 1) + ' ' + (l.sign < 0 ? 'back' : 'forward') + ' ' + Math.round(l.lengthM) + ' m, ends ' + Math.round(l.endHdgDeg) + '°, tightest ' + (l.tightestRadiusM ? Math.round(l.tightestRadiusM) + ' m' : '-');
+    });
+    PS.log('plan', 'route: ' + Math.round(res.totalM) + ' m, ' + res.legs.length + ' leg(s), radius ' + Math.round(res.radiusM) + ' m' + (res.adapted ? ' (tightened)' : '') + (res.turnaroundAdded ? ', turnaround pin added' : '') + ' | ' + legs.join('; '));
+    if (res.warnings.length) {
+      res.warnings.forEach(function (w) { PS.log('plan', 'WARNING ' + w); });
+      PS.log('plan', 'pins behind the warning (aircraft at heading ' + Math.round(origin.hdgDeg) + '°): ' + res.waypoints.map(function (w, i) {
+        return (i + 1) + '=' + w.lat.toFixed(5) + ',' + w.lon.toFixed(5) + ' ' + (w.headingUser ? 'heading ' + Math.round(w.headingDeg) + '° (' + (w.snapped ? 'snapped' : 'set by you') + ')' : 'auto') + (w.label === P.TURNAROUND_PIN_LABEL ? ' [turnaround]' : '');
+      }).join('; '));
+    } else { PS.log('plan', 'route plans without a warning'); }
+  }
   // The planned route for the pins, from the aircraft. origin: { lat, lon, hdgDeg }.
   // Returns { empty, waypoints (with any turnaround pin), segments, route ([[lat, lon], ...] from the aircraft), items, legs, totalM, warnings,
   //           turnaroundAdded, info, radiusM (the turn radius planned with), adapted (a tighter one than usual was needed) }
@@ -2284,6 +2355,7 @@ PS.plan = (function () {
       });
     }
     cache.key = key; cache.value = res;
+    logResult(res, origin);
     return res;
   }
 
@@ -2291,9 +2363,38 @@ PS.plan = (function () {
     list: function () { return pins; }, count: function () { return pins.length; },
     selected: function () { return selected; }, select: select,
     add: add, move: move, remove: remove, clear: clear, setHeading: setHeading, resetHeading: resetHeading, setAll: setAll,
-    headingFromHandle: headingFromHandle, evaluate: evaluate,
+    headingFromHandle: headingFromHandle, snapAt: snapAt, snapPin: snapPin, evaluate: evaluate,
     turn: function () { return turn; }, setMinRadius: setMinRadius
   };
+})();
+
+/* ---- 08-settings.js ---- */
+// Settings kept between runs (localStorage; the app still works if storage is unavailable): the tightest turn the plan may use, whether new
+// pins snap to the taxiway they sit on, and which list the Plan tab opens with.
+
+PS.settings = (function () {
+  var KEY = 'pushplanner.settings';
+  var defaults = { snap: true, planTab: 'suggested', tightest: 26 };
+  var values = {}, k;
+  for (k in defaults) values[k] = defaults[k];
+  try {
+    var saved = JSON.parse(window.localStorage.getItem(KEY) || '{}');
+    for (k in defaults) { if (saved[k] !== undefined && typeof saved[k] === typeof defaults[k]) values[k] = saved[k]; }
+    // the tightest turn used to have a key of its own
+    var old = Number(window.localStorage.getItem('pushplanner.tightest'));
+    if (saved.tightest === undefined && old >= 10 && old <= 40) values.tightest = old;
+  } catch (e) { /* defaults */ }
+  if (values.tightest < 10 || values.tightest > 40) values.tightest = defaults.tightest;
+  PS.plan.setMinRadius(values.tightest);
+
+  function get(name) { return values[name]; }
+  function set(name, v) {
+    values[name] = v;
+    if (name === 'tightest') PS.plan.setMinRadius(v);
+    try { window.localStorage.setItem(KEY, JSON.stringify(values)); } catch (e) { /* not saved */ }
+    PS.log('settings', name + ' = ' + v);
+  }
+  return { get: get, set: set };
 })();
 
 /* ---- 09-tug.js ---- */
@@ -2452,6 +2553,13 @@ PS.follow = (function () {
     TURN_SLOW_FULL_ALPHA_DEG: 60, MIN_TURN_FRACTION: 0.5, OFF_PATH_FRACTION: 0.6, OFF_PATH_M: 5,
     END_BRAKE_START_M: 24, END_BRAKE_MIN_FRACTION: 0.18, END_CREEP_M: 3.5, END_CREEP_FRACTION: 0.1, END_DONE_M: 0.8,
     RADIUS_SLOW_REF_M: 40,                      // arcs planned tighter than this slow the tug in proportion (the plan may tighten a cramped corner)
+    // Speed profile along a leg: a limit at each point from the path's curvature, then braking and acceleration passes so the tug is slowed in
+    // time for a curve or the stop, and speeds up no faster than is comfortable. Curve speeds are the original's (0.6 and 0.55 of its default
+    // cruise of 5 ft/s) and are kept in absolute terms, so a faster setting speeds up the straights without making curves faster than proven.
+    CURVE_BASE_FWD_FTS: 3.0, CURVE_BASE_REV_FTS: 2.75, CURVE_REF_R_M: 40,   // curve speed at a 40 m radius or wider; tighter radii are slower, to half at 20 m
+    STRAIGHT_R_M: 200, CURVE_FULL_R_M: 60,      // wider than 200 m counts as straight; tighter than 60 m gets the full curve speed
+    DECEL_MS2: 0.35, ACCEL_MS2: 0.5,            // comfortable braking and acceleration (m/s per second); the tug's own ramp (14 ft/s per s) is far quicker
+    PROFILE_DS_M: 0.5, CURV_WINDOW_M: 3, LOOK_FEATURE_M: 80,
     CUSP_STOP_FTS: 0.05, CUSP_STOP_SECONDS: 0.5, CUSP_HOLD_SECONDS: 1.0,
     LOST_CTE_M: 15, LOST_SECONDS: 3, STUCK_SECONDS: 8, STUCK_MIN_ADVANCE_M: 0.3
   };
@@ -2515,6 +2623,48 @@ PS.follow = (function () {
     return Math.abs(wrap180(b.tangent - a.tangent));
   }
 
+  // The speed (ft/s, magnitude) the tug should have at each half metre along a leg, and why. straightFts is the top speed on straights.
+  function buildProfile(path, reverse, straightFts) {
+    var ds = K.PROFILE_DS_M, total = path.total, n = Math.max(2, Math.ceil(total / ds) + 1), i;
+    var straight = straightFts * (reverse ? K.REVERSE_FRACTION : 1), curveBase = reverse ? K.CURVE_BASE_REV_FTS : K.CURVE_BASE_FWD_FTS;
+    var minF = K.MIN_AUTO_UNITS * K.UNITS_TO_FTS, cap = [], radius = [];
+    for (i = 0; i < n; i++) {
+      var s0 = Math.min(i * ds, total), sa = Math.max(0, s0 - K.CURV_WINDOW_M), sb = Math.min(total, s0 + K.CURV_WINDOW_M);
+      var k = sb - sa > 0.5 ? G.rad(Math.abs(wrap180(pointAt(path, sb).tangent - pointAt(path, sa).tangent))) / (sb - sa) : 0;   // rad per metre
+      var R = k > 1e-6 ? 1 / k : Infinity, v = straight;
+      if (R < K.STRAIGHT_R_M) {
+        var vc = Math.min(straight, curveBase * clamp(R / K.CURVE_REF_R_M, 0.5, 1));
+        v = straight + (vc - straight) * clamp((K.STRAIGHT_R_M - R) / (K.STRAIGHT_R_M - K.CURVE_FULL_R_M), 0, 1);
+      }
+      cap.push(Math.max(minF, v)); radius.push(R);
+    }
+    var vm = cap.map(function (f) { return f * 0.3048; });                    // metres per second for the passes
+    var floorMs = minF * 0.3048;
+    vm[n - 1] = 0;                                                            // stop at the end of the leg
+    for (i = n - 2; i >= 0; i--) vm[i] = Math.min(vm[i], Math.sqrt(vm[i + 1] * vm[i + 1] + 2 * K.DECEL_MS2 * ds));   // braking: slow in time
+    vm[0] = Math.min(vm[0], floorMs);                                         // from (nearly) rest
+    for (i = 1; i < n; i++) vm[i] = Math.min(vm[i], Math.sqrt(vm[i - 1] * vm[i - 1] + 2 * K.ACCEL_MS2 * ds));         // speeding up gently
+    for (i = 0; i < n; i++) { if (total - i * ds > K.END_DONE_M + 0.2) vm[i] = Math.max(vm[i], floorMs); }             // never slower than a crawl until the end
+    return { ds: ds, n: n, total: total, straight: straight, cap: cap, radius: radius, v: vm.map(function (m) { return m / 0.3048; }) };
+  }
+  // { v (ft/s), why } at distance s along the leg.
+  function profileAt(prof, s) {
+    var x = clamp(s / prof.ds, 0, prof.n - 1), i0 = Math.floor(x), i1 = Math.min(prof.n - 1, i0 + 1), f = x - i0;
+    var v = prof.v[i0] + (prof.v[i1] - prof.v[i0]) * f, capHere = prof.cap[i0] + (prof.cap[i1] - prof.cap[i0]) * f;
+    var kt = function (fts) { return PS.fmt.num(fts * 0.5925, 1) + ' kt'; };
+    var why;
+    if (capHere < prof.straight - 0.25) why = 'in a curve (radius ' + Math.round(prof.radius[i0]) + ' m): ' + kt(v);
+    else if (v >= prof.straight - 0.1) why = 'straight: top speed ' + kt(v);
+    else {
+      // slowing for something ahead: the next curve if there is one before the end, otherwise the stop
+      var limit = Math.min(prof.n - 1, i0 + Math.ceil(K.LOOK_FEATURE_M / prof.ds)), j, curveAt = -1;
+      for (j = i0; j <= limit; j++) { if (prof.cap[j] < prof.straight - 0.25) { curveAt = j; break; } }
+      if (curveAt >= 0 && curveAt < prof.n - 1) why = (v > prof.v[Math.min(prof.n - 1, i0 + 2)] ? 'slowing' : 'speeding up') + ' for the curve in ' + Math.round((curveAt - x) * prof.ds) + ' m: ' + kt(v);
+      else why = (v > prof.v[Math.min(prof.n - 1, i0 + 2)] ? 'slowing for the stop' : 'speeding up') + ' (' + Math.round(prof.total - s) + ' m to go): ' + kt(v);
+    }
+    return { v: v, why: why };
+  }
+
   // segments: [{ sign (-1 reverse, +1 forward), points [[lat, lon], ...], radiusM? }] from the planner. settings: { cruiseUnits }.
   // Returns a follower; call update() every tick.
   function create(segments, settings) {
@@ -2522,7 +2672,7 @@ PS.follow = (function () {
     var cruiseUnits = settings.cruiseUnits || 25;
     var legs = segments.map(function (sg) { return { sign: sg.sign < 0 ? -1 : 1, points: sg.points, radiusM: sg.radiusM || K.RADIUS_SLOW_REF_M }; });
     var origin = { lat: legs[0].points[0][0], lon: legs[0].points[0][1] };
-    legs.forEach(function (l) { l.path = buildPath(l.points, origin); });
+    legs.forEach(function (l) { l.path = buildPath(l.points, origin); l.prof = buildProfile(l.path, l.sign < 0, cruiseUnits * K.UNITS_TO_FTS); });
     var totalM = 0;
     legs.forEach(function (l) { totalM += l.path.total; });
 
@@ -2538,7 +2688,7 @@ PS.follow = (function () {
     // Returns { speedFtS (signed target), yawDegS (target nose turn rate, clockwise positive), phase, leg, legCount, remainingM, cte, alphaDeg,
     //           done, stop (a reason to stop, or ''), note }
     function update(pose, dt, speedFtS) {
-      var out = { speedFtS: 0, yawDegS: 0, phase: st.phase, leg: st.leg, legCount: legs.length, remainingM: 0, cte: 0, alphaDeg: 0, done: st.done, stop: '', note: '' };
+      var out = { why: '', speedFtS: 0, yawDegS: 0, phase: st.phase, leg: st.leg, legCount: legs.length, remainingM: 0, cte: 0, alphaDeg: 0, done: st.done, stop: '', note: '' };
       if (st.done) { out.remainingM = 0; out.phase = 'finished'; return out; }
       var leg = legs[st.leg], path = leg.path, reverse = leg.sign < 0;
       var p = G.toXY(origin.lat, origin.lon, pose.lat, pose.lon);
@@ -2591,23 +2741,14 @@ PS.follow = (function () {
       var kappa = 2 * Math.sin(G.rad(alpha)) / Math.max(aimDist, K.MIN_LOOK);     // 1/m, clockwise
       out.alphaDeg = alpha;
 
-      // ---- speed ----
-      var cruiseFts = cruiseUnits * K.UNITS_TO_FTS, minFts = K.MIN_AUTO_UNITS * K.UNITS_TO_FTS;
-      var mag = cruiseFts * (reverse ? K.REVERSE_FRACTION : 1);
+      // ---- speed: from the leg's profile (fast on straights, slower through curves, braking in time for curves and the stop), then slowed further
+      // only if the tug is not where it should be: pointing well away from the aim point, or off the path ----
+      var minFts = K.MIN_AUTO_UNITS * K.UNITS_TO_FTS, cruiseFts = cruiseUnits * K.UNITS_TO_FTS;
+      var pv = profileAt(leg.prof, s), mag = pv.v;
       var turnFactor = 1 - (1 - K.MIN_TURN_FRACTION) * clamp(Math.abs(alpha) / K.TURN_SLOW_FULL_ALPHA_DEG, 0, 1);
-      mag = Math.max(minFts, mag * turnFactor);
-      if (bendAhead(path, s, K.CURVE_SLOW_WITHIN_M) > K.CURVE_SLOW_BEND_DEG) mag = Math.max(minFts, Math.min(mag, cruiseFts * (reverse ? K.CURVE_REV_FRACTION : K.CURVE_FWD_FRACTION)));
-      // An arc planned tighter than the usual radius is driven slower in proportion (the same yaw rate costs less lag at low speed).
-      if (leg.radiusM < K.RADIUS_SLOW_REF_M - 0.5) mag = Math.max(minFts, mag * clamp(leg.radiusM / K.RADIUS_SLOW_REF_M, 0.5, 1));
-      if (offPath > K.OFF_PATH_M) mag = Math.max(minFts, Math.min(mag, cruiseFts * K.OFF_PATH_FRACTION));
-      // Braking onto the end of the leg.
-      if (remaining < K.END_BRAKE_START_M) {
-        var f = clamp((remaining - 4) / (K.END_BRAKE_START_M - 4), 0, 1);
-        var endMag = cruiseFts * (K.END_BRAKE_MIN_FRACTION + (1 - K.END_BRAKE_MIN_FRACTION) * f);
-        if (remaining < K.END_CREEP_M) endMag = Math.min(endMag, cruiseFts * K.END_CREEP_FRACTION);
-        mag = Math.max(minFts * 0.6, Math.min(mag, endMag));
-      }
-      out.speedFtS = (reverse ? -1 : 1) * mag;
+      if (turnFactor < 1) { mag = Math.max(minFts, mag * turnFactor); }
+      if (offPath > K.OFF_PATH_M) { mag = Math.max(minFts, Math.min(mag, cruiseFts * K.OFF_PATH_FRACTION)); pv.why = 'off the path by ' + PS.fmt.num(offPath, 1) + ' m: slowed'; }
+      out.speedFtS = (reverse ? -1 : 1) * mag; out.why = pv.why;
 
       // ---- turn rate: curvature x speed, within the steering limits, then the tug's measured response is allowed for ----
       var recovering = offPath > K.RECOVER_OFF;
@@ -2635,7 +2776,12 @@ PS.follow = (function () {
       return out;
     }
 
-    return { update: update, totalM: totalM, legCount: legs.length, state: st, legs: legs };
+    // A new top speed mid-push: rebuild each leg's speed profile (the position along the path is unchanged).
+    function setCruise(units) {
+      cruiseUnits = units;
+      legs.forEach(function (l) { l.prof = buildProfile(l.path, l.sign < 0, cruiseUnits * K.UNITS_TO_FTS); });
+    }
+    return { update: update, setCruise: setCruise, totalM: totalM, legCount: legs.length, state: st, legs: legs };
   }
 
   // The planner's evaluated plan (PS.plan.evaluate) as the legs the follower drives. The radius it was planned with goes with each leg.
@@ -2643,7 +2789,7 @@ PS.follow = (function () {
     return plan.segments.map(function (sg) { return { sign: sg.sign, points: sg.points, radiusM: plan.radiusM }; });
   }
 
-  return { create: create, K: K, buildPath: buildPath, locate: locate, pointAt: pointAt, legsFromPlan: legsFromPlan };
+  return { create: create, K: K, buildPath: buildPath, locate: locate, pointAt: pointAt, legsFromPlan: legsFromPlan, buildProfile: buildProfile, profileAt: profileAt };
 })();
 
 /* ---- 11-push.js ---- */
@@ -2718,7 +2864,7 @@ PS.push = (function () {
     var running = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1 };
     if (running[S.status]) {
       var paused = S.status === 'paused' || (S.status === 'stopping' && S.stopNext === 'paused');
-      PS.toasts.show({ id: 'push', kind: S.status === 'brakeHold' ? 'brake' : 'info', persistent: true,
+      PS.toasts.show({ efbOnly: true, id: 'push', kind: S.status === 'brakeHold' ? 'brake' : 'info', persistent: true,
         title: 'Pushback' + (paused ? ' (paused)' : (S.status === 'brakeHold' ? ' (brake set)' : '')),
         message: S.status === 'brakeHold' ? 'The parking brake was set. Release it and the push carries on. ' + remainingText() : (S.status === 'settling' ? 'Starting...' : remainingText()),
         actions: [{ label: paused ? 'Resume' : 'Pause', onClick: function () { if (paused) resume(); else pause(); } }, { label: 'Stop', onClick: function () { stop('stopped by you'); } }] });
@@ -2726,7 +2872,7 @@ PS.push = (function () {
       PS.toasts.dismiss('push');
     }
     if (S.status === 'waitBrake') {
-      PS.toasts.show({ id: 'push-brake', kind: 'brake', persistent: true, title: 'Release the parking brake',
+      PS.toasts.show({ efbOnly: true, id: 'push-brake', kind: 'brake', persistent: true, title: 'Release the parking brake',
         message: 'The push starts as soon as the brake is off.', actions: [{ label: 'Release it for me', onClick: function () { releaseBrake(); } }, { label: 'Cancel', onClick: function () { stop('cancelled by you'); } }] });
     } else if (S.status !== 'brakeHold') {
       PS.toasts.dismiss('push-brake');
@@ -2734,7 +2880,7 @@ PS.push = (function () {
     if (S.status === 'done') {
       if (!finishToastShown) {
         finishToastShown = true;
-        PS.toasts.show({ id: 'push-done', kind: 'info', persistent: true, title: 'Push finished', message: 'Set the parking brake, then dismiss the tug.',
+        PS.toasts.show({ efbOnly: true, id: 'push-done', kind: 'info', persistent: true, title: 'Push finished', message: 'Set the parking brake, then dismiss the tug.',
           actions: [{ label: 'Set the brake', onClick: function () { setBrake(); } }, { label: 'Dismiss tug', onClick: function () { dismissTug(); PS.toasts.dismiss('push-done'); } }, { label: 'x', onClick: function () { PS.toasts.dismiss('push-done'); } }] });
       }
     } else { finishToastShown = false; if (S.status !== 'done') PS.toasts.dismiss('push-done'); }
@@ -2771,7 +2917,7 @@ PS.push = (function () {
     S.plan = plan; S.totalM = plan.totalM;
     S.follower = PS.follow.create(PS.follow.legsFromPlan(plan), { cruiseUnits: cruiseUnits() });
     S.cur = { speed: 0, yaw: 0 }; S.writes = 0; S.failures = 0; S.lastError = ''; S.measuredYaw = null; S.prevHdg = null;
-    S.last = { remainingM: plan.totalM, leg: 0, legCount: plan.legs.length, phase: 'run', cte: 0, alphaDeg: 0, speedFtS: 0, yawDegS: 0, note: '' };
+    S.last = { remainingM: plan.totalM, leg: 0, legCount: plan.legs.length, phase: 'run', cte: 0, alphaDeg: 0, speedFtS: 0, yawDegS: 0, note: '', why: '' };
     log('push requested: ' + PS.fmt.dist(plan.totalM) + ' in ' + plan.legs.length + ' leg(s), turn radius ' + Math.round(plan.radiusM) + ' m, cruise speed factor ' + cruiseUnits() + ' (' + S.speedPercent + '%)' +
       (plan.warnings.length ? ', WITH WARNINGS: ' + plan.warnings.join(' | ') : ''));
     if (!PS.tug.isAttached()) {
@@ -2886,7 +3032,7 @@ PS.push = (function () {
     S.poseFails = 0;
     pose.t = (now - S.startedAt) / 1000;
     var out = S.follower.update(pose, dt, S.cur.speed);
-    S.last = { remainingM: out.remainingM, leg: out.leg, legCount: out.legCount, phase: out.phase, cte: out.cte, alphaDeg: out.alphaDeg, speedFtS: out.speedFtS, yawDegS: out.yawDegS, note: out.note };
+    S.last = { remainingM: out.remainingM, leg: out.leg, legCount: out.legCount, phase: out.phase, cte: out.cte, alphaDeg: out.alphaDeg, speedFtS: out.speedFtS, yawDegS: out.yawDegS, note: out.note, why: out.why };
     if (out.stop) { log('stopping: ' + out.stop); S.wantRun = false; beginStopping(out.stop, 'ready'); return; }
     if (out.done) { log('route finished'); beginStopping('', 'done'); return; }
     S.cur.speed = approach(S.cur.speed, out.speedFtS, SPEED_RAMP * dt);
@@ -2931,7 +3077,7 @@ PS.push = (function () {
       status: S.status, reason: S.reason, attached: S.attached, brake: S.brake, plan: S.plan, totalM: S.totalM, speedPercent: S.speedPercent, cruiseUnits: cruiseUnits(),
       remainingM: l.remainingM, leg: l.leg, legCount: l.legCount, phase: l.phase, cte: l.cte, alphaDeg: l.alphaDeg, speedFtS: S.cur.speed, yawDegS: S.cur.yaw, measuredYaw: S.measuredYaw,
       direction: leg ? (leg.sign < 0 ? 'push back' : 'drive forward') : '', elapsedS: S.startedAt && (S.status === 'driving' || S.status === 'stopping' || S.status === 'paused' || S.status === 'brakeHold') ? (Date.now() - S.startedAt) / 1000 : 0,
-      writes: S.writes, failures: S.failures, lastError: S.lastError, note: l.note, progress: S.totalM > 0 ? clamp(1 - l.remainingM / S.totalM, 0, 1) : 0
+      writes: S.writes, failures: S.failures, lastError: S.lastError, note: l.note, why: l.why || '', progress: S.totalM > 0 ? clamp(1 - l.remainingM / S.totalM, 0, 1) : 0
     };
   }
 
@@ -2939,6 +3085,7 @@ PS.push = (function () {
     S.speedPercent = clamp(Math.round(p), 10, 100);
     try { window.localStorage.setItem(SPEED_KEY, String(S.speedPercent)); } catch (e1) { /* not saved */ }
     log('cruise speed set to ' + S.speedPercent + '% (speed factor ' + cruiseUnits() + ')');
+    if (S.follower && S.follower.setCruise) S.follower.setCruise(cruiseUnits());
   }
 
   // Look at the tug once when the app starts, so the tab opens showing the truth.
@@ -3165,7 +3312,7 @@ PS.pages.push({
     var plotRange = ui.stepper(PLOT_STEPS, 300, function () { draw(); }, 'plan');
     var infoLine = h('div', { class: 'ps-kv', text: '' });
     var contactLine = h('div', { class: 'ps-kv', text: '' });
-    var routeBox = h('div');
+    var routeSummary = h('div', { class: 'ps-note' });
     var pinList = h('div');
     var sugBox = h('div');
     var airportLine = h('div', { class: 'ps-kv', text: '' });
@@ -3216,10 +3363,16 @@ PS.pages.push({
     // Editing the plan by hand takes over from any suggestion that was highlighted.
     function dropSuggestionHighlight() { if (sug.selectedId) { sug.selectedId = null; renderSuggestions(); } }
     function addPin(lat, lon) {
-      dropSuggestionHighlight();
+      dropSuggestionHighlight(); showList('pins', 'a pin was added');
       var i = PS.plan.add(lat, lon);
       log('pin ' + (i + 1) + ' added at ' + lat.toFixed(6) + ', ' + lon.toFixed(6));
+      snap(i);
       planChanged();
+    }
+    // New and moved pins take the heading of the taxiway they sit on, until rotated by hand.
+    function snap(i) {
+      var r = PS.plan.snapPin(i, (PS.readOwn() || { hdgDeg: 0 }).hdgDeg);
+      if (r) log('pin ' + (i + 1) + ' aligned with ' + (r.name ? 'taxiway ' + r.name : 'the taxiway') + ' (' + Math.round(r.distM) + ' m away): heading ' + r.headingDeg + '°');
     }
     function deletePin(i) { PS.plan.remove(i); log('pin ' + (i + 1) + ' deleted; ' + PS.plan.count() + ' left'); planChanged(); }
     function pinHeading(i) {
@@ -3235,22 +3388,10 @@ PS.pages.push({
       return [q[0] - Math.sin(a) * HANDLE_PX, q[1] + Math.cos(a) * HANDLE_PX];
     }
 
-    function legWord(sign) { return sign < 0 ? 'push back' : 'drive forward'; }
     function renderRoute(plan) {
-      PS.clear(routeBox);
-      if (plan.empty) {
-        routeBox.appendChild(ui.note('No route yet. Tap the plot to drop pins (Add pins is on), or pick a suggested push below. The last pin is where the aircraft ends up; rotate it with the handle behind it.'));
-        return;
-      }
-      routeBox.appendChild(h('div', { class: 'ps-kv', text: plan.adapted
-        ? 'Turn radius: ' + Math.round(plan.radiusM) + ' m. A corner was too cramped for the usual ' + Math.round(PS.plan.turn().radiusM) + ' m, so the plan tightened its turns (down to ' + Math.round(PS.plan.turn().minRadiusM) + ' m allowed).'
-        : 'Turn radius: ' + Math.round(plan.radiusM) + ' m (the tug can turn tighter, about 15 to 17 m, but the plan leaves room for steering corrections).' }));
-      routeBox.appendChild(h('div', { class: 'ps-result ' + (plan.warnings.length ? 'bad' : 'ok'),
-        text: PS.fmt.dist(plan.totalM) + ' in ' + plan.legs.length + ' leg(s)' + (plan.turnaroundAdded ? ', with a turnaround pin added by the planner' : '') + (plan.warnings.length ? '. The tug may not manage it (see below)' : '. Plans without a warning') }));
-      plan.legs.forEach(function (l, n) {
-        routeBox.appendChild(h('div', { class: 'ps-kv', text: 'Leg ' + (n + 1) + ': ' + legWord(l.sign) + ' ' + PS.fmt.dist(l.lengthM) + ', ends facing ' + Math.round(l.endHdgDeg) + '°' }));
-      });
-      plan.warnings.forEach(function (w) { routeBox.appendChild(h('div', { class: 'ps-result bad', text: w })); });
+      routeSummary.textContent = plan.empty ? 'No route yet. Tap the plot to drop pins, or pick a suggested push. The last pin is where the aircraft ends up; rotate it with the handle behind it.'
+        : 'Route: ' + PS.fmt.dist(plan.totalM) + ' in ' + plan.legs.length + ' leg(s), ' + (plan.warnings.length ? plan.warnings.length + ' WARNING(S): see the Route panel on the Push tab. The tug may not manage it.' : 'no warnings.');
+      routeSummary.className = 'ps-note' + (plan.warnings.length ? ' warn' : '');
     }
     function renderPins(plan, own) {
       PS.clear(pinList);
@@ -3317,8 +3458,8 @@ PS.pages.push({
     function inputUp(p) {
       if (!drag) return;
       var d = drag; drag = null;
-      if (d.kind === 'handle') { dropSuggestionHighlight(); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); planChanged(); return; }
-      if (d.kind === 'pin') { if (d.moved) { dropSuggestionHighlight(); log('pin ' + (d.idx + 1) + ' moved'); planChanged(); } return; }
+      if (d.kind === 'handle') { dropSuggestionHighlight(); showList('pins', 'a pin was rotated'); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); planChanged(); return; }
+      if (d.kind === 'pin') { if (d.moved) { dropSuggestionHighlight(); showList('pins', 'a pin was moved'); log('pin ' + (d.idx + 1) + ' moved'); if (PS.plan.list()[d.idx] && (PS.plan.list()[d.idx].snapped || !PS.plan.list()[d.idx].headingUser)) snap(d.idx); planChanged(); } return; }
       if (d.moved || !lastView) return;
       if (addMode) { var ll = lastView.fromPx(p[0], p[1]); addPin(ll[0], ll[1]); return; }
       // Add pins off: pick the nearest aircraft to read its details, or clear the selection.
@@ -3363,7 +3504,7 @@ PS.pages.push({
           PS.plan.setAll(s.waypoints);
           sug.selectedId = s.id;
           log('suggestion ' + (i + 1) + ' chosen as the plan: ' + s.title + ' (' + Math.round(s.lengthM) + ' m, ' + PS.plan.count() + ' pin(s)); replaced ' + before + ' earlier pin(s)');
-          renderSuggestions(); planChanged();
+          renderSuggestions(); showList('suggested', 'a suggestion was chosen'); planChanged();
         } }, h('div', { class: 'ps-sug-title', text: (i + 1) + '. ' + s.title + '  (' + PS.fmt.dist(s.lengthM) + ')' }), h('div', { class: 'ps-sug-detail', text: s.detail })));
       });
     }
@@ -3470,15 +3611,24 @@ PS.pages.push({
     }
 
     // ---------------- page ----------------
-    var TIGHT_STEPS = [18, 22, 26, 30, 34, 40];
-    try { var savedTight = Number(window.localStorage.getItem('pushplanner.tightest')); if (savedTight >= 10 && savedTight <= 40) PS.plan.setMinRadius(savedTight); } catch (e3) { /* storage may be unavailable */ }
-    var tightest = ui.stepper(TIGHT_STEPS, TIGHT_STEPS.indexOf(Math.round(PS.plan.turn().minRadiusM)) >= 0 ? Math.round(PS.plan.turn().minRadiusM) : 26, function (v) {
-      PS.plan.setMinRadius(v);
-      try { window.localStorage.setItem('pushplanner.tightest', String(v)); } catch (e4) { /* not saved */ }
-      log('tightest allowed turn radius set to ' + v + ' m'); planChanged();
-    }, 'plan', ['Tighter  -', 'Looser  +'], function (v) { return v + ' m'; });
     addBtn = ui.button('Add pins: ON (tap the plot)', function () { setAddMode(!addMode); });
     setAddMode(true);
+
+    var sugPanel = ui.panel('Suggested pushes', airportLine, sugBox,
+      h('div', { class: 'ps-row' }, ui.button('Reload airport data', function () { loadAirport('asked'); }, 'ps-small ps-ghost')),
+      ui.note('From the original app\'s suggester, planned with the same tug turn radius. Only options the tug can make without a warning are offered. Pick one and it becomes your plan; to adjust it, tap the plot to add pins of your own.'));
+    var pinPanel = ui.panel('Pins', pinList);
+    // Pins and suggestions are two views of the one plan, so only one is shown: placing or editing a pin shows the pins, choosing a suggestion shows the suggestions.
+    var listTabs = h('div', { class: 'ps-row' });
+    var tabToggle = ui.toggle([{ value: 'suggested', label: 'Suggested pushes' }, { value: 'pins', label: 'Custom pins' }], PS.settings.get('planTab'), function (v) { showList(v, 'tab pressed'); });
+    listTabs.appendChild(tabToggle.el);
+    function showList(which, why) {
+      sugPanel.style.display = which === 'suggested' ? '' : 'none';
+      pinPanel.style.display = which === 'pins' ? '' : 'none';
+      if (tabToggle.get() !== which) tabToggle.set(which);
+      if (why) log('showing ' + (which === 'pins' ? 'the custom pins' : 'the suggested pushes') + ' (' + why + ')');
+    }
+    showList(PS.settings.get('planTab'), '');
 
     var el = h('div', { class: 'ps-page' },
       ui.panel('Plan the push',
@@ -3488,11 +3638,10 @@ PS.pages.push({
           ui.button('Recentre', function () { pan.x = 0; pan.y = 0; log('map recentred on the aircraft'); draw(); }, 'ps-ghost')),
         canvas, infoLine, contactLine,
         ui.note('North is up, centred on the aircraft; drag empty map to move it. Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it. White route = push back, blue = drive forward, red = the tug may not manage that leg.')),
-      ui.panel('Route', h('div', { class: 'ps-row' }, ui.field('Tightest turn the plan may use', tightest.el)), routeBox),
-      ui.panel('Suggested pushes', airportLine, sugBox,
-        h('div', { class: 'ps-row' }, ui.button('Reload airport data', function () { loadAirport('asked'); }, 'ps-small ps-ghost')),
-        ui.note('From the original app\'s suggester, planned with the same tug turn radius. Only options the tug can make without a warning are offered. Pick one and it becomes your plan, replacing any pins you placed; then adjust it with pins of your own.')),
-      ui.panel('Pins', pinList)
+      routeSummary,
+      listTabs,
+      sugPanel,
+      pinPanel
     );
     // Redraw triggers: the interval, the EFB's per-frame update (a second chance if timers are throttled), and any click on the page.
     el.addEventListener('click', function () { setTimeout(draw, 0); setTimeout(draw, 400); });
@@ -3527,7 +3676,6 @@ PS.pages.push({
   create: function (ctx) {
     var ui = PS.ui, h = PS.h, D = PS.plotDraw;
     var MAP_STEPS = [50, 100, 200, 300];
-    var SPEED_STEPS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
     var canvas = h('canvas', { class: 'ps-canvas', width: '900', height: '540' });
     var mapRange = ui.stepper(MAP_STEPS, 100, function () { paint(); }, 'push');
     var timer = null, lastPaintAt = 0, lastErr = '';
@@ -3544,6 +3692,8 @@ PS.pages.push({
     var legLine = h('div', { class: 'ps-kv', text: '' });
     var motionLine = h('div', { class: 'ps-kv', text: '' });
     var infoLine = h('div', { class: 'ps-kv', text: '' });
+    var routeBox = h('div');
+    var renderedPlan = null;
 
     function say(msg) { PS.log('push', msg); }
     var tugBtn = ui.button('Call the tug', function () { PS.push.toggleTug(); paint(); });
@@ -3557,7 +3707,6 @@ PS.pages.push({
     var releaseBtn = ui.button('Release the brake for me', function () { PS.push.releaseBrake(); });
     var setBrakeBtn = ui.button('Set the brake', function () { PS.push.setBrake(); }, 'ps-small');
     var dismissBtn = ui.button('Dismiss the tug', function () { PS.push.dismissTug(); paint(); }, 'ps-small ps-ghost');
-    var speed = ui.stepper(SPEED_STEPS, PS.push.view().speedPercent, function (v) { PS.push.setSpeedPercent(v); }, 'push', ['Slower  -', 'Faster  +'], function (v) { return v + '%'; });
 
     var STATUS_TEXT = {
       idle: 'Tug not on', ready: 'Tug on, ready to push', attaching: 'Calling the tug...', waitBrake: 'Release the parking brake', settling: 'Starting...',
@@ -3584,6 +3733,7 @@ PS.pages.push({
       dismissBtn.style.display = v.status === 'done' || v.status === 'ready' ? '' : 'none';
       whyLine.textContent = !c.ok && !running && v.status !== 'waitBrake' ? c.why : '';
       var plan = PS.plan.evaluate(PS.readOwn() || { lat: 0, lon: 0, hdgDeg: 0 });
+      if (plan !== renderedPlan) { renderedPlan = plan; renderRoute(plan); }
       planLine.textContent = plan.empty ? 'No plan yet: make one on the Plan tab.' : 'Plan: ' + PS.fmt.dist(plan.totalM) + ' in ' + plan.legs.length + ' leg(s)' + (plan.warnings.length ? ', WITH WARNINGS (see the Plan tab): the tug may not manage it' : ', no warnings') + '. Turn radius ' + Math.round(plan.radiusM) + ' m.';
     }
 
@@ -3594,7 +3744,23 @@ PS.pages.push({
       legLine.textContent = active && v.legCount ? 'Leg ' + Math.min(v.leg + 1, v.legCount) + ' of ' + v.legCount + (v.direction ? ': ' + v.direction : '') + (v.phase && v.phase !== 'run' ? ' (' + v.phase + ')' : '') : '';
       var kt = Math.abs(v.speedFtS) * 0.5925;
       motionLine.textContent = active ? 'Speed ' + PS.fmt.num(kt, 1) + ' kt, turning ' + PS.fmt.num(v.yawDegS, 1) + ' deg/s (measured ' + PS.fmt.num(v.measuredYaw, 1) + '), ' + PS.fmt.num(Math.abs(v.cte), 1) + ' m off the path, elapsed ' + PS.fmt.seconds(v.elapsedS) +
-        (v.failures ? ', ' + v.failures + ' failed write(s): ' + v.lastError : '') + (v.note ? '. ' + v.note : '') : 'Cruise speed ' + v.speedPercent + '% (speed factor ' + v.cruiseUnits + ').';
+        (v.failures ? ', ' + v.failures + ' failed write(s): ' + v.lastError : '') + (v.note ? '. ' + v.note : '') + (v.why ? '. Speed: ' + v.why : '') : 'The tug picks its own speed along the route, up to the maximum cruise speed set in Settings (' + v.speedPercent + '%): slower for curves and near the end.';
+    }
+
+    function legWord(sign) { return sign < 0 ? 'push back' : 'drive forward'; }
+    // The planned route in words: radius, legs and any warnings (the plan itself is made on the Plan tab).
+    function renderRoute(plan) {
+      PS.clear(routeBox);
+      if (plan.empty) { routeBox.appendChild(ui.note('No route yet: make one on the Plan tab.')); return; }
+      routeBox.appendChild(h('div', { class: 'ps-kv', text: plan.adapted
+        ? 'Turn radius: ' + Math.round(plan.radiusM) + ' m. A corner was too cramped for the usual ' + Math.round(PS.plan.turn().radiusM) + ' m, so the plan tightened its turns (down to ' + Math.round(PS.plan.turn().minRadiusM) + ' m allowed, see Settings).'
+        : 'Turn radius: ' + Math.round(plan.radiusM) + ' m (the tug can turn tighter, about 15 to 17 m, but the plan leaves room for steering corrections).' }));
+      routeBox.appendChild(h('div', { class: 'ps-result ' + (plan.warnings.length ? 'bad' : 'ok'),
+        text: PS.fmt.dist(plan.totalM) + ' in ' + plan.legs.length + ' leg(s)' + (plan.turnaroundAdded ? ', with a turnaround pin added by the planner' : '') + (plan.warnings.length ? '. The tug may not manage it (see below)' : '. Plans without a warning') }));
+      plan.legs.forEach(function (l, n) {
+        routeBox.appendChild(h('div', { class: 'ps-kv', text: 'Leg ' + (n + 1) + ': ' + legWord(l.sign) + ' ' + PS.fmt.dist(l.lengthM) + ', ends facing ' + Math.round(l.endHdgDeg) + '°' }));
+      });
+      plan.warnings.forEach(function (w) { routeBox.appendChild(h('div', { class: 'ps-result bad', text: w })); });
     }
 
     function paintMap(v) {
@@ -3633,8 +3799,8 @@ PS.pages.push({
         planLine, whyLine,
         h('div', { class: 'ps-row' }, tugBtn, startBtn, pauseBtn, stopBtn),
         h('div', { class: 'ps-row' }, releaseBtn, setBrakeBtn, dismissBtn),
-        h('div', { class: 'ps-row' }, ui.field('Cruise speed (percent of the tug\'s top speed)', speed.el)),
         ui.note('Start does it all in one press: it calls the tug if it is not on, waits for the parking brake to be off (the app can release it for you), then drives the plan. It moves the aircraft, so only use it on the ground with the way clear. The push stops at once if you press STOP, the sim takes the tug away, the brake is set, or this app is paused or closed.', 'warn')),
+      ui.panel('Route', routeBox),
       ui.panel('Progress', remainBig, bar, legLine, motionLine),
       ui.panel('Map', h('div', { class: 'ps-row' }, ui.field('Range', mapRange.el)), canvas, infoLine),
       ui.panel('Log', ui.logBox(['push', 'tug', 'key', 'set']))
@@ -3652,6 +3818,41 @@ PS.pages.push({
         var fi = PS.frameHooks.indexOf(frameHook); if (fi >= 0) PS.frameHooks.splice(fi, 1);
         if (timer !== null) { clearInterval(timer); timer = null; }
       }
+    };
+  }
+});
+
+/* ---- 80-page-settings.js ---- */
+// Settings tab: the options that apply to planning and pushing.
+
+PS.pages.push({
+  id: 'settings',
+  title: 'Settings',
+  create: function () {
+    var ui = PS.ui, h = PS.h;
+    var TIGHT_STEPS = [18, 22, 26, 30, 34, 40];
+    var tight = PS.settings.get('tightest');
+    var tightest = ui.stepper(TIGHT_STEPS, TIGHT_STEPS.indexOf(tight) >= 0 ? tight : 26, function (v) {
+      PS.settings.set('tightest', v); PS.log('plan', 'tightest allowed turn radius set to ' + v + ' m');
+    }, 'settings', ['Tighter  -', 'Looser  +'], function (v) { return v + ' m'; });
+    var SPEED_STEPS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    var maxSpeed = ui.stepper(SPEED_STEPS, PS.push.view().speedPercent, function (v) { PS.push.setSpeedPercent(v); }, 'settings', ['Slower  -', 'Faster  +'],
+      function (v) { return v + '% (' + PS.fmt.num(v / 100 * 10 * 0.5925, 1) + ' kt forward, ' + PS.fmt.num(v / 100 * 10 * 0.75 * 0.5925, 1) + ' kt in reverse)'; });
+    var snap = ui.toggle([{ value: 'on', label: 'Snap on' }, { value: 'off', label: 'Snap off' }], PS.settings.get('snap') ? 'on' : 'off', function (v) { PS.settings.set('snap', v === 'on'); });
+    var tab = ui.toggle([{ value: 'suggested', label: 'Suggested pushes' }, { value: 'pins', label: 'Custom pins' }], PS.settings.get('planTab'), function (v) { PS.settings.set('planTab', v); });
+    return {
+      el: h('div', { class: 'ps-page' },
+        ui.panel('Pushing',
+          ui.field('Maximum cruise speed', maxSpeed.el),
+          ui.note('The most the tug will do on a straight. It chooses its own speed along the route, up to this: slower in curves (more so the tighter they are), slowing in good time before each curve, and easing down to a crawl as it nears the end. Changes apply to a push already under way.')),
+        ui.panel('Planning',
+          ui.field('Tightest turn the plan may use', tightest.el),
+          ui.note('The plan uses a 40 m turn radius. Where a corner is too cramped for that it tries tighter ones, down to this. Smaller means the tug has to turn harder: check the Route panel on the Push tab for warnings.'),
+          ui.field('Snap pins to the taxiway', snap.el),
+          ui.note('With snap on, a pin you drop or move within 35 m of a taxiway takes the taxiway\'s heading (the direction needing the smaller turn). Rotating a pin by hand overrides it.'),
+          ui.field('Plan tab opens on', tab.el),
+          ui.note('Which list the Plan tab shows first. It also switches by itself: placing a pin shows the pins, picking a suggestion shows the suggestions.'))),
+      onShow: function () {}, onHide: function () {}
     };
   }
 });
@@ -3801,10 +4002,10 @@ PS.createViewClass = function (sdk) {
       }
     }
     // EFB lifecycle hooks (names per the open-source sample; unverified against the SDK docs).
-    onOpen() { PS.hook('onOpen'); PS.hbStart(); PS.rafStart(); }
-    onResume() { PS.hook('onResume'); PS.hbResume(); }
-    onPause() { PS.hook('onPause'); PS.hbPause(); PS.runCloseHooks('app paused'); }
-    onClose() { PS.hook('onClose'); PS.runCloseHooks('app closed'); PS.hbStop(); }
+    onOpen() { PS.hook('onOpen'); PS.toasts.setAppOpen(true); PS.hbStart(); PS.rafStart(); }
+    onResume() { PS.hook('onResume'); PS.toasts.setAppOpen(true); PS.hbResume(); }
+    onPause() { PS.hook('onPause'); PS.toasts.setAppOpen(false); PS.hbPause(); PS.runCloseHooks('app paused'); }
+    onClose() { PS.hook('onClose'); PS.toasts.setAppOpen(false); PS.runCloseHooks('app closed'); PS.hbStop(); }
     onUpdate() { PS.hook('onUpdate'); PS.hbFrame(); }
     routeGamepadInteractionEvent() { PS.hook('routeGamepadInteractionEvent'); }
     handlePageKeyAction() { PS.hook('handlePageKeyAction'); }

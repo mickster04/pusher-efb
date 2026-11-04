@@ -8,7 +8,6 @@ PS.pages.push({
   create: function (ctx) {
     var ui = PS.ui, h = PS.h, D = PS.plotDraw;
     var MAP_STEPS = [50, 100, 200, 300];
-    var SPEED_STEPS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
     var canvas = h('canvas', { class: 'ps-canvas', width: '900', height: '540' });
     var mapRange = ui.stepper(MAP_STEPS, 100, function () { paint(); }, 'push');
     var timer = null, lastPaintAt = 0, lastErr = '';
@@ -25,6 +24,8 @@ PS.pages.push({
     var legLine = h('div', { class: 'ps-kv', text: '' });
     var motionLine = h('div', { class: 'ps-kv', text: '' });
     var infoLine = h('div', { class: 'ps-kv', text: '' });
+    var routeBox = h('div');
+    var renderedPlan = null;
 
     function say(msg) { PS.log('push', msg); }
     var tugBtn = ui.button('Call the tug', function () { PS.push.toggleTug(); paint(); });
@@ -38,7 +39,6 @@ PS.pages.push({
     var releaseBtn = ui.button('Release the brake for me', function () { PS.push.releaseBrake(); });
     var setBrakeBtn = ui.button('Set the brake', function () { PS.push.setBrake(); }, 'ps-small');
     var dismissBtn = ui.button('Dismiss the tug', function () { PS.push.dismissTug(); paint(); }, 'ps-small ps-ghost');
-    var speed = ui.stepper(SPEED_STEPS, PS.push.view().speedPercent, function (v) { PS.push.setSpeedPercent(v); }, 'push', ['Slower  -', 'Faster  +'], function (v) { return v + '%'; });
 
     var STATUS_TEXT = {
       idle: 'Tug not on', ready: 'Tug on, ready to push', attaching: 'Calling the tug...', waitBrake: 'Release the parking brake', settling: 'Starting...',
@@ -65,6 +65,7 @@ PS.pages.push({
       dismissBtn.style.display = v.status === 'done' || v.status === 'ready' ? '' : 'none';
       whyLine.textContent = !c.ok && !running && v.status !== 'waitBrake' ? c.why : '';
       var plan = PS.plan.evaluate(PS.readOwn() || { lat: 0, lon: 0, hdgDeg: 0 });
+      if (plan !== renderedPlan) { renderedPlan = plan; renderRoute(plan); }
       planLine.textContent = plan.empty ? 'No plan yet: make one on the Plan tab.' : 'Plan: ' + PS.fmt.dist(plan.totalM) + ' in ' + plan.legs.length + ' leg(s)' + (plan.warnings.length ? ', WITH WARNINGS (see the Plan tab): the tug may not manage it' : ', no warnings') + '. Turn radius ' + Math.round(plan.radiusM) + ' m.';
     }
 
@@ -75,7 +76,23 @@ PS.pages.push({
       legLine.textContent = active && v.legCount ? 'Leg ' + Math.min(v.leg + 1, v.legCount) + ' of ' + v.legCount + (v.direction ? ': ' + v.direction : '') + (v.phase && v.phase !== 'run' ? ' (' + v.phase + ')' : '') : '';
       var kt = Math.abs(v.speedFtS) * 0.5925;
       motionLine.textContent = active ? 'Speed ' + PS.fmt.num(kt, 1) + ' kt, turning ' + PS.fmt.num(v.yawDegS, 1) + ' deg/s (measured ' + PS.fmt.num(v.measuredYaw, 1) + '), ' + PS.fmt.num(Math.abs(v.cte), 1) + ' m off the path, elapsed ' + PS.fmt.seconds(v.elapsedS) +
-        (v.failures ? ', ' + v.failures + ' failed write(s): ' + v.lastError : '') + (v.note ? '. ' + v.note : '') : 'Cruise speed ' + v.speedPercent + '% (speed factor ' + v.cruiseUnits + ').';
+        (v.failures ? ', ' + v.failures + ' failed write(s): ' + v.lastError : '') + (v.note ? '. ' + v.note : '') + (v.why ? '. Speed: ' + v.why : '') : 'The tug picks its own speed along the route, up to the maximum cruise speed set in Settings (' + v.speedPercent + '%): slower for curves and near the end.';
+    }
+
+    function legWord(sign) { return sign < 0 ? 'push back' : 'drive forward'; }
+    // The planned route in words: radius, legs and any warnings (the plan itself is made on the Plan tab).
+    function renderRoute(plan) {
+      PS.clear(routeBox);
+      if (plan.empty) { routeBox.appendChild(ui.note('No route yet: make one on the Plan tab.')); return; }
+      routeBox.appendChild(h('div', { class: 'ps-kv', text: plan.adapted
+        ? 'Turn radius: ' + Math.round(plan.radiusM) + ' m. A corner was too cramped for the usual ' + Math.round(PS.plan.turn().radiusM) + ' m, so the plan tightened its turns (down to ' + Math.round(PS.plan.turn().minRadiusM) + ' m allowed, see Settings).'
+        : 'Turn radius: ' + Math.round(plan.radiusM) + ' m (the tug can turn tighter, about 15 to 17 m, but the plan leaves room for steering corrections).' }));
+      routeBox.appendChild(h('div', { class: 'ps-result ' + (plan.warnings.length ? 'bad' : 'ok'),
+        text: PS.fmt.dist(plan.totalM) + ' in ' + plan.legs.length + ' leg(s)' + (plan.turnaroundAdded ? ', with a turnaround pin added by the planner' : '') + (plan.warnings.length ? '. The tug may not manage it (see below)' : '. Plans without a warning') }));
+      plan.legs.forEach(function (l, n) {
+        routeBox.appendChild(h('div', { class: 'ps-kv', text: 'Leg ' + (n + 1) + ': ' + legWord(l.sign) + ' ' + PS.fmt.dist(l.lengthM) + ', ends facing ' + Math.round(l.endHdgDeg) + '°' }));
+      });
+      plan.warnings.forEach(function (w) { routeBox.appendChild(h('div', { class: 'ps-result bad', text: w })); });
     }
 
     function paintMap(v) {
@@ -114,8 +131,8 @@ PS.pages.push({
         planLine, whyLine,
         h('div', { class: 'ps-row' }, tugBtn, startBtn, pauseBtn, stopBtn),
         h('div', { class: 'ps-row' }, releaseBtn, setBrakeBtn, dismissBtn),
-        h('div', { class: 'ps-row' }, ui.field('Cruise speed (percent of the tug\'s top speed)', speed.el)),
         ui.note('Start does it all in one press: it calls the tug if it is not on, waits for the parking brake to be off (the app can release it for you), then drives the plan. It moves the aircraft, so only use it on the ground with the way clear. The push stops at once if you press STOP, the sim takes the tug away, the brake is set, or this app is paused or closed.', 'warn')),
+      ui.panel('Route', routeBox),
       ui.panel('Progress', remainBig, bar, legLine, motionLine),
       ui.panel('Map', h('div', { class: 'ps-row' }, ui.field('Range', mapRange.el)), canvas, infoLine),
       ui.panel('Log', ui.logBox(['push', 'tug', 'key', 'set']))

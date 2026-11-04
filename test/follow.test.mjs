@@ -110,3 +110,55 @@ test('follower: remaining distance counts down over all the legs, and a lost pat
   assert.ok(stuck.indexOf('not moving') >= 0, 'stuck: ' + stuck);
   plan.clear();
 });
+
+// ---- speed profile ----
+const F = PS.follow;
+function pathOf(pts) { return F.buildPath(pts, { lat: pts[0][0], lon: pts[0][1] }); }
+function straightPts(len) { const a = [own.lat, own.lon]; return [a, at(0, len)]; }
+function arcPts(radius, turnDeg, lead) {   // lead m straight, a left arc, lead m straight
+  const pts = [[own.lat, own.lon]]; let p = from(pts[0]), brg = 0;
+  const push = (d) => { const q = at(brg, d, p); pts.push(q); p = from(q); };
+  for (let d = 5; d <= lead; d += 5) push(5);
+  const stepDeg = 5, chord = 2 * radius * Math.sin(G.rad(stepDeg / 2));
+  for (let a = 0; a < turnDeg; a += stepDeg) { brg += stepDeg / 2; push(chord); brg += stepDeg / 2; }
+  for (let d = 5; d <= lead; d += 5) push(5);
+  return pts;
+}
+const mps = (fts) => fts * 0.3048;
+
+test('profile: a long straight reaches the top speed and the stop is braked for in time', () => {
+  const top = 5;                                    // ft/s
+  const prof = F.buildProfile(pathOf(straightPts(200)), false, top);
+  assert.ok(Math.abs(F.profileAt(prof, 100).v - top) < 0.05, 'top speed mid-straight');
+  assert.match(F.profileAt(prof, 100).why, /straight/);
+  assert.match(F.profileAt(prof, 198).why, /stop/);
+  for (let i = 1; i < prof.n; i++) {          // never decelerates faster than the limit, never accelerates faster either
+    const dv2 = mps(prof.v[i]) ** 2 - mps(prof.v[i - 1]) ** 2;
+    assert.ok(dv2 <= 2 * F.K.ACCEL_MS2 * prof.ds + 1e-6 && dv2 >= -2 * F.K.DECEL_MS2 * prof.ds - 1e-6, 'step ' + i);
+  }
+  assert.ok(prof.v[prof.n - 2] <= F.K.MIN_AUTO_UNITS * F.K.UNITS_TO_FTS + 0.5, 'a crawl at the end');
+});
+
+test('profile: slows before a tight curve, is slower in it than on the straight, and tighter curves are slower', () => {
+  const top = 5;
+  const p40 = F.buildProfile(pathOf(arcPts(40, 90, 80)), false, top);
+  const p20 = F.buildProfile(pathOf(arcPts(20, 90, 80)), false, top);
+  const min = (p) => Math.min(...p.v.slice(10, p.n - 20));
+  assert.ok(min(p40) < top - 1, 'curve slower than the straight');
+  assert.ok(min(p20) < min(p40) + 1e-9, 'tighter is not faster');
+  const iCurve = p40.radius.findIndex((r) => r < 100);
+  assert.ok(iCurve > 0);
+  const before = p40.v[Math.max(0, iCurve - 60)], at = p40.v[iCurve];   // 30 m before the curve starts to show
+  assert.ok(before > at - 1e-9, 'already slowing on the approach');
+  const slow = p40.v.findIndex((v, i) => i > 20 && v < top - 0.2);
+  assert.ok(slow < iCurve, 'slowing starts before the curve');
+});
+
+test('profile: a reverse push is slower than forward, and a new top speed changes a running follower', () => {
+  const fwd = F.buildProfile(pathOf(straightPts(200)), false, 5), rev = F.buildProfile(pathOf(straightPts(200)), true, 5);
+  assert.ok(F.profileAt(rev, 100).v < F.profileAt(fwd, 100).v);
+  const f = F.create([{ sign: -1, points: straightPts(200) }], { cruiseUnits: 25 });
+  const before = F.profileAt(f.legs[0].prof, 100).v;
+  f.setCruise(10);
+  assert.ok(F.profileAt(f.legs[0].prof, 100).v < before);
+});

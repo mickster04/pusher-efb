@@ -15,7 +15,7 @@ PS.pages.push({
     var plotRange = ui.stepper(PLOT_STEPS, 300, function () { draw(); }, 'plan');
     var infoLine = h('div', { class: 'ps-kv', text: '' });
     var contactLine = h('div', { class: 'ps-kv', text: '' });
-    var routeBox = h('div');
+    var routeSummary = h('div', { class: 'ps-note' });
     var pinList = h('div');
     var sugBox = h('div');
     var airportLine = h('div', { class: 'ps-kv', text: '' });
@@ -66,10 +66,16 @@ PS.pages.push({
     // Editing the plan by hand takes over from any suggestion that was highlighted.
     function dropSuggestionHighlight() { if (sug.selectedId) { sug.selectedId = null; renderSuggestions(); } }
     function addPin(lat, lon) {
-      dropSuggestionHighlight();
+      dropSuggestionHighlight(); showList('pins', 'a pin was added');
       var i = PS.plan.add(lat, lon);
       log('pin ' + (i + 1) + ' added at ' + lat.toFixed(6) + ', ' + lon.toFixed(6));
+      snap(i);
       planChanged();
+    }
+    // New and moved pins take the heading of the taxiway they sit on, until rotated by hand.
+    function snap(i) {
+      var r = PS.plan.snapPin(i, (PS.readOwn() || { hdgDeg: 0 }).hdgDeg);
+      if (r) log('pin ' + (i + 1) + ' aligned with ' + (r.name ? 'taxiway ' + r.name : 'the taxiway') + ' (' + Math.round(r.distM) + ' m away): heading ' + r.headingDeg + '°');
     }
     function deletePin(i) { PS.plan.remove(i); log('pin ' + (i + 1) + ' deleted; ' + PS.plan.count() + ' left'); planChanged(); }
     function pinHeading(i) {
@@ -85,22 +91,10 @@ PS.pages.push({
       return [q[0] - Math.sin(a) * HANDLE_PX, q[1] + Math.cos(a) * HANDLE_PX];
     }
 
-    function legWord(sign) { return sign < 0 ? 'push back' : 'drive forward'; }
     function renderRoute(plan) {
-      PS.clear(routeBox);
-      if (plan.empty) {
-        routeBox.appendChild(ui.note('No route yet. Tap the plot to drop pins (Add pins is on), or pick a suggested push below. The last pin is where the aircraft ends up; rotate it with the handle behind it.'));
-        return;
-      }
-      routeBox.appendChild(h('div', { class: 'ps-kv', text: plan.adapted
-        ? 'Turn radius: ' + Math.round(plan.radiusM) + ' m. A corner was too cramped for the usual ' + Math.round(PS.plan.turn().radiusM) + ' m, so the plan tightened its turns (down to ' + Math.round(PS.plan.turn().minRadiusM) + ' m allowed).'
-        : 'Turn radius: ' + Math.round(plan.radiusM) + ' m (the tug can turn tighter, about 15 to 17 m, but the plan leaves room for steering corrections).' }));
-      routeBox.appendChild(h('div', { class: 'ps-result ' + (plan.warnings.length ? 'bad' : 'ok'),
-        text: PS.fmt.dist(plan.totalM) + ' in ' + plan.legs.length + ' leg(s)' + (plan.turnaroundAdded ? ', with a turnaround pin added by the planner' : '') + (plan.warnings.length ? '. The tug may not manage it (see below)' : '. Plans without a warning') }));
-      plan.legs.forEach(function (l, n) {
-        routeBox.appendChild(h('div', { class: 'ps-kv', text: 'Leg ' + (n + 1) + ': ' + legWord(l.sign) + ' ' + PS.fmt.dist(l.lengthM) + ', ends facing ' + Math.round(l.endHdgDeg) + '°' }));
-      });
-      plan.warnings.forEach(function (w) { routeBox.appendChild(h('div', { class: 'ps-result bad', text: w })); });
+      routeSummary.textContent = plan.empty ? 'No route yet. Tap the plot to drop pins, or pick a suggested push. The last pin is where the aircraft ends up; rotate it with the handle behind it.'
+        : 'Route: ' + PS.fmt.dist(plan.totalM) + ' in ' + plan.legs.length + ' leg(s), ' + (plan.warnings.length ? plan.warnings.length + ' WARNING(S): see the Route panel on the Push tab. The tug may not manage it.' : 'no warnings.');
+      routeSummary.className = 'ps-note' + (plan.warnings.length ? ' warn' : '');
     }
     function renderPins(plan, own) {
       PS.clear(pinList);
@@ -167,8 +161,8 @@ PS.pages.push({
     function inputUp(p) {
       if (!drag) return;
       var d = drag; drag = null;
-      if (d.kind === 'handle') { dropSuggestionHighlight(); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); planChanged(); return; }
-      if (d.kind === 'pin') { if (d.moved) { dropSuggestionHighlight(); log('pin ' + (d.idx + 1) + ' moved'); planChanged(); } return; }
+      if (d.kind === 'handle') { dropSuggestionHighlight(); showList('pins', 'a pin was rotated'); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); planChanged(); return; }
+      if (d.kind === 'pin') { if (d.moved) { dropSuggestionHighlight(); showList('pins', 'a pin was moved'); log('pin ' + (d.idx + 1) + ' moved'); if (PS.plan.list()[d.idx] && (PS.plan.list()[d.idx].snapped || !PS.plan.list()[d.idx].headingUser)) snap(d.idx); planChanged(); } return; }
       if (d.moved || !lastView) return;
       if (addMode) { var ll = lastView.fromPx(p[0], p[1]); addPin(ll[0], ll[1]); return; }
       // Add pins off: pick the nearest aircraft to read its details, or clear the selection.
@@ -213,7 +207,7 @@ PS.pages.push({
           PS.plan.setAll(s.waypoints);
           sug.selectedId = s.id;
           log('suggestion ' + (i + 1) + ' chosen as the plan: ' + s.title + ' (' + Math.round(s.lengthM) + ' m, ' + PS.plan.count() + ' pin(s)); replaced ' + before + ' earlier pin(s)');
-          renderSuggestions(); planChanged();
+          renderSuggestions(); showList('suggested', 'a suggestion was chosen'); planChanged();
         } }, h('div', { class: 'ps-sug-title', text: (i + 1) + '. ' + s.title + '  (' + PS.fmt.dist(s.lengthM) + ')' }), h('div', { class: 'ps-sug-detail', text: s.detail })));
       });
     }
@@ -320,15 +314,24 @@ PS.pages.push({
     }
 
     // ---------------- page ----------------
-    var TIGHT_STEPS = [18, 22, 26, 30, 34, 40];
-    try { var savedTight = Number(window.localStorage.getItem('pushplanner.tightest')); if (savedTight >= 10 && savedTight <= 40) PS.plan.setMinRadius(savedTight); } catch (e3) { /* storage may be unavailable */ }
-    var tightest = ui.stepper(TIGHT_STEPS, TIGHT_STEPS.indexOf(Math.round(PS.plan.turn().minRadiusM)) >= 0 ? Math.round(PS.plan.turn().minRadiusM) : 26, function (v) {
-      PS.plan.setMinRadius(v);
-      try { window.localStorage.setItem('pushplanner.tightest', String(v)); } catch (e4) { /* not saved */ }
-      log('tightest allowed turn radius set to ' + v + ' m'); planChanged();
-    }, 'plan', ['Tighter  -', 'Looser  +'], function (v) { return v + ' m'; });
     addBtn = ui.button('Add pins: ON (tap the plot)', function () { setAddMode(!addMode); });
     setAddMode(true);
+
+    var sugPanel = ui.panel('Suggested pushes', airportLine, sugBox,
+      h('div', { class: 'ps-row' }, ui.button('Reload airport data', function () { loadAirport('asked'); }, 'ps-small ps-ghost')),
+      ui.note('From the original app\'s suggester, planned with the same tug turn radius. Only options the tug can make without a warning are offered. Pick one and it becomes your plan; to adjust it, tap the plot to add pins of your own.'));
+    var pinPanel = ui.panel('Pins', pinList);
+    // Pins and suggestions are two views of the one plan, so only one is shown: placing or editing a pin shows the pins, choosing a suggestion shows the suggestions.
+    var listTabs = h('div', { class: 'ps-row' });
+    var tabToggle = ui.toggle([{ value: 'suggested', label: 'Suggested pushes' }, { value: 'pins', label: 'Custom pins' }], PS.settings.get('planTab'), function (v) { showList(v, 'tab pressed'); });
+    listTabs.appendChild(tabToggle.el);
+    function showList(which, why) {
+      sugPanel.style.display = which === 'suggested' ? '' : 'none';
+      pinPanel.style.display = which === 'pins' ? '' : 'none';
+      if (tabToggle.get() !== which) tabToggle.set(which);
+      if (why) log('showing ' + (which === 'pins' ? 'the custom pins' : 'the suggested pushes') + ' (' + why + ')');
+    }
+    showList(PS.settings.get('planTab'), '');
 
     var el = h('div', { class: 'ps-page' },
       ui.panel('Plan the push',
@@ -338,11 +341,10 @@ PS.pages.push({
           ui.button('Recentre', function () { pan.x = 0; pan.y = 0; log('map recentred on the aircraft'); draw(); }, 'ps-ghost')),
         canvas, infoLine, contactLine,
         ui.note('North is up, centred on the aircraft; drag empty map to move it. Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it. White route = push back, blue = drive forward, red = the tug may not manage that leg.')),
-      ui.panel('Route', h('div', { class: 'ps-row' }, ui.field('Tightest turn the plan may use', tightest.el)), routeBox),
-      ui.panel('Suggested pushes', airportLine, sugBox,
-        h('div', { class: 'ps-row' }, ui.button('Reload airport data', function () { loadAirport('asked'); }, 'ps-small ps-ghost')),
-        ui.note('From the original app\'s suggester, planned with the same tug turn radius. Only options the tug can make without a warning are offered. Pick one and it becomes your plan, replacing any pins you placed; then adjust it with pins of your own.')),
-      ui.panel('Pins', pinList)
+      routeSummary,
+      listTabs,
+      sugPanel,
+      pinPanel
     );
     // Redraw triggers: the interval, the EFB's per-frame update (a second chance if timers are throttled), and any click on the page.
     el.addEventListener('click', function () { setTimeout(draw, 0); setTimeout(draw, 400); });

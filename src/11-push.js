@@ -69,7 +69,7 @@ PS.push = (function () {
     var running = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1 };
     if (running[S.status]) {
       var paused = S.status === 'paused' || (S.status === 'stopping' && S.stopNext === 'paused');
-      PS.toasts.show({ id: 'push', kind: S.status === 'brakeHold' ? 'brake' : 'info', persistent: true,
+      PS.toasts.show({ efbOnly: true, id: 'push', kind: S.status === 'brakeHold' ? 'brake' : 'info', persistent: true,
         title: 'Pushback' + (paused ? ' (paused)' : (S.status === 'brakeHold' ? ' (brake set)' : '')),
         message: S.status === 'brakeHold' ? 'The parking brake was set. Release it and the push carries on. ' + remainingText() : (S.status === 'settling' ? 'Starting...' : remainingText()),
         actions: [{ label: paused ? 'Resume' : 'Pause', onClick: function () { if (paused) resume(); else pause(); } }, { label: 'Stop', onClick: function () { stop('stopped by you'); } }] });
@@ -77,7 +77,7 @@ PS.push = (function () {
       PS.toasts.dismiss('push');
     }
     if (S.status === 'waitBrake') {
-      PS.toasts.show({ id: 'push-brake', kind: 'brake', persistent: true, title: 'Release the parking brake',
+      PS.toasts.show({ efbOnly: true, id: 'push-brake', kind: 'brake', persistent: true, title: 'Release the parking brake',
         message: 'The push starts as soon as the brake is off.', actions: [{ label: 'Release it for me', onClick: function () { releaseBrake(); } }, { label: 'Cancel', onClick: function () { stop('cancelled by you'); } }] });
     } else if (S.status !== 'brakeHold') {
       PS.toasts.dismiss('push-brake');
@@ -85,7 +85,7 @@ PS.push = (function () {
     if (S.status === 'done') {
       if (!finishToastShown) {
         finishToastShown = true;
-        PS.toasts.show({ id: 'push-done', kind: 'info', persistent: true, title: 'Push finished', message: 'Set the parking brake, then dismiss the tug.',
+        PS.toasts.show({ efbOnly: true, id: 'push-done', kind: 'info', persistent: true, title: 'Push finished', message: 'Set the parking brake, then dismiss the tug.',
           actions: [{ label: 'Set the brake', onClick: function () { setBrake(); } }, { label: 'Dismiss tug', onClick: function () { dismissTug(); PS.toasts.dismiss('push-done'); } }, { label: 'x', onClick: function () { PS.toasts.dismiss('push-done'); } }] });
       }
     } else { finishToastShown = false; if (S.status !== 'done') PS.toasts.dismiss('push-done'); }
@@ -122,7 +122,7 @@ PS.push = (function () {
     S.plan = plan; S.totalM = plan.totalM;
     S.follower = PS.follow.create(PS.follow.legsFromPlan(plan), { cruiseUnits: cruiseUnits() });
     S.cur = { speed: 0, yaw: 0 }; S.writes = 0; S.failures = 0; S.lastError = ''; S.measuredYaw = null; S.prevHdg = null;
-    S.last = { remainingM: plan.totalM, leg: 0, legCount: plan.legs.length, phase: 'run', cte: 0, alphaDeg: 0, speedFtS: 0, yawDegS: 0, note: '' };
+    S.last = { remainingM: plan.totalM, leg: 0, legCount: plan.legs.length, phase: 'run', cte: 0, alphaDeg: 0, speedFtS: 0, yawDegS: 0, note: '', why: '' };
     log('push requested: ' + PS.fmt.dist(plan.totalM) + ' in ' + plan.legs.length + ' leg(s), turn radius ' + Math.round(plan.radiusM) + ' m, cruise speed factor ' + cruiseUnits() + ' (' + S.speedPercent + '%)' +
       (plan.warnings.length ? ', WITH WARNINGS: ' + plan.warnings.join(' | ') : ''));
     if (!PS.tug.isAttached()) {
@@ -237,7 +237,7 @@ PS.push = (function () {
     S.poseFails = 0;
     pose.t = (now - S.startedAt) / 1000;
     var out = S.follower.update(pose, dt, S.cur.speed);
-    S.last = { remainingM: out.remainingM, leg: out.leg, legCount: out.legCount, phase: out.phase, cte: out.cte, alphaDeg: out.alphaDeg, speedFtS: out.speedFtS, yawDegS: out.yawDegS, note: out.note };
+    S.last = { remainingM: out.remainingM, leg: out.leg, legCount: out.legCount, phase: out.phase, cte: out.cte, alphaDeg: out.alphaDeg, speedFtS: out.speedFtS, yawDegS: out.yawDegS, note: out.note, why: out.why };
     if (out.stop) { log('stopping: ' + out.stop); S.wantRun = false; beginStopping(out.stop, 'ready'); return; }
     if (out.done) { log('route finished'); beginStopping('', 'done'); return; }
     S.cur.speed = approach(S.cur.speed, out.speedFtS, SPEED_RAMP * dt);
@@ -282,7 +282,7 @@ PS.push = (function () {
       status: S.status, reason: S.reason, attached: S.attached, brake: S.brake, plan: S.plan, totalM: S.totalM, speedPercent: S.speedPercent, cruiseUnits: cruiseUnits(),
       remainingM: l.remainingM, leg: l.leg, legCount: l.legCount, phase: l.phase, cte: l.cte, alphaDeg: l.alphaDeg, speedFtS: S.cur.speed, yawDegS: S.cur.yaw, measuredYaw: S.measuredYaw,
       direction: leg ? (leg.sign < 0 ? 'push back' : 'drive forward') : '', elapsedS: S.startedAt && (S.status === 'driving' || S.status === 'stopping' || S.status === 'paused' || S.status === 'brakeHold') ? (Date.now() - S.startedAt) / 1000 : 0,
-      writes: S.writes, failures: S.failures, lastError: S.lastError, note: l.note, progress: S.totalM > 0 ? clamp(1 - l.remainingM / S.totalM, 0, 1) : 0
+      writes: S.writes, failures: S.failures, lastError: S.lastError, note: l.note, why: l.why || '', progress: S.totalM > 0 ? clamp(1 - l.remainingM / S.totalM, 0, 1) : 0
     };
   }
 
@@ -290,6 +290,7 @@ PS.push = (function () {
     S.speedPercent = clamp(Math.round(p), 10, 100);
     try { window.localStorage.setItem(SPEED_KEY, String(S.speedPercent)); } catch (e1) { /* not saved */ }
     log('cruise speed set to ' + S.speedPercent + '% (speed factor ' + cruiseUnits() + ')');
+    if (S.follower && S.follower.setCruise) S.follower.setCruise(cruiseUnits());
   }
 
   // Look at the tug once when the app starts, so the tab opens showing the truth.
