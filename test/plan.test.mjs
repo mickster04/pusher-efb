@@ -176,3 +176,11 @@ test('snap: a pin near a taxiway takes its heading, the way that is the smaller 
   plan.setHeading(i, 77); assert.equal(plan.list()[i].snapped, false);
   plan.clear(); PS.state.taxi = null;
 });
+
+test('flip: turns a pin\'s nose round the other way and makes the heading the user\'s own', () => {
+  plan.clear();
+  const p = at(180, 50); const i = plan.add(p[0], p[1]);
+  plan.setHeading(i, 315); plan.flip(i);
+  assert.equal(plan.list()[i].headingDeg, 135); assert.equal(plan.list()[i].headingUser, true);
+  plan.clear();
+});

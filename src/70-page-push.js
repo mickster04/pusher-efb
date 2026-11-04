@@ -9,7 +9,7 @@ PS.pages.push({
     var ui = PS.ui, h = PS.h, D = PS.plotDraw;
     var MAP_STEPS = [50, 100, 200, 300];
     var canvas = h('canvas', { class: 'ps-canvas', width: '900', height: '540' });
-    var mapRange = ui.stepper(MAP_STEPS, 100, function () { paint(); }, 'push');
+    var mapRange = ui.stepper(MAP_STEPS, 100, function () { paint(); }, 'push', null, null, true);
     var timer = null, lastPaintAt = 0, lastErr = '';
 
     var statusBig = h('div', { class: 'ps-big', text: '' });

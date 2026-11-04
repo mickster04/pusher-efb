@@ -2,7 +2,7 @@
 (function () {
 'use strict';
 var PS = {};
-PS.CSS = ".ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: #131c24; color: #dfe7ee; font: 15px/1.35 Arial, sans-serif; } .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; } .ps-header { padding: 10px 16px 6px; background: #0e151b; } .ps-title { font-size: 20px; font-weight: bold; color: #f0a830; margin-right: 12px; } .ps-sub { color: #8aa0b2; font-size: 13px; } .ps-nav { display: flex; flex-wrap: wrap; background: #0e151b; padding: 0 10px 8px; } .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid #2a3a47; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-navbtn.on { background: #f0a830; color: #131c24; border-color: #f0a830; font-weight: bold; } .ps-body { position: relative; flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding: 12px 14px 24px; } .ps-footer { padding: 5px 14px; background: #0b1116; color: #7f93a4; font-size: 12px; white-space: nowrap; overflow: hidden; } .ps-panel { background: #1b2630; border: 1px solid #2a3a47; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; } .ps-panel-title { font-weight: bold; margin-bottom: 8px; color: #f0a830; } .ps-note { color: #93a7b8; font-size: 13px; margin-top: 8px; } .ps-note.warn { color: #ffd37a; } .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; } .ps-row > * { margin: 0 10px 8px 0; } .ps-field { display: block; } .ps-field-label { display: block; font-size: 12px; color: #8aa0b2; margin-bottom: 3px; } .ps-input { padding: 9px 10px; border: 1px solid #3a4d5c; border-radius: 6px; background: #0f171e; color: #e8f0f6; font-size: 15px; min-width: 120px; box-sizing: border-box; } .ps-check { display: block; padding: 8px 0; font-size: 14px; color: #cfd9e2; } .ps-btn { padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #2a3a47; color: #eef4f8; font-size: 15px; } .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; } .ps-btn.ps-warn { background: #7a5a14; border-color: #f0a830; } .ps-btn.ps-danger { background: #8a2230; border-color: #ff5c6c; font-weight: bold; } .ps-btn.ps-ghost { background: transparent; } .ps-toggle { display: flex; flex-wrap: wrap; } .ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-toggle-btn.on { background: #f0a830; color: #131c24; font-weight: bold; } .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; } .ps-pill.ok { background: #1d5a3a; color: #bff0d4; } .ps-pill.bad { background: #5a2a2a; color: #ffc9c9; } .ps-kv { font-size: 13px; color: #b9c8d4; margin-bottom: 6px; white-space: pre-wrap; } .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: #0f171e; font-size: 14px; word-wrap: break-word; } .ps-result.ok { border-left: 4px solid #4cd18a; } .ps-result.bad { border-left: 4px solid #ff6b6b; color: #ffd0d0; } .ps-mono { font-family: Consolas, monospace; font-size: 13px; } .ps-tablewrap { overflow-x: auto; } .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; } .ps-table th { text-align: left; color: #8aa0b2; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid #2a3a47; } .ps-table td { padding: 5px 8px; border-bottom: 1px solid #222f3a; } .ps-val { font-family: Consolas, monospace; color: #9fe3bd; word-break: break-all; } .ps-val.bad { color: #ff9d9d; } .ps-table tr.ps-hot td { background: #4a2a1a; } .ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: #0b1116; border-radius: 6px; color: #b9c8d4; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; } .ps-raw { max-height: 260px; } .ps-logwrap .ps-btn { margin-top: 6px; } .ps-canvas { display: block; border-radius: 8px; background: #0f171e; touch-action: none; -ms-touch-action: none; -webkit-user-select: none; user-select: none; } .ps-mount { margin-top: 8px; min-height: 0; } .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; } .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: #243442; border: 2px solid #f0a830; box-shadow: 0 4px 14px rgba(0,0,0,.5); } .ps-toast-brake { border-color: #ff6b6b; } .ps-toast-warn { border-color: #ffd37a; } .ps-toast-info { border-color: #5aa8e0; } .ps-toast-title { font-weight: bold; font-size: 16px; } .ps-toast-msg { margin: 4px 0 8px; color: #dfe7ee; } .ps-toast-actions .ps-btn { margin-right: 8px; } .ps-headbtn { float: right; padding: 8px 14px; font-size: 14px; background: #7a5a14; border: 1px solid #f0a830; border-radius: 8px; color: #fff; } .ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; } .ps-overlay-bar { margin-bottom: 8px; } .ps-overlay-bar .ps-btn { margin-left: 10px; } .ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: #0b1116; color: #cfd9e2; border: 1px solid #3a4d5c; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; } .ps-stepper { display: flex; align-items: center; } .ps-stepper .ps-btn { margin: 0 8px 0 0; } .ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-weight: bold; color: #f0a830; } .ps-canvas.ps-pinmode { cursor: crosshair; outline: 2px solid #f0a830; } .ps-sug { display: block; width: 100%; text-align: left; margin: 0 0 6px 0; padding: 9px 12px; border: 1px solid #3a4d5c; border-radius: 8px; background: #1b2630; color: #dfe7ee; font-size: 14px; } .ps-sug.on { border-color: #34d2c8; background: #173a3e; } .ps-sug-title { font-weight: bold; } .ps-sug-detail { color: #93a7b8; font-size: 12px; } .ps-pinrow { padding: 4px 0; border-bottom: 1px solid #222f3a; font-size: 13px; } .ps-pinrow .ps-btn { margin-left: 10px; } .ps-pinrow.on { background: #2a2f1a; } .ps-body::-webkit-scrollbar { width: 18px; } .ps-body::-webkit-scrollbar-track { background: #0b1116; } .ps-body::-webkit-scrollbar-thumb { background: #5b7184; border-radius: 9px; border: 3px solid #0b1116; min-height: 40px; } .ps-body::-webkit-scrollbar-thumb:hover { background: #f0a830; } .ps-log::-webkit-scrollbar, .ps-tablewrap::-webkit-scrollbar { width: 12px; height: 12px; } .ps-log::-webkit-scrollbar-track, .ps-tablewrap::-webkit-scrollbar-track { background: #0b1116; } .ps-log::-webkit-scrollbar-thumb, .ps-tablewrap::-webkit-scrollbar-thumb { background: #5b7184; border-radius: 6px; } .ps-big { font-size: 34px; font-weight: bold; color: #f0a830; margin: 2px 0 6px; } .ps-bar { height: 14px; background: #0b1116; border-radius: 7px; overflow: hidden; margin: 6px 0 10px; border: 1px solid #2a3a47; } .ps-bar > div { height: 100%; background: #34d2c8; } .ps-btn:disabled { opacity: 0.4; }";
+PS.CSS = ".ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: #131c24; color: #dfe7ee; font: 15px/1.35 Arial, sans-serif; } .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; } .ps-header { padding: 10px 16px 6px; background: #0e151b; } .ps-title { font-size: 20px; font-weight: bold; color: #f0a830; margin-right: 12px; } .ps-sub { color: #8aa0b2; font-size: 13px; } .ps-nav { display: flex; flex-wrap: wrap; background: #0e151b; padding: 0 10px 8px; } .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid #2a3a47; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-navbtn.on { background: #f0a830; color: #131c24; border-color: #f0a830; font-weight: bold; } .ps-body { position: relative; flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding: 12px 14px 24px; } .ps-footer { padding: 5px 14px; background: #0b1116; color: #7f93a4; font-size: 12px; white-space: nowrap; overflow: hidden; } .ps-panel { background: #1b2630; border: 1px solid #2a3a47; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; } .ps-panel-title { font-weight: bold; margin-bottom: 8px; color: #f0a830; } .ps-note { color: #93a7b8; font-size: 13px; margin-top: 8px; } .ps-note.warn { color: #ffd37a; } .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; } .ps-row > * { margin: 0 10px 8px 0; } .ps-field { display: block; } .ps-field-label { display: block; font-size: 12px; color: #8aa0b2; margin-bottom: 3px; } .ps-input { padding: 9px 10px; border: 1px solid #3a4d5c; border-radius: 6px; background: #0f171e; color: #e8f0f6; font-size: 15px; min-width: 120px; box-sizing: border-box; } .ps-check { display: block; padding: 8px 0; font-size: 14px; color: #cfd9e2; } .ps-btn { padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #2a3a47; color: #eef4f8; font-size: 15px; } .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; } .ps-btn.ps-warn { background: #7a5a14; border-color: #f0a830; } .ps-btn.ps-danger { background: #8a2230; border-color: #ff5c6c; font-weight: bold; } .ps-btn.ps-ghost { background: transparent; } .ps-toggle { display: flex; flex-wrap: wrap; } .ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid #3a4d5c; border-radius: 8px; background: #1b2630; color: #cfd9e2; font-size: 15px; } .ps-toggle-btn.on { background: #f0a830; color: #131c24; font-weight: bold; } .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; } .ps-pill.ok { background: #1d5a3a; color: #bff0d4; } .ps-pill.bad { background: #5a2a2a; color: #ffc9c9; } .ps-kv { font-size: 13px; color: #b9c8d4; margin-bottom: 6px; white-space: pre-wrap; } .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: #0f171e; font-size: 14px; word-wrap: break-word; } .ps-result.ok { border-left: 4px solid #4cd18a; } .ps-result.bad { border-left: 4px solid #ff6b6b; color: #ffd0d0; } .ps-mono { font-family: Consolas, monospace; font-size: 13px; } .ps-tablewrap { overflow-x: auto; } .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; } .ps-table th { text-align: left; color: #8aa0b2; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid #2a3a47; } .ps-table td { padding: 5px 8px; border-bottom: 1px solid #222f3a; } .ps-val { font-family: Consolas, monospace; color: #9fe3bd; word-break: break-all; } .ps-val.bad { color: #ff9d9d; } .ps-table tr.ps-hot td { background: #4a2a1a; } .ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: #0b1116; border-radius: 6px; color: #b9c8d4; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; } .ps-raw { max-height: 260px; } .ps-logwrap .ps-btn { margin-top: 6px; } .ps-canvas { display: block; border-radius: 8px; background: #0f171e; touch-action: none; -ms-touch-action: none; -webkit-user-select: none; user-select: none; } .ps-mount { margin-top: 8px; min-height: 0; } .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; } .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: #243442; border: 2px solid #f0a830; box-shadow: 0 4px 14px rgba(0,0,0,.5); } .ps-toast-brake { border-color: #ff6b6b; } .ps-toast-warn { border-color: #ffd37a; } .ps-toast-info { border-color: #5aa8e0; } .ps-toast-title { font-weight: bold; font-size: 16px; } .ps-toast-msg { margin: 4px 0 8px; color: #dfe7ee; } .ps-toast-actions .ps-btn { margin-right: 8px; } .ps-headbtn { float: right; padding: 8px 14px; font-size: 14px; background: #7a5a14; border: 1px solid #f0a830; border-radius: 8px; color: #fff; } .ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; } .ps-overlay-bar { margin-bottom: 8px; } .ps-overlay-bar .ps-btn { margin-left: 10px; } .ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: #0b1116; color: #cfd9e2; border: 1px solid #3a4d5c; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; } .ps-stepper { display: flex; align-items: center; } .ps-stepper .ps-btn { margin: 0 8px 0 0; } .ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-weight: bold; color: #f0a830; } .ps-canvas.ps-pinmode { cursor: crosshair; outline: 2px solid #f0a830; } .ps-sug { display: block; width: 100%; text-align: left; margin: 0 0 6px 0; padding: 9px 12px; border: 1px solid #3a4d5c; border-radius: 8px; background: #1b2630; color: #dfe7ee; font-size: 14px; } .ps-sug.on { border-color: #34d2c8; background: #173a3e; } .ps-sug-title { font-weight: bold; } .ps-sug-detail { color: #93a7b8; font-size: 12px; } .ps-pinrow { padding: 4px 0; border-bottom: 1px solid #222f3a; font-size: 13px; } .ps-pinrow .ps-btn { margin-left: 10px; } .ps-pinrow.on { background: #2a2f1a; } .ps-body::-webkit-scrollbar { width: 18px; } .ps-body::-webkit-scrollbar-track { background: #0b1116; } .ps-body::-webkit-scrollbar-thumb { background: #5b7184; border-radius: 9px; border: 3px solid #0b1116; min-height: 40px; } .ps-body::-webkit-scrollbar-thumb:hover { background: #f0a830; } .ps-log::-webkit-scrollbar, .ps-tablewrap::-webkit-scrollbar { width: 12px; height: 12px; } .ps-log::-webkit-scrollbar-track, .ps-tablewrap::-webkit-scrollbar-track { background: #0b1116; } .ps-log::-webkit-scrollbar-thumb, .ps-tablewrap::-webkit-scrollbar-thumb { background: #5b7184; border-radius: 6px; } .ps-big { font-size: 34px; font-weight: bold; color: #f0a830; margin: 2px 0 6px; } .ps-bar { height: 14px; background: #0b1116; border-radius: 7px; overflow: hidden; margin: 6px 0 10px; border: 1px solid #2a3a47; } .ps-bar > div { height: 100%; background: #34d2c8; } .ps-btn:disabled { opacity: 0.4; } .ps-compact .ps-btn { padding: 5px 10px; font-size: 13px; } .ps-compact .ps-step-label { font-size: 14px; min-width: 56px; margin: 0 8px 0 2px; }";
 /* ---- 00-core.js ---- */
 // Core: constants, sim access wrappers, logging, DOM helper, heartbeat, toasts.
 // Nothing here touches the DOM or starts timers at load time (so node tests can load the bundle).
@@ -687,22 +687,23 @@ PS.ui = {
   },
   // Zoom control: [-] current range [+] over a list of numeric steps (metres). Not built on ui.select, so it does not depend on
   // highlight state, and each press is logged (tag = log channel) so a session log shows whether presses arrive at all.
-  stepper: function (steps, value, onchange, tag, labels, fmt) {
-    labels = labels || ['Zoom in  -', 'Zoom out  +'];
+  // Steps go up from the left button to the right one, unless `invert` (the map zoom: the right-hand + zooms in, to a smaller range).
+  stepper: function (steps, value, onchange, tag, labels, fmt, invert) {
+    labels = labels || (invert ? ['Zoom out  -', 'Zoom in  +'] : ['Zoom in  -', 'Zoom out  +']);
     fmt = fmt || PS.fmt.dist;
     var idx = Math.max(0, steps.indexOf(value));
     var label = PS.h('span', { class: 'ps-step-label', text: fmt(steps[idx]) });
-    function go(delta) {
+    function go(delta, which) {
       var next = Math.max(0, Math.min(steps.length - 1, idx + delta));
-      if (tag) PS.log(tag, 'button pressed (' + labels[delta < 0 ? 0 : 1] + '): ' + fmt(steps[idx]) + ' -> ' + fmt(steps[next]));
+      if (tag) PS.log(tag, 'button pressed (' + labels[which] + '): ' + fmt(steps[idx]) + ' -> ' + fmt(steps[next]));
       if (next === idx) return;
       idx = next; label.textContent = fmt(steps[idx]);
       if (onchange) onchange(steps[idx]);
     }
     var el = PS.h('div', { class: 'ps-stepper' },
-      PS.ui.button(labels[0], function () { go(-1); }),
+      PS.ui.button(labels[0], function () { go(invert ? 1 : -1, 0); }),
       label,
-      PS.ui.button(labels[1], function () { go(1); }));
+      PS.ui.button(labels[1], function () { go(invert ? -1 : 1, 1); }));
     return { el: el, get: function () { return steps[idx]; }, set: function (v2) { idx = Math.max(0, steps.indexOf(v2)); label.textContent = fmt(steps[idx]); } };
   },
   // Segmented toggle. options: [{value,label}], returns { el, get(), set(v) }
@@ -1454,37 +1455,48 @@ PS.planner = (function () {
       pose = { lat: tail[0], lon: tail[1], hdgDeg: lastSeg.endHdgDeg };
     }
 
-    var best = null, tried = 0, feasible = 0, slack = 0;
-    // Prefer a pin that leaves both legs starting close to the aircraft's axis; settle for a sharper swing only if none does.
-    var maxStarts = [TURNAROUND_PREFERRED_START_OFF_DEG, HAIRPIN_START_OFF_DEG];
-    for (var m = 0; m < maxStarts.length; m++) {
-      var maxStartOff = maxStarts[m];
-      tried = 0; feasible = 0; best = null;
-      slack = maxStartOff === TURNAROUND_PREFERRED_START_OFF_DEG ? TURNAROUND_PREFERRED_SLACK_M : 0;
-      for (var ai = 0; ai < HELPER_ALONG_M.length; ai++) {
-        for (var si = 0; si < HELPER_SIDE_M.length; si++) {
-          var along = HELPER_ALONG_M[ai], side = HELPER_SIDE_M[si];
-          // `along` metres ahead (+) or behind (-) the aircraft's nose, and `side` metres to its right (+) or left (-).
-          var ap = destPoint(pose.lat, pose.lon, pose.hdgDeg, along);
-          var pp = side === 0 ? ap : destPoint(ap[0], ap[1], wrap360(pose.hdgDeg + 90), side);
-          var pin = { id: newId(pre.length), label: TURNAROUND_PIN_LABEL, lat: pp[0], lon: pp[1], seq: 0, terminal: false, headingDeg: null, drive: 'auto' };
-          var segs = plannedRouteSegments(origin, pre.concat([pin, end]));
-          tried++;
-          if (segs.length < 2) continue;
-          if (segs.some(function (sg) { return sg.startOffDeg > maxStartOff || pathTurnDeg(sg.points) > HAIRPIN_TURN_DEG; })) continue;
-          feasible++;
-          var score = driveCostM(segs) + CUSP_PENALTY_M * (segs.length - 1);
-          if (!best || score < best.score) best = { pin: pin, score: score, along: along, side: side };
+    var best = null, tried = 0, feasible = 0, slack = 0, clearanceUsed = 0, rejectedNear = 0, rejectedWarn = 0;
+    // The pin has to be somewhere the tug can make the turn: neither leg may be so short that the cusp
+    // sits inside the arc of the next turn. (An earlier version also kept the pin a full turn radius clear of the direct route, but that
+    // route is a loop the tug cannot drive, and it pushed the pin far away for nothing.) The cheapest such pin wins.
+    var clearances = [0];
+    var MIN_LEG_M = 12;
+    for (var ci = 0; ci < clearances.length && !(best && best.accepted); ci++) {
+      var clr = clearances[ci];
+      // Prefer a pin that leaves both legs starting close to the aircraft's axis; settle for a sharper swing only if none does.
+      var maxStarts = [TURNAROUND_PREFERRED_START_OFF_DEG, HAIRPIN_START_OFF_DEG];
+      for (var m = 0; m < maxStarts.length; m++) {
+        var maxStartOff = maxStarts[m];
+        tried = 0; feasible = 0; best = null;
+        slack = maxStartOff === TURNAROUND_PREFERRED_START_OFF_DEG ? TURNAROUND_PREFERRED_SLACK_M : 0;
+        for (var ai = 0; ai < HELPER_ALONG_M.length; ai++) {
+          for (var si = 0; si < HELPER_SIDE_M.length; si++) {
+            var along = HELPER_ALONG_M[ai], side = HELPER_SIDE_M[si];
+            // `along` metres ahead (+) or behind (-) the aircraft's nose, and `side` metres to its right (+) or left (-).
+            var ap = destPoint(pose.lat, pose.lon, pose.hdgDeg, along);
+            var pp = side === 0 ? ap : destPoint(ap[0], ap[1], wrap360(pose.hdgDeg + 90), side);
+            tried++;
+            var pin = { id: newId(pre.length), label: TURNAROUND_PIN_LABEL, lat: pp[0], lon: pp[1], seq: 0, terminal: false, headingDeg: null, drive: 'auto' };
+            var segs = plannedRouteSegments(origin, pre.concat([pin, end]));
+            if (segs.length < 2) continue;
+            if (segs.some(function (sg) { return sg.startOffDeg > maxStartOff || pathTurnDeg(sg.points) > HAIRPIN_TURN_DEG; })) continue;
+            if (segs.some(function (sg) { return pathLengthM(sg.points) < MIN_LEG_M; })) { rejectedNear++; continue; }
+            feasible++;
+            var score = driveCostM(segs) + CUSP_PENALTY_M * (segs.length - 1);
+            if (!best || score < best.score) best = { pin: pin, score: score, along: along, side: side };
+          }
         }
+        // The gentle pass may cost a little more than the single leg and still win.
+        if (best && best.score < directCost + slack) { best.accepted = true; clearanceUsed = clr; break; }
       }
-      // The gentle pass may cost a little more than the single leg and still win.
-      if (best && best.score < directCost + slack) break;
+      if (best && !best.accepted && ci < clearances.length - 1) { /* keep looking with less clearance only if nothing better turns up */ }
     }
     if (!best) return none('hairpin but none of ' + tried + ' candidate pins gave a workable two-leg route');
     // A single leg that warns (a loop, or an arc tighter than the tug can steer) is not a route at all.
     var directWarns = direct.some(function (g) { return segmentWarning(g) !== null; });
     if (!directWarns && best.score >= directCost + slack) return none('hairpin but the best workable pin is not cheaper than the single leg');
-    return { waypoints: ensureTerminal(pre.concat([best.pin, end])), added: true, info: 'added a turnaround pin ' + (best.along >= 0 ? best.along + ' m ahead of' : -best.along + ' m behind') + ' the nose and ' + Math.abs(best.side) + ' m ' + (best.side >= 0 ? 'right' : 'left') + ' (' + feasible + '/' + tried + ' candidates workable)' };
+    var why = 'the direct route is ' + Math.round(len) + ' m for a ' + Math.round(chord) + ' m gap, starts ' + Math.round(direct[0].startOffDeg) + ' deg off the aircraft\'s axis and turns ' + Math.round(directTurn) + ' deg' + (directWarns ? ' (and warns)' : '') + '; ';
+    return { waypoints: ensureTerminal(pre.concat([best.pin, end])), added: true, info: why + 'added a turnaround pin ' + (best.along >= 0 ? best.along + ' m ahead of' : -best.along + ' m behind') + ' the nose and ' + Math.abs(best.side) + ' m ' + (best.side >= 0 ? 'right' : 'left') + ' (' + feasible + '/' + tried + ' candidates workable)' };
   }
 
   // Re-work the turnaround pin for a route: drop any the planner added earlier, then add one if the route needs it.
@@ -2160,21 +2172,35 @@ PS.suggest = (function () {
   //  - an option whose tightest arc is under MIN_ARC_RADIUS_M, or whose first stretch starts more than MAX_START_OFF_DEG off the aircraft's
   //    axis, is left out (the planner accepts down to 60% of the tug radius, which draws as a cramped arc). If that would leave nothing,
   //    the unfiltered list (minus pointing) is used so there is still something to pick.
-  var MIN_ARC_RADIUS_M = 32;
+  var MIN_ARC_RADIUS_M = 32;       // used when the Settings value is not available
   var MAX_START_OFF_DEG = 45;
+  // The arcs the plan may use follow the Settings "tightest turn" (default 26 m), never above the 32 m this used to insist on.
+  function arcFloor() { var t = PS.settings && PS.settings.get('tightest'); return typeof t === 'number' ? Math.min(MIN_ARC_RADIUS_M, t) : MIN_ARC_RADIUS_M; }
+  // Returns { kept, dropped: [{ s, why }] }: why an option is not offered, so the log can say.
   function filterOptions(all) {
-    var nonPointing = all.filter(function (s) { return s.kind !== 'pointing'; });
-    var good = nonPointing.filter(function (s) { return s.tightestRadiusM >= MIN_ARC_RADIUS_M && s.maxStartOffDeg <= MAX_START_OFF_DEG; });
+    var floor = arcFloor(), dropped = [];
+    var nonPointing = all.filter(function (s) { if (s.kind === 'pointing') { dropped.push({ s: s, why: 'a compass-pointing option (not offered)' }); return false; } return true; });
+    var good = nonPointing.filter(function (s) {
+      if (s.tightestRadiusM < floor) { dropped.push({ s: s, why: 'its tightest arc is ' + Math.round(s.tightestRadiusM) + ' m, under the ' + Math.round(floor) + ' m allowed' }); return false; }
+      if (s.maxStartOffDeg > MAX_START_OFF_DEG) { dropped.push({ s: s, why: 'it starts ' + Math.round(s.maxStartOffDeg) + ' degrees off the aircraft\'s axis (over ' + MAX_START_OFF_DEG + ')' }); return false; }
+      return true;
+    });
     var pool = good.length ? good : nonPointing;
+    if (!good.length) dropped = dropped.filter(function (d) { return d.s.kind === 'pointing'; });
     var onTaxiway = pool.some(function (s) { return s.group === 'taxiway'; });
-    return onTaxiway ? pool.filter(function (s) { return s.group === 'taxiway'; }) : pool;
+    var kept = pool.filter(function (s) { if (onTaxiway && s.group !== 'taxiway') { dropped.push({ s: s, why: 'a lane or link, offered only when no taxiway has an option' }); return false; } return true; });
+    return { kept: kept, dropped: dropped };
   }
   function suggest(items, ac, parking) {
     if (!ac || typeof ac.lat !== 'number' || typeof ac.lon !== 'number') return [];
     var list = suggestPushbacks(layoutFrom(items, parking), { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg || 0 });
     var all = list.map(function (s) { return decorate(s, { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg || 0 }); });
-    var kept = filterOptions(all);
+    var f = filterOptions(all), kept = f.kept;
     kept.forEach(function (s) { s.detail += '. Tightest arc ' + Math.round(s.tightestRadiusM) + ' m (tug turns at ' + P.PATH_TURN_RADIUS_M + ' m)'; });
+    // Everything the suggester found and what became of it, for the log.
+    var report = { found: all.length, kept: kept.map(function (s) { return s.title + ' -> facing ' + Math.round(s.facingDeg) + ', ' + Math.round(s.lengthM) + ' m'; }),
+      dropped: f.dropped.map(function (d) { return d.s.title + ' -> facing ' + Math.round(d.s.facingDeg) + ', ' + Math.round(d.s.lengthM) + ' m: ' + d.why; }) };
+    Object.defineProperty(kept, 'lastReport', { value: report, enumerable: false });
     return kept;
   }
 
@@ -2236,37 +2262,46 @@ PS.plan = (function () {
   }
   // The direction of the taxiway centreline nearest (lat, lon) within maxM, as the nose heading closest to refDeg (a taxiway runs both ways, and the
   // way with the smaller turn from where the aircraft is already pointing is the one to default to). Runways are not snapped to.
-  var SNAP_MAX_M = 35;
+  var SNAP_MAX_M = 50;          // the default reach; Settings can change it
+  function snapReach() { var m = PS.settings && PS.settings.get('snapM'); return typeof m === 'number' && m > 0 ? m : SNAP_MAX_M; }
+  var lastSnapMiss = null;     // why the last snap found nothing: { nearestM, nearestName, items, off }
   function snapAt(lat, lon, refDeg, maxM) {
-    var taxi = PS.state && PS.state.taxi, best = null;
+    var taxi = PS.state && PS.state.taxi, best = null, nearest = null, usable = 0;
+    lastSnapMiss = { nearestM: null, nearestName: '', items: taxi && taxi.items ? taxi.items.length : 0, noData: !taxi || !taxi.items };
     if (!taxi || !taxi.items) return null;
     taxi.items.forEach(function (it) {
       if (!it.points || it.points.length < 2 || it.category === 'Runway') return;
+      usable++;
       for (var i = 1; i < it.points.length; i++) {
         var a = it.points[i - 1], b = it.points[i];
         var A = G.toXY(lat, lon, a[0], a[1]), B = G.toXY(lat, lon, b[0], b[1]);
         var dx = B.x - A.x, dy = B.y - A.y, len2 = dx * dx + dy * dy;
         if (len2 < 1) continue;
         var t = Math.max(0, Math.min(1, -(A.x * dx + A.y * dy) / len2)), px = A.x + t * dx, py = A.y + t * dy, d = Math.sqrt(px * px + py * py);
-        if (d <= (maxM || SNAP_MAX_M) && (!best || d < best.distM)) best = { distM: d, bearing: G.bearingDeg(a[0], a[1], b[0], b[1]), name: it.name || '' };
+        if (!nearest || d < nearest.d) nearest = { d: d, name: it.name || '' };
+        if (d <= (maxM || snapReach()) && (!best || d < best.distM)) best = { distM: d, bearing: G.bearingDeg(a[0], a[1], b[0], b[1]), name: it.name || '' };
       }
     });
+    if (nearest) { lastSnapMiss.nearestM = nearest.d; lastSnapMiss.nearestName = nearest.name; }
+    lastSnapMiss.usable = usable;
     if (!best) return null;
     var other = G.normDeg(best.bearing + 180);
     var hdg = Math.abs(G.angleDiff(best.bearing, refDeg)) <= Math.abs(G.angleDiff(other, refDeg)) ? best.bearing : other;
-    return { headingDeg: Math.round(G.normDeg(hdg)), name: best.name, distM: best.distM };
+    return { headingDeg: Math.round(G.normDeg(hdg)), otherDeg: Math.round(G.normDeg(hdg === best.bearing ? other : best.bearing)), refDeg: Math.round(G.normDeg(refDeg)), name: best.name, distM: best.distM };
   }
   // Give pin i the heading of the taxiway it sits on (if there is one close by). It stays "snapped" so moving the pin re-snaps it, until the pin
   // is rotated by hand. refDeg is where the aircraft points before this pin: the previous pin's heading, else the aircraft's own.
   function snapPin(i, ownHdgDeg) {
     var w = pins[i]; if (!w) return null;
-    if (PS.settings && !PS.settings.get('snap')) return null;
+    if (PS.settings && !PS.settings.get('snap')) { lastSnapMiss = { off: true }; return null; }
     var prev = pins[i - 1], ref = prev && prev.headingUser && prev.headingDeg !== null ? prev.headingDeg : ownHdgDeg;
     var r = snapAt(w.lat, w.lon, ref || 0);
     if (!r) { if (w.snapped) { w.snapped = false; w.headingUser = false; w.headingDeg = null; changed(); } return null; }
     w.headingDeg = r.headingDeg; w.headingUser = true; w.snapped = true; changed();
     return r;
   }
+  // Turn pin i's nose round to the opposite way along the taxiway it is on (the snap can only guess which way is wanted when the turn is near 90 degrees).
+  function flip(i) { var w = pins[i]; if (!w) return; var cur = w.headingDeg; if (cur === null || cur === undefined) return; setHeading(i, cur + 180); }
   function clear() { pins.length = 0; selected = -1; changed(); }
   function setHeading(i, deg) { if (!pins[i]) return; pins[i].snapped = false; pins[i].headingDeg = Math.round(G.normDeg(deg)); pins[i].headingUser = true; changed(); }
   function resetHeading(i) { if (!pins[i]) return; pins[i].snapped = false; pins[i].headingDeg = null; pins[i].headingUser = false; pins[i].leadInM = undefined; changed(); }
@@ -2316,6 +2351,7 @@ PS.plan = (function () {
       return 'leg ' + (n + 1) + ' ' + (l.sign < 0 ? 'back' : 'forward') + ' ' + Math.round(l.lengthM) + ' m, ends ' + Math.round(l.endHdgDeg) + '°, tightest ' + (l.tightestRadiusM ? Math.round(l.tightestRadiusM) + ' m' : '-');
     });
     PS.log('plan', 'route: ' + Math.round(res.totalM) + ' m, ' + res.legs.length + ' leg(s), radius ' + Math.round(res.radiusM) + ' m' + (res.adapted ? ' (tightened)' : '') + (res.turnaroundAdded ? ', turnaround pin added' : '') + ' | ' + legs.join('; '));
+    if (res.turnaroundAdded && res.info) PS.log('plan', 'turnaround pin: ' + res.info);
     if (res.warnings.length) {
       res.warnings.forEach(function (w) { PS.log('plan', 'WARNING ' + w); });
       PS.log('plan', 'pins behind the warning (aircraft at heading ' + Math.round(origin.hdgDeg) + '°): ' + res.waypoints.map(function (w, i) {
@@ -2363,7 +2399,7 @@ PS.plan = (function () {
     list: function () { return pins; }, count: function () { return pins.length; },
     selected: function () { return selected; }, select: select,
     add: add, move: move, remove: remove, clear: clear, setHeading: setHeading, resetHeading: resetHeading, setAll: setAll,
-    headingFromHandle: headingFromHandle, snapAt: snapAt, snapPin: snapPin, evaluate: evaluate,
+    headingFromHandle: headingFromHandle, snapAt: snapAt, snapPin: snapPin, snapMiss: function () { return lastSnapMiss; }, snapMaxM: snapReach, flip: flip, evaluate: evaluate,
     turn: function () { return turn; }, setMinRadius: setMinRadius
   };
 })();
@@ -2374,7 +2410,7 @@ PS.plan = (function () {
 
 PS.settings = (function () {
   var KEY = 'pushplanner.settings';
-  var defaults = { snap: true, planTab: 'suggested', tightest: 26 };
+  var defaults = { snap: true, snapM: 50, planTab: 'suggested', tightest: 26 };
   var values = {}, k;
   for (k in defaults) values[k] = defaults[k];
   try {
@@ -2559,7 +2595,9 @@ PS.follow = (function () {
     CURVE_BASE_FWD_FTS: 3.0, CURVE_BASE_REV_FTS: 2.75, CURVE_REF_R_M: 40,   // curve speed at a 40 m radius or wider; tighter radii are slower, to half at 20 m
     STRAIGHT_R_M: 200, CURVE_FULL_R_M: 60,      // wider than 200 m counts as straight; tighter than 60 m gets the full curve speed
     DECEL_MS2: 0.35, ACCEL_MS2: 0.5,            // comfortable braking and acceleration (m/s per second); the tug's own ramp (14 ft/s per s) is far quicker
-    PROFILE_DS_M: 0.5, CURV_WINDOW_M: 3, LOOK_FEATURE_M: 80,
+    PROFILE_DS_M: 0.5, CURV_WINDOW_M: 10,        // wide enough to span several of the planner's chords (about 3.5 m long on a 40 m arc), or the estimated radius flickers
+    END_STEER_FADE_M: 6, END_STEER_MIN: 0.25,    // in the last few metres the aim point is close and the steering gets twitchy: fade the correction down so the nose is not swung at the end
+    LOOK_FEATURE_M: 80,
     CUSP_STOP_FTS: 0.05, CUSP_STOP_SECONDS: 0.5, CUSP_HOLD_SECONDS: 1.0,
     LOST_CTE_M: 15, LOST_SECONDS: 3, STUCK_SECONDS: 8, STUCK_MIN_ADVANCE_M: 0.3
   };
@@ -2739,6 +2777,7 @@ PS.follow = (function () {
       var toAim = aimDist > K.AIM_MIN ? brgXY(p.x, p.y, aim.x, aim.y) : aim.tangent;
       var alpha = clamp(wrap180(toAim - travelHdg), -K.MAX_ALPHA_DEG, K.MAX_ALPHA_DEG);
       var kappa = 2 * Math.sin(G.rad(alpha)) / Math.max(aimDist, K.MIN_LOOK);     // 1/m, clockwise
+      if (st.leg >= legs.length - 1 && remaining < K.END_STEER_FADE_M) kappa *= K.END_STEER_MIN + (1 - K.END_STEER_MIN) * clamp((remaining - 1) / (K.END_STEER_FADE_M - 1), 0, 1);
       out.alphaDeg = alpha;
 
       // ---- speed: from the leg's profile (fast on straights, slower through curves, braking in time for curves and the stop), then slowed further
@@ -3397,15 +3436,13 @@ PS.pages.push({
     var HANDLE_PX = 58;          // how far behind the tail the heading handle sits
     var HANDLE_HIT_PX = 36;      // how close a press has to be to the handle (canvas pixels, which are screen pixels: the canvas is not scaled)
     var canvas = h('canvas', { class: 'ps-canvas', width: '900', height: '540' });
-    var plotRange = ui.stepper(PLOT_STEPS, 300, function () { draw(); }, 'plan');
+    var plotRange = ui.stepper(PLOT_STEPS, 300, function () { draw(); }, 'plan', null, null, true);
     var infoLine = h('div', { class: 'ps-kv', text: '' });
     var contactLine = h('div', { class: 'ps-kv', text: '' });
     var routeSummary = h('div', { class: 'ps-note' });
     var pinList = h('div');
     var sugBox = h('div');
     var airportLine = h('div', { class: 'ps-kv', text: '' });
-    var addBtn = null;
-    var addMode = true;
     var timer = null;
     var airportLoading = false;
     var drag = null;            // { kind: 'handle' | 'pin' | 'none', idx, sx, sy, moved, touch }
@@ -3442,11 +3479,6 @@ PS.pages.push({
     }
 
     // ---------------- pins ----------------
-    function setAddMode(on) {
-      addMode = on;
-      if (addBtn) { addBtn.textContent = 'Add pins: ' + (on ? 'ON (tap the plot)' : 'off'); addBtn.className = 'ps-btn' + (on ? ' ps-warn' : ''); }
-      canvas.className = 'ps-canvas' + (on ? ' ps-pinmode' : '');
-    }
     function planChanged() { renderedPlan = null; draw(); }
     // Editing the plan by hand takes over from any suggestion that was highlighted.
     function dropSuggestionHighlight() { if (sug.selectedId) { sug.selectedId = null; renderSuggestions(); } }
@@ -3460,7 +3492,11 @@ PS.pages.push({
     // New and moved pins take the heading of the taxiway they sit on, until rotated by hand.
     function snap(i) {
       var r = PS.plan.snapPin(i, (PS.readOwn() || { hdgDeg: 0 }).hdgDeg);
-      if (r) log('pin ' + (i + 1) + ' aligned with ' + (r.name ? 'taxiway ' + r.name : 'the taxiway') + ' (' + Math.round(r.distM) + ' m away): heading ' + r.headingDeg + '°');
+      if (!r) {
+        var m = PS.plan.snapMiss() || {};
+        log('pin ' + (i + 1) + ' not snapped: ' + (m.off ? 'snapping is off in Settings' : (m.noData ? 'no airport data loaded' : (m.nearestM === null || m.nearestM === undefined ? 'no taxiway lines to snap to (' + m.items + ' items, ' + (m.usable || 0) + ' usable)' : 'the nearest taxiway line (' + (m.nearestName || 'unnamed') + ') is ' + Math.round(m.nearestM) + ' m away, over the ' + PS.plan.snapMaxM() + ' m reach'))));
+      }
+      if (r) log('pin ' + (i + 1) + ' aligned with ' + (r.name ? 'taxiway ' + r.name : 'the taxiway') + ' (' + Math.round(r.distM) + ' m away): heading ' + r.headingDeg + '° rather than ' + r.otherDeg + '° (the aircraft was pointing ' + r.refDeg + '°; use Flip if the other way is wanted)');
     }
     function deletePin(i) { PS.plan.remove(i); log('pin ' + (i + 1) + ' deleted; ' + PS.plan.count() + ' left'); planChanged(); }
     function pinHeading(i) {
@@ -3491,6 +3527,7 @@ PS.pages.push({
         pinList.appendChild(h('div', { class: 'ps-pinrow' + (i === sel ? ' on' : '') },
           h('span', { text: (i === pins.length - 1 ? 'End' : 'Pin ' + (i + 1)) + ': ' + PS.fmt.dist(legs.legs[i].distM) + ' on a bearing of ' + Math.round(legs.legs[i].bearingDeg) + '°, nose ' + (hd === null ? '?' : Math.round(hd) + '°') + (p.headingUser ? ' (set by you)' : ' (auto)') }),
           ui.button(i === sel ? 'Selected' : 'Select', function () { PS.plan.select(i); planChanged(); }, 'ps-small ps-ghost'),
+          ui.button('Flip 180°', function () { var cur = pinHeading(i); if (cur !== null && cur !== undefined) { PS.plan.setHeading(i, cur); PS.plan.flip(i); log('pin ' + (i + 1) + ' flipped to ' + PS.plan.list()[i].headingDeg + '°'); planChanged(); } }, 'ps-small ps-ghost'),
           p.headingUser ? ui.button('Auto heading', function () { PS.plan.resetHeading(i); log('pin ' + (i + 1) + ' heading back to auto'); planChanged(); }, 'ps-small ps-ghost') : null,
           ui.button('Delete', function () { deletePin(i); }, 'ps-small ps-ghost')));
       });
@@ -3549,15 +3586,15 @@ PS.pages.push({
       if (d.kind === 'handle') { dropSuggestionHighlight(); showList('pins', 'a pin was rotated'); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); planChanged(); return; }
       if (d.kind === 'pin') { if (d.moved) { dropSuggestionHighlight(); showList('pins', 'a pin was moved'); log('pin ' + (d.idx + 1) + ' moved'); if (PS.plan.list()[d.idx] && (PS.plan.list()[d.idx].snapped || !PS.plan.list()[d.idx].headingUser)) snap(d.idx); planChanged(); } return; }
       if (d.moved || !lastView) return;
-      if (addMode) { var ll = lastView.fromPx(p[0], p[1]); addPin(ll[0], ll[1]); return; }
-      // Add pins off: pick the nearest aircraft to read its details, or clear the selection.
-      var best = null, bestD = 16;
+      // A tap on an AI aircraft reads its details; a tap anywhere else drops a pin.
+      var best = null, bestD = 14;
       contactsNow().forEach(function (c) {
         var dd = pxDist(lastView.toPx(c.lat, c.lon), p);
         if (dd < bestD) { bestD = dd; best = c; }
       });
-      selectedContact = best ? best.id : null;
-      PS.plan.select(-1); planChanged();
+      if (best) { selectedContact = best.id; PS.plan.select(-1); planChanged(); return; }
+      selectedContact = null;
+      var ll = lastView.fromPx(p[0], p[1]); addPin(ll[0], ll[1]);
     }
     ['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach(function (type) {
       canvas.addEventListener(type, function (e) {
@@ -3613,6 +3650,12 @@ PS.pages.push({
         sug.list = PS.suggest.suggest(t.items, own, t.parking);
         sug.tookMs = Date.now() - t0;
         if (!sug.logged || sug.list.length !== before) { sug.logged = true; log('suggested pushes: ' + sug.list.length + ' option(s) in ' + sug.tookMs + ' ms (heading ' + Math.round(own.hdgDeg) + ')'); }
+        if (sug.list.lastReport && sug.reportKey !== key) {
+          sug.reportKey = key; var rep = sug.list.lastReport;
+          log('suggester found ' + rep.found + ', offering ' + rep.kept.length + ' (aircraft ' + own.lat.toFixed(5) + ', ' + own.lon.toFixed(5) + ', heading ' + Math.round(own.hdgDeg) + ')');
+          rep.kept.forEach(function (t) { log('  offered: ' + t); });
+          rep.dropped.forEach(function (t) { log('  left out: ' + t); });
+        }
       } catch (e) { sug.list = []; log('suggestion failed: ' + PS.errText(e)); }
       if (sug.selectedId) { var still = false; sug.list.forEach(function (s) { if (s.id === sug.selectedId) still = true; }); if (!still) sug.selectedId = null; }
       renderSuggestions();
@@ -3695,13 +3738,11 @@ PS.pages.push({
         var a = PS.traffic.analyse(own, sc);
         contactLine.textContent = (sc.title || sc.id) + ': ' + PS.fmt.dist(a.distM) + ' away on a bearing of ' + Math.round(a.bearingDeg) + '°, ' + PS.fmt.num(sc.gsKt, 0) + ' kt, heading ' + Math.round(sc.hdgDeg || 0) + '°, closing ' + PS.fmt.num(a.closingKt, 1) + ' kt';
       } else {
-        contactLine.textContent = contacts.length && !addMode ? 'Tap an aircraft to read its details.' : '';
+        contactLine.textContent = contacts.length ? 'Tap an aircraft to read its details.' : '';
       }
     }
 
     // ---------------- page ----------------
-    addBtn = ui.button('Add pins: ON (tap the plot)', function () { setAddMode(!addMode); });
-    setAddMode(true);
 
     var sugPanel = ui.panel('Suggested pushes', airportLine, sugBox,
       h('div', { class: 'ps-row' }, ui.button('Reload airport data', function () { loadAirport('asked'); }, 'ps-small ps-ghost')),
@@ -3721,11 +3762,13 @@ PS.pages.push({
 
     var el = h('div', { class: 'ps-page' },
       ui.panel('Plan the push',
-        h('div', { class: 'ps-row' }, ui.field('Range', plotRange.el), addBtn,
+        h('div', { class: 'ps-row' },
           ui.button('Undo pin', function () { if (PS.plan.count()) deletePin(PS.plan.count() - 1); }, 'ps-ghost'),
           ui.button('Clear pins', function () { PS.plan.clear(); log('pins cleared'); planChanged(); }, 'ps-ghost'),
           ui.button('Recentre', function () { pan.x = 0; pan.y = 0; log('map recentred on the aircraft'); draw(); }, 'ps-ghost')),
-        canvas, infoLine, contactLine,
+        canvas,
+        h('div', { class: 'ps-row ps-compact' }, ui.field('Range', plotRange.el)),
+        infoLine, contactLine,
         ui.note('North is up, centred on the aircraft; drag empty map to move it. Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it. White route = push back, blue = drive forward, red = the tug may not manage that leg.')),
       routeSummary,
       listTabs,
@@ -3766,7 +3809,7 @@ PS.pages.push({
     var ui = PS.ui, h = PS.h, D = PS.plotDraw;
     var MAP_STEPS = [50, 100, 200, 300];
     var canvas = h('canvas', { class: 'ps-canvas', width: '900', height: '540' });
-    var mapRange = ui.stepper(MAP_STEPS, 100, function () { paint(); }, 'push');
+    var mapRange = ui.stepper(MAP_STEPS, 100, function () { paint(); }, 'push', null, null, true);
     var timer = null, lastPaintAt = 0, lastErr = '';
 
     var statusBig = h('div', { class: 'ps-big', text: '' });
@@ -3931,6 +3974,8 @@ PS.pages.push({
     var maxSpeed = ui.stepper(SPEED_STEPS, PS.push.view().speedPercent, function (v) { PS.push.setSpeedPercent(v); }, 'settings', ['Slower  -', 'Faster  +'],
       function (v) { return v + '% (' + PS.fmt.num(v / 100 * 10 * 0.5925, 1) + ' kt forward, ' + PS.fmt.num(v / 100 * 10 * 0.75 * 0.5925, 1) + ' kt in reverse)'; });
     var snap = ui.toggle([{ value: 'on', label: 'Snap on' }, { value: 'off', label: 'Snap off' }], PS.settings.get('snap') ? 'on' : 'off', function (v) { PS.settings.set('snap', v === 'on'); });
+    var SNAP_STEPS = [10, 20, 30, 50, 75, 100, 150];
+    var snapDist = ui.stepper(SNAP_STEPS, SNAP_STEPS.indexOf(PS.settings.get('snapM')) >= 0 ? PS.settings.get('snapM') : 50, function (v) { PS.settings.set('snapM', v); }, 'settings', ['Closer  -', 'Further  +'], function (v) { return v + ' m'; });
     var tab = ui.toggle([{ value: 'suggested', label: 'Suggested pushes' }, { value: 'pins', label: 'Custom pins' }], PS.settings.get('planTab'), function (v) { PS.settings.set('planTab', v); });
     return {
       el: h('div', { class: 'ps-page' },
@@ -3941,7 +3986,8 @@ PS.pages.push({
           ui.field('Tightest turn the plan may use', tightest.el),
           ui.note('The plan uses a 40 m turn radius. Where a corner is too cramped for that it tries tighter ones, down to this. Smaller means the tug has to turn harder: check the Route panel on the Push tab for warnings.'),
           ui.field('Snap pins to the taxiway', snap.el),
-          ui.note('With snap on, a pin you drop or move within 35 m of a taxiway takes the taxiway\'s heading (the direction needing the smaller turn). Rotating a pin by hand overrides it.'),
+          ui.note('With snap on, a pin you drop or move within the snap reach of a taxiway takes the taxiway\'s heading (the direction needing the smaller turn). Rotating a pin by hand overrides it.'),
+          ui.field('Snap reach (how close to a taxiway a pin must be)', snapDist.el),
           ui.field('Plan tab opens on', tab.el),
           ui.note('Which list the Plan tab shows first. It also switches by itself: placing a pin shows the pins, picking a suggestion shows the suggestions.'))),
       onShow: function () {}, onHide: function () {}

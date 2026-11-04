@@ -314,37 +314,48 @@ PS.planner = (function () {
       pose = { lat: tail[0], lon: tail[1], hdgDeg: lastSeg.endHdgDeg };
     }
 
-    var best = null, tried = 0, feasible = 0, slack = 0;
-    // Prefer a pin that leaves both legs starting close to the aircraft's axis; settle for a sharper swing only if none does.
-    var maxStarts = [TURNAROUND_PREFERRED_START_OFF_DEG, HAIRPIN_START_OFF_DEG];
-    for (var m = 0; m < maxStarts.length; m++) {
-      var maxStartOff = maxStarts[m];
-      tried = 0; feasible = 0; best = null;
-      slack = maxStartOff === TURNAROUND_PREFERRED_START_OFF_DEG ? TURNAROUND_PREFERRED_SLACK_M : 0;
-      for (var ai = 0; ai < HELPER_ALONG_M.length; ai++) {
-        for (var si = 0; si < HELPER_SIDE_M.length; si++) {
-          var along = HELPER_ALONG_M[ai], side = HELPER_SIDE_M[si];
-          // `along` metres ahead (+) or behind (-) the aircraft's nose, and `side` metres to its right (+) or left (-).
-          var ap = destPoint(pose.lat, pose.lon, pose.hdgDeg, along);
-          var pp = side === 0 ? ap : destPoint(ap[0], ap[1], wrap360(pose.hdgDeg + 90), side);
-          var pin = { id: newId(pre.length), label: TURNAROUND_PIN_LABEL, lat: pp[0], lon: pp[1], seq: 0, terminal: false, headingDeg: null, drive: 'auto' };
-          var segs = plannedRouteSegments(origin, pre.concat([pin, end]));
-          tried++;
-          if (segs.length < 2) continue;
-          if (segs.some(function (sg) { return sg.startOffDeg > maxStartOff || pathTurnDeg(sg.points) > HAIRPIN_TURN_DEG; })) continue;
-          feasible++;
-          var score = driveCostM(segs) + CUSP_PENALTY_M * (segs.length - 1);
-          if (!best || score < best.score) best = { pin: pin, score: score, along: along, side: side };
+    var best = null, tried = 0, feasible = 0, slack = 0, clearanceUsed = 0, rejectedNear = 0, rejectedWarn = 0;
+    // The pin has to be somewhere the tug can make the turn: neither leg may be so short that the cusp
+    // sits inside the arc of the next turn. (An earlier version also kept the pin a full turn radius clear of the direct route, but that
+    // route is a loop the tug cannot drive, and it pushed the pin far away for nothing.) The cheapest such pin wins.
+    var clearances = [0];
+    var MIN_LEG_M = 12;
+    for (var ci = 0; ci < clearances.length && !(best && best.accepted); ci++) {
+      var clr = clearances[ci];
+      // Prefer a pin that leaves both legs starting close to the aircraft's axis; settle for a sharper swing only if none does.
+      var maxStarts = [TURNAROUND_PREFERRED_START_OFF_DEG, HAIRPIN_START_OFF_DEG];
+      for (var m = 0; m < maxStarts.length; m++) {
+        var maxStartOff = maxStarts[m];
+        tried = 0; feasible = 0; best = null;
+        slack = maxStartOff === TURNAROUND_PREFERRED_START_OFF_DEG ? TURNAROUND_PREFERRED_SLACK_M : 0;
+        for (var ai = 0; ai < HELPER_ALONG_M.length; ai++) {
+          for (var si = 0; si < HELPER_SIDE_M.length; si++) {
+            var along = HELPER_ALONG_M[ai], side = HELPER_SIDE_M[si];
+            // `along` metres ahead (+) or behind (-) the aircraft's nose, and `side` metres to its right (+) or left (-).
+            var ap = destPoint(pose.lat, pose.lon, pose.hdgDeg, along);
+            var pp = side === 0 ? ap : destPoint(ap[0], ap[1], wrap360(pose.hdgDeg + 90), side);
+            tried++;
+            var pin = { id: newId(pre.length), label: TURNAROUND_PIN_LABEL, lat: pp[0], lon: pp[1], seq: 0, terminal: false, headingDeg: null, drive: 'auto' };
+            var segs = plannedRouteSegments(origin, pre.concat([pin, end]));
+            if (segs.length < 2) continue;
+            if (segs.some(function (sg) { return sg.startOffDeg > maxStartOff || pathTurnDeg(sg.points) > HAIRPIN_TURN_DEG; })) continue;
+            if (segs.some(function (sg) { return pathLengthM(sg.points) < MIN_LEG_M; })) { rejectedNear++; continue; }
+            feasible++;
+            var score = driveCostM(segs) + CUSP_PENALTY_M * (segs.length - 1);
+            if (!best || score < best.score) best = { pin: pin, score: score, along: along, side: side };
+          }
         }
+        // The gentle pass may cost a little more than the single leg and still win.
+        if (best && best.score < directCost + slack) { best.accepted = true; clearanceUsed = clr; break; }
       }
-      // The gentle pass may cost a little more than the single leg and still win.
-      if (best && best.score < directCost + slack) break;
+      if (best && !best.accepted && ci < clearances.length - 1) { /* keep looking with less clearance only if nothing better turns up */ }
     }
     if (!best) return none('hairpin but none of ' + tried + ' candidate pins gave a workable two-leg route');
     // A single leg that warns (a loop, or an arc tighter than the tug can steer) is not a route at all.
     var directWarns = direct.some(function (g) { return segmentWarning(g) !== null; });
     if (!directWarns && best.score >= directCost + slack) return none('hairpin but the best workable pin is not cheaper than the single leg');
-    return { waypoints: ensureTerminal(pre.concat([best.pin, end])), added: true, info: 'added a turnaround pin ' + (best.along >= 0 ? best.along + ' m ahead of' : -best.along + ' m behind') + ' the nose and ' + Math.abs(best.side) + ' m ' + (best.side >= 0 ? 'right' : 'left') + ' (' + feasible + '/' + tried + ' candidates workable)' };
+    var why = 'the direct route is ' + Math.round(len) + ' m for a ' + Math.round(chord) + ' m gap, starts ' + Math.round(direct[0].startOffDeg) + ' deg off the aircraft\'s axis and turns ' + Math.round(directTurn) + ' deg' + (directWarns ? ' (and warns)' : '') + '; ';
+    return { waypoints: ensureTerminal(pre.concat([best.pin, end])), added: true, info: why + 'added a turnaround pin ' + (best.along >= 0 ? best.along + ' m ahead of' : -best.along + ' m behind') + ' the nose and ' + Math.abs(best.side) + ' m ' + (best.side >= 0 ? 'right' : 'left') + ' (' + feasible + '/' + tried + ' candidates workable)' };
   }
 
   // Re-work the turnaround pin for a route: drop any the planner added earlier, then add one if the route needs it.

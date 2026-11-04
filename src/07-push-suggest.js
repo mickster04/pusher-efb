@@ -654,21 +654,35 @@ PS.suggest = (function () {
   //  - an option whose tightest arc is under MIN_ARC_RADIUS_M, or whose first stretch starts more than MAX_START_OFF_DEG off the aircraft's
   //    axis, is left out (the planner accepts down to 60% of the tug radius, which draws as a cramped arc). If that would leave nothing,
   //    the unfiltered list (minus pointing) is used so there is still something to pick.
-  var MIN_ARC_RADIUS_M = 32;
+  var MIN_ARC_RADIUS_M = 32;       // used when the Settings value is not available
   var MAX_START_OFF_DEG = 45;
+  // The arcs the plan may use follow the Settings "tightest turn" (default 26 m), never above the 32 m this used to insist on.
+  function arcFloor() { var t = PS.settings && PS.settings.get('tightest'); return typeof t === 'number' ? Math.min(MIN_ARC_RADIUS_M, t) : MIN_ARC_RADIUS_M; }
+  // Returns { kept, dropped: [{ s, why }] }: why an option is not offered, so the log can say.
   function filterOptions(all) {
-    var nonPointing = all.filter(function (s) { return s.kind !== 'pointing'; });
-    var good = nonPointing.filter(function (s) { return s.tightestRadiusM >= MIN_ARC_RADIUS_M && s.maxStartOffDeg <= MAX_START_OFF_DEG; });
+    var floor = arcFloor(), dropped = [];
+    var nonPointing = all.filter(function (s) { if (s.kind === 'pointing') { dropped.push({ s: s, why: 'a compass-pointing option (not offered)' }); return false; } return true; });
+    var good = nonPointing.filter(function (s) {
+      if (s.tightestRadiusM < floor) { dropped.push({ s: s, why: 'its tightest arc is ' + Math.round(s.tightestRadiusM) + ' m, under the ' + Math.round(floor) + ' m allowed' }); return false; }
+      if (s.maxStartOffDeg > MAX_START_OFF_DEG) { dropped.push({ s: s, why: 'it starts ' + Math.round(s.maxStartOffDeg) + ' degrees off the aircraft\'s axis (over ' + MAX_START_OFF_DEG + ')' }); return false; }
+      return true;
+    });
     var pool = good.length ? good : nonPointing;
+    if (!good.length) dropped = dropped.filter(function (d) { return d.s.kind === 'pointing'; });
     var onTaxiway = pool.some(function (s) { return s.group === 'taxiway'; });
-    return onTaxiway ? pool.filter(function (s) { return s.group === 'taxiway'; }) : pool;
+    var kept = pool.filter(function (s) { if (onTaxiway && s.group !== 'taxiway') { dropped.push({ s: s, why: 'a lane or link, offered only when no taxiway has an option' }); return false; } return true; });
+    return { kept: kept, dropped: dropped };
   }
   function suggest(items, ac, parking) {
     if (!ac || typeof ac.lat !== 'number' || typeof ac.lon !== 'number') return [];
     var list = suggestPushbacks(layoutFrom(items, parking), { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg || 0 });
     var all = list.map(function (s) { return decorate(s, { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg || 0 }); });
-    var kept = filterOptions(all);
+    var f = filterOptions(all), kept = f.kept;
     kept.forEach(function (s) { s.detail += '. Tightest arc ' + Math.round(s.tightestRadiusM) + ' m (tug turns at ' + P.PATH_TURN_RADIUS_M + ' m)'; });
+    // Everything the suggester found and what became of it, for the log.
+    var report = { found: all.length, kept: kept.map(function (s) { return s.title + ' -> facing ' + Math.round(s.facingDeg) + ', ' + Math.round(s.lengthM) + ' m'; }),
+      dropped: f.dropped.map(function (d) { return d.s.title + ' -> facing ' + Math.round(d.s.facingDeg) + ', ' + Math.round(d.s.lengthM) + ' m: ' + d.why; }) };
+    Object.defineProperty(kept, 'lastReport', { value: report, enumerable: false });
     return kept;
   }
 

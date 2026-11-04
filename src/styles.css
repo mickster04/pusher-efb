@@ -94,3 +94,7 @@
 .ps-bar { height: 14px; background: #0b1116; border-radius: 7px; overflow: hidden; margin: 6px 0 10px; border: 1px solid #2a3a47; }
 .ps-bar > div { height: 100%; background: #34d2c8; }
 .ps-btn:disabled { opacity: 0.4; }
+
+/* the map's range control sits under the map and is smaller than the main buttons */
+.ps-compact .ps-btn { padding: 5px 10px; font-size: 13px; }
+.ps-compact .ps-step-label { font-size: 14px; min-width: 56px; margin: 0 8px 0 2px; }

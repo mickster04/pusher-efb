@@ -162,3 +162,11 @@ test('profile: a reverse push is slower than forward, and a new top speed change
   f.setCruise(10);
   assert.ok(F.profileAt(f.legs[0].prof, 100).v < before);
 });
+
+test('profile: the speed along a chord-built arc is steady, not a sawtooth', () => {
+  const prof = F.buildProfile(pathOf(arcPts(40, 120, 30)), false, 7);
+  const a = Math.round(prof.n * 0.4), b = Math.round(prof.n * 0.7);
+  let lo = Infinity, hi = 0;
+  for (let i = a; i < b; i++) { lo = Math.min(lo, prof.v[i]); hi = Math.max(hi, prof.v[i]); }
+  assert.ok(hi - lo < 0.6, 'speed in the arc varies by ' + (hi - lo).toFixed(2) + ' ft/s');
+});

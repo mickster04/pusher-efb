@@ -28,7 +28,9 @@ PS.follow = (function () {
     CURVE_BASE_FWD_FTS: 3.0, CURVE_BASE_REV_FTS: 2.75, CURVE_REF_R_M: 40,   // curve speed at a 40 m radius or wider; tighter radii are slower, to half at 20 m
     STRAIGHT_R_M: 200, CURVE_FULL_R_M: 60,      // wider than 200 m counts as straight; tighter than 60 m gets the full curve speed
     DECEL_MS2: 0.35, ACCEL_MS2: 0.5,            // comfortable braking and acceleration (m/s per second); the tug's own ramp (14 ft/s per s) is far quicker
-    PROFILE_DS_M: 0.5, CURV_WINDOW_M: 3, LOOK_FEATURE_M: 80,
+    PROFILE_DS_M: 0.5, CURV_WINDOW_M: 10,        // wide enough to span several of the planner's chords (about 3.5 m long on a 40 m arc), or the estimated radius flickers
+    END_STEER_FADE_M: 6, END_STEER_MIN: 0.25,    // in the last few metres the aim point is close and the steering gets twitchy: fade the correction down so the nose is not swung at the end
+    LOOK_FEATURE_M: 80,
     CUSP_STOP_FTS: 0.05, CUSP_STOP_SECONDS: 0.5, CUSP_HOLD_SECONDS: 1.0,
     LOST_CTE_M: 15, LOST_SECONDS: 3, STUCK_SECONDS: 8, STUCK_MIN_ADVANCE_M: 0.3
   };
@@ -208,6 +210,7 @@ PS.follow = (function () {
       var toAim = aimDist > K.AIM_MIN ? brgXY(p.x, p.y, aim.x, aim.y) : aim.tangent;
       var alpha = clamp(wrap180(toAim - travelHdg), -K.MAX_ALPHA_DEG, K.MAX_ALPHA_DEG);
       var kappa = 2 * Math.sin(G.rad(alpha)) / Math.max(aimDist, K.MIN_LOOK);     // 1/m, clockwise
+      if (st.leg >= legs.length - 1 && remaining < K.END_STEER_FADE_M) kappa *= K.END_STEER_MIN + (1 - K.END_STEER_MIN) * clamp((remaining - 1) / (K.END_STEER_FADE_M - 1), 0, 1);
       out.alphaDeg = alpha;
 
       // ---- speed: from the leg's profile (fast on straights, slower through curves, braking in time for curves and the stop), then slowed further

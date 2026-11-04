@@ -37,22 +37,23 @@ PS.ui = {
   },
   // Zoom control: [-] current range [+] over a list of numeric steps (metres). Not built on ui.select, so it does not depend on
   // highlight state, and each press is logged (tag = log channel) so a session log shows whether presses arrive at all.
-  stepper: function (steps, value, onchange, tag, labels, fmt) {
-    labels = labels || ['Zoom in  -', 'Zoom out  +'];
+  // Steps go up from the left button to the right one, unless `invert` (the map zoom: the right-hand + zooms in, to a smaller range).
+  stepper: function (steps, value, onchange, tag, labels, fmt, invert) {
+    labels = labels || (invert ? ['Zoom out  -', 'Zoom in  +'] : ['Zoom in  -', 'Zoom out  +']);
     fmt = fmt || PS.fmt.dist;
     var idx = Math.max(0, steps.indexOf(value));
     var label = PS.h('span', { class: 'ps-step-label', text: fmt(steps[idx]) });
-    function go(delta) {
+    function go(delta, which) {
       var next = Math.max(0, Math.min(steps.length - 1, idx + delta));
-      if (tag) PS.log(tag, 'button pressed (' + labels[delta < 0 ? 0 : 1] + '): ' + fmt(steps[idx]) + ' -> ' + fmt(steps[next]));
+      if (tag) PS.log(tag, 'button pressed (' + labels[which] + '): ' + fmt(steps[idx]) + ' -> ' + fmt(steps[next]));
       if (next === idx) return;
       idx = next; label.textContent = fmt(steps[idx]);
       if (onchange) onchange(steps[idx]);
     }
     var el = PS.h('div', { class: 'ps-stepper' },
-      PS.ui.button(labels[0], function () { go(-1); }),
+      PS.ui.button(labels[0], function () { go(invert ? 1 : -1, 0); }),
       label,
-      PS.ui.button(labels[1], function () { go(1); }));
+      PS.ui.button(labels[1], function () { go(invert ? -1 : 1, 1); }));
     return { el: el, get: function () { return steps[idx]; }, set: function (v2) { idx = Math.max(0, steps.indexOf(v2)); label.textContent = fmt(steps[idx]); } };
   },
   // Segmented toggle. options: [{value,label}], returns { el, get(), set(v) }

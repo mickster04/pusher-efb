@@ -51,37 +51,46 @@ PS.plan = (function () {
   }
   // The direction of the taxiway centreline nearest (lat, lon) within maxM, as the nose heading closest to refDeg (a taxiway runs both ways, and the
   // way with the smaller turn from where the aircraft is already pointing is the one to default to). Runways are not snapped to.
-  var SNAP_MAX_M = 35;
+  var SNAP_MAX_M = 50;          // the default reach; Settings can change it
+  function snapReach() { var m = PS.settings && PS.settings.get('snapM'); return typeof m === 'number' && m > 0 ? m : SNAP_MAX_M; }
+  var lastSnapMiss = null;     // why the last snap found nothing: { nearestM, nearestName, items, off }
   function snapAt(lat, lon, refDeg, maxM) {
-    var taxi = PS.state && PS.state.taxi, best = null;
+    var taxi = PS.state && PS.state.taxi, best = null, nearest = null, usable = 0;
+    lastSnapMiss = { nearestM: null, nearestName: '', items: taxi && taxi.items ? taxi.items.length : 0, noData: !taxi || !taxi.items };
     if (!taxi || !taxi.items) return null;
     taxi.items.forEach(function (it) {
       if (!it.points || it.points.length < 2 || it.category === 'Runway') return;
+      usable++;
       for (var i = 1; i < it.points.length; i++) {
         var a = it.points[i - 1], b = it.points[i];
         var A = G.toXY(lat, lon, a[0], a[1]), B = G.toXY(lat, lon, b[0], b[1]);
         var dx = B.x - A.x, dy = B.y - A.y, len2 = dx * dx + dy * dy;
         if (len2 < 1) continue;
         var t = Math.max(0, Math.min(1, -(A.x * dx + A.y * dy) / len2)), px = A.x + t * dx, py = A.y + t * dy, d = Math.sqrt(px * px + py * py);
-        if (d <= (maxM || SNAP_MAX_M) && (!best || d < best.distM)) best = { distM: d, bearing: G.bearingDeg(a[0], a[1], b[0], b[1]), name: it.name || '' };
+        if (!nearest || d < nearest.d) nearest = { d: d, name: it.name || '' };
+        if (d <= (maxM || snapReach()) && (!best || d < best.distM)) best = { distM: d, bearing: G.bearingDeg(a[0], a[1], b[0], b[1]), name: it.name || '' };
       }
     });
+    if (nearest) { lastSnapMiss.nearestM = nearest.d; lastSnapMiss.nearestName = nearest.name; }
+    lastSnapMiss.usable = usable;
     if (!best) return null;
     var other = G.normDeg(best.bearing + 180);
     var hdg = Math.abs(G.angleDiff(best.bearing, refDeg)) <= Math.abs(G.angleDiff(other, refDeg)) ? best.bearing : other;
-    return { headingDeg: Math.round(G.normDeg(hdg)), name: best.name, distM: best.distM };
+    return { headingDeg: Math.round(G.normDeg(hdg)), otherDeg: Math.round(G.normDeg(hdg === best.bearing ? other : best.bearing)), refDeg: Math.round(G.normDeg(refDeg)), name: best.name, distM: best.distM };
   }
   // Give pin i the heading of the taxiway it sits on (if there is one close by). It stays "snapped" so moving the pin re-snaps it, until the pin
   // is rotated by hand. refDeg is where the aircraft points before this pin: the previous pin's heading, else the aircraft's own.
   function snapPin(i, ownHdgDeg) {
     var w = pins[i]; if (!w) return null;
-    if (PS.settings && !PS.settings.get('snap')) return null;
+    if (PS.settings && !PS.settings.get('snap')) { lastSnapMiss = { off: true }; return null; }
     var prev = pins[i - 1], ref = prev && prev.headingUser && prev.headingDeg !== null ? prev.headingDeg : ownHdgDeg;
     var r = snapAt(w.lat, w.lon, ref || 0);
     if (!r) { if (w.snapped) { w.snapped = false; w.headingUser = false; w.headingDeg = null; changed(); } return null; }
     w.headingDeg = r.headingDeg; w.headingUser = true; w.snapped = true; changed();
     return r;
   }
+  // Turn pin i's nose round to the opposite way along the taxiway it is on (the snap can only guess which way is wanted when the turn is near 90 degrees).
+  function flip(i) { var w = pins[i]; if (!w) return; var cur = w.headingDeg; if (cur === null || cur === undefined) return; setHeading(i, cur + 180); }
   function clear() { pins.length = 0; selected = -1; changed(); }
   function setHeading(i, deg) { if (!pins[i]) return; pins[i].snapped = false; pins[i].headingDeg = Math.round(G.normDeg(deg)); pins[i].headingUser = true; changed(); }
   function resetHeading(i) { if (!pins[i]) return; pins[i].snapped = false; pins[i].headingDeg = null; pins[i].headingUser = false; pins[i].leadInM = undefined; changed(); }
@@ -131,6 +140,7 @@ PS.plan = (function () {
       return 'leg ' + (n + 1) + ' ' + (l.sign < 0 ? 'back' : 'forward') + ' ' + Math.round(l.lengthM) + ' m, ends ' + Math.round(l.endHdgDeg) + '°, tightest ' + (l.tightestRadiusM ? Math.round(l.tightestRadiusM) + ' m' : '-');
     });
     PS.log('plan', 'route: ' + Math.round(res.totalM) + ' m, ' + res.legs.length + ' leg(s), radius ' + Math.round(res.radiusM) + ' m' + (res.adapted ? ' (tightened)' : '') + (res.turnaroundAdded ? ', turnaround pin added' : '') + ' | ' + legs.join('; '));
+    if (res.turnaroundAdded && res.info) PS.log('plan', 'turnaround pin: ' + res.info);
     if (res.warnings.length) {
       res.warnings.forEach(function (w) { PS.log('plan', 'WARNING ' + w); });
       PS.log('plan', 'pins behind the warning (aircraft at heading ' + Math.round(origin.hdgDeg) + '°): ' + res.waypoints.map(function (w, i) {
@@ -178,7 +188,7 @@ PS.plan = (function () {
     list: function () { return pins; }, count: function () { return pins.length; },
     selected: function () { return selected; }, select: select,
     add: add, move: move, remove: remove, clear: clear, setHeading: setHeading, resetHeading: resetHeading, setAll: setAll,
-    headingFromHandle: headingFromHandle, snapAt: snapAt, snapPin: snapPin, evaluate: evaluate,
+    headingFromHandle: headingFromHandle, snapAt: snapAt, snapPin: snapPin, snapMiss: function () { return lastSnapMiss; }, snapMaxM: snapReach, flip: flip, evaluate: evaluate,
     turn: function () { return turn; }, setMinRadius: setMinRadius
   };
 })();

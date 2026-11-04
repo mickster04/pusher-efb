@@ -12,15 +12,13 @@ PS.pages.push({
     var HANDLE_PX = 58;          // how far behind the tail the heading handle sits
     var HANDLE_HIT_PX = 36;      // how close a press has to be to the handle (canvas pixels, which are screen pixels: the canvas is not scaled)
     var canvas = h('canvas', { class: 'ps-canvas', width: '900', height: '540' });
-    var plotRange = ui.stepper(PLOT_STEPS, 300, function () { draw(); }, 'plan');
+    var plotRange = ui.stepper(PLOT_STEPS, 300, function () { draw(); }, 'plan', null, null, true);
     var infoLine = h('div', { class: 'ps-kv', text: '' });
     var contactLine = h('div', { class: 'ps-kv', text: '' });
     var routeSummary = h('div', { class: 'ps-note' });
     var pinList = h('div');
     var sugBox = h('div');
     var airportLine = h('div', { class: 'ps-kv', text: '' });
-    var addBtn = null;
-    var addMode = true;
     var timer = null;
     var airportLoading = false;
     var drag = null;            // { kind: 'handle' | 'pin' | 'none', idx, sx, sy, moved, touch }
@@ -57,11 +55,6 @@ PS.pages.push({
     }
 
     // ---------------- pins ----------------
-    function setAddMode(on) {
-      addMode = on;
-      if (addBtn) { addBtn.textContent = 'Add pins: ' + (on ? 'ON (tap the plot)' : 'off'); addBtn.className = 'ps-btn' + (on ? ' ps-warn' : ''); }
-      canvas.className = 'ps-canvas' + (on ? ' ps-pinmode' : '');
-    }
     function planChanged() { renderedPlan = null; draw(); }
     // Editing the plan by hand takes over from any suggestion that was highlighted.
     function dropSuggestionHighlight() { if (sug.selectedId) { sug.selectedId = null; renderSuggestions(); } }
@@ -75,7 +68,11 @@ PS.pages.push({
     // New and moved pins take the heading of the taxiway they sit on, until rotated by hand.
     function snap(i) {
       var r = PS.plan.snapPin(i, (PS.readOwn() || { hdgDeg: 0 }).hdgDeg);
-      if (r) log('pin ' + (i + 1) + ' aligned with ' + (r.name ? 'taxiway ' + r.name : 'the taxiway') + ' (' + Math.round(r.distM) + ' m away): heading ' + r.headingDeg + '°');
+      if (!r) {
+        var m = PS.plan.snapMiss() || {};
+        log('pin ' + (i + 1) + ' not snapped: ' + (m.off ? 'snapping is off in Settings' : (m.noData ? 'no airport data loaded' : (m.nearestM === null || m.nearestM === undefined ? 'no taxiway lines to snap to (' + m.items + ' items, ' + (m.usable || 0) + ' usable)' : 'the nearest taxiway line (' + (m.nearestName || 'unnamed') + ') is ' + Math.round(m.nearestM) + ' m away, over the ' + PS.plan.snapMaxM() + ' m reach'))));
+      }
+      if (r) log('pin ' + (i + 1) + ' aligned with ' + (r.name ? 'taxiway ' + r.name : 'the taxiway') + ' (' + Math.round(r.distM) + ' m away): heading ' + r.headingDeg + '° rather than ' + r.otherDeg + '° (the aircraft was pointing ' + r.refDeg + '°; use Flip if the other way is wanted)');
     }
     function deletePin(i) { PS.plan.remove(i); log('pin ' + (i + 1) + ' deleted; ' + PS.plan.count() + ' left'); planChanged(); }
     function pinHeading(i) {
@@ -106,6 +103,7 @@ PS.pages.push({
         pinList.appendChild(h('div', { class: 'ps-pinrow' + (i === sel ? ' on' : '') },
           h('span', { text: (i === pins.length - 1 ? 'End' : 'Pin ' + (i + 1)) + ': ' + PS.fmt.dist(legs.legs[i].distM) + ' on a bearing of ' + Math.round(legs.legs[i].bearingDeg) + '°, nose ' + (hd === null ? '?' : Math.round(hd) + '°') + (p.headingUser ? ' (set by you)' : ' (auto)') }),
           ui.button(i === sel ? 'Selected' : 'Select', function () { PS.plan.select(i); planChanged(); }, 'ps-small ps-ghost'),
+          ui.button('Flip 180°', function () { var cur = pinHeading(i); if (cur !== null && cur !== undefined) { PS.plan.setHeading(i, cur); PS.plan.flip(i); log('pin ' + (i + 1) + ' flipped to ' + PS.plan.list()[i].headingDeg + '°'); planChanged(); } }, 'ps-small ps-ghost'),
           p.headingUser ? ui.button('Auto heading', function () { PS.plan.resetHeading(i); log('pin ' + (i + 1) + ' heading back to auto'); planChanged(); }, 'ps-small ps-ghost') : null,
           ui.button('Delete', function () { deletePin(i); }, 'ps-small ps-ghost')));
       });
@@ -164,15 +162,15 @@ PS.pages.push({
       if (d.kind === 'handle') { dropSuggestionHighlight(); showList('pins', 'a pin was rotated'); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); planChanged(); return; }
       if (d.kind === 'pin') { if (d.moved) { dropSuggestionHighlight(); showList('pins', 'a pin was moved'); log('pin ' + (d.idx + 1) + ' moved'); if (PS.plan.list()[d.idx] && (PS.plan.list()[d.idx].snapped || !PS.plan.list()[d.idx].headingUser)) snap(d.idx); planChanged(); } return; }
       if (d.moved || !lastView) return;
-      if (addMode) { var ll = lastView.fromPx(p[0], p[1]); addPin(ll[0], ll[1]); return; }
-      // Add pins off: pick the nearest aircraft to read its details, or clear the selection.
-      var best = null, bestD = 16;
+      // A tap on an AI aircraft reads its details; a tap anywhere else drops a pin.
+      var best = null, bestD = 14;
       contactsNow().forEach(function (c) {
         var dd = pxDist(lastView.toPx(c.lat, c.lon), p);
         if (dd < bestD) { bestD = dd; best = c; }
       });
-      selectedContact = best ? best.id : null;
-      PS.plan.select(-1); planChanged();
+      if (best) { selectedContact = best.id; PS.plan.select(-1); planChanged(); return; }
+      selectedContact = null;
+      var ll = lastView.fromPx(p[0], p[1]); addPin(ll[0], ll[1]);
     }
     ['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach(function (type) {
       canvas.addEventListener(type, function (e) {
@@ -228,6 +226,12 @@ PS.pages.push({
         sug.list = PS.suggest.suggest(t.items, own, t.parking);
         sug.tookMs = Date.now() - t0;
         if (!sug.logged || sug.list.length !== before) { sug.logged = true; log('suggested pushes: ' + sug.list.length + ' option(s) in ' + sug.tookMs + ' ms (heading ' + Math.round(own.hdgDeg) + ')'); }
+        if (sug.list.lastReport && sug.reportKey !== key) {
+          sug.reportKey = key; var rep = sug.list.lastReport;
+          log('suggester found ' + rep.found + ', offering ' + rep.kept.length + ' (aircraft ' + own.lat.toFixed(5) + ', ' + own.lon.toFixed(5) + ', heading ' + Math.round(own.hdgDeg) + ')');
+          rep.kept.forEach(function (t) { log('  offered: ' + t); });
+          rep.dropped.forEach(function (t) { log('  left out: ' + t); });
+        }
       } catch (e) { sug.list = []; log('suggestion failed: ' + PS.errText(e)); }
       if (sug.selectedId) { var still = false; sug.list.forEach(function (s) { if (s.id === sug.selectedId) still = true; }); if (!still) sug.selectedId = null; }
       renderSuggestions();
@@ -310,13 +314,11 @@ PS.pages.push({
         var a = PS.traffic.analyse(own, sc);
         contactLine.textContent = (sc.title || sc.id) + ': ' + PS.fmt.dist(a.distM) + ' away on a bearing of ' + Math.round(a.bearingDeg) + '°, ' + PS.fmt.num(sc.gsKt, 0) + ' kt, heading ' + Math.round(sc.hdgDeg || 0) + '°, closing ' + PS.fmt.num(a.closingKt, 1) + ' kt';
       } else {
-        contactLine.textContent = contacts.length && !addMode ? 'Tap an aircraft to read its details.' : '';
+        contactLine.textContent = contacts.length ? 'Tap an aircraft to read its details.' : '';
       }
     }
 
     // ---------------- page ----------------
-    addBtn = ui.button('Add pins: ON (tap the plot)', function () { setAddMode(!addMode); });
-    setAddMode(true);
 
     var sugPanel = ui.panel('Suggested pushes', airportLine, sugBox,
       h('div', { class: 'ps-row' }, ui.button('Reload airport data', function () { loadAirport('asked'); }, 'ps-small ps-ghost')),
@@ -336,11 +338,13 @@ PS.pages.push({
 
     var el = h('div', { class: 'ps-page' },
       ui.panel('Plan the push',
-        h('div', { class: 'ps-row' }, ui.field('Range', plotRange.el), addBtn,
+        h('div', { class: 'ps-row' },
           ui.button('Undo pin', function () { if (PS.plan.count()) deletePin(PS.plan.count() - 1); }, 'ps-ghost'),
           ui.button('Clear pins', function () { PS.plan.clear(); log('pins cleared'); planChanged(); }, 'ps-ghost'),
           ui.button('Recentre', function () { pan.x = 0; pan.y = 0; log('map recentred on the aircraft'); draw(); }, 'ps-ghost')),
-        canvas, infoLine, contactLine,
+        canvas,
+        h('div', { class: 'ps-row ps-compact' }, ui.field('Range', plotRange.el)),
+        infoLine, contactLine,
         ui.note('North is up, centred on the aircraft; drag empty map to move it. Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it. White route = push back, blue = drive forward, red = the tug may not manage that leg.')),
       routeSummary,
       listTabs,
