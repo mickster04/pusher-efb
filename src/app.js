@@ -4,12 +4,15 @@
 
 PS.injectStyle = function () {
   var id = 'ps-style-' + PS.INTERNAL_NAME;
-  if (document.getElementById(id)) return;
-  var el = document.createElement('style');
-  el.id = id;
-  el.type = 'text/css';
-  el.appendChild(document.createTextNode(PS.CSS));
-  document.head.appendChild(el);
+  var el = document.getElementById(id);
+  if (!el) {
+    el = document.createElement('style');
+    el.id = id;
+    el.type = 'text/css';
+    document.head.appendChild(el);
+  }
+  PS.theme.attach(el);
+  if (el.firstChild) el.firstChild.nodeValue = PS.theme.css(); else el.appendChild(document.createTextNode(PS.theme.css()));
 };
 
 // Builds the whole UI into `root` using plain DOM. Returns { showPage }.
@@ -67,6 +70,7 @@ PS.buildShell = function (root) {
     });
     return lines.join('\n');
   }
+  PS.copyAllLogs = function () { copyAll(); };
   function copyAll() {
     var text = buildReport();
     var ok = PS.ui.copyText(text);
@@ -104,16 +108,33 @@ PS.buildShell = function (root) {
       '  |  timer ticks ' + hb.ticks + '  |  onUpdate frames ' + hb.frames + (hb.paused ? '  |  PAUSED' : '');
   }
   paintFooter();
-  var footTimer = setInterval(paintFooter, 1000);
+  // Landscape or portrait: the pages put their map and controls side by side when the tablet is wider than it is tall.
+  function updateOrientation() {
+    var w = root.clientWidth || window.innerWidth, hgt = root.clientHeight || window.innerHeight;
+    if (!(w > 0 && hgt > 0)) return;
+    var land = w > hgt * 1.1;
+    if (land === !!PS.state.landscape && PS.state.layoutLogged) return;
+    PS.state.landscape = land; PS.state.layoutLogged = true;
+    root.className = 'ps-root' + (land ? ' ps-landscape' : '');
+    PS.log('app', 'layout: ' + (land ? 'landscape' : 'portrait') + ' (' + w + ' x ' + hgt + ')');
+  }
+  updateOrientation();
+  var orientHook = function () { updateOrientation(); };
+  PS.frameHooks.push(orientHook);
+  try { window.addEventListener('resize', updateOrientation); } catch (eR) { /* no resize events */ }
+  var footTimer = setInterval(function () { paintFooter(); updateOrientation(); }, 1000);
 
-  root.appendChild(h('div', { class: 'ps-app' },
+  var appEl = h('div', { class: 'ps-app' },
     h('div', { class: 'ps-header' },
-      PS.ui.button('Copy all logs', copyAll, 'ps-headbtn'),
       h('span', { class: 'ps-title', text: PS.APP_NAME }), h('span', { class: 'ps-sub', text: 'pushback planner' })),
-    nav, toastHost, body, footer));
+    nav, toastHost, body, footer);
+  root.appendChild(appEl);
+  // The EFB draws its own header and bottom bar over the top and bottom of an app; the margins (Settings) keep this app's own header and footer clear of them.
+  PS.applyInsets = function () { appEl.style.top = PS.settings.get('insetTop') + 'px'; appEl.style.bottom = PS.settings.get('insetBottom') + 'px'; };
+  PS.applyInsets();
 
   showPage(PS.pages[0].id);
-  return { showPage: showPage, dispose: function () { clearInterval(footTimer); } };
+  return { showPage: showPage, dispose: function () { clearInterval(footTimer); var oi = PS.frameHooks.indexOf(orientHook); if (oi >= 0) PS.frameHooks.splice(oi, 1); try { window.removeEventListener('resize', updateOrientation); } catch (eR2) { /* ignore */ } } };
 };
 
 PS.createViewClass = function (sdk) {

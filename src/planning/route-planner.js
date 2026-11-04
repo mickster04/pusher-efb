@@ -133,7 +133,26 @@ PS.planner = (function () {
 
   // One segment's path: straight along the aircraft's own axis first, then a turn toward the first pin as late as a radiusM arc
   // allows, then the remaining pins with rounded corners.
+  // The arrival line for a pin with a set heading starts where it crosses the aircraft's axis when that gives a neat straight-arc-straight path (see
+  // buildSegment); where that does not fit, the older lead-in is used. Whichever ends on the heading with the gentler turn wins.
   function segmentPath(pose, sign, pins, radiusM, stats) {
+    var sCross = { minRadiusM: radiusM }, crossed = { used: false };
+    var withCross = buildSegment(pose, sign, pins, radiusM, sCross, true, crossed);
+    if (!crossed.used) { if (stats) stats.minRadiusM = sCross.minRadiusM; return withCross; }
+    var sOld = { minRadiusM: radiusM };
+    var old = buildSegment(pose, sign, pins, radiusM, sOld, false, crossed);
+    var lastPin = pins[pins.length - 1];
+    function penalty(points, st) {
+      var a = points[points.length - 2] || points[0], b = points[points.length - 1];
+      var tg = initialBearing(a[0], a[1], b[0], b[1]), nose = sign > 0 ? tg : wrap360(tg + 180);
+      var off = lastPin && lastPin.headingUser && lastPin.headingDeg !== null && lastPin.headingDeg !== undefined && isFinite(lastPin.headingDeg) ? Math.abs(wrap180(nose - lastPin.headingDeg)) : 0;
+      return (off > 12 ? 100 + off : 0) + Math.max(0, radiusM - st.minRadiusM);
+    }
+    var useCross = penalty(withCross, sCross) <= penalty(old, sOld);
+    if (stats) stats.minRadiusM = useCross ? sCross.minRadiusM : sOld.minRadiusM;
+    return useCross ? withCross : old;
+  }
+  function buildSegment(pose, sign, pins, radiusM, stats, useCross, crossed) {
     var raw = [[pose.lat, pose.lon]];
     for (var n = 0; n < pins.length; n++) {
       var w = pins[n];
@@ -144,6 +163,20 @@ PS.planner = (function () {
         var reach = Math.max(MIN_LEAD_IN_M, 0.8 * haversineM(prevPt[0], prevPt[1], w.lat, w.lon));
         var lead = w.leadInM !== null && w.leadInM !== undefined ? w.leadInM : HEADING_LEAD_IN_M;
         var leadPointM = Math.min(Math.min(MAX_LEAD_IN_M, Math.max(MIN_LEAD_IN_M, lead)) + radiusM, reach);
+        // Where the line the tug must arrive along crosses the aircraft's own axis: starting the arrival line there lets the path be one straight run
+        // along the axis, one arc, and the run in to the pin, which is the neatest way when the pin is not far to the side. A lead-in longer than
+        // that overshoots the crossing and forces a tight kink.
+        if (useCross && raw.length === 1 && pose.hdgDeg !== null && pose.hdgDeg !== undefined && isFinite(pose.hdgDeg)) {
+          var axisHdg = sign < 0 ? wrap360(pose.hdgDeg + 180) : wrap360(pose.hdgDeg);
+          var cosP = Math.cos(pose.lat * Math.PI / 180);
+          var px = (w.lon - pose.lon) * M_PER_DEG * cosP, py = (w.lat - pose.lat) * M_PER_DEG;   // pin relative to the aircraft (x east, y north)
+          var ax = Math.sin(G.rad(axisHdg)), ay = Math.cos(G.rad(axisHdg)), tx = Math.sin(G.rad(travel)), ty = Math.cos(G.rad(travel));
+          var det = ax * ty - ay * tx;                       // axis ray: s*(ax, ay) meets the arrival line pin - u*(tx, ty)
+          if (Math.abs(det) > 0.2) {
+            var sAxis = (px * ty - py * tx) / det, uLine = -(px * ay - py * ax) / det;
+            if (sAxis > 0 && uLine > 0 && uLine < leadPointM && uLine >= MIN_POINT_SPACING_M) { leadPointM = uLine; crossed.used = true; }
+          }
+        }
         var lp = destPoint(w.lat, w.lon, wrap360(travel + 180), leadPointM);
         if (haversineM(prevPt[0], prevPt[1], lp[0], lp[1]) >= MIN_POINT_SPACING_M && haversineM(prevPt[0], prevPt[1], w.lat, w.lon) >= MIN_POINT_SPACING_M) raw.push([lp[0], lp[1]]);
       }

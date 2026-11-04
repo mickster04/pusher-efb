@@ -90,7 +90,7 @@ PS.push = (function () {
     if (S.status === 'done') {
       if (!finishToastShown) {
         finishToastShown = true;
-        PS.toasts.show({ efbOnly: true, id: 'push-done', kind: 'info', persistent: true, title: 'Push finished', message: 'Set the parking brake, then dismiss the tug.',
+        PS.toasts.show({ efbOnly: true, id: 'push-done', kind: 'info', persistent: true, title: 'Push finished', message: 'Finish sets the parking brake and dismisses the tug.',
           actions: [{ label: 'Set the brake', onClick: function () { setBrake(); } }].concat(S.returnPlan ? [{ label: 'Return to gate', onClick: function () { PS.toasts.dismiss('push-done'); requestStart({ returnToGate: true }); } }] : []).concat([ { label: 'Dismiss tug', onClick: function () { dismissTug(); PS.toasts.dismiss('push-done'); } }, { label: 'x', onClick: function () { PS.toasts.dismiss('push-done'); } }]) });
       }
     } else { finishToastShown = false; if (S.status !== 'done') PS.toasts.dismiss('push-done'); }
@@ -188,7 +188,11 @@ PS.push = (function () {
   }
   function beginBrakeCheck() {
     S.brake = PS.brake.read(true);
-    if (S.brake.set) { setStatus('waitBrake', 'the parking brake is set'); }
+    if (S.brake.set) {
+      setStatus('waitBrake', 'the parking brake is set');
+      // Start does the rest itself: release the brake (once; if the pilot releases it first, that is just as good).
+      if (!S.brakeAsked) { S.brakeAsked = true; log('releasing the parking brake for you'); releaseBrake(); }
+    }
     else beginSettling();
   }
   function beginSettling() { S.settleStart = Date.now(); setStatus('settling', 'tug attached'); }
@@ -239,6 +243,33 @@ PS.push = (function () {
     }
   }
   function dismissTug() { PS.tug.detach(); setStatus('idle', 'tug dismissed'); }
+  // The brake toggle on the Push tab (a lesser option: Start and Finish do this themselves).
+  function toggleBrake() {
+    if (ACTIVE[S.status] && S.status !== 'waitBrake' && S.status !== 'brakeHold') return;
+    S.brake = PS.brake.read(true);
+    if (S.brake.set) releaseBrake(); else setBrake();
+  }
+  // Finish: set the parking brake if it is not set and dismiss the tug if it is on. Whatever the pilot already did by hand is skipped, so doing
+  // either first never leaves the other undone.
+  function canFinish() {
+    if (!({ idle: 1, ready: 1, done: 1 })[S.status]) return false;
+    var b = PS.brake.read(false);
+    return PS.tug.isAttached() || (b.ok && !b.set);
+  }
+  function finishPush() {
+    if (!canFinish()) return false;
+    PS.toasts.dismiss('push-done');
+    function dismiss() {
+      if (PS.tug.isAttached()) { log('finish: dismissing the tug'); dismissTug(); } else log('finish: the tug was already dismissed');
+    }
+    var b = PS.brake.read(true);
+    S.brake = b;
+    if (b.ok && !b.set) {
+      log('finish: setting the parking brake, then dismissing the tug');
+      PS.brake.set(function (r) { log('finish: parking brake ' + (r.ok ? 'set (' + r.how + ')' : 'would not set: ' + r.how)); S.brake = PS.brake.read(true); dismiss(); });
+    } else { log('finish: the parking brake was already set'); dismiss(); }
+    return true;
+  }
 
   // ---------------- the loop ----------------
   function slowChecks(now) {
@@ -346,7 +377,7 @@ PS.push = (function () {
       status: S.status, reason: S.reason, attached: S.attached, brake: S.brake, plan: S.plan, totalM: S.totalM, speedPercent: S.speedPercent, cruiseUnits: cruiseUnits(),
       remainingM: l.remainingM, leg: l.leg, legCount: l.legCount, phase: l.phase, cte: l.cte, alphaDeg: l.alphaDeg, speedFtS: S.cur.speed, yawDegS: S.cur.yaw, measuredYaw: S.measuredYaw,
       direction: leg ? (leg.sign < 0 ? 'push back' : 'drive forward') : '', elapsedS: S.startedAt && (S.status === 'driving' || S.status === 'stopping' || S.status === 'paused' || S.status === 'brakeHold') ? (Date.now() - S.startedAt) / 1000 : 0,
-      writes: S.writes, failures: S.failures, lastError: S.lastError, note: l.note, why: l.why || '', isReturn: !!S.isReturn, canReturn: canReturn(), returnM: S.returnPlan ? S.returnPlan.totalM : 0, progress: S.totalM > 0 ? clamp(1 - l.remainingM / S.totalM, 0, 1) : 0
+      writes: S.writes, failures: S.failures, lastError: S.lastError, note: l.note, why: l.why || '', isReturn: !!S.isReturn, canFinish: canFinish(), canReturn: canReturn(), returnM: S.returnPlan ? S.returnPlan.totalM : 0, progress: S.totalM > 0 ? clamp(1 - l.remainingM / S.totalM, 0, 1) : 0
     };
   }
 
@@ -361,6 +392,6 @@ PS.push = (function () {
   S.attached = PS.tug.isAttached();
   if (S.attached) { S.status = 'ready'; S.reason = 'the tug is already attached'; ensureLoop(); }
 
-  return { view: view, canStart: canStart, canReturn: canReturn, requestStart: requestStart, pause: pause, resume: resume, stop: stop, emergencyStop: emergencyStop, toggleTug: toggleTug, dismissTug: dismissTug,
+  return { view: view, canStart: canStart, canReturn: canReturn, requestStart: requestStart, pause: pause, resume: resume, stop: stop, emergencyStop: emergencyStop, toggleTug: toggleTug, dismissTug: dismissTug, toggleBrake: toggleBrake, finish: finishPush,
     releaseBrake: releaseBrake, setBrake: setBrake, setSpeedPercent: setSpeedPercent, route: function () { return S.plan; }, forgetLoop: forgetLoop };
 })();

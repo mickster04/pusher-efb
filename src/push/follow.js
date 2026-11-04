@@ -29,7 +29,8 @@ PS.follow = (function () {
     STRAIGHT_R_M: 200, CURVE_FULL_R_M: 60,      // wider than 200 m counts as straight; tighter than 60 m gets the full curve speed
     DECEL_MS2: 0.35, ACCEL_MS2: 0.5,            // comfortable braking and acceleration (m/s per second); the tug's own ramp (14 ft/s per s) is far quicker
     PROFILE_DS_M: 0.5, CURV_WINDOW_M: 10,        // wide enough to span several of the planner's chords (about 3.5 m long on a 40 m arc), or the estimated radius flickers
-    END_STEER_FADE_M: 6, END_STEER_MIN: 0.25,    // in the last few metres the aim point is close and the steering gets twitchy: fade the correction down so the nose is not swung at the end
+    END_HOLD_M: 14, END_HOLD_FULL_M: 6, END_HOLD_LOOK_M: 14,   // the last stretch steers to the END HEADING, not the path: a tug a metre off the line finishes a metre off, but facing right
+    END_SPEED_BASE_FTS: 1.6, END_SPEED_SLOPE: 0.45,             // top speed in the last metres: base + slope x metres to go (ft/s), so the nose is not swung at speed
     LOOK_FEATURE_M: 80,
     CUSP_STOP_FTS: 0.05, CUSP_STOP_SECONDS: 0.5, CUSP_HOLD_SECONDS: 1.0,
     LOST_CTE_M: 15, LOST_SECONDS: 3, STUCK_SECONDS: 8, STUCK_MIN_ADVANCE_M: 0.3
@@ -98,7 +99,7 @@ PS.follow = (function () {
   function buildProfile(path, reverse, straightFts) {
     var ds = K.PROFILE_DS_M, total = path.total, n = Math.max(2, Math.ceil(total / ds) + 1), i;
     var straight = straightFts * (reverse ? K.REVERSE_FRACTION : 1), curveBase = reverse ? K.CURVE_BASE_REV_FTS : K.CURVE_BASE_FWD_FTS;
-    var minF = K.MIN_AUTO_UNITS * K.UNITS_TO_FTS, cap = [], radius = [];
+    var minF = K.MIN_AUTO_UNITS * K.UNITS_TO_FTS, cap = [], ccap = [], radius = [];
     for (i = 0; i < n; i++) {
       var s0 = Math.min(i * ds, total), sa = Math.max(0, s0 - K.CURV_WINDOW_M), sb = Math.min(total, s0 + K.CURV_WINDOW_M);
       var k = sb - sa > 0.5 ? G.rad(Math.abs(wrap180(pointAt(path, sb).tangent - pointAt(path, sa).tangent))) / (sb - sa) : 0;   // rad per metre
@@ -107,7 +108,8 @@ PS.follow = (function () {
         var vc = Math.min(straight, curveBase * clamp(R / K.CURVE_REF_R_M, 0.5, 1));
         v = straight + (vc - straight) * clamp((K.STRAIGHT_R_M - R) / (K.STRAIGHT_R_M - K.CURVE_FULL_R_M), 0, 1);
       }
-      cap.push(Math.max(minF, v)); radius.push(R);
+      ccap.push(Math.max(minF, v));
+      cap.push(Math.max(minF, Math.min(v, K.END_SPEED_BASE_FTS + K.END_SPEED_SLOPE * Math.max(0, total - s0)))); radius.push(R);
     }
     var vm = cap.map(function (f) { return f * 0.3048; });                    // metres per second for the passes
     var floorMs = minF * 0.3048;
@@ -116,12 +118,12 @@ PS.follow = (function () {
     vm[0] = Math.min(vm[0], floorMs);                                         // from (nearly) rest
     for (i = 1; i < n; i++) vm[i] = Math.min(vm[i], Math.sqrt(vm[i - 1] * vm[i - 1] + 2 * K.ACCEL_MS2 * ds));         // speeding up gently
     for (i = 0; i < n; i++) { if (total - i * ds > K.END_DONE_M + 0.2) vm[i] = Math.max(vm[i], floorMs); }             // never slower than a crawl until the end
-    return { ds: ds, n: n, total: total, straight: straight, cap: cap, radius: radius, v: vm.map(function (m) { return m / 0.3048; }) };
+    return { ds: ds, n: n, total: total, straight: straight, cap: cap, ccap: ccap, radius: radius, v: vm.map(function (m) { return m / 0.3048; }) };
   }
   // { v (ft/s), why } at distance s along the leg.
   function profileAt(prof, s) {
     var x = clamp(s / prof.ds, 0, prof.n - 1), i0 = Math.floor(x), i1 = Math.min(prof.n - 1, i0 + 1), f = x - i0;
-    var v = prof.v[i0] + (prof.v[i1] - prof.v[i0]) * f, capHere = prof.cap[i0] + (prof.cap[i1] - prof.cap[i0]) * f;
+    var v = prof.v[i0] + (prof.v[i1] - prof.v[i0]) * f, capHere = prof.ccap[i0] + (prof.ccap[i1] - prof.ccap[i0]) * f;
     var kt = function (fts) { return PS.fmt.num(fts * 0.5925, 1) + ' kt'; };
     var why;
     if (capHere < prof.straight - 0.25) why = 'in a curve (radius ' + Math.round(prof.radius[i0]) + ' m): ' + kt(v);
@@ -129,7 +131,7 @@ PS.follow = (function () {
     else {
       // slowing for something ahead: the next curve if there is one before the end, otherwise the stop
       var limit = Math.min(prof.n - 1, i0 + Math.ceil(K.LOOK_FEATURE_M / prof.ds)), j, curveAt = -1;
-      for (j = i0; j <= limit; j++) { if (prof.cap[j] < prof.straight - 0.25) { curveAt = j; break; } }
+      for (j = i0; j <= limit; j++) { if (prof.ccap[j] < prof.straight - 0.25) { curveAt = j; break; } }
       if (curveAt >= 0 && curveAt < prof.n - 1) why = (v > prof.v[Math.min(prof.n - 1, i0 + 2)] ? 'slowing' : 'speeding up') + ' for the curve in ' + Math.round((curveAt - x) * prof.ds) + ' m: ' + kt(v);
       else why = (v > prof.v[Math.min(prof.n - 1, i0 + 2)] ? 'slowing for the stop' : 'speeding up') + ' (' + Math.round(prof.total - s) + ' m to go): ' + kt(v);
     }
@@ -210,7 +212,16 @@ PS.follow = (function () {
       var toAim = aimDist > K.AIM_MIN ? brgXY(p.x, p.y, aim.x, aim.y) : aim.tangent;
       var alpha = clamp(wrap180(toAim - travelHdg), -K.MAX_ALPHA_DEG, K.MAX_ALPHA_DEG);
       var kappa = 2 * Math.sin(G.rad(alpha)) / Math.max(aimDist, K.MIN_LOOK);     // 1/m, clockwise
-      if (st.leg >= legs.length - 1 && remaining < K.END_STEER_FADE_M) kappa *= K.END_STEER_MIN + (1 - K.END_STEER_MIN) * clamp((remaining - 1) / (K.END_STEER_FADE_M - 1), 0, 1);
+      // The last stretch of the last leg steers by the nose, not the position: ease from following the path to turning toward the path's end heading
+      // (gently: a long look-ahead), so the aircraft finishes facing the way the plan says even if it is a little off the line.
+      if (st.leg >= legs.length - 1 && remaining < K.END_HOLD_M) {
+        var wHold = clamp((K.END_HOLD_M - remaining) / (K.END_HOLD_M - K.END_HOLD_FULL_M), 0, 1);
+        var endTan = pointAt(path, path.total).tangent;
+        var alphaH = clamp(wrap180(endTan - travelHdg), -60, 60);
+        var kappaH = 2 * Math.sin(G.rad(alphaH)) / K.END_HOLD_LOOK_M;
+        kappa = kappa * (1 - wHold) + kappaH * wHold;
+        out.alphaDeg = alphaH * wHold + alpha * (1 - wHold);
+      }
       out.alphaDeg = alpha;
 
       // ---- speed: from the leg's profile (fast on straights, slower through curves, braking in time for curves and the stop), then slowed further

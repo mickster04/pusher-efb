@@ -246,9 +246,10 @@ test('push: a return to the gate is refused if the aircraft is not where the pus
   assert.match(PS.push.view().canReturn.why, /moved/);
   assert.equal(PS.push.requestStart({ returnToGate: true }), false);
   sim.y += 100; sim.brake = 1;
-  assert.ok(PS.push.requestStart({ returnToGate: true }), 'accepted, but then waits for the brake like any push');
-  run(2);
-  assert.equal(PS.push.view().status, 'waitBrake');
+  assert.ok(PS.push.requestStart({ returnToGate: true }), 'accepted: the brake is released for the pilot like any push');
+  run(5);
+  assert.equal(sim.brake, 0, 'the brake was released by the app');
+  assert.notEqual(PS.push.view().status, 'waitBrake');
   PS.push.stop('test');
   });
 });
@@ -277,5 +278,28 @@ test('push: a stopped push can return to the gate over the ground it covered, an
   run(200, () => { if (PS.push.view().status === 'done') return false; });
   assert.equal(PS.push.view().status, 'done');
   assert.ok(Math.hypot(sim.x, sim.y) < 1.6, 'back at the gate: ' + sim.x.toFixed(1) + ',' + sim.y.toFixed(1));
+  });
+});
+
+test('push: Finish sets the brake and dismisses the tug, and skips whatever the pilot already did by hand', () => {
+  withClock(10000000, () => {
+  reset(); sim.brake = 0; planBack(40);
+  assert.ok(PS.push.requestStart());
+  run(150, () => { if (PS.push.view().status === 'done') return false; });
+  assert.equal(PS.push.view().status, 'done');
+  assert.ok(PS.push.view().canFinish);
+  assert.ok(PS.push.finish());
+  run(4);
+  assert.equal(sim.brake, 1, 'brake set'); assert.equal(sim.attached, 0, 'tug dismissed');
+  assert.equal(PS.push.view().canFinish, false, 'nothing left to finish');
+  // the pilot sets the brake first: Finish still dismisses the tug
+  reset(); sim.brake = 0; planBack(30);
+  assert.ok(PS.push.requestStart());
+  run(150, () => { if (PS.push.view().status === 'done') return false; });
+  sim.brake = 1;
+  assert.ok(PS.push.view().canFinish, 'the tug is still on');
+  assert.ok(PS.push.finish());
+  run(4);
+  assert.equal(sim.attached, 0, 'tug dismissed even though the pilot set the brake');
   });
 });

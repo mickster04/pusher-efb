@@ -1,0 +1,164 @@
+/* No CSS variables, calc() or grid: the sim's browser is old. All classes are prefixed ps- */
+.ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: @bg@; color: @text@; font: 15px/1.35 Arial, sans-serif; }
+.ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; }
+.ps-header { padding: 10px 16px 6px; background: @bgDeep@; }
+.ps-title { font-size: 20px; font-weight: bold; color: @accent@; margin-right: 12px; }
+.ps-sub { color: @textDim@; font-size: 13px; }
+.ps-nav { display: flex; flex-wrap: wrap; background: @bgDeep@; padding: 0 10px 8px; }
+.ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid @border@; border-radius: 8px; background: @panel@; color: @text2@; font-size: 15px; }
+.ps-navbtn.on { background: @accent@; color: @accentText@; border-color: @accent@; font-weight: bold; }
+.ps-body { position: relative; flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding: 12px 14px 24px; }
+.ps-footer { padding: 5px 14px; background: @bgDeeper@; color: @dim4@; font-size: 12px; white-space: nowrap; overflow: hidden; }
+
+.ps-panel { background: @panel@; border: 1px solid @border@; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+.ps-panel-title { font-weight: bold; margin-bottom: 8px; color: @accent@; }
+.ps-note { color: @dim2@; font-size: 13px; margin-top: 8px; }
+.ps-note.warn { color: @warn@; }
+.ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; }
+.ps-row > * { margin: 0 10px 8px 0; }
+.ps-field { display: block; }
+.ps-field-label { display: block; font-size: 12px; color: @textDim@; margin-bottom: 3px; }
+.ps-input { padding: 9px 10px; border: 1px solid @border2@; border-radius: 6px; background: @input@; color: @text@; font-size: 15px; min-width: 120px; box-sizing: border-box; }
+.ps-check { display: block; padding: 8px 0; font-size: 14px; color: @text2@; }
+
+.ps-btn { padding: 11px 16px; border: 1px solid @border2@; border-radius: 8px; background: @button@; color: @buttonText@; font-size: 15px; }
+.ps-btn.ps-small { padding: 6px 10px; font-size: 13px; }
+.ps-btn.ps-warn { background: @accentDeep@; border-color: @accent@; }
+.ps-btn.ps-danger { background: @badDeep@; border-color: @bad@; font-weight: bold; }
+.ps-btn.ps-ghost { background: transparent; }
+
+.ps-toggle { display: flex; flex-wrap: wrap; }
+.ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text2@; font-size: 15px; }
+.ps-toggle-btn.on { background: @accent@; color: @accentText@; font-weight: bold; }
+
+.ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; }
+.ps-pill.ok { background: @goodDeep@; color: @goodSoft@; }
+.ps-pill.bad { background: @badDeeper@; color: @badSoft@; }
+.ps-kv { font-size: 13px; color: @dim3@; margin-bottom: 6px; white-space: pre-wrap; }
+.ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: @input@; font-size: 14px; word-wrap: break-word; }
+.ps-result.ok { border-left: 4px solid @good@; }
+.ps-result.bad { border-left: 4px solid @bad@; color: @badSoft@; }
+.ps-mono { font-family: Consolas, monospace; font-size: 13px; }
+
+.ps-tablewrap { overflow-x: auto; }
+.ps-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ps-table th { text-align: left; color: @textDim@; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid @border@; }
+.ps-table td { padding: 5px 8px; border-bottom: 1px solid @borderSoft@; }
+.ps-val { font-family: Consolas, monospace; color: @goodSoft@; word-break: break-all; }
+.ps-val.bad { color: @badSoft@; }
+.ps-table tr.ps-hot td { background: @accentDeeper@; }
+
+.ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: @bgDeeper@; border-radius: 6px; color: @dim3@; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; }
+.ps-raw { max-height: 260px; }
+.ps-logwrap .ps-btn { margin-top: 6px; }
+.ps-canvas { display: block; border-radius: 8px; background: @input@; touch-action: none; -ms-touch-action: none; -webkit-user-select: none; user-select: none; }
+.ps-mount { margin-top: 8px; min-height: 0; }
+
+.ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; }
+.ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: @panelHi@; border: 2px solid @accent@; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
+.ps-toast-brake { border-color: @bad@; }
+.ps-toast-warn { border-color: @warn@; }
+.ps-toast-info { border-color: @routeFwd@; }
+.ps-toast-title { font-weight: bold; font-size: 16px; }
+.ps-toast-msg { margin: 4px 0 8px; color: @text@; }
+.ps-toast-actions .ps-btn { margin-right: 8px; }
+
+.ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; }
+.ps-overlay-bar { margin-bottom: 8px; }
+.ps-overlay-bar .ps-btn { margin-left: 10px; }
+.ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: @bgDeeper@; color: @text2@; border: 1px solid @border2@; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; }
+
+.ps-stepper { display: flex; align-items: center; }
+.ps-stepper .ps-btn { margin: 0 8px 0 0; }
+.ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-weight: bold; color: @accent@; }
+.ps-canvas.ps-pinmode { cursor: crosshair; outline: 2px solid @accent@; }
+.ps-sug { display: block; width: 100%; text-align: left; margin: 0 0 6px 0; padding: 9px 12px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text@; font-size: 14px; }
+.ps-sug.on { border-color: @accent2@; background: @accent2Deep@; }
+.ps-sug-title { font-weight: bold; }
+.ps-sug-detail { color: @dim2@; font-size: 12px; }
+.ps-pinrow { padding: 4px 0; border-bottom: 1px solid @borderSoft@; font-size: 13px; }
+.ps-pinrow .ps-btn { margin-left: 10px; }
+.ps-pinrow.on { background: @accentFaint@; }
+
+/* Scroll bars drawn explicitly and always shown: the sim's browser did not show its default ones. */
+.ps-body::-webkit-scrollbar { width: 18px; }
+.ps-body::-webkit-scrollbar-track { background: @bgDeeper@; }
+.ps-body::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 9px; border: 3px solid @bgDeeper@; min-height: 40px; }
+.ps-body::-webkit-scrollbar-thumb:hover { background: @accent@; }
+.ps-log::-webkit-scrollbar, .ps-tablewrap::-webkit-scrollbar { width: 12px; height: 12px; }
+.ps-log::-webkit-scrollbar-track, .ps-tablewrap::-webkit-scrollbar-track { background: @bgDeeper@; }
+.ps-log::-webkit-scrollbar-thumb, .ps-tablewrap::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 6px; }
+
+.ps-big { font-size: 34px; font-weight: bold; color: @accent@; margin: 2px 0 6px; }
+.ps-bar { height: 14px; background: @bgDeeper@; border-radius: 7px; overflow: hidden; margin: 6px 0 10px; border: 1px solid @border@; }
+.ps-bar > div { height: 100%; background: @accent2@; }
+.ps-btn:disabled { opacity: 0.4; }
+
+/* the map's range control sits under the map and is smaller than the main buttons */
+.ps-compact .ps-btn { padding: 5px 10px; font-size: 13px; }
+.ps-compact .ps-step-label { font-size: 14px; min-width: 56px; margin: 0 8px 0 2px; }
+
+/* help icon and its card */
+.ps-help { position: relative; display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border: 1px solid @dim5@; border-radius: 12px; color: @dim3@; font-size: 14px; font-weight: bold; cursor: default; }
+.ps-help-pop { position: fixed; left: 8%; right: 8%; top: 130px; z-index: 60; background: @bgDeep@; border: 1px solid @accent@; border-radius: 10px; padding: 12px 16px; text-align: left; font-weight: normal; box-shadow: 0 4px 24px rgba(0,0,0,0.6); pointer-events: none; }
+.ps-help-title { color: @accent@; font-weight: bold; margin-bottom: 6px; }
+.ps-help-line { color: @text2@; font-size: 13px; margin-bottom: 5px; }
+
+/* top row of the Plan tab: left group, then the right group pushed to the right edge */
+.ps-toprow { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.ps-toprow > * { margin: 0 8px 6px 0; }
+.ps-toprow .ps-spacer { flex: 1; min-width: 8px; margin: 0; }
+.ps-toprow .ps-right { display: flex; align-items: center; margin-right: 0; }
+.ps-toprow .ps-right > * { margin-left: 8px; margin-right: 0; }
+.ps-toprow .ps-btn, .ps-compact .ps-btn { padding: 6px 12px; font-size: 13px; }
+.ps-toprow .ps-stepper .ps-btn { margin: 0 6px 0 0; }
+.ps-toprow .ps-step-label { font-size: 14px; min-width: 54px; margin: 0 8px 0 2px; }
+
+/* two columns when the tablet is held landscape (no grid in the sim's browser: flex) */
+.ps-cols { display: block; }
+.ps-landscape .ps-cols { display: flex; align-items: flex-start; }
+.ps-landscape .ps-col-main { flex: 3; min-width: 0; }
+.ps-landscape .ps-col-side { flex: 2; min-width: 0; margin-left: 14px; }
+.ps-landscape .ps-col-first { order: -1; }
+.ps-btnrow { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
+.ps-btnrow > * { margin: 0 8px 8px 0; }
+.ps-btn:disabled { opacity: 0.38; }
+
+/* a pin's description on its own line, its buttons below it */
+.ps-pinrow { padding: 6px 0; }
+.ps-pindesc { margin-bottom: 4px; }
+.ps-pinbtns { margin-bottom: 0; }
+.ps-pinbtns > * { margin: 0 8px 0 0; }
+.ps-pinrow .ps-btn { margin-left: 0; }
+/* buttons did not take the page font, and their own font has no degree sign */
+.ps-btn, .ps-toggle-btn, .ps-navbtn { font-family: Arial, sans-serif; }
+
+.ps-pairbtns { display: inline-block; }
+.ps-pairbtns .ps-btn { margin: 0 8px 0 0; }
+
+
+.ps-icon { vertical-align: middle; }
+.ps-iconbtn { display: inline-flex; align-items: center; }
+.ps-iconbtn .ps-iconbtn-label { margin-left: 6px; }
+
+/* colours section */
+.ps-themegrid { display: flex; flex-wrap: wrap; }
+.ps-themecard { width: 150px; margin: 0 10px 10px 0; padding: 8px; border: 2px solid @border@; border-radius: 12px; background: @panel@; color: @text@; text-align: center; }
+.ps-themecard.on { border-color: @accent@; background: @panelHi@; }
+.ps-themecard svg { display: block; margin: 0 auto 6px; }
+.ps-themename { font-size: 14px; font-weight: bold; }
+.ps-themenote { font-size: 11px; color: @textDim@; margin-top: 2px; }
+.ps-colgroup { margin: 12px 0 6px; font-weight: bold; color: @accent@; }
+.ps-colrow { display: flex; align-items: center; padding: 4px 0; border-bottom: 1px solid @borderSoft@; }
+.ps-colrow.changed { background: @accentFaint@; }
+.ps-collabel { flex: 1; font-size: 14px; }
+.ps-colswatch { width: 44px; height: 28px; margin: 0 10px; border: 2px solid @border2@; border-radius: 6px; }
+.ps-hex { width: 96px; min-width: 96px; margin-right: 10px; padding: 5px 8px; font-size: 14px; }
+.ps-cgrid { display: flex; flex-wrap: wrap; padding: 8px 0 10px; }
+.ps-cswatch { width: 30px; height: 26px; margin: 0 3px 3px 0; border: 1px solid @border@; border-radius: 4px; }
+.ps-import { display: block; width: 100%; height: 70px; margin: 10px 0 6px; font-size: 12px; }
+
+/* icons take the theme's button text colour (currentColor did not follow it in the sim) and keep their size */
+.ps-ip { stroke: @buttonText@; fill: none; }
+.ps-ipf { fill: @buttonText@; stroke: none; }
+.ps-icon { flex: none; }

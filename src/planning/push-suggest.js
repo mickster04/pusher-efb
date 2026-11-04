@@ -17,7 +17,7 @@ PS.suggest = (function () {
   var MAX_TAXIWAYS = 2;            // how many different taxiways are offered (each in both directions)
   var SAMPLE_STEP_M = 8;           // end pins are tried every this far along the centreline
   var TURN_TRIES = 6;              // cheapest end points tried with their heading honoured when none arrives lined up
-  var MAX_PUSH_FLOOR_M = 130;      // options longer than max(this, MAX_PUSH_FACTOR x the cheapest) are dropped
+  var MAX_PUSH_FLOOR_M = 160;      // options longer than max(this, MAX_PUSH_FACTOR x the cheapest) are dropped
   var MAX_PUSH_FACTOR = 1.7;
   var MAX_CLEAR_PUSH_M = 200;      // ...except options that end clear of a link
   var MIN_DIST_M = 15;             // an end pin closer than this to the aircraft is not worth offering
@@ -104,27 +104,53 @@ PS.suggest = (function () {
   // ---- planner questions ----
   // A end pin whose heading has to be honoured: plan it with the heading set so the path curves in along it, let the planner add a
   // turnaround pin if one leg cannot do it, and accept it only if nothing is tight.
+  // The turn radii a candidate may be planned with: the usual one, then tighter ones down to the Settings "tightest turn" (the same ladder the Plan
+  // tab uses for pins you place, so a suggestion plans the way choosing it will).
+  function radiusLadder() {
+    var R = P.PATH_TURN_RADIUS_M, setting = PS.settings && PS.settings.get('tightest'), m = Math.min(R, typeof setting === 'number' ? setting : 26), out = [R];
+    for (var r = R * 0.88; r > m + 0.5; r *= 0.88) out.push(r);
+    if (m < R - 0.5) out.push(m);
+    return out;
+  }
   function evaluateWithTurn(ac, lat, lon, hdg, leadInM) {
     var end = { id: 'wp-taxi-' + nextId() + '-' + Math.round(hdg), label: 'End position', lat: lat, lon: lon, seq: 0, terminal: true,
       headingDeg: Math.round(wrap360(hdg)), headingUser: true, drive: 'auto' };
     if (leadInM !== undefined && leadInM !== null) end.leadInM = leadInM;
     var origin = { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg };
-    var r = P.withTurnaroundPin(origin, [end]);
-    var segs = P.plannedRouteSegments(origin, r.waypoints);
-    if (!segs.length || segs.some(function (g) { return P.segmentWarning(g) !== null; })) return null;
-    var cost = 0;
-    segs.forEach(function (g) { cost += P.pathLengthM(g.points); });
-    return { waypoints: r.waypoints, costM: cost, pinAdded: r.added };
+    var ladder = radiusLadder(), prev = P.getRadius();
+    try {
+      for (var i = 0; i < ladder.length; i++) {
+        var rad = ladder[i];
+        P.setRadius(rad);
+        var r = P.withTurnaroundPin(origin, [end]);
+        var segs = P.plannedRouteSegments(origin, r.waypoints, false, rad);
+        if (!segs.length || segs.some(function (g) { return P.segmentWarning(g, rad) !== null; })) continue;
+        // The route has to end facing the way asked: one that ends well off it (it was offered as "facing south" and ended facing south-east) is not that push.
+        if (Math.abs(wrap180(segs[segs.length - 1].endHdgDeg - hdg)) > MAX_END_HEADING_OFF_DEG) continue;
+        var cost = 0;
+        segs.forEach(function (g) { cost += P.pathLengthM(g.points); });
+        return { waypoints: r.waypoints, costM: cost, pinAdded: r.added, radiusM: rad };
+      }
+    } finally { P.setRadius(prev); }
+    return null;
   }
 
-  // Plan the single leg to a trial end pin the way the app will, and say whether the tug can make it.
+  // Plan the single leg to a trial end pin the way the app will, and say whether the tug can make it. A tighter turn radius is tried when the
+  // usual one does not give a clean arrival.
   function evaluate(ac, lat, lon, hdg) {
-    var segs = P.plannedRouteSegments({ lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg }, [{ lat: lat, lon: lon, headingDeg: hdg, headingUser: false, drive: 'auto' }]);
-    if (segs.length !== 1) return null;
-    var s = segs[0];
-    var arrivalOffDeg = Math.abs(wrap180(s.endHdgDeg - hdg));
-    var pathOk = P.segmentWarning(s) === null;
-    return { costM: P.pathLengthM(s.points), arrivalOffDeg: arrivalOffDeg, pathOk: pathOk, clean: pathOk && arrivalOffDeg <= MAX_ARRIVAL_OFF_DEG };
+    var ladder = radiusLadder(), first = null;
+    for (var i = 0; i < ladder.length; i++) {
+      var rad = ladder[i];
+      var segs = P.plannedRouteSegments({ lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg }, [{ lat: lat, lon: lon, headingDeg: hdg, headingUser: false, drive: 'auto' }], false, rad);
+      if (segs.length !== 1) return i === 0 ? null : first;
+      var sg = segs[0];
+      var arrivalOffDeg = Math.abs(wrap180(sg.endHdgDeg - hdg));
+      var pathOk = P.segmentWarning(sg, rad) === null;
+      var res = { costM: P.pathLengthM(sg.points), arrivalOffDeg: arrivalOffDeg, pathOk: pathOk, clean: pathOk && arrivalOffDeg <= MAX_ARRIVAL_OFF_DEG, radiusM: rad };
+      if (!first) first = res;
+      if (res.clean) return res;
+    }
+    return first;
   }
 
   // ---- tail axis (the line straight back from the aircraft) ----
@@ -470,7 +496,9 @@ PS.suggest = (function () {
   // ---- the suggester ----
   // Default pushbacks that end on the nearest taxiways: per taxiway and direction, the cheapest end pin the planner says the tug can reach,
   // plus straight back, back-then-along, the opposite direction and compass-pointing options.
+  var lastDiag = [];     // what was considered for each taxiway and direction, for the log
   function suggestPushbacks(layout, ac) {
+    lastDiag = [];
     if (!layout || !ac || !isFinite(ac.lat) || !isFinite(ac.lon)) return [];
     var cos = Math.cos(ac.lat * Math.PI / 180);
 
@@ -552,6 +580,12 @@ PS.suggest = (function () {
         });
         if (bestTurn) { cleanOrder.push(dirKey); bestClean[dirKey] = bestTurn; }
       });
+      // For the log: per direction, what the sampled end points gave (so a missing option can be explained).
+      for (var dk = 0; dk < 8; dk++) {
+        var dc = bestClean[dk], da = bestAny[dk], dm = misses.filter(function (c) { return dirKeyOf(c) === dk; }).length;
+        lastDiag.push(groupWhere(name) + ' ' + COMPASS[dk] + ': ' + (dc ? 'clean end point, ' + Math.round(dc.costM) + ' m' + (dc.turn ? ' (curving in' + (dc.turn.pinAdded ? ', turnaround pin' : '') + ', radius ' + Math.round(dc.turn.radiusM || 0) + ' m)' : '')
+          : (da ? 'no clean end point; the nearest arrives ' + Math.round(da.arrivalOffDeg) + ' deg off the heading (' + (da.pathOk ? 'path ok' : 'path warns') + '), ' + dm + ' tried with the heading honoured: none workable' : 'no end point on it faces this way within reach')));
+      }
       // Push back to the taxiway then along it comes first: per direction the cheapest plain one, and the cheapest that is clear of a link.
       var alongOpts = alongTaxiwayOptions(layout, ac, name);
       var covered = {};
@@ -601,7 +635,8 @@ PS.suggest = (function () {
         .sort(function (x, y) { return x.score - y.score; })
         .slice(0, limit);
     }
-    var namedChosen = pick('taxiway', straightHit ? straightHit.t : undefined, 5);
+    // (Room for the compass-pointing options too: they take slots here but are never shown, and must not crowd out a real option.)
+    var namedChosen = pick('taxiway', straightHit ? straightHit.t : undefined, 9);
     var laneChosen = pick('lane', laneHit ? laneHit.t : undefined, 2);
     var linkChosen = pick('link', linkHit ? linkHit.t : undefined, 4);
 
@@ -631,13 +666,24 @@ PS.suggest = (function () {
   // The planned line, its length and the nose it ends with, for drawing and listing.
   function decorate(s, ac) {
     var origin = { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg };
-    var segs = P.plannedRouteSegments(origin, s.waypoints);
-    var route = [[ac.lat, ac.lon]], len = 0, warning = null;
+    // Plan it the way choosing it will: the usual radius, then tighter ones down to the setting, taking the first without a warning.
+    var ladder = radiusLadder(), segs = null, warning = null, radiusUsed = ladder[0], prevR = P.getRadius();
+    try {
+      for (var li = 0; li < ladder.length; li++) {
+        P.setRadius(ladder[li]);
+        var trial = P.plannedRouteSegments(origin, s.waypoints, false, ladder[li]);
+        var w = null;
+        trial.forEach(function (g) { if (!w) w = P.segmentWarning(g, ladder[li]); });
+        segs = trial; warning = w; radiusUsed = ladder[li];
+        if (!w) break;
+      }
+    } finally { P.setRadius(prevR); }
+    var route = [[ac.lat, ac.lon]], len = 0;
     segs.forEach(function (g) {
       g.points.forEach(function (pt, i) { if (!(i === 0 && route.length > 1)) route.push(pt); });
       len += P.pathLengthM(g.points);
-      if (!warning) warning = P.segmentWarning(g);
     });
+    s.radiusM = radiusUsed;
     var minR = Infinity, maxOff = 0;
     segs.forEach(function (g) { if (g.tightestRadiusM < minR) minR = g.tightestRadiusM; if (g.startOffDeg > maxOff) maxOff = g.startOffDeg; });
     s.tightestRadiusM = minR === Infinity ? P.PATH_TURN_RADIUS_M : minR; s.maxStartOffDeg = maxOff;
@@ -654,34 +700,59 @@ PS.suggest = (function () {
   //  - an option whose tightest arc is under MIN_ARC_RADIUS_M, or whose first stretch starts more than MAX_START_OFF_DEG off the aircraft's
   //    axis, is left out (the planner accepts down to 60% of the tug radius, which draws as a cramped arc). If that would leave nothing,
   //    the unfiltered list (minus pointing) is used so there is still something to pick.
+  var MAX_END_HEADING_OFF_DEG = 20; // a suggestion has to end facing within this of what its title says
+  var MIN_END_SEP_M = 12;          // suggestions have to end at least this far apart
   var MIN_ARC_RADIUS_M = 32;       // used when the Settings value is not available
   var MAX_START_OFF_DEG = 45;
   // The arcs the plan may use follow the Settings "tightest turn" (default 26 m), never above the 32 m this used to insist on.
   function arcFloor() { var t = PS.settings && PS.settings.get('tightest'); return typeof t === 'number' ? Math.min(MIN_ARC_RADIUS_M, t) : MIN_ARC_RADIUS_M; }
   // Returns { kept, dropped: [{ s, why }] }: why an option is not offered, so the log can say.
+  // Pointing options ("Taxiway L36, pointing south": the end pin sits on the taxiway but the nose points a compass way that is not along it) are offered
+  // only where they add something: at least POINT_MIN_APART_DEG from the facing of every other option, and no more than POINT_MAX of them.
+  var POINT_MIN_APART_DEG = 50, POINT_MAX = 2;
   function filterOptions(all) {
     var floor = arcFloor(), dropped = [];
-    var nonPointing = all.filter(function (s) { if (s.kind === 'pointing') { dropped.push({ s: s, why: 'a compass-pointing option (not offered)' }); return false; } return true; });
-    var good = nonPointing.filter(function (s) {
+    function usable(s) {
       if (s.tightestRadiusM < floor) { dropped.push({ s: s, why: 'its tightest arc is ' + Math.round(s.tightestRadiusM) + ' m, under the ' + Math.round(floor) + ' m allowed' }); return false; }
       if (s.maxStartOffDeg > MAX_START_OFF_DEG) { dropped.push({ s: s, why: 'it starts ' + Math.round(s.maxStartOffDeg) + ' degrees off the aircraft\'s axis (over ' + MAX_START_OFF_DEG + ')' }); return false; }
       return true;
-    });
-    var pool = good.length ? good : nonPointing;
-    if (!good.length) dropped = dropped.filter(function (d) { return d.s.kind === 'pointing'; });
+    }
+    var along = all.filter(function (s) { return s.kind !== 'pointing'; }), pointing = all.filter(function (s) { return s.kind === 'pointing'; });
+    var good = along.filter(usable);
+    var pool = good.length ? good : along;
+    if (!good.length) dropped = [];
     var onTaxiway = pool.some(function (s) { return s.group === 'taxiway'; });
     var kept = pool.filter(function (s) { if (onTaxiway && s.group !== 'taxiway') { dropped.push({ s: s, why: 'a lane or link, offered only when no taxiway has an option' }); return false; } return true; });
+    // pointing options: shortest first, each only if it faces differently enough from everything already offered
+    var added = 0;
+    pointing.filter(function (s) { return !onTaxiway || s.group === 'taxiway'; }).sort(function (x, y) { return x.lengthM - y.lengthM; }).forEach(function (s) {
+      if (!usable(s)) return;
+      var near = null;
+      kept.forEach(function (o) { if (!near && Math.abs(wrap180(o.facingDeg - s.facingDeg)) < POINT_MIN_APART_DEG) near = o; });
+      if (near) { dropped.push({ s: s, why: 'it faces within ' + POINT_MIN_APART_DEG + ' degrees of "' + near.title + '"' }); return; }
+      if (added >= POINT_MAX) { dropped.push({ s: s, why: 'only ' + POINT_MAX + ' pointing options are offered' }); return; }
+      kept.push(s); added++;
+    });
     return { kept: kept, dropped: dropped };
   }
+  function endAt(sg) { var e = sg.waypoints[sg.waypoints.length - 1]; return e.lat.toFixed(5) + ', ' + e.lon.toFixed(5); }
   function suggest(items, ac, parking) {
     if (!ac || typeof ac.lat !== 'number' || typeof ac.lon !== 'number') return [];
     var list = suggestPushbacks(layoutFrom(items, parking), { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg || 0 });
     var all = list.map(function (s) { return decorate(s, { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg || 0 }); });
     var f = filterOptions(all), kept = f.kept;
+    // Options that end in (nearly) the same spot are the same push: keep the first (the list is in order of preference: straight back, then the cheapest).
+    var spaced = [];
+    kept.forEach(function (sg) {
+      var e = sg.waypoints[sg.waypoints.length - 1], clash = null;
+      spaced.forEach(function (o) { var oe = o.waypoints[o.waypoints.length - 1]; if (!clash && G.distanceM(e.lat, e.lon, oe.lat, oe.lon) < MIN_END_SEP_M) clash = o; });
+      if (clash) f.dropped.push({ s: sg, why: 'it ends within ' + MIN_END_SEP_M + ' m of "' + clash.title + '"' }); else spaced.push(sg);
+    });
+    kept = spaced;
     kept.forEach(function (s) { s.detail += '. Tightest arc ' + Math.round(s.tightestRadiusM) + ' m (tug turns at ' + P.PATH_TURN_RADIUS_M + ' m)'; });
     // Everything the suggester found and what became of it, for the log.
-    var report = { found: all.length, kept: kept.map(function (s) { return s.title + ' -> facing ' + Math.round(s.facingDeg) + ', ' + Math.round(s.lengthM) + ' m'; }),
-      dropped: f.dropped.map(function (d) { return d.s.title + ' -> facing ' + Math.round(d.s.facingDeg) + ', ' + Math.round(d.s.lengthM) + ' m: ' + d.why; }) };
+    var report = { diag: lastDiag.slice(), found: all.length, kept: kept.map(function (s) { return s.title + ' -> facing ' + Math.round(s.facingDeg) + ', ' + Math.round(s.lengthM) + ' m, ends ' + endAt(s); }),
+      dropped: f.dropped.map(function (d) { return d.s.title + ' -> facing ' + Math.round(d.s.facingDeg) + ', ' + Math.round(d.s.lengthM) + ' m, ends ' + endAt(d.s) + ': ' + d.why; }) };
     Object.defineProperty(kept, 'lastReport', { value: report, enumerable: false });
     return kept;
   }

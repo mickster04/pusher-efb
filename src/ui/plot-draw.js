@@ -36,7 +36,7 @@ PS.plotDraw = (function () {
     g.restore();
   }
   function labelAt(g, text, x, y) {
-    g.font = 'bold 13px Arial'; g.lineWidth = 3; g.strokeStyle = '#0b1116'; g.strokeText(text, x, y); g.fillStyle = '#ffffff'; g.fillText(text, x, y);
+    g.font = 'bold 13px Arial'; g.lineWidth = 3; g.strokeStyle = PS.theme.c('outline'); g.strokeText(text, x, y); g.fillStyle = PS.theme.c('pin'); g.fillText(text, x, y);
   }
   // Direction chevrons along a drawn path every ~46 px, pointing the way the tug travels.
   function chevrons(g, px, color) {
@@ -63,18 +63,18 @@ PS.plotDraw = (function () {
 
   // Background, range rings (centred on `ringCentre`, a canvas point), taxiways with names, runways and stands. Returns the number of taxi items drawn.
   function backdrop(g, view, w, h, range, ringCentre, taxi) {
-    g.fillStyle = '#0f171e'; g.fillRect(0, 0, w, h);
-    g.lineWidth = 1; g.strokeStyle = '#2a3a47'; g.fillStyle = '#6f8294'; g.font = '11px Arial';
+    g.fillStyle = PS.theme.c('mapBg'); g.fillRect(0, 0, w, h);
+    g.lineWidth = 1; g.strokeStyle = PS.theme.c('mapGrid'); g.fillStyle = PS.theme.c('mapText'); g.font = '11px Arial';
     [0.25, 0.5, 0.75, 1].forEach(function (f) {
       g.beginPath(); g.arc(ringCentre[0], ringCentre[1], range * f * view.scale, 0, Math.PI * 2); g.stroke();
       g.fillText(PS.fmt.dist(range * f), ringCentre[0] + 4, ringCentre[1] - range * f * view.scale + 12);
     });
-    g.fillStyle = '#8aa0b2'; g.font = 'bold 12px Arial'; g.fillText('N', 8, 16);
+    g.fillStyle = PS.theme.c('textDim'); g.font = 'bold 12px Arial'; g.fillText('N', 8, 16);
     var drawn = 0, labels = {};
     if (!taxi) return drawn;
     taxi.items.forEach(function (it) {
       if (!it.points.length) return;
-      g.strokeStyle = it.category === 'Runway' ? '#8aa3b8' : (it.category === 'Taxiway' ? '#f0a830' : '#4d6275');
+      g.strokeStyle = it.category === 'Runway' ? PS.theme.c('runway') : (it.category === 'Taxiway' ? PS.theme.c('taxiway') : PS.theme.c('pathOther'));
       g.lineWidth = it.category === 'Runway' ? 4 : 2;
       g.beginPath();
       var first = null, last = null;
@@ -86,10 +86,10 @@ PS.plotDraw = (function () {
         if (mx > 0 && mx < w && my > 0 && my < h) labels[nm] = [mx, my];
       }
     });
-    g.lineWidth = 1; g.font = '11px Arial'; g.fillStyle = '#ffd37a';
+    g.lineWidth = 1; g.font = '11px Arial'; g.fillStyle = PS.theme.c('warn');
     Object.keys(labels).forEach(function (nm) { g.fillText(nm, labels[nm][0] + 3, labels[nm][1] - 3); });
     if (range <= 300) {
-      g.fillStyle = '#8aa3b8'; g.font = '10px Arial';
+      g.fillStyle = PS.theme.c('runway'); g.font = '10px Arial';
       (taxi.parking || []).forEach(function (p) {
         if (p.lat === null) return;
         var q = view.toPx(p.lat, p.lon);
@@ -105,16 +105,16 @@ PS.plotDraw = (function () {
   function planRoute(g, view, plan, opts) {
     opts = opts || {};
     plan.segments.forEach(function (sg, n) {
-      var color = plan.legs[n].warning ? '#ff5c6c' : (sg.sign < 0 ? '#ffffff' : '#5aa8ff');
-      if (opts.doneLegs && n < opts.doneLegs) color = '#4d6275';
+      var color = plan.legs[n].warning ? PS.theme.c('routeBad') : (sg.sign < 0 ? PS.theme.c('routeBack') : PS.theme.c('routeFwd'));
+      if (opts.doneLegs && n < opts.doneLegs) color = PS.theme.c('routeDone');
       chevrons(g, strokePath(g, sg.points, view, color, 3), color);
     });
     g.font = 'bold 13px Arial';
     plan.items.forEach(function (it) {
       var q = view.toPx(it.wp.lat, it.wp.lon), isEnd = it.userIndex === (opts.pinCount || 0) - 1;
       var hd = it.headingDeg === null ? 0 : it.headingDeg;
-      if (it.turnaround) { aircraftMarker(g, q[0], q[1], hd, null, '#9fb3c4', 0.8); labelAt(g, 'turn', q[0] + 14, q[1] - 12); return; }
-      aircraftMarker(g, q[0], q[1], hd, isEnd ? '#ff9f43' : '#e8f0f6', '#0b1116', isEnd ? 1.15 : 1);
+      if (it.turnaround) { aircraftMarker(g, q[0], q[1], hd, null, PS.theme.c('textDim'), 0.8); labelAt(g, 'turn', q[0] + 14, q[1] - 12); return; }
+      aircraftMarker(g, q[0], q[1], hd, isEnd ? PS.theme.c('pinEnd') : PS.theme.c('pin'), PS.theme.c('outline'), isEnd ? 1.15 : 1);
       labelAt(g, isEnd ? 'End' : String(it.userIndex + 1), q[0] + 16, q[1] - 14);
     });
   }
@@ -127,12 +127,12 @@ PS.plotDraw = (function () {
       var q = view.toPx(ct.lat, ct.lon);
       if (q[0] < -10 || q[0] > w + 10 || q[1] < -10 || q[1] > h + 10) return;
       inView++;
-      g.fillStyle = '#ff5c5c';
+      g.fillStyle = PS.theme.c('traffic');
       g.beginPath(); g.arc(q[0], q[1], ct.id === selectedId ? 7 : 5, 0, Math.PI * 2); g.fill();
       var trk = typeof ct.trackDeg === 'number' && ct.gsKt > 1 ? ct.trackDeg : (ct.hdgDeg || 0);
-      g.strokeStyle = '#ff5c5c'; g.lineWidth = 2; g.beginPath(); g.moveTo(q[0], q[1]);
+      g.strokeStyle = PS.theme.c('traffic'); g.lineWidth = 2; g.beginPath(); g.moveTo(q[0], q[1]);
       g.lineTo(q[0] + Math.sin(PS.geo.rad(trk)) * 16, q[1] - Math.cos(PS.geo.rad(trk)) * 16); g.stroke(); g.lineWidth = 1;
-      g.fillStyle = '#e8b4b4'; g.fillText(ct.title || '', q[0] + 8, q[1] + 4);
+      g.fillStyle = PS.theme.mix(PS.theme.c('traffic'), PS.theme.c('text'), 0.55); g.fillText(ct.title || '', q[0] + 8, q[1] + 4);
     });
     return inView;
   }

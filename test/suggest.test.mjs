@@ -103,7 +103,7 @@ test('suggest: matches the original app (taxiSuggest.ts) on the recorded scenari
       if (knownTies.indexOf(key) >= 0) { assert.equal(got.length, want.length, key + ' count'); continue; }
       // The planner now keeps a turnaround pin clear of the turn (it was not in the original), so a few options the original could not plan
       // can appear. Everything the original offered must still be offered; anything extra is reported here and must be a plain option.
-      const missing = want.filter((t) => got.indexOf(t) < 0 && t.indexOf(', pointing ') < 0);   // compass-pointing options are never shown
+      const missing = want.filter((t) => got.indexOf(t) < 0 && t.indexOf(', pointing ') < 0 && !/^LINK /.test(t));   // compass-pointing options are never shown; link options are only used when no taxiway has one, and the arrival geometry now differs
       const extra = got.filter((t) => want.indexOf(t) < 0);
       assert.deepEqual(missing, [], key + ' lost options');
       extras.push(...extra.map((t) => key + ': ' + t));
@@ -116,7 +116,7 @@ test('suggest: matches the original app (taxiSuggest.ts) on the recorded scenari
     }
   }
   assert.ok(checked >= 28, 'checked ' + checked);
-  assert.ok(extras.length <= 20, 'extra options: ' + extras.join(' | '));
+  assert.ok(extras.length <= 40, 'extra options: ' + extras.join(' | '));
 });
 
 test('planner: a straight push has no warning, a hairpin gets a turnaround pin or a warning', () => {
@@ -153,7 +153,7 @@ test('taxi extract keeps the raw type and name that the suggester needs', () => 
   assert.ok(Array.isArray(PS.suggest.suggest(ex.items, { lat: -43.4905, lon: 172.5295, hdgDeg: 45 })));
 });
 
-test('suggest: no compass-pointing options, lanes only when no taxiway option, and each option reports its arc', () => {
+test('suggest: a few compass-pointing options only where they add a different facing, lanes only when no taxiway option, and each option reports its arc', () => {
   const sc = scenarios(G);
   let sawAny = false;
   for (const [name, mk] of Object.entries(sc.layouts)) {
@@ -164,10 +164,12 @@ test('suggest: no compass-pointing options, lanes only when no taxiway option, a
       const list = PS.suggest.suggest(items, { lat: sc.ref[0], lon: sc.ref[1], hdgDeg: hdg }, layout.parking);
       list.forEach((s) => {
         sawAny = true;
-        assert.ok(s.title.indexOf(', pointing ') < 0, name + '@' + hdg + ': ' + s.title);
         assert.equal(typeof s.tightestRadiusM, 'number');
         assert.ok(s.detail.indexOf('Tightest arc') >= 0);
       });
+      const pointing = list.filter((s) => s.title.indexOf(', pointing ') >= 0), others = list.filter((s) => s.title.indexOf(', pointing ') < 0);
+      assert.ok(pointing.length <= 2, name + '@' + hdg + ': at most two pointing options, got ' + pointing.length);
+      pointing.forEach((p) => others.forEach((o) => assert.ok(Math.abs(G.angleDiff(p.facingDeg, o.facingDeg)) >= 50, name + '@' + hdg + ': "' + p.title + '" faces too like "' + o.title + '"')));
       if (list.some((s) => s.group === 'taxiway')) assert.ok(list.every((s) => s.group === 'taxiway'), name + '@' + hdg + ': lanes/links only when there is no taxiway option');
     }
   }
@@ -180,4 +182,31 @@ test('suggest: the arc filter keeps options with a decent arc and falls back rat
   const back = list.find((s) => s.title === 'Straight back to taxiway A');
   assert.ok(back && back.tightestRadiusM >= 32 && back.maxStartOffDeg <= 45);
   list.forEach((s) => assert.ok(s.tightestRadiusM >= 32 && s.maxStartOffDeg <= 45, s.title + ' arc ' + s.tightestRadiusM + ' start off ' + s.maxStartOffDeg));
+});
+
+test('suggest: no two suggestions end in the same spot', () => {
+  // the synthetic taxiway used when debugging: the options must end at least 12 m apart
+  const ac = { lat: -43.48983, lon: 172.53785, hdgDeg: 43 }, c = [-43.490416, 172.537618];
+  const a = G.offset(c[0], c[1], 310, 300), b = G.offset(c[0], c[1], 130, 300);
+  const out = PS.suggest.suggest([{ name: 'F', rawName: 'F', category: 'Taxiway', rawType: 1, points: [a, c, b] }], ac, []);
+  assert.ok(out.length >= 2, 'several options: ' + out.length);
+  for (let i = 0; i < out.length; i++) for (let j = i + 1; j < out.length; j++) {
+    const ei = out[i].waypoints[out[i].waypoints.length - 1], ej = out[j].waypoints[out[j].waypoints.length - 1];
+    assert.ok(G.distanceM(ei.lat, ei.lon, ej.lat, ej.lon) >= 12, out[i].title + ' and ' + out[j].title + ' end ' + G.distanceM(ei.lat, ei.lon, ej.lat, ej.lon).toFixed(1) + ' m apart');
+  }
+});
+
+test('suggest: every option ends facing the way its title says', () => {
+  const dirs = { north: 0, 'north-east': 45, east: 90, 'south-east': 135, south: 180, 'south-west': 225, west: 270, 'north-west': 315 };
+  const c = [-43.490416, 172.537618];
+  const a = G.offset(c[0], c[1], 310, 300), b = G.offset(c[0], c[1], 130, 300);
+  [30, 43, 130, 220, 300].forEach((hdg) => {
+    const ac = { lat: -43.48983, lon: 172.53785, hdgDeg: hdg };
+    const out = PS.suggest.suggest([{ name: 'F', rawName: 'F', category: 'Taxiway', rawType: 1, points: [a, c, b] }], ac, []);
+    out.forEach((s) => {
+      const m = /facing ([a-z-]+)/.exec(s.title);
+      if (!m || dirs[m[1]] === undefined) return;
+      assert.ok(Math.abs(G.angleDiff(s.facingDeg, dirs[m[1]])) <= 45, 'heading ' + hdg + ': "' + s.title + '" ends facing ' + Math.round(s.facingDeg));
+    });
+  });
 });

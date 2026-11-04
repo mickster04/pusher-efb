@@ -33,7 +33,7 @@ BIAS_X / BIAS_Z are metres east / north of the airport reference. `lat = refLat 
 
 ## Protocol
 
-Documented at the top of `src/05-wasm-taxi.js`. Messages are small JSON strings (default chunk 6000 bytes, adjustable). The JS client assembles by `seq` in any order and completes when the meta, all chunks and the end message have arrived.
+Documented at the top of `src/data/wasm-taxi.js`. Messages are small JSON strings (default chunk 6000 bytes, adjustable). The JS client assembles by `seq` in any order and completes when the meta, all chunks and the end message have arrived.
 
 ## Where it is used
 

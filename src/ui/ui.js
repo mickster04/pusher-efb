@@ -4,6 +4,18 @@ PS.ui = {
   button: function (label, onclick, cls) {
     return PS.h('button', { class: 'ps-btn' + (cls ? ' ' + cls : ''), type: 'button', onclick: onclick, text: label });
   },
+  // A button with one of our icons (and a label, if given).
+  iconButton: function (icon, label, onclick, cls) {
+    var b = PS.h('button', { class: 'ps-btn ps-iconbtn' + (cls ? ' ' + cls : ''), type: 'button', onclick: onclick });
+    var svg = PS.icon(icon, 18), span = PS.h('span', { class: 'ps-iconbtn-label', text: label || '' });
+    if (!label) span.style.display = 'none';
+    b.appendChild(svg); b.appendChild(span);
+    // The label and icon can change later (Pause becomes Resume, Call the tug becomes Dismiss the tug).
+    b.setLabel = function (text) { if (span.textContent !== text) span.textContent = text; span.style.display = text ? '' : 'none'; };
+    b.setIcon = function (name) { if (b._iconName === name) return; var n = PS.icon(name, 18); b.replaceChild(n, svg); svg = n; b._iconName = name; };
+    b._iconName = icon;
+    return b;
+  },
   panel: function (title) {
     var kids = Array.prototype.slice.call(arguments, 1);
     return PS.h('div', { class: 'ps-panel' }, title ? PS.h('div', { class: 'ps-panel-title', text: title }) : null, kids);
@@ -39,6 +51,7 @@ PS.ui = {
   // highlight state, and each press is logged (tag = log channel) so a session log shows whether presses arrive at all.
   // Steps go up from the left button to the right one, unless `invert` (the map zoom: the right-hand + zooms in, to a smaller range).
   stepper: function (steps, value, onchange, tag, labels, fmt, invert) {
+    var zoomIcons = !labels && invert;
     labels = labels || (invert ? ['Zoom out  -', 'Zoom in  +'] : ['Zoom in  -', 'Zoom out  +']);
     fmt = fmt || PS.fmt.dist;
     var idx = Math.max(0, steps.indexOf(value));
@@ -51,9 +64,9 @@ PS.ui = {
       if (onchange) onchange(steps[idx]);
     }
     var el = PS.h('div', { class: 'ps-stepper' },
-      PS.ui.button(labels[0], function () { go(invert ? 1 : -1, 0); }),
+      zoomIcons ? PS.ui.iconButton('zoomOut', '', function () { go(1, 0); }) : PS.ui.button(labels[0], function () { go(invert ? 1 : -1, 0); }),
       label,
-      PS.ui.button(labels[1], function () { go(invert ? -1 : 1, 1); }));
+      zoomIcons ? PS.ui.iconButton('zoomIn', '', function () { go(-1, 1); }) : PS.ui.button(labels[1], function () { go(invert ? -1 : 1, 1); }));
     return { el: el, get: function () { return steps[idx]; }, set: function (v2) { idx = Math.max(0, steps.indexOf(v2)); label.textContent = fmt(steps[idx]); } };
   },
   // Segmented toggle. options: [{value,label}], returns { el, get(), set(v) }
@@ -74,8 +87,21 @@ PS.ui = {
     paint();
     return { el: wrap, get: function () { return current; }, set: function (v) { current = v; paint(); } };
   },
+  // A small "?" that shows `text` in a card while the pointer is over it (or after a tap, for touch). Keeps explanations off the page.
+  help: function (title, text) {
+    var pop = PS.h('div', { class: 'ps-help-pop' }, PS.h('div', { class: 'ps-help-title', text: title }));
+    (Array.isArray(text) ? text : [text]).forEach(function (t) { pop.appendChild(PS.h('div', { class: 'ps-help-line', text: t })); });
+    pop.style.display = 'none';
+    var open = false;
+    function show(on) { open = on; pop.style.display = on ? 'block' : 'none'; }
+    var icon = PS.h('span', { class: 'ps-help', text: '?', onmouseenter: function () { show(true); }, onmouseleave: function () { show(false); }, onclick: function () { show(!open); } });
+    icon.appendChild(pop);
+    return icon;
+  },
   // A scrolling log box that shows entries whose channel is in `channels` (all when omitted).
-  logBox: function (channels) {
+  // opts: { copy: function () (copies something other than the text shown), label: button text }
+  logBox: function (channels, opts) {
+    opts = opts || {};
     var box = PS.h('pre', { class: 'ps-log' });
     function match(e) { return !channels || channels.indexOf(e.ch) >= 0; }
     function render() {
@@ -88,15 +114,24 @@ PS.ui = {
     }
     PS.logListeners.push(function (e) { if (match(e)) render(); });
     render();
-    var wrap = PS.h('div', { class: 'ps-logwrap' },
-      box,
-      PS.ui.button('Copy log', function () {
-        var text = box.textContent;
-        var ok = PS.ui.copyText(text);
-        PS.log('ui', ok ? 'log copied to clipboard' : 'clipboard copy not available; showing text to select');
-        if (!ok) PS.ui.showText(text, 'Log (select all and copy)');
-      }, 'ps-small')
-    );
+    var copyBtn = PS.ui.iconButton('list', opts.label || 'Copy log', function () {
+      if (opts.copy) { opts.copy(); return; }
+      var text = box.textContent;
+      var ok = PS.ui.copyText(text);
+      PS.log('ui', ok ? 'log copied to clipboard' : 'clipboard copy not available; showing text to select');
+      if (!ok) PS.ui.showText(text, 'Log (select all and copy)');
+    }, 'ps-small');
+    var buttons = [copyBtn];
+    if (opts.clearable) {
+      buttons.push(PS.ui.iconButton('trash', 'Clear logs', function () {
+        var n = PS.logs.length;
+        PS.logs.length = 0;
+        render();
+        PS.log('ui', 'logs cleared (' + n + ' lines)');
+      }, 'ps-small ps-ghost'));
+    }
+    var bar = PS.h('div', { class: 'ps-btnrow' }, buttons);
+    var wrap = opts.buttonsAbove ? PS.h('div', { class: 'ps-logwrap' }, bar, box) : PS.h('div', { class: 'ps-logwrap' }, box, bar);
     return wrap;
   },
   table: function (headers) {
@@ -108,6 +143,34 @@ PS.ui = {
 };
 
 // Copies text to the clipboard. Returns true only if the browser says it worked.
+
+// Our own icons: inline SVG drawn with the current text colour, so they do not depend on any font in the sim. The shapes live as real SVG files in
+// src/icons/ (kebab-case file name, e.g. arrow-up.svg -> 'arrowUp'); build.mjs puts them into PS.ICONS as lists of path strings on a 24 x 24 grid,
+// where a path starting with '#' is filled and the others are stroked lines.
+// Size: the sim's own stylesheet can stretch an <svg> to fill its container (it did: the icons filled the buttons), so the size is also set in the
+// element's style with !important. Colour: not 'currentColor' (it came out black or white in the sim whatever the button's colour was) but the
+// theme's button text colour, set by the stylesheet (.ps-ip / .ps-ipf, which follow the theme) and, as a fallback, on the element.
+PS.icon = function (name, size, color) {
+  var NS = 'http://www.w3.org/2000/svg', paths = PS.ICONS[name] || [], px = size || 18;
+  var col = color || (PS.theme ? PS.theme.c('buttonText') : '#ffffff');
+  var svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('width', String(px)); svg.setAttribute('height', String(px));
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  svg.setAttribute('class', 'ps-icon');
+  svg.setAttribute('style', 'width:' + px + 'px!important;height:' + px + 'px!important;min-width:' + px + 'px!important;max-width:' + px + 'px!important;min-height:' + px + 'px!important;max-height:' + px + 'px!important;flex:none;display:inline-block');
+  svg.setAttribute('fill', 'none'); svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round'); svg.setAttribute('stroke-linejoin', 'round');
+  paths.forEach(function (d) {
+    var el = document.createElementNS(NS, 'path'), filled = d.charAt(0) === '#';
+    el.setAttribute('d', filled ? d.slice(1) : d);
+    if (filled) { el.setAttribute('class', color ? '' : 'ps-ipf'); el.setAttribute('fill', col); el.setAttribute('stroke', 'none'); }
+    else { el.setAttribute('class', color ? '' : 'ps-ip'); el.setAttribute('fill', 'none'); el.setAttribute('stroke', col); }
+    svg.appendChild(el);
+  });
+  return svg;
+};
+
+
 PS.ui.copyText = function (text) {
   try {
     var ta = PS.h('textarea', { style: 'position:fixed;left:-1000px;top:0' });

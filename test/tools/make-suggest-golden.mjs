@@ -1,5 +1,5 @@
 // Regenerates test/fixtures/suggest-golden.json from the ORIGINAL app's taxiSuggest.ts (sibling repo ../msfs-pusher-main), so the port in
-// src/07-push-suggest.js can be checked against it. Needs Node 22.6+ (--experimental-strip-types). Run:  node test/tools/make-suggest-golden.mjs
+// src/planning/push-suggest.js can be checked against it. Needs Node 22.6+ (--experimental-strip-types). Run:  node test/tools/make-suggest-golden.mjs
 import { mkdtempSync, copyFileSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';

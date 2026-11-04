@@ -6,8 +6,8 @@ A single EFB app, internal name `PushPlanner`, whose pages were the feasibility 
 
 ## Structure
 
-- `src/*.js` are concatenated by `build.mjs` (in filename order) into `PackageSources/PushPlanner/PushPlanner.js`, wrapped in one IIFE. Modules share one object, `PS`.
-- `src/styles.css` is inlined into the bundle and injected as a `<style>` element. All class names start with `ps-`.
+- The modules in `src/` are concatenated by `build.mjs` (in the order listed there) into `PackageSources/PushPlanner/PushPlanner.js`, wrapped in one IIFE. Modules share one object, `PS`.
+- `src/styles/styles.css` is inlined into the bundle and injected as a `<style>` element. All class names start with `ps-`.
 - Pure helpers (formatting, geometry, taxiway extraction) must not touch the DOM at load time, so `test/` can load the built file in node.
 - Pages are objects `{ id, title, create(ctx) }` pushed onto `PS.pages`; `create` returns `{ el, onShow(), onHide() }`. Each page owns its timers: it starts them in `onShow` and stops them in `onHide`. The shell shows one page at a time and keeps built pages alive.
 - Page 1 deliberately stops its poll timer when hidden, so the separate heartbeat timer (`PS.hb`, started by the view) is what measures ticking while the app is paused.
@@ -24,7 +24,7 @@ A single EFB app, internal name `PushPlanner`, whose pages were the feasibility 
 | 3 | Taxiways | Can taxiway data be read from JS? | ICAO input, tries the facility APIs, extracts named taxiways, runways and parking, shows name, category, length, width, and distance and bearing from the aircraft. Raw dump of what came back. Offline sample button for UI review. |
 | 4 | Traffic | Can AI aircraft be listed from JS? | Discovery of candidate APIs (names found on `window` and `msfssdk`), a contacts table (distance, bearing, altitude, ground speed, heading, closing speed, time to closest approach) fed by whatever source is found, and a simulated-contacts button for UI review. |
 | 5 | Notifications | What in-tablet popups can carry action buttons, and does the EFB's notification manager help? | In-app toast host with the original toast kinds (release brake, set brake with Dismiss tug and Return to gate, distance left with Pause/Resume, traffic hold with Ignore). Probe of `props.notificationManager` methods with buttons to try candidate calls. |
-| 6 | Map | Can the sim's built-in map be used, and with overlays? What can a tile-less plot do? | The plot is the main view: own aircraft, range rings, runways, named taxiways, parking, AI traffic, pins (tap to add, drag to move, `PS.state.pins`) and suggested pushes (`src/07-push-suggest.js`). The built-in Bing map and its probes sit below it and are mounted only on request. |
+| 6 | Map | Can the sim's built-in map be used, and with overlays? What can a tile-less plot do? | The plot is the main view: own aircraft, range rings, runways, named taxiways, parking, AI traffic, pins (tap to add, drag to move, `PS.state.pins`) and suggested pushes (`src/planning/push-suggest.js`). The built-in Bing map and its probes sit below it and are mounted only on request. |
 
 ## Safety rules for page 2
 

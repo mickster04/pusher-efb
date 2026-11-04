@@ -15,7 +15,7 @@ PS.pages.push({
     var plotRange = ui.stepper(PLOT_STEPS, 300, function () { draw(); }, 'plan', null, null, true);
     var infoLine = h('div', { class: 'ps-kv', text: '' });
     var contactLine = h('div', { class: 'ps-kv', text: '' });
-    var routeSummary = h('div', { class: 'ps-note' });
+    var routeSummary = h('div');
     var pinList = h('div');
     var sugBox = h('div');
     var airportLine = h('div', { class: 'ps-kv', text: '' });
@@ -59,6 +59,7 @@ PS.pages.push({
     // Editing the plan by hand takes over from any suggestion that was highlighted.
     function dropSuggestionHighlight() { if (sug.selectedId) { sug.selectedId = null; renderSuggestions(); } }
     function addPin(lat, lon) {
+      if (PS.plan.snapEnabled()) { var sn = PS.plan.snapAt(lat, lon, { refDeg: 0 }); if (sn && sn.point) { lat = sn.point[0]; lon = sn.point[1]; } }   // a pin dropped near a taxiway lands on its centreline
       dropSuggestionHighlight(); showList('pins', 'a pin was added');
       var i = PS.plan.add(lat, lon);
       log('pin ' + (i + 1) + ' added at ' + lat.toFixed(6) + ', ' + lon.toFixed(6));
@@ -67,12 +68,12 @@ PS.pages.push({
     }
     // New and moved pins take the heading of the taxiway they sit on, until rotated by hand.
     function snap(i) {
-      var r = PS.plan.snapPin(i, (PS.readOwn() || { hdgDeg: 0 }).hdgDeg);
+      var r = PS.plan.snapPin(i, PS.readOwn() || { hdgDeg: 0 });
       if (!r) {
         var m = PS.plan.snapMiss() || {};
         log('pin ' + (i + 1) + ' not snapped: ' + (m.off ? 'snapping is off in Settings' : (m.noData ? 'no airport data loaded' : (m.nearestM === null || m.nearestM === undefined ? 'no taxiway lines to snap to (' + m.items + ' items, ' + (m.usable || 0) + ' usable)' : 'the nearest taxiway line (' + (m.nearestName || 'unnamed') + ') is ' + Math.round(m.nearestM) + ' m away, over the ' + PS.plan.snapMaxM() + ' m reach'))));
       }
-      if (r) log('pin ' + (i + 1) + ' aligned with ' + (r.name ? 'taxiway ' + r.name : 'the taxiway') + ' (' + Math.round(r.distM) + ' m away): heading ' + r.headingDeg + '° rather than ' + r.otherDeg + '° (the aircraft was pointing ' + r.refDeg + '°; use Flip if the other way is wanted)');
+      if (r) log('pin ' + (i + 1) + ' aligned with ' + (r.name ? 'taxiway ' + r.name : 'the taxiway') + ' (' + Math.round(r.distM) + ' m away, taxiway runs ' + r.taxiwayDeg + '°/' + ((r.taxiwayDeg + 180) % 360) + '°): heading ' + r.headingDeg + '° rather than ' + r.otherDeg + '°. ' + r.how + ' (was pointing ' + r.refDeg + '°). Use Flip if the other way is wanted');
     }
     function deletePin(i) { PS.plan.remove(i); log('pin ' + (i + 1) + ' deleted; ' + PS.plan.count() + ' left'); planChanged(); }
     function pinHeading(i) {
@@ -88,10 +89,13 @@ PS.pages.push({
       return [q[0] - Math.sin(a) * HANDLE_PX, q[1] + Math.cos(a) * HANDLE_PX];
     }
 
+    // One line on the route, and every warning in full (the Push tab no longer repeats them).
     function renderRoute(plan) {
-      routeSummary.textContent = plan.empty ? 'No route yet. Tap the plot to drop pins, or pick a suggested push. The last pin is where the aircraft ends up; rotate it with the handle behind it.'
-        : 'Route: ' + PS.fmt.dist(plan.totalM) + ' in ' + plan.legs.length + ' leg(s), ' + (plan.warnings.length ? plan.warnings.length + ' WARNING(S): see the Route panel on the Push tab. The tug may not manage it.' : 'no warnings.');
-      routeSummary.className = 'ps-note' + (plan.warnings.length ? ' warn' : '');
+      PS.clear(routeSummary);
+      if (plan.empty) { routeSummary.appendChild(ui.note('No route yet. Tap the map to drop pins, or pick a suggested push.')); return; }
+      routeSummary.appendChild(h('div', { class: 'ps-result ' + (plan.warnings.length ? 'bad' : 'ok'),
+        text: 'Route: ' + PS.fmt.dist(plan.totalM) + ' in ' + plan.legs.length + ' leg(s)' + (plan.turnaroundAdded ? ', with a turnaround pin' : '') + ', turn radius ' + Math.round(plan.radiusM) + ' m' + (plan.warnings.length ? '. The tug may not manage it:' : '. No warnings.') }));
+      plan.warnings.forEach(function (w) { routeSummary.appendChild(h('div', { class: 'ps-result bad', text: w })); });
     }
     function renderPins(plan, own) {
       PS.clear(pinList);
@@ -101,11 +105,18 @@ PS.pages.push({
       pins.forEach(function (p, i) {
         var hd = pinHeading(i);
         pinList.appendChild(h('div', { class: 'ps-pinrow' + (i === sel ? ' on' : '') },
-          h('span', { text: (i === pins.length - 1 ? 'End' : 'Pin ' + (i + 1)) + ': ' + PS.fmt.dist(legs.legs[i].distM) + ' on a bearing of ' + Math.round(legs.legs[i].bearingDeg) + '°, nose ' + (hd === null ? '?' : Math.round(hd) + '°') + (p.headingUser ? ' (set by you)' : ' (auto)') }),
-          ui.button(i === sel ? 'Selected' : 'Select', function () { PS.plan.select(i); planChanged(); }, 'ps-small ps-ghost'),
-          ui.button('Flip 180°', function () { var cur = pinHeading(i); if (cur !== null && cur !== undefined) { PS.plan.setHeading(i, cur); PS.plan.flip(i); log('pin ' + (i + 1) + ' flipped to ' + PS.plan.list()[i].headingDeg + '°'); planChanged(); } }, 'ps-small ps-ghost'),
-          p.headingUser ? ui.button('Auto heading', function () { PS.plan.resetHeading(i); log('pin ' + (i + 1) + ' heading back to auto'); planChanged(); }, 'ps-small ps-ghost') : null,
-          ui.button('Delete', function () { deletePin(i); }, 'ps-small ps-ghost')));
+          h('div', { class: 'ps-pindesc', text: (i === pins.length - 1 ? 'End' : 'Pin ' + (i + 1)) + ': ' + PS.fmt.dist(legs.legs[i].distM) + ' on a bearing of ' + Math.round(legs.legs[i].bearingDeg) + '°, nose ' + (hd === null ? '?' : Math.round(hd) + '°') + (p.headingUser ? ' (set by you)' : ' (auto)') }),
+          h('div', { class: 'ps-btnrow ps-pinbtns' },
+            ui.button(i === sel ? 'Selected' : 'Select', function () { PS.plan.select(i); planChanged(); }, 'ps-small ps-ghost'),
+            (function () {
+              var up = ui.iconButton('arrowUp', 'Earlier', function () { if (PS.plan.reorder(i, -1)) { dropSuggestionHighlight(); showList('pins', 'pins reordered'); log('pin ' + (i + 1) + ' moved earlier, now pin ' + i); planChanged(); } }, 'ps-small ps-ghost');
+              var down = ui.iconButton('arrowDown', 'Later', function () { if (PS.plan.reorder(i, 1)) { dropSuggestionHighlight(); showList('pins', 'pins reordered'); log('pin ' + (i + 1) + ' moved later, now pin ' + (i + 2)); planChanged(); } }, 'ps-small ps-ghost');
+              up.disabled = i === 0; down.disabled = i === pins.length - 1;
+              return h('span', { class: 'ps-pairbtns' }, up, down);
+            })(),
+            ui.iconButton('turnRound', 'Turn round', function () { var cur = pinHeading(i); if (cur !== null && cur !== undefined) { PS.plan.setHeading(i, cur); PS.plan.flip(i); log('pin ' + (i + 1) + ' flipped to ' + PS.plan.list()[i].headingDeg + '°'); planChanged(); } }, 'ps-small ps-ghost'),
+            p.headingUser ? ui.button('Auto heading', function () { PS.plan.resetHeading(i); log('pin ' + (i + 1) + ' heading back to auto'); planChanged(); }, 'ps-small ps-ghost') : null,
+            ui.iconButton('trash', 'Delete', function () { deletePin(i); }, 'ps-small ps-ghost'))));
       });
     }
 
@@ -152,14 +163,24 @@ PS.pages.push({
         draw();
       } else if (drag.kind === 'pin' && drag.moved) {
         var ll = lastView.fromPx(p[0], p[1]);
+        // The taxiway pulls the pin onto its centreline while it is dragged within the snap reach, and holds it there: it has to be dragged
+        // 1.5 times the reach away to come free. While held, the pin takes the taxiway's heading too (unless it was rotated by hand).
+        if (PS.plan.snapEnabled()) {
+          var reach = PS.plan.snapMaxM() * (drag.locked ? 1.5 : 1);
+          var sn = PS.plan.snapAt(ll[0], ll[1], { refDeg: 0 }, reach);
+          if (sn && sn.point) { ll = sn.point; if (!drag.locked) log('pin ' + (drag.idx + 1) + ' pulled onto ' + (sn.name ? 'taxiway ' + sn.name : 'the taxiway') + ' (' + Math.round(sn.distM) + ' m away); drag more than ' + Math.round(reach * 1.5) + ' m away to free it'); drag.locked = true; }
+          else { if (drag.locked) log('pin ' + (drag.idx + 1) + ' pulled free of the taxiway'); drag.locked = false; }
+        }
         PS.plan.move(drag.idx, ll[0], ll[1]);
+        var dp = PS.plan.list()[drag.idx];
+        if (dp && PS.plan.snapEnabled() && (dp.snapped || !dp.headingUser)) PS.plan.snapPin(drag.idx, PS.readOwn() || { hdgDeg: 0 });
         draw();
       }
     }
     function inputUp(p) {
       if (!drag) return;
       var d = drag; drag = null;
-      if (d.kind === 'handle') { dropSuggestionHighlight(); showList('pins', 'a pin was rotated'); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); planChanged(); return; }
+      if (d.kind === 'handle') { dropSuggestionHighlight(); showList('pins', 'a pin was rotated'); log('pin ' + (d.idx + 1) + ' rotated to ' + PS.plan.list()[d.idx].headingDeg + '°'); var hs = PS.plan.snapHandle(d.idx); if (hs) log('pin ' + (d.idx + 1) + ' nose lined up with ' + (hs.name ? 'taxiway ' + hs.name : 'the taxiway') + ' (' + Math.round(hs.offDeg) + '° off): heading ' + hs.headingDeg + '°'); planChanged(); return; }
       if (d.kind === 'pin') { if (d.moved) { dropSuggestionHighlight(); showList('pins', 'a pin was moved'); log('pin ' + (d.idx + 1) + ' moved'); if (PS.plan.list()[d.idx] && (PS.plan.list()[d.idx].snapped || !PS.plan.list()[d.idx].headingUser)) snap(d.idx); planChanged(); } return; }
       if (d.moved || !lastView) return;
       // A tap on an AI aircraft reads its details; a tap anywhere else drops a pin.
@@ -231,6 +252,7 @@ PS.pages.push({
           log('suggester found ' + rep.found + ', offering ' + rep.kept.length + ' (aircraft ' + own.lat.toFixed(5) + ', ' + own.lon.toFixed(5) + ', heading ' + Math.round(own.hdgDeg) + ')');
           rep.kept.forEach(function (t) { log('  offered: ' + t); });
           rep.dropped.forEach(function (t) { log('  left out: ' + t); });
+          (rep.diag || []).forEach(function (t) { log('  considered: ' + t); });
         }
       } catch (e) { sug.list = []; log('suggestion failed: ' + PS.errText(e)); }
       if (sug.selectedId) { var still = false; sug.list.forEach(function (s) { if (s.id === sug.selectedId) still = true; }); if (!still) sug.selectedId = null; }
@@ -240,7 +262,7 @@ PS.pages.push({
       airportLoading = true;
       airportLine.textContent = 'Loading airport data' + (why ? ' (' + why + ')' : '') + '...';
       return PS.facility.loadNearestIntoState().then(function (icao) {
-        airportLoading = false; sug.key = ''; airportLine.textContent = 'Airport ' + icao + ' loaded: ' + PS.state.taxi.items.length + ' runway/path item(s), ' + PS.state.taxi.parking.length + ' stand(s).';
+        airportLoading = false; sug.key = ''; airportLine.textContent = '';
         renderSuggestions(); draw();
       }, function (e) { airportLoading = false; airportLine.textContent = 'Could not load airport data: ' + PS.errText(e); log('could not load airport data: ' + PS.errText(e)); });
     }
@@ -272,13 +294,13 @@ PS.pages.push({
       sug.list.forEach(function (s, i) {
         if (s === chosen) return;
         var e = s.pins[s.pins.length - 1], q = view.toPx(e[0], e[1]);
-        g.fillStyle = '#34d2c8'; g.beginPath(); g.arc(q[0], q[1], 7, 0, Math.PI * 2); g.fill();
-        g.fillStyle = '#0f171e'; g.fillText(String(i + 1), q[0] - (i > 8 ? 6 : 3), q[1] + 4);
+        g.fillStyle = PS.theme.c('accent2'); g.beginPath(); g.arc(q[0], q[1], 7, 0, Math.PI * 2); g.fill();
+        g.fillStyle = PS.theme.c('outline'); g.fillText(String(i + 1), q[0] - (i > 8 ? 6 : 3), q[1] + 4);
       });
       if (chosen && PS.plan.count() === 0) {
-        D.chevrons(g, D.strokePath(g, chosen.route, view, '#34d2c8', 4), '#0f171e');
+        D.chevrons(g, D.strokePath(g, chosen.route, view, PS.theme.c('accent2'), 4), PS.theme.c('outline'));
         var ep = chosen.pins[chosen.pins.length - 1], eq = view.toPx(ep[0], ep[1]);
-        D.aircraftMarker(g, eq[0], eq[1], chosen.facingDeg, 'rgba(52,210,200,0.35)', '#34d2c8', 1);
+        D.aircraftMarker(g, eq[0], eq[1], chosen.facingDeg, PS.theme.mix(PS.theme.c('mapBg'), PS.theme.c('accent2'), 0.4), PS.theme.c('accent2'), 1);
       }
 
       // The plan, and the ring and heading handle of the selected pin.
@@ -287,12 +309,12 @@ PS.pages.push({
         var sel = PS.plan.selected();
         if (sel >= 0 && PS.plan.list()[sel]) {
           var sp = PS.plan.list()[sel], sq = view.toPx(sp.lat, sp.lon), hp = handlePx(sel);
-          g.strokeStyle = '#ffe14d'; g.lineWidth = 3; g.beginPath(); g.arc(sq[0], sq[1], 25, 0, Math.PI * 2); g.stroke();
+          g.strokeStyle = PS.theme.c('handle'); g.lineWidth = 3; g.beginPath(); g.arc(sq[0], sq[1], 25, 0, Math.PI * 2); g.stroke();
           if (hp) {
             g.lineWidth = 2; g.beginPath(); g.moveTo(sq[0], sq[1]); g.lineTo(hp[0], hp[1]); g.stroke();
-            g.fillStyle = '#ffe14d'; g.beginPath(); g.arc(hp[0], hp[1], 15, 0, Math.PI * 2); g.fill();
-            g.strokeStyle = '#0b1116'; g.lineWidth = 2; g.beginPath(); g.arc(hp[0], hp[1], 15, 0, Math.PI * 2); g.stroke();
-            g.fillStyle = '#0b1116'; g.font = 'bold 11px Arial'; g.fillText('turn', hp[0] - 12, hp[1] + 4);
+            g.fillStyle = PS.theme.c('handle'); g.beginPath(); g.arc(hp[0], hp[1], 15, 0, Math.PI * 2); g.fill();
+            g.strokeStyle = PS.theme.c('outline'); g.lineWidth = 2; g.beginPath(); g.arc(hp[0], hp[1], 15, 0, Math.PI * 2); g.stroke();
+            g.fillStyle = PS.theme.c('outline'); g.font = 'bold 11px Arial'; g.fillText('turn', hp[0] - 12, hp[1] + 4);
           }
           g.lineWidth = 1;
         }
@@ -302,27 +324,25 @@ PS.pages.push({
       PS.airTraffic.poll();
       var contacts = contactsNow(), T = PS.airTraffic;
       var inView = D.contacts(g, view, contacts, w, hgt, selectedContact);
-      D.aircraftMarker(g, ownPx[0], ownPx[1], own.hdgDeg, '#4cd18a', '#0b1116', 1.1);
+      D.aircraftMarker(g, ownPx[0], ownPx[1], own.hdgDeg, PS.theme.c('aircraft'), PS.theme.c('outline'), 1.1);
 
       var age = T.lastAt ? ((Date.now() - T.lastAt) / 1000).toFixed(1) + ' s ago' : 'never';
-      infoLine.textContent = (c.live ? 'Own position live. ' : 'Own position: reference point (sim not readable). ') + 'Range ' + PS.fmt.dist(range) +
-        (pan.x || pan.y ? '. Map moved ' + PS.fmt.dist(Math.sqrt(pan.x * pan.x + pan.y * pan.y)) + ' from the aircraft (Recentre brings it back)' : '') + '. Taxi items drawn: ' + drawn +
-        '. AI aircraft in view: ' + inView + ' of ' + contacts.length + ' (listener updated ' + age + ')' + (taxi && taxi.icao ? '. Airport ' + taxi.icao + '.' : '. No airport data yet.');
+      // (the map's range, item and traffic counts used to be written here; they are in the log when something is wrong)
       var sc = null;
       for (var k = 0; k < contacts.length; k++) { if (contacts[k].id === selectedContact) sc = contacts[k]; }
       if (sc) {
         var a = PS.traffic.analyse(own, sc);
         contactLine.textContent = (sc.title || sc.id) + ': ' + PS.fmt.dist(a.distM) + ' away on a bearing of ' + Math.round(a.bearingDeg) + '°, ' + PS.fmt.num(sc.gsKt, 0) + ' kt, heading ' + Math.round(sc.hdgDeg || 0) + '°, closing ' + PS.fmt.num(a.closingKt, 1) + ' kt';
       } else {
-        contactLine.textContent = contacts.length ? 'Tap an aircraft to read its details.' : '';
+        contactLine.textContent = '';
       }
     }
 
     // ---------------- page ----------------
 
     var sugPanel = ui.panel('Suggested pushes', airportLine, sugBox,
-      h('div', { class: 'ps-row' }, ui.button('Reload airport data', function () { loadAirport('asked'); }, 'ps-small ps-ghost')),
-      ui.note('From the original app\'s suggester, planned with the same tug turn radius. Only options the tug can make without a warning are offered. Pick one and it becomes your plan; to adjust it, tap the plot to add pins of your own.'));
+      h('div', { class: 'ps-row' }, ui.iconButton('swap', 'Reload airport data', function () { loadAirport('asked'); }, 'ps-small ps-ghost')),
+      null);
     var pinPanel = ui.panel('Pins', pinList);
     // Pins and suggestions are two views of the one plan, so only one is shown: placing or editing a pin shows the pins, choosing a suggestion shows the suggestions.
     var listTabs = h('div', { class: 'ps-row' });
@@ -336,21 +356,24 @@ PS.pages.push({
     }
     showList(PS.settings.get('planTab'), '');
 
-    var el = h('div', { class: 'ps-page' },
-      ui.panel('Plan the push',
-        h('div', { class: 'ps-row' },
-          ui.button('Undo pin', function () { if (PS.plan.count()) deletePin(PS.plan.count() - 1); }, 'ps-ghost'),
-          ui.button('Clear pins', function () { PS.plan.clear(); log('pins cleared'); planChanged(); }, 'ps-ghost'),
-          ui.button('Recentre', function () { pan.x = 0; pan.y = 0; log('map recentred on the aircraft'); draw(); }, 'ps-ghost')),
-        canvas,
-        h('div', { class: 'ps-row ps-compact' }, ui.field('Range', plotRange.el)),
-        infoLine, contactLine,
-        ui.note('North is up, centred on the aircraft; drag empty map to move it. Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it. White route = push back, blue = drive forward, red = the tug may not manage that leg.')),
-      routeSummary,
-      listTabs,
-      sugPanel,
-      pinPanel
-    );
+    var help = ui.help('Planning a push', [
+      'North is up, centred on the aircraft. Tap the map to drop a pin; the last pin is where the aircraft ends up. Drag empty map to move it.',
+      'Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it.',
+      'Near a taxiway a pin is pulled onto its centreline and takes its heading (Settings: snap). Drag it further than 1.5 times the snap reach to pull it free.',
+      'White route = push back, blue = drive forward, red = the tug may not manage that leg.',
+      'Suggested pushes come from the original app\'s suggester. Pick one and it becomes your plan; adding a pin of your own takes over from it.']);
+    var el = h('div', { class: 'ps-page ps-plan' },
+      h('div', { class: 'ps-cols' },
+        h('div', { class: 'ps-col-main' },
+          ui.panel('Plan the push',
+            h('div', { class: 'ps-toprow' },
+              ui.iconButton('undo', 'Undo pin', function () { if (PS.plan.count()) deletePin(PS.plan.count() - 1); }, 'ps-ghost'),
+              ui.iconButton('trash', 'Clear pins', function () { PS.plan.clear(); log('pins cleared'); planChanged(); }, 'ps-ghost'),
+              h('div', { class: 'ps-spacer' }),
+              h('div', { class: 'ps-right' }, plotRange.el,
+                ui.iconButton('target', 'Recentre', function () { pan.x = 0; pan.y = 0; log('map recentred on the aircraft'); draw(); }, 'ps-ghost'), help)),
+            canvas, contactLine)),
+        h('div', { class: 'ps-col-side' }, routeSummary, listTabs, sugPanel, pinPanel)));
     // Redraw triggers: the interval, the EFB's per-frame update (a second chance if timers are throttled), and any click on the page.
     el.addEventListener('click', function () { setTimeout(draw, 0); setTimeout(draw, 400); });
     var frameHook = function () { if (Date.now() - lastDrawAt > 450) draw(); };

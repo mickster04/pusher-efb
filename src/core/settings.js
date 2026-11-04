@@ -3,7 +3,7 @@
 
 PS.settings = (function () {
   var KEY = 'pushplanner.settings';
-  var defaults = { snap: true, snapM: 50, planTab: 'suggested', tightest: 26 };
+  var defaults = { snap: true, snapM: 50, planTab: 'suggested', tightest: 26, insetTop: 40, insetBottom: 56 };
   var values = {}, k;
   for (k in defaults) values[k] = defaults[k];
   try {
@@ -20,6 +20,7 @@ PS.settings = (function () {
   function set(name, v) {
     values[name] = v;
     if (name === 'tightest') PS.plan.setMinRadius(v);
+    if ((name === 'insetTop' || name === 'insetBottom') && PS.applyInsets) PS.applyInsets();
     try { window.localStorage.setItem(KEY, JSON.stringify(values)); } catch (e) { /* not saved */ }
     PS.log('settings', name + ' = ' + v);
   }

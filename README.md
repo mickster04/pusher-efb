@@ -13,7 +13,15 @@ Use **Copy all logs** (top right) to copy the whole log. The Push tab has its ow
 
 ## Layout of the code
 
-`src/*.js` are concatenated in filename order by `build.mjs`: sim access and logging (00), geometry (01), taxi and traffic data (02, 03), UI helpers (04), the taxi WASM client (05), plot maths and drawing (06), the route planner (06, a port of the original's `mapGeo.ts` planner), the suggester (07, a port of `taxiSuggest.ts`), the plan model (08), the parking brake and tug (09), the path follower (10), the push controller (11), facility loading (30), AI traffic (40), the Plan tab (60), the Push tab (70) and the app shell (90).
+`build.mjs` concatenates the modules in `src/` (in an explicit order listed in the script; it fails if a file is missing from the list) into the one file the sim loads:
+
+- `src/core/`: sim access and logging, geometry, saved settings.
+- `src/data/`: taxi and traffic data, the taxi WASM client, facility loading, AI traffic.
+- `src/planning/`: the route planner (a port of the original's `mapGeo.ts` planner), the push suggester (a port of `taxiSuggest.ts`), the plan (pins).
+- `src/push/`: the parking brake and tug, the path follower, the push controller.
+- `src/ui/`: widgets and icons, themes and colours, map maths and drawing.
+- `src/pages/`: the Plan, Push and Settings tabs. `src/app.js` is the shell and EFB registration.
+- `src/styles/styles.css`: the stylesheet, a template filled from the colour theme. `src/icons/*.svg`: one SVG file per icon, inlined by the build.
 
 ## Taxi WASM module
 
@@ -41,4 +49,4 @@ npm run harness
 
 Serves the mock EFB at http://127.0.0.1:8765/. The mock fakes the EFB, the SDK, `SimVar` and `Coherent`, so it shows layout and logic only. It says nothing about what the sim allows.
 
-Source is in `src/` (concatenated in filename order by `build.mjs`). Project notes for Claude are in [CLAUDE.md](CLAUDE.md).
+Source is in `src/` (see "Layout of the code"; concatenated by `build.mjs`). Project notes for Claude are in [CLAUDE.md](CLAUDE.md).

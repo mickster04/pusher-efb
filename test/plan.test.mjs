@@ -163,15 +163,15 @@ test('snap: a pin near a taxiway takes its heading, the way that is the smaller 
   const a = at(180, 20), b = at(180, 200);       // a taxiway running north-south, 100 m east of the aircraft
   const e = G.offset(a[0], a[1], 90, 100), f = G.offset(b[0], b[1], 90, 100);
   PS.state.taxi = { items: [{ name: 'A', category: 'Taxiway', points: [e, f] }, { name: '02', category: 'Runway', points: [at(90, 100), at(90, 300)] }] };
-  const p = G.offset(at(180, 80)[0], at(180, 80)[1], 90, 105);   // 5 m off the taxiway
+  const p = G.offset(at(180, 80)[0], at(180, 80)[1], 90, 105);   // 5 m off the taxiway, behind and to the side of the aircraft
   const i = plan.add(p[0], p[1]);
-  let r = plan.snapPin(i, 10);                   // aircraft pointing north: pick the northbound heading
-  assert.ok(r && (r.headingDeg === 0 || r.headingDeg === 360 || r.headingDeg <= 1 || r.headingDeg >= 359), 'northbound ' + (r && r.headingDeg));
+  let r = plan.snapPin(i, { lat: ref.lat, lon: ref.lon, hdgDeg: 0 });   // pointing north: the pin is behind, so it reverses to it, arriving travelling south, nose north
+  assert.ok(r && r.reverse && (r.headingDeg <= 1 || r.headingDeg >= 359), 'reversing: nose north ' + (r && r.headingDeg));
   assert.equal(plan.list()[i].headingUser, true);
-  r = plan.snapPin(i, 170);
-  assert.ok(Math.abs(r.headingDeg - 180) <= 1, 'southbound when the nose points south');
+  r = plan.snapPin(i, { lat: ref.lat, lon: ref.lon, hdgDeg: 170 });      // pointing south: the pin is ahead, so it drives forward, travelling south, nose south
+  assert.ok(!r.reverse && Math.abs(r.headingDeg - 180) <= 1, 'forward: nose south ' + r.headingDeg);
   const far = at(270, 300); plan.move(i, far[0], far[1]);
-  assert.equal(plan.snapPin(i, 0), null, 'nothing within reach');
+  assert.equal(plan.snapPin(i, { lat: ref.lat, lon: ref.lon, hdgDeg: 0 }), null, 'nothing within reach');
   assert.equal(plan.list()[i].headingUser, false, 'a snap that no longer applies is cleared');
   plan.setHeading(i, 77); assert.equal(plan.list()[i].snapped, false);
   plan.clear(); PS.state.taxi = null;
@@ -183,4 +183,73 @@ test('flip: turns a pin\'s nose round the other way and makes the heading the us
   plan.setHeading(i, 315); plan.flip(i);
   assert.equal(plan.list()[i].headingDeg, 135); assert.equal(plan.list()[i].headingUser, true);
   plan.clear();
+});
+
+test('snap: releasing the heading handle near the taxiway direction lines the nose up with it', () => {
+  plan.clear();
+  const e = G.offset(ref.lat, ref.lon, 90, 100), f = G.offset(ref.lat, ref.lon, 270, 100);
+  PS.state.taxi = { items: [{ name: 'B', category: 'Taxiway', points: [e, f] }] };   // runs east-west through the aircraft
+  const p = at(180, 3); const i = plan.add(p[0], p[1]);
+  plan.setHeading(i, 82);                                  // 8 degrees off east
+  const r = plan.snapHandle(i);
+  assert.ok(r && plan.list()[i].headingDeg === 90, 'lined up to east: ' + plan.list()[i].headingDeg);
+  plan.setHeading(i, 60);                                  // 30 off: left alone
+  assert.equal(plan.snapHandle(i), null); assert.equal(plan.list()[i].headingDeg, 60);
+  plan.clear(); PS.state.taxi = null;
+});
+
+test('plan: a pin behind and a little to the side, with its heading set, is one clean reverse (no far-off turnaround pin), ending on that heading', () => {
+  plan.clear();
+  const o = { lat: -43.48983, lon: 172.53785, hdgDeg: 43 };
+  const i = plan.add(-43.490416, 172.537618); plan.setHeading(i, 312);
+  const r = plan.evaluate(o);
+  assert.equal(r.warnings.length, 0, 'no warnings: ' + r.warnings.join(' | '));
+  assert.equal(r.legs.length, 1, 'one leg');
+  assert.equal(r.turnaroundAdded, false, 'no turnaround pin');
+  assert.ok(r.legs[0].sign < 0 && Math.abs(G.angleDiff(r.legs[0].endHdgDeg, 312)) < 6, 'reverse, ending ' + r.legs[0].endHdgDeg);
+  assert.ok(r.totalM < 130, 'a short route: ' + r.totalM);
+  plan.clear();
+});
+
+test('snap: snapAt gives the point on the centreline, so a dragged pin can be pulled onto it', () => {
+  plan.clear();
+  const e = G.offset(ref.lat, ref.lon, 90, 100), f = G.offset(ref.lat, ref.lon, 270, 100);
+  PS.state.taxi = { items: [{ name: 'B', category: 'Taxiway', points: [e, f] }] };   // east-west through the reference point
+  const near = G.offset(ref.lat, ref.lon, 0, 20);                                    // 20 m north of the line
+  const r = plan.snapAt(near[0], near[1], { refDeg: 0 }, 50);
+  assert.ok(r && r.point && Math.abs(G.distanceM(r.point[0], r.point[1], ref.lat, ref.lon)) < 1, 'projects onto the line');
+  assert.equal(plan.snapAt(near[0], near[1], { refDeg: 0 }, 10), null, 'out of reach');
+  plan.clear(); PS.state.taxi = null;
+});
+
+test('pins: reorder swaps a pin with its neighbour, keeps the selection on the same pin and relabels the end', () => {
+  plan.clear();
+  const a = at(180, 40), b = at(180, 90), c = at(180, 140);
+  [a, b, c].forEach((p) => plan.add(p[0], p[1]));
+  plan.select(0);
+  assert.equal(plan.reorder(0, 1), true);
+  assert.ok(Math.abs(plan.list()[0].lat - b[0]) < 1e-9 && Math.abs(plan.list()[1].lat - a[0]) < 1e-9, 'swapped');
+  assert.equal(plan.selected(), 1, 'selection follows the pin');
+  assert.equal(plan.list()[2].label, 'End position');
+  assert.equal(plan.reorder(0, -1), false, 'cannot move the first pin earlier');
+  assert.equal(plan.reorder(2, 1), false, 'cannot move the last pin later');
+  plan.reorder(1, 1);                                          // the pin that was first is now the end
+  assert.ok(Math.abs(plan.list()[2].lat - a[0]) < 1e-9 && plan.list()[2].terminal, 'moved to the end, so it is the end pin');
+  plan.clear();
+});
+
+test('snap: the log names the taxiway a pin snapped to', () => {
+  plan.clear();
+  const e = G.offset(ref.lat, ref.lon, 90, 100), f = G.offset(ref.lat, ref.lon, 270, 100);
+  PS.state.taxi = { items: [{ name: 'L36', category: 'Taxiway', points: [e, f] }] };
+  const p = at(180, 4), i = plan.add(p[0], p[1]);
+  PS.logs.length = 0;
+  assert.ok(plan.snapPin(i, { lat: ref.lat, lon: ref.lon, hdgDeg: 0 }));
+  plan.evaluate({ lat: ref.lat, lon: ref.lon, hdgDeg: 0 });
+  const text = PS.logs.map((l) => PS.fmtLog(l)).join('\n');
+  assert.match(text, /snapped to taxiway L36/);
+  plan.setHeading(i, 90);
+  PS.logs.length = 0; plan.evaluate({ lat: ref.lat, lon: ref.lon, hdgDeg: 0 });
+  assert.doesNotMatch(PS.logs.map((l) => PS.fmtLog(l)).join('\n'), /snapped to/);
+  plan.clear(); PS.state.taxi = null;
 });

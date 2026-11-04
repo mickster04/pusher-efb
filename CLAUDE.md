@@ -23,7 +23,12 @@ This project is a **standalone** EFB app: no companion exe, no localhost bridge.
 
 ## Commands
 
-- `npm run build`: concatenates `src/*.js` into `PackageSources/PushPlanner/PushPlanner.js` (node only, no dependencies).
+- `npm run build`: concatenates the modules in `src/` (order listed in `build.mjs`; icons from `src/icons/*.svg` and the stylesheet are inlined) into `PackageSources/PushPlanner/PushPlanner.js` (node only, no dependencies).
 - `npm test`: build plus node unit tests for the pure helpers.
 - `npm run harness`: serve a browser mock of the EFB and sim at the printed URL to review the UI on a Mac.
 - `bash wasm/build.sh` (Git Bash on Windows only): builds the taxi WASM module with the SDK's clang, no Visual Studio. Writes `wasm/build.log`. Link flags and sim load errors are in `wasm/README.md`.
+
+## Where things are
+- Add a module: put it in the right `src/` folder and add it to `ORDER` in `build.mjs` (the build refuses to run if a `.js` is not listed). Order matters: a module must come after any it uses while loading.
+- Add an icon: drop a `<path>`-only SVG on a 24 x 24 grid into `src/icons/` (kebab-case name; `fill="currentColor"` on a path makes it a filled shape) and use it as `PS.icon('camelCaseName')` or `ui.iconButton`.
+- Colours: never hard-code a hex in CSS or drawing code; use an `@role@` token in `styles.css` or `PS.theme.c('role')` (roles are in `src/ui/theme.js`).

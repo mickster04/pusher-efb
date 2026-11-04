@@ -24,12 +24,14 @@ PS.pages.push({
           ui.note('The most the tug will do on a straight. It chooses its own speed along the route, up to this: slower in curves (more so the tighter they are), slowing in good time before each curve, and easing down to a crawl as it nears the end. Changes apply to a push already under way.')),
         ui.panel('Planning',
           ui.field('Tightest turn the plan may use', tightest.el),
-          ui.note('The plan uses a 40 m turn radius. Where a corner is too cramped for that it tries tighter ones, down to this. Smaller means the tug has to turn harder: check the Route panel on the Push tab for warnings.'),
+          ui.note('The plan uses a 40 m turn radius. Where a corner is too cramped for that it tries tighter ones, down to this. Smaller means the tug has to turn harder: the Plan tab shows any warning.'),
           ui.field('Snap pins to the taxiway', snap.el),
           ui.note('With snap on, a pin you drop or move within the snap reach of a taxiway takes the taxiway\'s heading (the direction needing the smaller turn). Rotating a pin by hand overrides it.'),
           ui.field('Snap reach (how close to a taxiway a pin must be)', snapDist.el),
           ui.field('Plan tab opens on', tab.el),
-          ui.note('Which list the Plan tab shows first. It also switches by itself: placing a pin shows the pins, picking a suggestion shows the suggestions.'))),
+          ui.note('Which list the Plan tab shows first. It also switches by itself: placing a pin shows the pins, picking a suggestion shows the suggestions.')),
+        PS.colourPanel(),
+        ui.panel('Log', ui.logBox(null, { copy: function () { PS.copyAllLogs(); }, label: 'Copy all logs', clearable: true, buttonsAbove: true }))),
       onShow: function () {}, onHide: function () {}
     };
   }

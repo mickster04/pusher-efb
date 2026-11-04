@@ -17,7 +17,7 @@ function simulate(planned, opts) {
   const gain = opts.gain === undefined ? 2.3 : opts.gain, dead = opts.dead === undefined ? 0.30 : opts.dead, dt = 0.05;
   const legs = PS.follow.legsFromPlan(planned);
   const f = PS.follow.create(legs, { cruiseUnits: opts.cruise || 25 });
-  let x = 0, y = 0, psi = own.hdgDeg, v = 0, yawRamped = 0, t = 0, maxCte = 0, c = null, stops = [], phases = {}, maxYawSeen = 0;
+  let x = opts.startX || 0, y = 0, psi = own.hdgDeg + (opts.startPsi || 0), v = 0, yawRamped = 0, t = 0, maxCte = 0, c = null, stops = [], phases = {}, maxYawSeen = 0;
   const endWp = planned.waypoints[planned.waypoints.length - 1];
   while (t < (opts.maxT || 300)) {
     const ll = G.fromXY(own.lat, own.lon, x, y);
@@ -169,4 +169,26 @@ test('profile: the speed along a chord-built arc is steady, not a sawtooth', () 
   let lo = Infinity, hi = 0;
   for (let i = a; i < b; i++) { lo = Math.min(lo, prof.v[i]); hi = Math.max(hi, prof.v[i]); }
   assert.ok(hi - lo < 0.6, 'speed in the arc varies by ' + (hi - lo).toFixed(2) + ' ft/s');
+});
+
+test('follower: arrives facing the planned heading even when it starts off the line and off the heading (heading matters more than position)', () => {
+  const r = simulate(planFor([at(180, 40), at(90, 60, from(at(180, 40)))]), { startX: 1.5, startPsi: 7 });
+  assert.ok(r.done, 'finished: ' + JSON.stringify(r.stops));
+  assert.ok(r.headErr < 5, 'nose ends ' + r.headErr.toFixed(1) + ' deg off');
+  const s = simulate(planFor([at(180, 100)]), { startX: 2, startPsi: -8 });
+  assert.ok(s.done && s.headErr < 4, 'straight, started off: nose ends ' + s.headErr.toFixed(1) + ' deg off (done ' + s.done + ')');
+});
+
+test('follower: near the end it steers by the nose, not the position, so a metre off the line does not swing the tug', () => {
+  const planned = planFor([at(180, 100)]);
+  const f = PS.follow.create(PS.follow.legsFromPlan(planned), { cruiseUnits: 25 });
+  const run = (hdgOff, side, atM) => {
+    const base = G.fromXY(own.lat, own.lon, side, -atM);                    // atM metres back along the line, side metres east of it
+    let c = null;
+    for (let i = 0; i < 40; i++) c = f.update({ lat: base[0], lon: base[1], hdgDeg: G.normDeg(own.hdgDeg + hdgOff), t: i * 0.05 }, 0.05, -3);
+    return c;
+  };
+  const c = run(8, 1.0, 95);                                                 // 5 m from the end, 1 m off, nose 8 degrees off the line
+  assert.ok(c.yawDegS < 0 && c.yawDegS > -1.0, 'a gentle turn back toward the end heading (nose is clockwise of it): ' + c.yawDegS.toFixed(2) + ' deg/s command');
+  assert.ok(Math.abs(c.speedFtS) < 4, 'and slowing: ' + c.speedFtS.toFixed(2) + ' ft/s');
 });
