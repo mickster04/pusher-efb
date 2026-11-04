@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 
 // ---- a fake sim, installed before the app loads ----
-const sim = { x: 0, y: 0, hdg: 0, velZ: 0, rotY: 0, wait: 1, attached: 0, attachAt: 0, brake: 1, ground: 1, agl: 0, lastWrite: 0, writes: [], t0: 0, ref: { lat: -43.49, lon: 172.53 } };
+const sim = { eng: [0, 0], x: 0, y: 0, hdg: 0, velZ: 0, rotY: 0, wait: 1, attached: 0, attachAt: 0, brake: 1, ground: 1, agl: 0, lastWrite: 0, writes: [], t0: 0, ref: { lat: -43.49, lon: 172.53 } };
 let G, PS;
 function now() { return Date.now(); }
 globalThis.SimVar = {
@@ -20,7 +20,12 @@ globalThis.SimVar = {
       case 'BRAKE PARKING POSITION': return sim.brake ? 1 : 0;
       case 'GROUND VELOCITY': return Math.abs(sim.velZ) * 0.5925;
       case 'VELOCITY BODY Z': return sim.velZ;
-      default: return 0;
+      case 'NUMBER OF ENGINES': return sim.engines === undefined ? 0 : sim.engines;
+      default: {
+        const m = /^(GENERAL ENG COMBUSTION|TURBINE ENG N1):(\d)$/.exec(name);
+        if (m) { const v = sim.eng[Number(m[2]) - 1] || 0; return m[1] === 'GENERAL ENG COMBUSTION' ? (v > 0 ? 1 : 0) : v; }
+        return 0;
+      }
     }
   },
   SetSimVarValue(name, unit, value) {
@@ -58,7 +63,8 @@ function run(seconds, each) {
 }
 function reset() {
   PS.push.emergencyStop('test reset'); PS.plan.clear();
-  Object.assign(sim, { x: 0, y: 0, hdg: 0, velZ: 0, rotY: 0, wait: 1, attached: 0, attachAt: 0, brake: 1, ground: 1, agl: 0, lastWrite: 0, writes: [] });
+  Object.assign(sim, { eng: [0, 0], engines: undefined, x: 0, y: 0, hdg: 0, velZ: 0, rotY: 0, wait: 1, attached: 0, attachAt: 0, brake: 1, ground: 1, agl: 0, lastWrite: 0, writes: [] });
+  PS.state.taxi = null; PS.engines.reset(); PS.settings.set('requireEngines', true);
   PS.toasts.clear(); PS.toasts.setAppOpen(false);   // push toasts only show while the app is not on screen
 }
 function withClock(start, fn) {
@@ -301,5 +307,107 @@ test('push: Finish sets the brake and dismisses the tug, and skips whatever the 
   assert.ok(PS.push.finish());
   run(4);
   assert.equal(sim.attached, 0, 'tug dismissed even though the pilot set the brake');
+  });
+});
+
+const stand = (name, dx, dy, hdg) => { const p = G.fromXY(sim.ref.lat, sim.ref.lon, dx, dy); return { name, type: 1, lat: p[0], lon: p[1], headingDeg: hdg === undefined ? 0 : hdg, radiusM: 25 }; };
+
+test('engines: the text counts good engine starts, held for a few seconds, as a tug operator would', () => {
+  withClock(11000000, () => {
+  reset(); sim.engines = 2;
+  const poll = () => { PS.engines.status(); };                  // (on the Push tab, or from the push loop, this runs by itself)
+  assert.equal(PS.engines.status().text, 'Waiting for a good engine start');
+  sim.eng = [25, 0]; run(1, poll);
+  assert.match(PS.engines.status().text, /Engine starting/, 'running but not yet held long enough');
+  run(4, poll);
+  assert.equal(PS.engines.status().text, '1 good engine start');
+  sim.eng = [25, 30]; run(5, poll);
+  assert.equal(PS.engines.status().text, '2 good engine starts');
+  sim.eng = [5, 0]; run(5, poll);                               // combustion on but not turning over: not good
+  assert.notEqual(PS.engines.status().good, 1);
+  });
+});
+
+test('push: the tug is only dismissed after a good engine start, unless the aircraft is back at a gate or the setting is off', () => {
+  withClock(12000000, () => {
+  reset(); sim.brake = 0; sim.engines = 2; planBack(40);
+  PS.state.taxi = { parking: [stand('A1', 0, 0)], items: [] };
+  assert.ok(PS.push.requestStart());
+  run(150, () => { if (PS.push.view().status === 'done') return false; });
+  assert.equal(PS.push.view().status, 'done');
+  assert.equal(PS.push.view().canFinish, false, 'no engine yet: the tug stays');
+  PS.push.toggleTug(); run(2);
+  assert.equal(sim.attached, 1, 'the dismiss was refused');
+  assert.match(PS.push.view().engineGate.why, /engine/);
+  sim.eng = [24, 0]; run(5);
+  assert.equal(PS.push.view().engines.text, '1 good engine start');
+  assert.ok(PS.push.view().canFinish, 'one good engine is enough');
+  assert.ok(PS.push.finish()); run(4);
+  assert.equal(sim.attached, 0);
+  // the setting off: no wait
+  reset(); sim.brake = 0; sim.engines = 2; planBack(30);
+  PS.settings.set('requireEngines', false);
+  assert.ok(PS.push.requestStart());
+  run(150, () => { if (PS.push.view().status === 'done') return false; });
+  assert.ok(PS.push.view().canFinish, 'dismissable with the setting off');
+  });
+});
+
+test('push: return to gate needs the push to have started at a gate, and at the gate the tug can come off whatever the engines are doing', () => {
+  withClock(13000000, () => {
+  reset(); sim.brake = 0; sim.engines = 2; planBack(50);
+  PS.state.taxi = { parking: [stand('B4', 0, 0)], items: [] };
+  assert.ok(PS.push.requestStart());
+  assert.equal(PS.push.view().gateLeft.name, 'B4'); assert.ok(PS.push.view().gateLeft.at);
+  run(150, () => { if (PS.push.view().status === 'done') return false; });
+  assert.ok(PS.push.view().canReturn.ok, PS.push.view().canReturn.why);
+  assert.equal(PS.push.view().canFinish, false, 'engines off, away from the gate: the tug stays');
+  assert.ok(PS.push.requestStart({ returnToGate: true }));
+  run(200, () => { if (PS.push.view().status === 'done') return false; });
+  const v = PS.push.view();
+  assert.equal(v.status, 'done'); assert.match(v.reason, /back at gate B4/);
+  assert.ok(v.gate.at, 'detected at the gate');
+  assert.ok(v.canFinish, 'at the gate the tug comes off with no engine running');
+  // a push that did not start at a gate has no gate to return to
+  reset(); sim.brake = 0; planBack(50);
+  PS.state.taxi = { parking: [stand('C2', 60, 60)], items: [] };
+  assert.ok(PS.push.requestStart());
+  run(150, () => { if (PS.push.view().status === 'done') return false; });
+  assert.equal(PS.push.view().canReturn.ok, false);
+  assert.match(PS.push.view().canReturn.why, /did not start at a gate/);
+  });
+});
+
+test('gate: at a stand only when close, lined up and stopped', () => {
+  withClock(14000000, () => {
+  reset();
+  PS.state.taxi = { parking: [stand('G1', 0, 0, 0), stand('G2', 100, 0, 0)], items: [] };
+  const o = (hdg, gs) => ({ lat: sim.ref.lat, lon: sim.ref.lon, hdgDeg: hdg, gsKt: gs });
+  assert.equal(PS.gate.detect(o(10, 0)).at, true);
+  assert.equal(PS.gate.detect(o(10, 0)).name, 'G1');
+  assert.equal(PS.gate.detect(o(120, 0)).at, false, 'nose off the stand');
+  assert.equal(PS.gate.detect(o(0, 6)).at, false, 'still moving');
+  const far = G.fromXY(sim.ref.lat, sim.ref.lon, 40, 0);
+  assert.equal(PS.gate.detect({ lat: far[0], lon: far[1], hdgDeg: 0, gsKt: 0 }).at, false, 'too far from either stand');
+  PS.state.taxi = null;
+  assert.equal(PS.gate.detect(o(0, 0)).known, false, 'no stand data');
+  });
+});
+
+test('services: a request sends the key event, and is refused while a push is under way', () => {
+  withClock(15000000, () => {
+  reset(); sim.brake = 0; planBack(60);
+  sim.writes.length = 0;
+  assert.equal(PS.services.request('jetbridge').ok, true);
+  assert.ok(sim.writes.some((w) => w[0] === 'K:TOGGLE_JETWAY'));
+  ['fuel', 'baggage', 'catering', 'power'].forEach((id) => assert.ok(PS.services.request(id).ok));
+  ['REQUEST_FUEL_KEY', 'REQUEST_LUGGAGE', 'REQUEST_CATERING', 'REQUEST_POWER_SUPPLY'].forEach((e) => assert.ok(sim.writes.some((w) => w[0] === 'K:' + e), e));
+  assert.ok(PS.services.recently('fuel'));
+  assert.ok(PS.push.requestStart());
+  run(10, () => { if (PS.push.view().status === 'driving') return false; });
+  assert.equal(PS.services.can().ok, false);
+  sim.writes.length = 0;
+  assert.equal(PS.services.request('fuel').ok, false);
+  assert.equal(sim.writes.length, 0, 'nothing sent mid-push');
   });
 });

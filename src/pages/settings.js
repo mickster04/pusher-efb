@@ -16,11 +16,14 @@ PS.pages.push({
     var snap = ui.toggle([{ value: 'on', label: 'Snap on' }, { value: 'off', label: 'Snap off' }], PS.settings.get('snap') ? 'on' : 'off', function (v) { PS.settings.set('snap', v === 'on'); });
     var SNAP_STEPS = [10, 20, 30, 50, 75, 100, 150];
     var snapDist = ui.stepper(SNAP_STEPS, SNAP_STEPS.indexOf(PS.settings.get('snapM')) >= 0 ? PS.settings.get('snapM') : 50, function (v) { PS.settings.set('snapM', v); }, 'settings', ['Closer  -', 'Further  +'], function (v) { return v + ' m'; });
+    var engines = ui.toggle([{ value: 'on', label: 'Wait for an engine' }, { value: 'off', label: 'Dismiss any time' }], PS.settings.get('requireEngines') ? 'on' : 'off', function (v) { PS.settings.set('requireEngines', v === 'on'); });
     var tab = ui.toggle([{ value: 'suggested', label: 'Suggested pushes' }, { value: 'pins', label: 'Custom pins' }], PS.settings.get('planTab'), function (v) { PS.settings.set('planTab', v); });
     return {
       el: h('div', { class: 'ps-page' },
         ui.panel('Pushing',
           ui.field('Maximum cruise speed', maxSpeed.el),
+          ui.field('Dismissing the tug', engines.el),
+          ui.note('With "Wait for an engine" the tug is only let go (the Dismiss button and Finish push) after one good engine start, as a real tug operator waits for it. One engine is enough. It applies once the tug has moved the aircraft, and not if the aircraft\'s engines cannot be read.'),
           ui.note('The most the tug will do on a straight. It chooses its own speed along the route, up to this: slower in curves (more so the tighter they are), slowing in good time before each curve, and easing down to a crawl as it nears the end. Changes apply to a push already under way.')),
         ui.panel('Planning',
           ui.field('Tightest turn the plan may use', tightest.el),

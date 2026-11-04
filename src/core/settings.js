@@ -3,7 +3,7 @@
 
 PS.settings = (function () {
   var KEY = 'pushplanner.settings';
-  var defaults = { snap: true, snapM: 50, planTab: 'suggested', tightest: 26, insetTop: 40, insetBottom: 56 };
+  var defaults = { snap: true, snapM: 50, planTab: 'suggested', tightest: 26, insetTop: 40, insetBottom: 56, requireEngines: true };
   var values = {}, k;
   for (k in defaults) values[k] = defaults[k];
   try {

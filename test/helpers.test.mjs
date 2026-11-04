@@ -90,3 +90,20 @@ test('runway centre + heading + length becomes a line of the right length', () =
   const len = PS.geo.polylineLengthM(ex.items[0].points);
   assert.ok(Math.abs(len - 3000) < 5);
 });
+
+test('air traffic: our own aircraft in the list is ignored, even as it lags behind us', () => {
+  const T = PS.airTraffic, G = PS.geo;
+  T.ownIds = {};
+  const own = { lat: -43.49, lon: 172.53 };
+  const near = (d) => G.offset(own.lat, own.lon, 180, d);
+  const mk = (id, d) => ({ id, title: 'T' + id, lat: near(d)[0], lon: near(d)[1] });
+  let out = T.ignoreOwn([mk(1, 3), mk(2, 120)], own);
+  assert.deepEqual(out.map((c) => c.id), [2], 'the one 3 m away is us');
+  out = T.ignoreOwn([mk(1, 40), mk(2, 120)], own);                       // we moved on and it lags 40 m behind: still us
+  assert.deepEqual(out.map((c) => c.id), [2]);
+  out = T.ignoreOwn([mk(1, 200), mk(2, 120)], own);                      // 200 m away: a real contact now
+  assert.deepEqual(out.map((c) => c.id), [1, 2]);
+  out = T.ignoreOwn([mk(3, 40)], own);                                   // a different aircraft 40 m away that was never us is kept
+  assert.deepEqual(out.map((c) => c.id), [3]);
+  assert.equal(T.ignoreOwn([mk(4, 1)], null).length, 1, 'no own position: nothing is ignored');
+});

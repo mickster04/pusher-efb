@@ -162,3 +162,7 @@
 .ps-ip { stroke: @buttonText@; fill: none; }
 .ps-ipf { fill: @buttonText@; stroke: none; }
 .ps-icon { flex: none; }
+
+/* a ground service asked for in the last few seconds */
+.ps-btn.ps-requested { border-color: @accent@; color: @accent@; }
+.ps-btn.ps-requested .ps-ip { stroke: @accent@; }

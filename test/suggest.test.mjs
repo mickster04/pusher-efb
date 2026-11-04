@@ -210,3 +210,21 @@ test('suggest: every option ends facing the way its title says', () => {
     });
   });
 });
+
+test('suggest: end points are kept out of junctions where the push can go a little further', () => {
+  const ref = { lat: -43.49, lon: 172.53 };
+  const xy = (x, y) => G.fromXY(ref.lat, ref.lon, x, y);
+  const items = [
+    { name: 'A', rawName: 'A', category: 'Taxiway', rawType: 1, points: [xy(-200, -60), xy(250, -60)] },
+    { name: 'B', rawName: 'B', category: 'Taxiway', rawType: 1, points: [xy(20, -60), xy(20, -200)] }
+  ];
+  [20, 340].forEach((hdg) => {
+    const out = PS.suggest.suggest(items, { lat: ref.lat, lon: ref.lon, hdgDeg: hdg }, []);
+    // (taxiway A has room to go further either way; B's only workable end for this heading is the one at the junction, so it is left out of the check)
+    out.filter((s) => /^Taxiway A, /.test(s.title)).forEach((s) => {
+      const e = s.waypoints[s.waypoints.length - 1], q = G.toXY(ref.lat, ref.lon, e.lat, e.lon);
+      const toJunction = Math.hypot(q.x - 20, q.y - -60);
+      assert.ok(toJunction >= 35, 'heading ' + hdg + ': "' + s.title + '" ends ' + toJunction.toFixed(0) + ' m from the junction at (20, -60)');
+    });
+  });
+});

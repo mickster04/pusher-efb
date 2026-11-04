@@ -24,7 +24,9 @@ PS.push = (function () {
     status: 'idle', reason: '', speedPercent: 50, plan: null, follower: null, totalM: 0,
     cur: { speed: 0, yaw: 0 }, last: { remainingM: 0, leg: 0, legCount: 0, phase: '', cte: 0, alphaDeg: 0, speedFtS: 0, yawDegS: 0, note: '' },
     startedAt: 0, doneAt: 0, attached: false, brake: null, writes: 0, failures: 0, lastError: '', stopNext: 'ready', stopQuietSince: 0,
-    lastTick: 0, lastSlow: 0, lastLog: 0, lastBrakeCheck: 0, poseFails: 0, prevHdg: null, prevHdgAt: 0, measuredYaw: null, wantRun: false, settleStart: 0, brakeAsked: false
+    lastTick: 0, lastSlow: 0, lastLog: 0, lastBrakeCheck: 0, poseFails: 0, prevHdg: null, prevHdgAt: 0, measuredYaw: null, wantRun: false, settleStart: 0, brakeAsked: false,
+    moved: false,        // the tug has moved the aircraft since it was called: it is not let go until an engine is started
+    gateLeft: null       // PS.gate.detect() when the push started: the gate Return to gate has to get back to
   };
   var timer = null;
   try { var sp = Number(window.localStorage.getItem(SPEED_KEY)); if (sp >= 10 && sp <= 100) S.speedPercent = sp; } catch (e0) { /* storage may be unavailable */ }
@@ -55,7 +57,7 @@ PS.push = (function () {
   // For tests that swap the clock: forget the timer, which belonged to the old one.
   function forgetLoop() { timer = null; wasActive = false; S.returnPlan = null; S.isReturn = false; }
   function ensureLoop() {
-    var active = !!ACTIVE[S.status], wanted = active || S.status === 'ready';
+    var active = !!ACTIVE[S.status], wanted = active || S.status === 'ready' || S.moved;    // (after a push the loop keeps watching the engines until the tug goes)
     if (!wanted) { if (timer !== null) { clearInterval(timer); timer = null; } wasActive = false; return; }
     if (timer === null || (active && !wasActive)) {
       if (timer !== null) clearInterval(timer);
@@ -90,7 +92,7 @@ PS.push = (function () {
     if (S.status === 'done') {
       if (!finishToastShown) {
         finishToastShown = true;
-        PS.toasts.show({ efbOnly: true, id: 'push-done', kind: 'info', persistent: true, title: 'Push finished', message: 'Finish sets the parking brake and dismisses the tug.',
+        PS.toasts.show({ efbOnly: true, id: 'push-done', kind: 'info', persistent: true, title: 'Push finished', message: 'Finish sets the parking brake and dismisses the tug (after a good engine start).',
           actions: [{ label: 'Set the brake', onClick: function () { setBrake(); } }].concat(S.returnPlan ? [{ label: 'Return to gate', onClick: function () { PS.toasts.dismiss('push-done'); requestStart({ returnToGate: true }); } }] : []).concat([ { label: 'Dismiss tug', onClick: function () { dismissTug(); PS.toasts.dismiss('push-done'); } }, { label: 'x', onClick: function () { PS.toasts.dismiss('push-done'); } }]) });
       }
     } else { finishToastShown = false; if (S.status !== 'done') PS.toasts.dismiss('push-done'); }
@@ -155,6 +157,8 @@ PS.push = (function () {
     if (!pose) return { ok: false, why: 'The aircraft position cannot be read.' };
     var p0 = S.returnPlan.segments[0].points[0], d = PS.geo.distanceM(pose.lat, pose.lon, p0[0], p0[1]);
     if (d > RETURN_NEAR_M) return { ok: false, why: 'The aircraft has moved ' + Math.round(d) + ' m from where the push ended.' };
+    // With stand data the push has to have started at a gate: a retrace of a push from anywhere else does not lead to one.
+    if (S.gateLeft && S.gateLeft.known && !S.gateLeft.at) return { ok: false, why: 'The push did not start at a gate (' + PS.gate.describe(S.gateLeft) + '), so there is no gate to go back to.' };
     return { ok: true, why: '' };
   }
 
@@ -168,7 +172,7 @@ PS.push = (function () {
     if (!pose) { S.reason = 'The aircraft position cannot be read.'; log('cannot start: ' + S.reason); return false; }
     var plan = isReturn ? S.returnPlan : PS.plan.evaluate(pose);        // planned again from where the aircraft is now (a return to the gate retraces the push)
     S.isReturn = isReturn;
-    if (!isReturn) S.returnPlan = null;
+    if (!isReturn) { S.returnPlan = null; S.gateLeft = PS.gate.detect(); log('push starts: ' + PS.gate.describe(S.gateLeft)); }
     if (plan.empty || !plan.segments.length) { S.reason = 'The plan has no route from here.'; log('cannot start: ' + S.reason); return false; }
     S.plan = plan; S.totalM = plan.totalM;
     S.follower = PS.follow.create(PS.follow.legsFromPlan(plan), { cruiseUnits: cruiseUnits() });
@@ -197,6 +201,7 @@ PS.push = (function () {
   }
   function beginSettling() { S.settleStart = Date.now(); setStatus('settling', 'tug attached'); }
   function beginDriving() {
+    S.moved = true;
     S.startedAt = Date.now(); S.cur = { speed: 0, yaw: 0 }; S.poseFails = 0; S.lastLog = 0;
     setStatus('driving', '');
   }
@@ -233,8 +238,21 @@ PS.push = (function () {
     setStatus(PS.tug.isAttached() ? 'ready' : 'idle', why);
   }
 
+  // A tug operator does not unhook until an engine is running well. Applies once the tug has moved the aircraft, unless switched off in Settings or the
+  // aircraft's engines cannot be read.
+  function engineGate() {
+    if (!S.moved || !PS.settings.get('requireEngines')) return { ok: true, why: '' };
+    // Back at a gate (a return to the gate, or just parked on a stand) the tug can come off whatever the engines are doing.
+    var gd = PS.gate.detect();
+    if (gd.known && gd.at) return { ok: true, why: '' };
+    var e = PS.engines.status();
+    if (!e.known || e.ok) return { ok: true, why: '' };
+    return { ok: false, why: 'The tug stays on until an engine has started well. ' + e.text + '.' };
+  }
   function toggleTug() {
     if (PS.tug.isAttached()) {
+      var eg = engineGate();
+      if (!eg.ok) { log('tug not dismissed: ' + eg.why); return; }
       emergencyStop('dismissing the tug');
       dismissTug();
     } else if (S.status === 'idle' || S.status === 'ready' || S.status === 'done') {
@@ -242,7 +260,7 @@ PS.push = (function () {
       PS.tug.attach(function (r) { setStatus(r.ok ? 'ready' : 'idle', r.ok ? 'tug attached' : r.error); S.attached = PS.tug.isAttached(); if (r.ok) S.brake = PS.brake.read(true); });
     }
   }
-  function dismissTug() { PS.tug.detach(); setStatus('idle', 'tug dismissed'); }
+  function dismissTug() { PS.tug.detach(); S.moved = false; setStatus('idle', 'tug dismissed'); }
   // The brake toggle on the Push tab (a lesser option: Start and Finish do this themselves).
   function toggleBrake() {
     if (ACTIVE[S.status] && S.status !== 'waitBrake' && S.status !== 'brakeHold') return;
@@ -254,7 +272,8 @@ PS.push = (function () {
   function canFinish() {
     if (!({ idle: 1, ready: 1, done: 1 })[S.status]) return false;
     var b = PS.brake.read(false);
-    return PS.tug.isAttached() || (b.ok && !b.set);
+    if (PS.tug.isAttached()) return engineGate().ok;           // the tug comes off (after the brake goes on), but only after a good engine start
+    return b.ok && !b.set;
   }
   function finishPush() {
     if (!canFinish()) return false;
@@ -274,6 +293,7 @@ PS.push = (function () {
   // ---------------- the loop ----------------
   function slowChecks(now) {
     S.attached = PS.tug.isAttached();
+    if (S.attached || S.moved) PS.engines.update(false);
     var live = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1 }[S.status];
     if (live && !S.attached) { emergencyStop('the sim detached the tug'); return; }
     if (S.status === 'ready' && !S.attached) { setStatus('idle', 'the tug is no longer attached'); return; }
@@ -354,9 +374,17 @@ PS.push = (function () {
         if (next === 'driving') { setStatus('driving', ''); return; }
         if (next === 'done') {
           S.doneAt = Date.now(); S.last.remainingM = 0;
-          if (S.isReturn) { S.returnPlan = null; log('back at the gate'); } else updateReturn();
+          var doneText = 'the route is finished';
+          if (S.isReturn) {
+            S.returnPlan = null;
+            var gd = PS.gate.detect(), left = S.gateLeft;
+            if (gd.known && gd.at && (!left || !left.known || left.name === gd.name)) { doneText = 'back at gate ' + gd.name; S.moved = false; }
+            else if (gd.known) { doneText = 'back where the push started, but ' + PS.gate.describe(gd) + (left && left.known && left.name ? ' (it left gate ' + left.name + ')' : ''); }
+            else { doneText = 'back where the push started'; S.moved = false; }     // no stand data to check against: trust the retrace
+            log('return finished: ' + doneText);
+          } else updateReturn();
           if (PS.plan.count()) { PS.plan.clear(); log('the push is finished: the pins were deleted'); }
-          setStatus('done', S.isReturn ? 'back at the gate' : 'the route is finished'); return;
+          setStatus('done', doneText); return;
         }
         if (next === 'ready') updateReturn();
         setStatus(next, next === 'paused' ? 'held still' : (next === 'brakeHold' ? 'waiting for the parking brake to be released' : S.reason));
@@ -377,7 +405,7 @@ PS.push = (function () {
       status: S.status, reason: S.reason, attached: S.attached, brake: S.brake, plan: S.plan, totalM: S.totalM, speedPercent: S.speedPercent, cruiseUnits: cruiseUnits(),
       remainingM: l.remainingM, leg: l.leg, legCount: l.legCount, phase: l.phase, cte: l.cte, alphaDeg: l.alphaDeg, speedFtS: S.cur.speed, yawDegS: S.cur.yaw, measuredYaw: S.measuredYaw,
       direction: leg ? (leg.sign < 0 ? 'push back' : 'drive forward') : '', elapsedS: S.startedAt && (S.status === 'driving' || S.status === 'stopping' || S.status === 'paused' || S.status === 'brakeHold') ? (Date.now() - S.startedAt) / 1000 : 0,
-      writes: S.writes, failures: S.failures, lastError: S.lastError, note: l.note, why: l.why || '', isReturn: !!S.isReturn, canFinish: canFinish(), canReturn: canReturn(), returnM: S.returnPlan ? S.returnPlan.totalM : 0, progress: S.totalM > 0 ? clamp(1 - l.remainingM / S.totalM, 0, 1) : 0
+      writes: S.writes, failures: S.failures, lastError: S.lastError, note: l.note, why: l.why || '', isReturn: !!S.isReturn, canFinish: canFinish(), engines: PS.engines.status(), engineGate: engineGate(), gate: PS.gate.detect(), gateLeft: S.gateLeft, canReturn: canReturn(), returnM: S.returnPlan ? S.returnPlan.totalM : 0, progress: S.totalM > 0 ? clamp(1 - l.remainingM / S.totalM, 0, 1) : 0
     };
   }
 

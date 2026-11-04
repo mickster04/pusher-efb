@@ -16,8 +16,8 @@ PS.suggest = (function () {
   var MAX_DIST_M = 250;            // taxiways further than this from the aircraft are not offered
   var MAX_TAXIWAYS = 2;            // how many different taxiways are offered (each in both directions)
   var SAMPLE_STEP_M = 8;           // end pins are tried every this far along the centreline
-  var TURN_TRIES = 6;              // cheapest end points tried with their heading honoured when none arrives lined up
-  var MAX_PUSH_FLOOR_M = 160;      // options longer than max(this, MAX_PUSH_FACTOR x the cheapest) are dropped
+  var TURN_TRIES = 12;             // cheapest end points tried with their heading honoured when none arrives lined up
+  var MAX_PUSH_FLOOR_M = 200;      // options longer than max(this, MAX_PUSH_FACTOR x the cheapest) are dropped
   var MAX_PUSH_FACTOR = 1.7;
   var MAX_CLEAR_PUSH_M = 200;      // ...except options that end clear of a link
   var MIN_DIST_M = 15;             // an end pin closer than this to the aircraft is not worth offering
@@ -138,20 +138,76 @@ PS.suggest = (function () {
   // Plan the single leg to a trial end pin the way the app will, and say whether the tug can make it. A tighter turn radius is tried when the
   // usual one does not give a clean arrival.
   function evaluate(ac, lat, lon, hdg) {
-    var ladder = radiusLadder(), first = null;
+    var ladder = radiusLadder(), first = null, origin = { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg };
     for (var i = 0; i < ladder.length; i++) {
       var rad = ladder[i];
-      var segs = P.plannedRouteSegments({ lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg }, [{ lat: lat, lon: lon, headingDeg: hdg, headingUser: false, drive: 'auto' }], false, rad);
+      var segs = P.plannedRouteSegments(origin, [{ lat: lat, lon: lon, headingDeg: hdg, headingUser: false, drive: 'auto' }], false, rad);
       if (segs.length !== 1) return i === 0 ? null : first;
       var sg = segs[0];
       var arrivalOffDeg = Math.abs(wrap180(sg.endHdgDeg - hdg));
       var pathOk = P.segmentWarning(sg, rad) === null;
       var res = { costM: P.pathLengthM(sg.points), arrivalOffDeg: arrivalOffDeg, pathOk: pathOk, clean: pathOk && arrivalOffDeg <= MAX_ARRIVAL_OFF_DEG, radiusM: rad };
       if (!first) first = res;
-      if (res.clean) return res;
+      if (res.clean) {
+        // Arriving roughly lined up on the way in is not enough: the plan will set this heading on the pin (as choosing the suggestion does), and the
+        // route it then makes has to end on it. If it does not, this end point is not clean, and the turn-in search below can look for a better one.
+        if (!honoursHeading(origin, lat, lon, hdg)) { res.clean = false; res.honourFailed = true; }
+        return res;
+      }
     }
     return first;
   }
+  // A pin here with its heading set to hdg (no turnaround pin): the plan if it plans without a warning at some radius on the ladder and ends within
+  // MAX_END_HEADING_OFF_DEG of hdg, else null. { waypoints, costM, radiusM }
+  function honourPlan(origin, lat, lon, hdg) {
+    var ladder = radiusLadder(), pin = { id: 'wp-taxi-' + nextId() + '-' + Math.round(hdg), label: 'End position', lat: lat, lon: lon, seq: 0, terminal: true, headingDeg: Math.round(wrap360(hdg)), headingUser: true, drive: 'auto' };
+    for (var i = 0; i < ladder.length; i++) {
+      var segs = P.plannedRouteSegments(origin, [pin], false, ladder[i]);
+      if (segs.length !== 1) return null;
+      if (P.segmentWarning(segs[0], ladder[i]) === null && Math.abs(wrap180(segs[0].endHdgDeg - hdg)) <= MAX_END_HEADING_OFF_DEG) {
+        return { waypoints: P.ensureTerminal([pin]), costM: P.pathLengthM(segs[0].points), radiusM: ladder[i] };
+      }
+    }
+    return null;
+  }
+  function honoursHeading(origin, lat, lon, hdg) { return !!honourPlan(origin, lat, lon, hdg); }
+
+  // ---- junctions ----
+  // Where other taxiways, links or lanes meet the one being pushed to. An aircraft stopped inside a junction (its triangle) blocks it, so end points
+  // within JUNCTION_CLEAR_M of one are penalised in the ranking, which moves the end beyond the junction when that costs a little more push.
+  var JUNCTION_JOIN_M = 6, JUNCTION_CLEAR_M = 35, JUNCTION_PEN = 1.5;
+  function junctionsFor(layout, name) {
+    layout.junctionCache = layout.junctionCache || {};
+    if (layout.junctionCache[name]) return layout.junctionCache[name];
+    var own = layout.paths.filter(function (p) { return inGroup(p, name); }), pts = [];
+    layout.paths.forEach(function (o) {
+      if (inGroup(o, name) || !(isTaxiwayPath(o) || isNamedPath(o) || isLanePath(o))) return;
+      [o.points[0], o.points[1]].forEach(function (q) {
+        for (var i = 0; i < own.length; i++) {
+          var n = nearestOnPath(own[i].points[0], own[i].points[1], q[0], q[1]);
+          if (n && n.distM <= JUNCTION_JOIN_M) { pts.push(q); return; }
+        }
+      });
+    });
+    // ...and where this taxiway's own ends meet or touch one of the others (a taxiway that starts on another is a junction too)
+    var others = layout.paths.filter(function (o) { return !inGroup(o, name) && (isTaxiwayPath(o) || isNamedPath(o) || isLanePath(o)); });
+    own.forEach(function (o) {
+      [o.points[0], o.points[1]].forEach(function (q) {
+        for (var i = 0; i < others.length; i++) {
+          var n = nearestOnPath(others[i].points[0], others[i].points[1], q[0], q[1]);
+          if (n && n.distM <= JUNCTION_JOIN_M) { pts.push(q); return; }
+        }
+      });
+    });
+    layout.junctionCache[name] = pts;
+    return pts;
+  }
+  function nearestJunctionM(junctions, lat, lon) {
+    var best = Infinity;
+    for (var i = 0; i < junctions.length; i++) { var d = distM([lat, lon], junctions[i]); if (d < best) best = d; }
+    return best;
+  }
+  function junctionPenalty(d) { return d < JUNCTION_CLEAR_M ? (JUNCTION_CLEAR_M - d) * JUNCTION_PEN : 0; }
 
   // ---- tail axis (the line straight back from the aircraft) ----
   // Distance back along the tail axis to the first path (among those `pick` accepts) it crosses, if within range.
@@ -541,6 +597,7 @@ PS.suggest = (function () {
       var bestClean = {}, bestAny = {}, misses = [];
       var cleanOrder = [], anyOrder = [];   // first-insertion order of each map (the original's Map iterates in that order, objects would sort numeric keys)
       function dirKeyOf(c) { return dirKeyOfHdg(c.hdg); }
+      var junctions = junctionsFor(layout, name);
       layout.paths.forEach(function (p) {
         if (!inGroup(p, name)) return;
         var a = p.points[0], b = p.points[1];
@@ -558,13 +615,14 @@ PS.suggest = (function () {
             var dirKey = dirKeyOfHdg(hdg);
             var ev = evaluate(ac, lat, lon, hdg);
             if (!ev) return;
-            var cand = extend(ev, { name: name, lat: lat, lon: lon, hdg: hdg });
+            var jd = nearestJunctionM(junctions, lat, lon);
+            var cand = extend(ev, { name: name, lat: lat, lon: lon, hdg: hdg, junctionM: jd });
             if (!ev.clean) misses.push(cand);
             var any = bestAny[dirKey];
-            if (!any || ev.costM + ev.arrivalOffDeg * 2 < any.costM + any.arrivalOffDeg * 2) { if (!any) anyOrder.push(dirKey); bestAny[dirKey] = cand; }
+            if (!any || ev.costM + ev.arrivalOffDeg * 2 + junctionPenalty(jd) < any.costM + any.arrivalOffDeg * 2 + junctionPenalty(any.junctionM)) { if (!any) anyOrder.push(dirKey); bestAny[dirKey] = cand; }
             if (ev.clean) {
               var c = bestClean[dirKey];
-              if (!c || ev.costM < c.costM) { if (!c) cleanOrder.push(dirKey); bestClean[dirKey] = cand; }
+              if (!c || ev.costM + junctionPenalty(jd) < c.costM + junctionPenalty(c.junctionM)) { if (!c) cleanOrder.push(dirKey); bestClean[dirKey] = cand; }
             }
           });
         }
@@ -572,11 +630,20 @@ PS.suggest = (function () {
       // Where no end point arrives already lined up, try the best few with the heading honoured (curve in, turnaround pin if needed).
       uniq(misses.map(dirKeyOf)).forEach(function (dirKey) {
         if (bestClean[dirKey]) return;
-        var tries = misses.filter(function (c) { return dirKeyOf(c) === dirKey && c.pathOk; }).sort(function (x, y) { return x.costM - y.costM; }).slice(0, TURN_TRIES);
+        var cands = misses.filter(function (c) { return dirKeyOf(c) === dirKey && c.pathOk; }).sort(function (x, y) { return x.costM - y.costM; });
+        // First the cheap check on every end point: does a pin here, with its heading set, plan cleanly with no turnaround pin? (The cost ordering above
+        // is of the plain route, which can be far off the one that honours the heading, so all of them are checked.)
+        var originNow = { lat: ac.lat, lon: ac.lon, hdgDeg: ac.hdgDeg }, direct = null;
+        cands.forEach(function (c) {
+          var hp = honourPlan(originNow, c.lat, c.lon, c.hdg);
+          if (hp && (!direct || hp.costM + junctionPenalty(c.junctionM) < direct.turn.costM + junctionPenalty(direct.junctionM))) direct = extend(c, { costM: hp.costM, arrivalOffDeg: 0, clean: true, pathOk: true, turn: { waypoints: hp.waypoints, costM: hp.costM, pinAdded: false, radiusM: hp.radiusM } });
+        });
+        if (direct) { cleanOrder.push(dirKey); bestClean[dirKey] = direct; return; }
+        var tries = cands.slice(0, TURN_TRIES);
         var bestTurn = null;
         tries.forEach(function (c) {
           var t = evaluateWithTurn(ac, c.lat, c.lon, c.hdg);
-          if (t && (!bestTurn || t.costM < bestTurn.turn.costM)) bestTurn = extend(c, { costM: t.costM, arrivalOffDeg: 0, clean: true, pathOk: true, turn: t });
+          if (t && (!bestTurn || t.costM + junctionPenalty(c.junctionM) < bestTurn.turn.costM + junctionPenalty(bestTurn.junctionM))) bestTurn = extend(c, { costM: t.costM, arrivalOffDeg: 0, clean: true, pathOk: true, turn: t });
         });
         if (bestTurn) { cleanOrder.push(dirKey); bestClean[dirKey] = bestTurn; }
       });
@@ -591,16 +658,19 @@ PS.suggest = (function () {
       var covered = {};
       uniq(alongOpts.map(dirKeyOf)).forEach(function (dirKey) {
         var here = alongOpts.filter(function (c) { return dirKeyOf(c) === dirKey; });
-        var plain = here.filter(function (c) { return c.title.indexOf('clear of') < 0; }).sort(function (x, y) { return x.costM - y.costM; })[0];
-        var clear = here.filter(function (c) { return c.title.indexOf('clear of') >= 0; }).sort(function (x, y) { return x.costM - y.costM; })[0];
-        [clear, plain].forEach(function (c) { if (c) out.push({ cand: c, score: c.costM }); });
+        // (ranked with the junction penalty too: an end point inside a junction costs extra, so one beyond it can win)
+        here.forEach(function (c) { c.junctionM = nearestJunctionM(junctions, c.lat, c.lon); });
+        function ranked(x, y) { return (x.costM + junctionPenalty(x.junctionM)) - (y.costM + junctionPenalty(y.junctionM)); }
+        var plain = here.filter(function (c) { return c.title.indexOf('clear of') < 0; }).sort(ranked)[0];
+        var clear = here.filter(function (c) { return c.title.indexOf('clear of') >= 0; }).sort(ranked)[0];
+        [clear, plain].forEach(function (c) { if (c) out.push({ cand: c, score: c.costM + junctionPenalty(c.junctionM) }); });
         covered[dirKey] = true;
       });
       // Other directions (the taxiway bends away from the tail axis): the sampled end points.
       uniq(cleanOrder.concat(anyOrder)).forEach(function (dirKey) {
         if (covered[dirKey]) return;
         var cand = bestClean[dirKey] || bestAny[dirKey];
-        out.push({ cand: cand, score: cand.costM + (cand.clean ? 0 : 1000) });
+        out.push({ cand: cand, score: cand.costM + (cand.clean ? 0 : 1000) + (typeof cand.junctionM === 'number' ? junctionPenalty(cand.junctionM) : 0) });
       });
       // Every direction offered along this taxiway comes with the opposite one (the other way along it), planned with the heading honoured
       // and a turnaround pin if one leg can't do it, so an option isn't offered one way and missing the other.
@@ -650,7 +720,7 @@ PS.suggest = (function () {
         id: 'taxi-' + key + '-' + hdg + '-' + Math.round(c.lat * 1e5),
         title: c.title || (groupTitle(c.name) + ', facing ' + compass(hdg) + (c.clean ? '' : ' (tight)')),
         detail: c.detail || (Math.round(c.costM) + ' m of push; ends on the centreline heading ' + pad3(hdg) + '° along it' + (c.turn ? (c.turn.pinAdded ? ', with a turnaround pin to get lined up' : ', curving in to line up') : '') + (c.clean ? '' : '. The tug may not manage this one: no cleaner end point found')),
-        waypoints: wps
+        waypoints: wps, junctionM: c.junctionM
       };
     }
     var res = [];
@@ -702,10 +772,12 @@ PS.suggest = (function () {
   //    the unfiltered list (minus pointing) is used so there is still something to pick.
   var MAX_END_HEADING_OFF_DEG = 20; // a suggestion has to end facing within this of what its title says
   var MIN_END_SEP_M = 12;          // suggestions have to end at least this far apart
-  var MIN_ARC_RADIUS_M = 32;       // used when the Settings value is not available
+  var MIN_ARC_RADIUS_M = 32;       // the most the Settings value counts for; used when it is not available
   var MAX_START_OFF_DEG = 45;
   // The arcs the plan may use follow the Settings "tightest turn" (default 26 m), never above the 32 m this used to insist on.
-  function arcFloor() { var t = PS.settings && PS.settings.get('tightest'); return typeof t === 'number' ? Math.min(MIN_ARC_RADIUS_M, t) : MIN_ARC_RADIUS_M; }
+  // The planner warns about an arc under 60% of the turn radius it planned at, and plans down to the Settings "tightest turn", so that is the arc below
+  // which an option is not offered (it used to be the full setting, stricter than what the planner itself accepts for a pin you place).
+  function arcFloor() { var t = PS.settings && PS.settings.get('tightest'); return (typeof t === 'number' ? Math.min(MIN_ARC_RADIUS_M, t) : MIN_ARC_RADIUS_M) * 0.6; }
   // Returns { kept, dropped: [{ s, why }] }: why an option is not offered, so the log can say.
   // Pointing options ("Taxiway L36, pointing south": the end pin sits on the taxiway but the nose points a compass way that is not along it) are offered
   // only where they add something: at least POINT_MIN_APART_DEG from the facing of every other option, and no more than POINT_MAX of them.
@@ -735,6 +807,7 @@ PS.suggest = (function () {
     });
     return { kept: kept, dropped: dropped };
   }
+  function junctionNote(sg) { return typeof sg.junctionM === 'number' && isFinite(sg.junctionM) ? ', ' + Math.round(sg.junctionM) + ' m from the nearest junction' + (sg.junctionM < JUNCTION_CLEAR_M ? ' (inside it)' : '') : ''; }
   function endAt(sg) { var e = sg.waypoints[sg.waypoints.length - 1]; return e.lat.toFixed(5) + ', ' + e.lon.toFixed(5); }
   function suggest(items, ac, parking) {
     if (!ac || typeof ac.lat !== 'number' || typeof ac.lon !== 'number') return [];
@@ -751,7 +824,7 @@ PS.suggest = (function () {
     kept = spaced;
     kept.forEach(function (s) { s.detail += '. Tightest arc ' + Math.round(s.tightestRadiusM) + ' m (tug turns at ' + P.PATH_TURN_RADIUS_M + ' m)'; });
     // Everything the suggester found and what became of it, for the log.
-    var report = { diag: lastDiag.slice(), found: all.length, kept: kept.map(function (s) { return s.title + ' -> facing ' + Math.round(s.facingDeg) + ', ' + Math.round(s.lengthM) + ' m, ends ' + endAt(s); }),
+    var report = { diag: lastDiag.slice(), found: all.length, kept: kept.map(function (s) { return s.title + ' -> facing ' + Math.round(s.facingDeg) + ', ' + Math.round(s.lengthM) + ' m, ends ' + endAt(s) + junctionNote(s); }),
       dropped: f.dropped.map(function (d) { return d.s.title + ' -> facing ' + Math.round(d.s.facingDeg) + ', ' + Math.round(d.s.lengthM) + ' m, ends ' + endAt(d.s) + ': ' + d.why; }) };
     Object.defineProperty(kept, 'lastReport', { value: report, enumerable: false });
     return kept;

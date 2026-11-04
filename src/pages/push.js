@@ -16,6 +16,8 @@ PS.pages.push({
     var statusSub = h('div', { class: 'ps-kv', text: '' });
     var tugPill = h('span', { class: 'ps-pill bad', text: 'TUG OFF' });
     var brakePill = h('span', { class: 'ps-pill', text: 'BRAKE ?' });
+    var gatePill = h('span', { class: 'ps-pill', text: 'GATE ?' });
+    var engineLine = h('div', { class: 'ps-kv', text: '' });
     var whyLine = h('div', { class: 'ps-kv', text: '' });
     var remainBig = h('div', { class: 'ps-big', text: '-' });
     var barFill = h('div', { style: 'width:0%' });
@@ -37,6 +39,11 @@ PS.pages.push({
     // The lesser options, on their own row: the tug and the parking brake by hand.
     var tugBtn = ui.iconButton('tug', 'Call the tug', function () { PS.push.toggleTug(); paint(); }, 'ps-small ps-ghost');
     var brakeBtn = ui.iconButton('brake', 'Set the brake', function () { PS.push.toggleBrake(); paint(); }, 'ps-small ps-ghost');
+    // Ground services (key events: the sim does not say whether they happened)
+    var serviceBtns = {};
+    PS.services.LIST.forEach(function (sv) {
+      serviceBtns[sv.id] = ui.iconButton(sv.icon, sv.label, function () { PS.services.request(sv.id); paint(); }, 'ps-small ps-ghost');
+    });
 
     var STATUS_TEXT = {
       idle: 'Tug not on', ready: 'Tug on, ready to push', attaching: 'Calling the tug...', waitBrake: 'Releasing the parking brake', settling: 'Starting...',
@@ -51,6 +58,12 @@ PS.pages.push({
       var b = v.brake, brakeKnown = !!(b && b.ok);
       if (!brakeKnown) { brakePill.className = 'ps-pill'; brakePill.textContent = 'BRAKE ?'; }
       else { brakePill.className = 'ps-pill ' + (b.set ? 'bad' : 'ok'); brakePill.textContent = b.set ? 'PARKING BRAKE SET' : 'PARKING BRAKE OFF'; }
+      if (!v.gate || !v.gate.known) { gatePill.className = 'ps-pill'; gatePill.textContent = 'GATE ?'; gatePill.title = 'No stand data for this airport yet'; }
+      else if (v.gate.at) { gatePill.className = 'ps-pill ok'; gatePill.textContent = 'AT GATE ' + v.gate.name; gatePill.title = PS.gate.describe(v.gate); }
+      else { gatePill.className = 'ps-pill'; gatePill.textContent = 'NOT AT A GATE'; gatePill.title = PS.gate.describe(v.gate); }
+      var eng = v.engines;
+      engineLine.textContent = eng && eng.known ? eng.text + (eng.n > 1 ? ' (' + eng.running + ' of ' + eng.n + ' running)' : '') : '';
+      engineLine.style.color = eng && eng.known && eng.ok ? PS.theme.c('good') : '';
       var running = !!RUNNING[v.status], waiting = v.status === 'waitBrake' || v.status === 'attaching';
       var paused = v.status === 'paused' || (v.status === 'stopping' && v.reason === 'paused');
       var c = PS.push.canStart();
@@ -63,10 +76,18 @@ PS.pages.push({
       pauseBtn.disabled = !(v.status === 'driving' || paused);
       stopBtn.disabled = !(running || waiting);
       tugBtn.setLabel(v.attached ? 'Dismiss the tug' : 'Call the tug');
-      tugBtn.disabled = running || v.status === 'attaching' || v.status === 'waitBrake';
+      var holdTug = v.attached && !v.engineGate.ok;
+      tugBtn.disabled = running || v.status === 'attaching' || v.status === 'waitBrake' || holdTug;
+      tugBtn.title = holdTug ? v.engineGate.why : '';
+      var svc = PS.services.can();
+      PS.services.LIST.forEach(function (sv) {
+        var b = serviceBtns[sv.id];
+        b.disabled = !svc.ok; b.title = svc.ok ? '' : svc.why;
+        b.className = 'ps-btn ps-iconbtn ps-small ps-ghost' + (PS.services.recently(sv.id) ? ' ps-requested' : '');
+      });
       brakeBtn.setLabel(brakeKnown && b.set ? 'Release the brake' : 'Set the brake');
       brakeBtn.disabled = !brakeKnown || (running && v.status !== 'brakeHold') || v.status === 'attaching';
-      whyLine.textContent = v.canReturn.ok && !running ? 'Return to gate retraces the push back to where it started (' + PS.fmt.dist(v.returnM) + ').' : (!finishMode && !c.ok && !running && !waiting ? c.why : '');
+      whyLine.textContent = v.attached && !v.engineGate.ok && !running ? v.engineGate.why : v.canReturn.ok && !running ? 'Return to gate retraces the push back to where it started (' + PS.fmt.dist(v.returnM) + ').' : (!finishMode && !c.ok && !running && !waiting ? c.why : '');
     }
 
     function paintProgress(v) {
@@ -118,10 +139,12 @@ PS.pages.push({
           ui.panel('Push',
             h('div', { class: 'ps-toprow' }, statusBig, h('div', { class: 'ps-spacer' }), h('div', { class: 'ps-right' }, help)),
             statusSub,
-            h('div', { class: 'ps-row' }, tugPill, brakePill),
+            h('div', { class: 'ps-row' }, tugPill, brakePill, gatePill),
+            engineLine,
             whyLine,
             h('div', { class: 'ps-btnrow' }, startBtn, returnBtn, pauseBtn, stopBtn),
-            h('div', { class: 'ps-btnrow' }, tugBtn, brakeBtn)),
+            h('div', { class: 'ps-btnrow' }, tugBtn, brakeBtn),
+            h('div', { class: 'ps-btnrow' }, PS.services.LIST.map(function (sv) { return serviceBtns[sv.id]; }))),
           ui.panel('Progress', remainBig, bar, legLine, motionLine)),
         h('div', { class: 'ps-col-main ps-col-first' },
           ui.panel('Map', h('div', { class: 'ps-toprow' }, h('div', { class: 'ps-spacer' }), h('div', { class: 'ps-right' }, mapRange.el)), canvas))));

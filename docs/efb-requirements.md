@@ -49,7 +49,7 @@ MSFS 2020 support is out of scope, so there is no sim detection. That removes th
 | B6 | **Must** | Steering and tiller: reset the aircraft tiller LVars while driven | `TugDrive.cs` `TillerLvars` | **A** |
 | B7 | **Must** | Yaw calibration learned during the push (`measured = gain × commanded + offset` per direction and side) | `YawCalibration.cs` | **G** logic, pure maths |
 
-### C. Manual pushback
+### C. Manual pushback (**dropped by the product owner**: not needed in this app, and there are other ways to do it)
 
 | ID | Priority | Requirement | EFB |
 |---|---|---|---|
@@ -155,3 +155,11 @@ Do these in order. Each is a day or two.
 ## 7. Suggested MVP
 
 All the Musts: sim state (A), tug attach, detach and brake handling (B1, B3–B7), manual pushback (C, on B2 or its fallback), ground services (G) and a map with the live aircraft marker (H1). Then, in order: auto routes (D, Should) once the spikes confirm the tick, B2 smooth driving if not already in, prompts beyond the tablet (I1) and the EFB redesign polish (H2). Plan saving (D6), taxiway suggestions (E), traffic watch (F) and settings (J) are Could.
+
+## 8. Status (latest)
+
+Done: A1 (the values the app uses), A3a (gate detection from stand data, `src/push/gate.js`), A3b, B1 to B5, D1 to D5, E1 to E3, G1 and G2 (key events, `src/push/services.js`; unverified in the sim), H1, H2, K.
+Partly: A2, A4 (read in `core.js`, not shown or used), E4 (stand detection exists, no display), F1 (traffic drawn, own aircraft filtered; no pause or ignore), H3 (Plan, Push and Settings tabs; services are on the Push tab), I1 (EFB notifications when the app is not open, unverified in the sim; the push carries on in the background), J (tightest turn, snap, plan tab, speed, colours, margins, engine rule).
+Not done: B6 (tiller LVars), B7 (learned yaw calibration; a fitted fixed response is used), D6 (plan save and load; kept for later).
+Dropped: C1 to C3 (manual pushback).
+Added beyond the list: colour themes and custom colours, SVG icons, taxiway snapping, Finish push, return to gate that checks the gate, engine start monitoring before the tug is dismissed (`src/push/engines.js`), landscape layout.

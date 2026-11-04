@@ -31,7 +31,7 @@ const ORDER = [
   'ui/plot-draw.js', 'ui/plot-math.js',
   'planning/route-planner.js', 'planning/push-suggest.js', 'planning/plan.js',
   'core/settings.js',
-  'push/tug.js', 'push/follow.js', 'push/push.js',
+  'push/tug.js', 'push/follow.js', 'push/gate.js', 'push/engines.js', 'push/push.js', 'push/services.js',
   'data/facility.js', 'data/air-traffic.js',
   'pages/plan.js', 'pages/push.js',
   'ui/colours.js',
