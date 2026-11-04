@@ -15,7 +15,7 @@ PS.follow = (function () {
     ROT_PER_CURVATURE: 30.48,                   // rotation setting per 1/m: the tug's turn radius is 30.5 / rotation (the original's RotPerCurvature)
     ROT_LIMIT_FWD: 2.0, ROT_LIMIT_REV: 1.8, ROT_LIMIT_RECOVER_FWD: 2.4, ROT_LIMIT_RECOVER_REV: 2.2, END_ROT_LIMIT: 1.8, END_ROT_LIMIT_DIST: 12, RECOVER_OFF: 3.5,
     YAW_PER_ROT_PER_FTS: 0.002 * 5 * 180 / Math.PI / 1,  // degrees per second per rotation setting per ft/s: rot x 0.002 x (speed units = ft/s / 0.2) x 57.3
-    YAW_GAIN: 0.77, YAW_DEADBAND_DEG_S: 0.30,   // the original's fit: the nose turns at gain x commanded - deadband (ground friction)
+    YAW_GAIN: 2.3, YAW_DEADBAND_DEG_S: 0.30,    // the nose turns at gain x commanded - deadband. Fitted to the first real pushes (Fenix A320 at NZCH): measured about 2.0 to 2.4 x the command (the original app's 0.77 did not hold)
     SMOOTH_KEEP_AT_50MS: 0.78,                  // steering smoothing, about a 200 ms time constant
     UNITS_TO_FTS: 0.2,                          // one speed unit is 0.2 ft/s (the original's SpeedUnitToFtPerSec)
     MIN_AUTO_UNITS: 8, REVERSE_FRACTION: 0.75, CURVE_FWD_FRACTION: 0.6, CURVE_REV_FRACTION: 0.55, CURVE_SLOW_BEND_DEG: 20, CURVE_SLOW_WITHIN_M: 50,
@@ -250,7 +250,31 @@ PS.follow = (function () {
       cruiseUnits = units;
       legs.forEach(function (l) { l.prof = buildProfile(l.path, l.sign < 0, cruiseUnits * K.UNITS_TO_FTS); });
     }
-    return { update: update, setCruise: setCruise, totalM: totalM, legCount: legs.length, state: st, legs: legs };
+    // The route as driven so far, and what is still to drive, as legs of [lat, lon] points (for a return to the gate, or finishing one).
+    function cut(path, s0, s1) {
+      var pts = [pointAt(path, s0)], k;
+      for (k = 0; k < path.xy.length; k++) { if (path.cum[k] > s0 + 0.01 && path.cum[k] < s1 - 0.01) pts.push({ x: path.xy[k][0], y: path.xy[k][1] }); }
+      pts.push(pointAt(path, s1));
+      return pts.map(function (q) { return G.fromXY(origin.lat, origin.lon, q.x, q.y); });
+    }
+    function travelled() {
+      var out = [];
+      for (var i = 0; i <= st.leg && i < legs.length; i++) {
+        var end = i < st.leg || st.done ? legs[i].path.total : st.s;
+        if (end >= 0.5) out.push({ sign: legs[i].sign, points: cut(legs[i].path, 0, end), radiusM: legs[i].radiusM, index: i, lengthM: end });
+      }
+      return out;
+    }
+    function ahead() {
+      var out = [];
+      if (st.done) return out;
+      for (var i = st.leg; i < legs.length; i++) {
+        var from = i === st.leg ? st.s : 0, total = legs[i].path.total;
+        if (total - from >= 0.5) out.push({ sign: legs[i].sign, points: cut(legs[i].path, from, total), radiusM: legs[i].radiusM, index: i, lengthM: total - from });
+      }
+      return out;
+    }
+    return { update: update, setCruise: setCruise, travelled: travelled, ahead: ahead, totalM: totalM, legCount: legs.length, state: st, legs: legs };
   }
 
   // The planner's evaluated plan (PS.plan.evaluate) as the legs the follower drives. The radius it was planned with goes with each leg.

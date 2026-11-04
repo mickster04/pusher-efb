@@ -22,8 +22,8 @@
       var hdg = sim['PLANE HEADING DEGREES TRUE'] * Math.PI / 180;
       sim['PLANE LATITUDE'] += (vz * 0.3048 * dt * Math.cos(hdg)) / 111320;
       sim['PLANE LONGITUDE'] += (vz * 0.3048 * dt * Math.sin(hdg)) / (111320 * Math.cos(sim['PLANE LATITUDE'] * Math.PI / 180));
-      // the nose turns at 0.77 x what is written, less a small dead band (the response the original app measured)
-      var mag = Math.max(0, 0.77 * Math.abs(yawDegS) - 0.30);
+      // the nose turns at 2.3 x what is written, less a small dead band (fitted to the first real pushes)
+      var mag = Math.max(0, 2.3 * Math.abs(yawDegS) - 0.30);
       sim['PLANE HEADING DEGREES TRUE'] = (sim['PLANE HEADING DEGREES TRUE'] + (yawDegS < 0 ? -1 : 1) * mag * dt + 360) % 360;
     }
     sim['VELOCITY BODY Z'] *= 0.96; sim['ROTATION VELOCITY BODY Y'] *= 0.96;   // velocity is not sticky: it decays unless rewritten

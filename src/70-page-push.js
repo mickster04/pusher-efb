@@ -28,6 +28,7 @@ PS.pages.push({
     var renderedPlan = null;
 
     function say(msg) { PS.log('push', msg); }
+    var returnBtn = ui.button('Return to gate', function () { PS.push.requestStart({ returnToGate: true }); paint(); }, 'ps-warn');
     var tugBtn = ui.button('Call the tug', function () { PS.push.toggleTug(); paint(); });
     var startBtn = ui.button('Start push', function () { PS.push.requestStart(); paint(); }, 'ps-warn');
     var pauseBtn = ui.button('Pause', function () {
@@ -57,13 +58,15 @@ PS.pages.push({
       tugBtn.disabled = !!running || v.status === 'attaching';
       var c = PS.push.canStart();
       startBtn.disabled = !c.ok;
+      returnBtn.disabled = !v.canReturn.ok;
+      returnBtn.title = v.canReturn.ok ? '' : v.canReturn.why;
       pauseBtn.textContent = (v.status === 'paused' || (v.status === 'stopping' && v.reason === 'paused')) ? 'Resume' : 'Pause';
       pauseBtn.disabled = !(v.status === 'driving' || v.status === 'paused' || (v.status === 'stopping' && v.reason === 'paused'));
       stopBtn.disabled = !(running || waiting);
       releaseBtn.style.display = v.attached && v.brake && v.brake.set && !running ? '' : 'none';
       setBrakeBtn.style.display = v.status === 'done' ? '' : 'none';
       dismissBtn.style.display = v.status === 'done' || v.status === 'ready' ? '' : 'none';
-      whyLine.textContent = !c.ok && !running && v.status !== 'waitBrake' ? c.why : '';
+      whyLine.textContent = v.canReturn.ok && !running ? 'Return to gate retraces the push back to where it started (' + PS.fmt.dist(v.returnM) + ').' : (!c.ok && !running && v.status !== 'waitBrake' ? c.why : '');
       var plan = PS.plan.evaluate(PS.readOwn() || { lat: 0, lon: 0, hdgDeg: 0 });
       if (plan !== renderedPlan) { renderedPlan = plan; renderRoute(plan); }
       planLine.textContent = plan.empty ? 'No plan yet: make one on the Plan tab.' : 'Plan: ' + PS.fmt.dist(plan.totalM) + ' in ' + plan.legs.length + ' leg(s)' + (plan.warnings.length ? ', WITH WARNINGS (see the Plan tab): the tug may not manage it' : ', no warnings') + '. Turn radius ' + Math.round(plan.radiusM) + ' m.';
@@ -129,7 +132,7 @@ PS.pages.push({
         statusBig, statusSub,
         h('div', { class: 'ps-row' }, tugPill, brakePill),
         planLine, whyLine,
-        h('div', { class: 'ps-row' }, tugBtn, startBtn, pauseBtn, stopBtn),
+        h('div', { class: 'ps-row' }, tugBtn, startBtn, returnBtn, pauseBtn, stopBtn),
         h('div', { class: 'ps-row' }, releaseBtn, setBrakeBtn, dismissBtn),
         ui.note('Start does it all in one press: it calls the tug if it is not on, waits for the parking brake to be off (the app can release it for you), then drives the plan. It moves the aircraft, so only use it on the ground with the way clear. The push stops at once if you press STOP, the sim takes the tug away, the brake is set, or this app is paused or closed.', 'warn')),
       ui.panel('Route', routeBox),

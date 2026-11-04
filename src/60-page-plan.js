@@ -253,6 +253,7 @@ PS.pages.push({
       lastView = view;
       var ownPx = view.toPx(own.lat, own.lon);
       refreshSuggestions(own);
+      if (!PS.plan.count() && sug.selectedId) { sug.selectedId = null; renderSuggestions(); }   // the pins were cleared (a finished push)
       var plan = PS.plan.evaluate(own);
       lastPlan = plan;
       if (plan !== renderedPlan) { renderedPlan = plan; renderRoute(plan); renderPins(plan, own); }

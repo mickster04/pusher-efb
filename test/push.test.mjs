@@ -47,7 +47,7 @@ function physics(ms) {
   const fresh = now() - sim.lastWrite < 150;                  // velocity is not sticky: stop writing it and the aircraft stops
   if (sim.attached && !sim.wait && fresh) {
     const yawDegS = sim.rotY * 180 / Math.PI;
-    const mag = Math.max(0, 0.77 * Math.abs(yawDegS) - 0.30);
+    const mag = Math.max(0, 2.3 * Math.abs(yawDegS) - 0.30);
     sim.hdg = G.normDeg(sim.hdg + Math.sign(yawDegS) * mag * dt);
     const d = sim.velZ * 0.3048 * dt;
     sim.x += d * Math.sin(G.rad(sim.hdg)); sim.y += d * Math.cos(G.rad(sim.hdg));
@@ -63,6 +63,7 @@ function reset() {
 }
 function withClock(start, fn) {
   mock.timers.enable({ apis: ['setInterval', 'setTimeout', 'Date'], now: start });
+  PS.push.forgetLoop();
   try { fn(); } finally { mock.timers.reset(); }
 }
 const planBack = (m) => { const p = G.offset(sim.ref.lat, sim.ref.lon, 180, m); PS.plan.add(p[0], p[1]); };
@@ -125,6 +126,7 @@ test('push: setting the parking brake mid-push holds the tug, and releasing it c
   assert.ok(PS.push.requestStart());
   run(8, () => { if (PS.push.view().status === 'driving') return false; });
   run(15);
+  assert.equal(PS.push.view().status, 'driving', 'before: ' + PS.logs.slice(-6).map((e) => e.msg).join(' / '));
   const y0 = sim.y;
   sim.brake = 1;
   run(4);
@@ -177,13 +179,19 @@ test('push: refuses to start with no plan, or when the aircraft is not on the gr
   });
 });
 
-test('push: closing or pausing the app stops the push at once', () => {
+test('push: going to another EFB app carries on, closing the app stops the push at once', () => {
   withClock(6000000, () => {
-  reset(); sim.brake = 0; sim.attached = 1; sim.wait = 0; planBack(80);
+  reset(); sim.brake = 0; planBack(80);
   assert.ok(PS.push.requestStart());
-  run(8, () => { if (PS.push.view().status === 'driving') return false; });
-  run(10);
-  PS.runCloseHooks('paused');
+  run(10, () => { if (PS.push.view().status === 'driving') return false; });
+  run(3);
+  assert.equal(PS.push.view().status, 'driving', 'before: ' + PS.logs.slice(-6).map((e) => e.msg).join(' / '));
+  const y0 = sim.y;
+  PS.runCloseHooks('app paused');
+  run(5);
+  assert.equal(PS.push.view().status, 'driving', 'still pushing in the background');
+  assert.ok(sim.y < y0, 'still moving');
+  PS.runCloseHooks('app closed');
   assert.equal(sim.velZ, 0, 'velocity zeroed');
   assert.notEqual(PS.push.view().status, 'driving');
   });
@@ -204,4 +212,70 @@ test('toasts: push messages are held back while the app is open, and sent to the
   PS.toasts.setAppOpen(true);
   assert.equal(PS.toasts.items.length, 0, 'dropped when the app comes back');
   PS.state.notificationManager = null; PS.toasts.setAppOpen(false);
+});
+
+test('push: finishing deletes the pins and offers a return to the gate, which retraces the push', () => {
+  withClock(7000000, () => {
+  reset(); sim.brake = 0; planBack(60);
+  assert.equal(PS.push.view().canReturn.ok, false, 'nothing to return from yet');
+  assert.ok(PS.push.requestStart());
+  run(150, () => { if (PS.push.view().status === 'done') return false; });
+  assert.equal(PS.push.view().status, 'done');
+  assert.equal(PS.plan.count(), 0, 'pins deleted');
+  const v = PS.push.view();
+  assert.ok(v.canReturn.ok, 'return offered: ' + v.canReturn.why);
+  assert.ok(Math.abs(sim.y - (-60)) < 1.6);
+  assert.ok(PS.push.requestStart({ returnToGate: true }), 'return accepted with no pins');
+  run(5);
+  assert.ok(PS.push.view().isReturn);
+  run(200, () => { if (PS.push.view().status === 'done') return false; });
+  assert.equal(PS.push.view().status, 'done', 'return finished: ' + PS.push.view().status);
+  assert.ok(Math.hypot(sim.x, sim.y) < 1.6, 'back at the gate: ' + sim.x.toFixed(1) + ',' + sim.y.toFixed(1));
+  assert.equal(PS.push.view().canReturn.ok, false, 'nothing more to return from');
+  });
+});
+
+test('push: a return to the gate is refused if the aircraft is not where the push ended, or the brake holds it', () => {
+  withClock(8000000, () => {
+  reset(); sim.brake = 0; planBack(40);
+  assert.ok(PS.push.requestStart());
+  run(150, () => { if (PS.push.view().status === 'done') return false; });
+  assert.equal(PS.push.view().status, 'done');
+  sim.y -= 100;                                  // the aircraft was moved
+  assert.equal(PS.push.view().canReturn.ok, false);
+  assert.match(PS.push.view().canReturn.why, /moved/);
+  assert.equal(PS.push.requestStart({ returnToGate: true }), false);
+  sim.y += 100; sim.brake = 1;
+  assert.ok(PS.push.requestStart({ returnToGate: true }), 'accepted, but then waits for the brake like any push');
+  run(2);
+  assert.equal(PS.push.view().status, 'waitBrake');
+  PS.push.stop('test');
+  });
+});
+
+test('push: a stopped push can return to the gate over the ground it covered, and a stopped return can be carried on', () => {
+  withClock(9000000, () => {
+  reset(); sim.brake = 0; planBack(80);
+  assert.ok(PS.push.requestStart());
+  run(40, () => { if (PS.push.view().status === 'driving' && sim.y < -25) return false; });
+  PS.push.stop('test stop');
+  run(10);
+  assert.equal(PS.push.view().status, 'ready');
+  const stoppedAt = sim.y;
+  assert.ok(stoppedAt < -20 && stoppedAt > -70, 'stopped part way: ' + stoppedAt.toFixed(1));
+  const v = PS.push.view();
+  assert.ok(v.canReturn.ok, 'return offered: ' + v.canReturn.why);
+  assert.ok(Math.abs(v.returnM - -stoppedAt) < 3, 'the way back is as far as it got: ' + v.returnM.toFixed(1) + ' vs ' + (-stoppedAt).toFixed(1));
+  // go back part of the way, stop again, then carry on to the gate
+  assert.ok(PS.push.requestStart({ returnToGate: true }));
+  run(40, () => { if (PS.push.view().status === 'driving' && sim.y > stoppedAt / 2) return false; });
+  PS.push.stop('test stop 2');
+  run(10);
+  assert.equal(PS.push.view().status, 'ready');
+  assert.ok(PS.push.view().canReturn.ok, 'still offered: ' + PS.push.view().canReturn.why);
+  assert.ok(PS.push.requestStart({ returnToGate: true }));
+  run(200, () => { if (PS.push.view().status === 'done') return false; });
+  assert.equal(PS.push.view().status, 'done');
+  assert.ok(Math.hypot(sim.x, sim.y) < 1.6, 'back at the gate: ' + sim.x.toFixed(1) + ',' + sim.y.toFixed(1));
+  });
 });

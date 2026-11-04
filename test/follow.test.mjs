@@ -11,10 +11,10 @@ const from = (pt) => ({ lat: pt[0], lon: pt[1] });   // a [lat, lon] point as a 
 function approach(cur, target, step) { return cur < target ? Math.min(target, cur + step) : Math.max(target, cur - step); }
 
 // A simulated tug: the drive layer ramps speed (14 ft/s per s) and turn rate (5 deg/s per s) towards what the follower asks, and the
-// aircraft's nose turns at gain x commanded - deadband, which is the response the original app measured (gain 0.77, deadband 0.30 deg/s).
+// aircraft's nose turns at gain x commanded - deadband, which is the response the original app measured (fitted to the real sim: gain about 2.3, deadband 0.30 deg/s).
 function simulate(planned, opts) {
   opts = opts || {};
-  const gain = opts.gain === undefined ? 0.77 : opts.gain, dead = opts.dead === undefined ? 0.30 : opts.dead, dt = 0.05;
+  const gain = opts.gain === undefined ? 2.3 : opts.gain, dead = opts.dead === undefined ? 0.30 : opts.dead, dt = 0.05;
   const legs = PS.follow.legsFromPlan(planned);
   const f = PS.follow.create(legs, { cruiseUnits: opts.cruise || 25 });
   let x = 0, y = 0, psi = own.hdgDeg, v = 0, yawRamped = 0, t = 0, maxCte = 0, c = null, stops = [], phases = {}, maxYawSeen = 0;
@@ -79,7 +79,7 @@ test('follower: a route that reverses direction stops at the cusp, holds, then d
 test('follower: copes with a sluggish tug (turns at 60% of the command) and a faster cruise speed', () => {
   const a = at(180, 60), b = at(90, 50, from(a));
   const planned = planFor([a, b]);
-  const r = simulate(planned, { gain: 0.6, dead: 0.4, cruise: 35 });
+  const r = simulate(planned, { gain: 1.6, dead: 0.4, cruise: 35 });
   assert.ok(r.done, 'finished: ' + JSON.stringify(r.stops));
   assert.ok(r.endErrM < 3.5, 'end error ' + r.endErrM.toFixed(2) + ' m');
   assert.ok(r.maxCte < 5, 'off the line by at most ' + r.maxCte.toFixed(2) + ' m');
