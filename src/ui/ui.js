@@ -303,22 +303,6 @@ PS.ui = {
     var wrap = opts.buttonsAbove ? PS.h('div', { class: 'ps-logwrap' }, bar, box) : PS.h('div', { class: 'ps-logwrap' }, box, bar);
     wrap.refresh = render;
     return wrap;
-  },
-  table: function (headers) {
-    var thead = PS.h(
-      'thead',
-      null,
-      PS.h(
-        'tr',
-        null,
-        headers.map(function (t) {
-          return PS.h('th', { text: t });
-        })
-      )
-    );
-    var tbody = PS.h('tbody');
-    var table = PS.h('table', { class: 'ps-table' }, thead, tbody);
-    return { el: PS.h('div', { class: 'ps-tablewrap' }, table), body: tbody };
   }
 };
 

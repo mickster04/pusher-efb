@@ -37,7 +37,7 @@ test('theme: text is readable on the panels in every preset', () => {
   });
 });
 
-test('theme: choosing a preset, setting a colour, resetting it, and sharing a theme as text', () => {
+test('theme: choosing a preset, setting a colour, and resetting it', () => {
   T.select('klm');
   assert.equal(T.selectedId(), 'klm');
   assert.equal(T.c('accent'), '#00a1de');
@@ -46,14 +46,8 @@ test('theme: choosing a preset, setting a colour, resetting it, and sharing a th
   assert.ok(PS.theme.css().indexOf('#ff0000') >= 0, 'the stylesheet picked it up');
   assert.equal(T.setColour('accent', 'nonsense'), false, 'a bad value is refused');
   assert.equal(T.setColour('notARole', '#123456'), false);
-  const text = T.exportText();
   T.resetAll();
   assert.equal(T.c('accent'), '#00a1de');
-  const r = T.importText(text);
-  assert.ok(r.ok && r.count >= 30, 'imported ' + r.count);
-  assert.equal(T.c('accent'), '#ff0000');
-  assert.equal(T.importText('{not json').ok, false);
-  assert.equal(T.importText('{"colours":{"nope":"#fff"}}').ok, false);
   T.select('default');
   assert.equal(T.c('accent'), '#f0a830');
 });
@@ -87,7 +81,7 @@ test('theme files: valid ones add or replace themes, bad ones are reported and i
   T.select('default');
 });
 
-test('theme files: the presets in the package folder are the ones built in, and an exported theme is a valid file', () => {
+test('theme files: the presets in the package folder are the ones built in', () => {
   const fs = require('node:fs');
   const dir = new URL('../PackageSources/PushPlanner/themes/', import.meta.url);
   const index = JSON.parse(fs.readFileSync(new URL('index.json', dir), 'utf8'));
@@ -100,8 +94,6 @@ test('theme files: the presets in the package folder are the ones built in, and 
     assert.equal(T.byId(id).id, id);
   });
   assert.equal(empties, 8, 'eight free slots to put a theme in');
-  const exported = JSON.parse(T.exportText());
-  assert.equal(T.validateThemeFile(exported), '', 'the copied theme can be saved straight as a theme file');
 });
 
 test('theme files: an empty slot is skipped quietly, and a slot that has been filled in loads', () => {

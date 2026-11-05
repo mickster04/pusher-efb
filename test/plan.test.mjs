@@ -177,14 +177,6 @@ test('snap: a pin near a taxiway takes its heading, the way that is the smaller 
   plan.clear(); PS.state.taxi = null;
 });
 
-test('flip: turns a pin\'s nose round the other way and makes the heading the user\'s own', () => {
-  plan.clear();
-  const p = at(180, 50); const i = plan.add(p[0], p[1]);
-  plan.setHeading(i, 315); plan.flip(i);
-  assert.equal(plan.list()[i].headingDeg, 135); assert.equal(plan.list()[i].headingUser, true);
-  plan.clear();
-});
-
 test('snap: releasing the heading handle near the taxiway direction lines the nose up with it', () => {
   plan.clear();
   const e = G.offset(ref.lat, ref.lon, 90, 100), f = G.offset(ref.lat, ref.lon, 270, 100);

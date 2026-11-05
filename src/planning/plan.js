@@ -224,14 +224,6 @@ PS.plan = (function () {
     changed();
     return { headingDeg: w.headingDeg, taxiwayDeg: r.taxiwayDeg, name: r.name, offDeg: best.off };
   }
-  // Turn pin i's nose round to the opposite way along the taxiway it is on (the snap can only guess which way is wanted when the turn is near 90 degrees).
-  function flip(i) {
-    var w = pins[i];
-    if (!w) return;
-    var cur = w.headingDeg;
-    if (cur === null || cur === undefined) return;
-    setHeading(i, cur + 180);
-  }
   function clear() {
     pins.length = 0;
     selected = -1;
@@ -579,7 +571,6 @@ PS.plan = (function () {
       return lastSnapMiss;
     },
     snapMaxM: snapReach,
-    flip: flip,
     evaluate: evaluate,
     turn: function () {
       return turn;

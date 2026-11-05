@@ -192,10 +192,6 @@ PS.fmt = {
   dist: function (m) {
     if (typeof m !== 'number' || !isFinite(m)) return '-';
     return m >= 1000 ? (m / 1000).toFixed(2) + ' km' : Math.round(m) + ' m';
-  },
-  seconds: function (s) {
-    if (typeof s !== 'number' || !isFinite(s)) return '-';
-    return s >= 120 ? Math.round(s / 60) + ' min' : Math.round(s) + ' s';
   }
 };
 

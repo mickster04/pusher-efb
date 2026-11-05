@@ -102,35 +102,6 @@ PS.facility = {
       });
     });
     return chain;
-  },
-
-  // Strategy B: the sim's JS facility listener (RegisterViewListener + Coherent events). Names are from memory of the
-  // sim's own JS and are unverified.
-  viaListener: function (icao) {
-    var co = PS.coherent();
-    if (!co || !co.call || !co.on) return Promise.reject(new Error('Coherent call/on not available'));
-    return PS.facility.withTimeout(
-      new Promise(function (resolve, reject) {
-        try {
-          if (typeof RegisterViewListener === 'function')
-            RegisterViewListener('JS_LISTENER_FACILITY', function () {
-              PS.logv('taxi', 'JS_LISTENER_FACILITY ready');
-            });
-          else PS.logv('taxi', 'RegisterViewListener is not a function here');
-          co.on('SendAirport', function (data) {
-            resolve(data);
-          });
-          var cands = PS.facility.icaoCandidates(icao);
-          PS.logv('taxi', 'Coherent.call LOAD_AIRPORT ' + JSON.stringify(cands[1]));
-          var r = co.call('LOAD_AIRPORT', cands[1]);
-          if (r && typeof r.then === 'function') r.then(null, reject);
-        } catch (e) {
-          reject(e);
-        }
-      }),
-      6000,
-      'LOAD_AIRPORT / SendAirport'
-    );
   }
 };
 

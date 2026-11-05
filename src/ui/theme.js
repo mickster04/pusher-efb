@@ -887,10 +887,6 @@ PS.theme = (function () {
     selectedId: function () {
       return find(state.id) ? state.id : THEMES[0].id;
     },
-    // The theme's own colour for a role (ignoring the user's changes), to reset to.
-    themeColour: function (role) {
-      return palette(state.id, {})[role];
-    },
     isChanged: function (role) {
       return state.custom[role] !== undefined;
     },
@@ -932,9 +928,6 @@ PS.theme = (function () {
       save();
       apply();
     },
-    mapChanged: function () {
-      return Object.keys(state.customMap).length > 0;
-    },
     resetAll: function () {
       state.custom = {};
       state.customMap = {};
@@ -943,39 +936,6 @@ PS.theme = (function () {
     },
     onChange: function (fn) {
       listeners.push(fn);
-    },
-    // A theme as text to share, and back. Only roles that differ from the base theme are written.
-    exportText: function () {
-      return JSON.stringify(
-        { app: 'PushPlanner', id: 'my-theme', name: 'My theme', note: 'Saved from Push Planner', theme: state.id, colours: palette() },
-        null,
-        1
-      );
-    },
-    importText: function (text) {
-      var data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        return { ok: false, why: 'That is not valid JSON.' };
-      }
-      var cols = data && (data.colours || data.colors || data.custom);
-      if (!cols || typeof cols !== 'object') return { ok: false, why: 'No "colours" found in it.' };
-      var next = {},
-        n = 0,
-        k;
-      for (k in cols) {
-        if (ALL_ROLES.indexOf(k) >= 0 && isHex(cols[k])) {
-          next[k] = normalise(cols[k]);
-          n++;
-        }
-      }
-      if (!n) return { ok: false, why: 'None of the colours in it are ones this app knows.' };
-      if (data.theme && typeof data.theme === 'string' && find(data.theme)) state.id = data.theme;
-      state.custom = next;
-      save();
-      apply();
-      return { ok: true, count: n };
     },
     // Where a colour is poorly readable against its background: [{ name, ratio }]
     contrastWarnings: function () {
