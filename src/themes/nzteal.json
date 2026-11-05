@@ -1,0 +1,69 @@
+{
+ "id": "nzteal",
+ "name": "Air NZ Teal",
+ "note": "Koru teal on white (light; colours approximate)",
+ "page": {
+  "surface": {
+   "bg": "#ffffff",
+   "bgDeep": "#dff1f0",
+   "panel": "#f3faf9",
+   "border": "#bcdcda",
+   "input": "#ffffff"
+  },
+  "text": {
+   "text": "#10201f",
+   "textDim": "#52706e",
+   "accentText": "#ffffff",
+   "buttonText": "#10201f"
+  },
+  "controls": {
+   "accent": "#00857f",
+   "accent2": "#5b2c83",
+   "button": "#e1f0ef"
+  },
+  "status": {
+   "good": "#17854e",
+   "warn": "#8f5a00",
+   "bad": "#c62f3d"
+  }
+ },
+ "map": {
+  "surface": {
+   "mapBg": "#ffffff",
+   "mapGrid": "#bcdcda",
+   "mapText": "#52706e",
+   "outline": "#ffffff"
+  },
+  "paths": {
+   "runway": {
+    "colour": "#3b4a49",
+    "width": 32
+   },
+   "taxiway": {
+    "colour": "#00857f",
+    "width": 6
+   },
+   "unnamed": {
+    "colour": "#a9bfbd",
+    "width": 3
+   }
+  },
+  "labels": {
+   "size": 15,
+   "gap": 9
+  },
+  "route": {
+   "routeBack": "#10201f",
+   "routeFwd": "#5b2c83",
+   "routeBad": "#c62f3d",
+   "routeDone": "#b9cccb"
+  },
+  "markers": {
+   "aircraft": "#17854e",
+   "pin": "#10201f",
+   "pinEnd": "#00857f",
+   "traffic": "#c62f3d",
+   "handle": "#b8860b"
+  }
+ }
+}
