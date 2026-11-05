@@ -31,7 +31,7 @@ const ORDER = [
   'ui/theme.js',
   'data/traffic-data.js',
   'ui/ui.js',
-  'data/wasm-taxi.js',
+  'data/wasm-taxi.js', 'data/wasm-files.js',
   'ui/plot-draw.js', 'ui/plot-math.js',
   'planning/route-planner.js', 'planning/push-suggest.js', 'planning/plan.js',
   'core/settings.js',

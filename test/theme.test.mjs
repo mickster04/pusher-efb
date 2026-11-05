@@ -132,3 +132,46 @@ test('theme slots: saving keeps the colours in use as a theme in that slot, and 
   assert.equal(T.selectedId(), T.THEMES[0].id, 'clearing the slot in use falls back to the first theme');
   T.select('default');
 });
+
+test('saved themes: saving writes a file named after the theme through the files module, it comes back as a theme, and can be deleted', async () => {
+  const files = {};
+  const orig = { list: PS.wasmFiles.list, save: PS.wasmFiles.save, remove: PS.wasmFiles.remove };
+  PS.wasmFiles.list = () => Promise.resolve(Object.keys(files).map((n) => ({ name: n, text: files[n] })));
+  PS.wasmFiles.save = (name, text) => { files[name] = text; return Promise.resolve({ ok: true, detail: '' }); };
+  PS.wasmFiles.remove = (name) => { const had = name in files; delete files[name]; return Promise.resolve({ ok: had, detail: had ? '' : 'missing' }); };
+  const call = (fn, ...a) => new Promise((resolve) => fn(...a, resolve));
+  try {
+    T.select('delta'); T.setColour('accent', '#00ff00');
+    const r = await call(T.saveTheme, '  Delta  night!  ');
+    assert.equal(r.ok, true); assert.equal(r.where, 'file'); assert.equal(r.file, 'delta-night.json');
+    assert.match(r.folder, /push-planner\\work$/, 'the folder is reported');
+    const saved = JSON.parse(files['delta-night.json']);
+    assert.equal(saved.name, 'Delta night!'); assert.equal(saved.colours.accent, '#00ff00'); assert.equal(T.validateThemeFile(saved), '', 'a valid theme file that can be shared');
+    assert.ok(T.THEMES.some((t) => t.fromSaved === 'delta-night.json'), 'listed as a theme');
+    assert.equal(T.byId(T.selectedId()).fromSaved, 'delta-night.json', 'and selected');
+    assert.equal(T.c('accent'), '#00ff00');
+    // a file somebody else dropped into the folder is picked up on the next load, and never replaces a preset
+    files['friend.json'] = JSON.stringify({ id: 'klm', name: 'Friend KLM', colours: { bg: '#001122', text: '#ffffff', accent: '#abcdef' } });
+    files['junk.json'] = '{nope';
+    const klmName = T.byId('klm').name;
+    await call(T.loadSaved);
+    assert.equal(T.byId('klm').name, klmName, 'the preset is untouched');
+    assert.ok(T.THEMES.some((t) => t.name === 'Friend KLM' && t.id === 'klm-saved'));
+    assert.deepEqual(T.savedStatus().failed.map((f) => f.file), ['junk.json']);
+    const d = await call(T.deleteSaved, 'delta-night.json');
+    assert.equal(d.ok, true); assert.ok(!('delta-night.json' in files));
+    assert.ok(!T.THEMES.some((t) => t.fromSaved === 'delta-night.json'));
+  } finally { Object.assign(PS.wasmFiles, orig); T.select('default'); }
+});
+
+test('saved themes: with no files module the theme is kept in the app\'s storage instead', async () => {
+  const orig = { save: PS.wasmFiles.save };
+  PS.wasmFiles.save = () => Promise.reject(new Error('no reply'));
+  try {
+    T.select('klm');
+    const r = await new Promise((resolve) => T.saveTheme('Fallback one', resolve));
+    assert.equal(r.ok, true); assert.equal(r.where, 'storage'); assert.ok(r.slot >= 1);
+    assert.ok(T.THEMES.some((t) => t.name === 'Fallback one' && t.fromSlot));
+    T.clearSlot(r.slot);
+  } finally { Object.assign(PS.wasmFiles, orig); T.select('default'); }
+});

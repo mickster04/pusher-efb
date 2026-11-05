@@ -146,6 +146,86 @@ PS.theme = (function () {
     }
   }
 
+  // ---- saved themes: real files in the files module's work folder ----
+  // The page cannot write files and nothing inside the package can be written by a module (the sim refuses), but the files module can read and write its
+  // own work folder (found by the probe). A theme saved there is a .json file named after the theme, found again at every start (the module lists the
+  // folder), and can be copied out to share or dropped in from someone else. If the files module is not installed, saving falls back to the in-app slots.
+  // Where the files are on disk. Found with the probe on a Microsoft Store install; a Steam install keeps its WASM work folders under a different root, so the
+  // hint says how to find it from the probe file the files module leaves there.
+  var WORK_FOLDER = '%LOCALAPPDATA%\\Packages\\Microsoft.Limitless_8wekyb3d8bbwe\\LocalState\\WASM\\MSFS2024\\push-planner\\work';
+  var WORK_FOLDER_NOTE = 'Saved themes are .json files in ' + WORK_FOLDER + ' (Microsoft Store install). A Steam install keeps it under a different root: search your drive for pusher-probe.txt to find the folder. Copy a file out to share it; drop one in and reload to use it.';
+  var savedInfo = { state: 'idle', module: 'unknown', count: 0, failed: [], at: 0 };
+  function slugify(name) {
+    var t = String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+    return t || 'my-theme';
+  }
+  // Add the theme files the module listed ([{ name, text }]) as themes, replacing the ones listed last time.
+  function ingestSaved(list) {
+    for (var i = THEMES.length - 1; i >= 0; i--) { if (THEMES[i].fromSaved) THEMES.splice(i, 1); }
+    var failed = [], count = 0;
+    list.forEach(function (it) {
+      var t;
+      try { t = JSON.parse(it.text); } catch (e) { failed.push({ file: it.name, why: 'not valid JSON' }); return; }
+      if (t && t.empty === true) return;
+      var why = validateThemeFile(t);
+      if (why) { failed.push({ file: it.name, why: why }); return; }
+      var cols = {}, k, src = t.colours || t.colors;
+      for (k in src) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(src[k])) cols[k] = normalise(src[k]); }
+      var id = t.id, clash = find(id);
+      if (clash && !clash.fromSaved) id = id + '-saved';                    // a saved file never replaces a preset
+      THEMES.push({ id: id, name: typeof t.name === 'string' && t.name ? t.name : id, note: typeof t.note === 'string' ? t.note : 'Saved theme', p: cols, fromFile: false, fromSaved: it.name });
+      count++;
+    });
+    refreshSlots();
+    return { count: count, failed: failed };
+  }
+  function loadSaved(done) {
+    if (!PS.wasmFiles || typeof PS.wasmFiles.list !== 'function') { savedInfo = { state: 'failed', module: 'no', count: 0, failed: [], at: Date.now() }; if (done) done(savedInfo); return; }
+    savedInfo.state = 'loading';
+    PS.wasmFiles.list().then(function (files) {
+      var r = ingestSaved(files);
+      savedInfo = { state: 'done', module: 'yes', count: r.count, failed: r.failed, at: Date.now() };
+      PS.log('theme', 'saved themes: ' + r.count + ' file(s) in the files module\'s work folder' + (r.failed.length ? '; not read: ' + r.failed.map(function (f) { return f.file + ' ' + f.why; }).join(', ') : ''));
+      if (!find(state.id)) { state.id = THEMES[0].id; state.custom = {}; save(); }
+      apply(); if (done) done(savedInfo);
+    }, function (e) {
+      savedInfo = { state: 'failed', module: 'no', count: 0, failed: [], at: Date.now() };
+      PS.log('theme', 'saved themes: the files module did not answer (' + (PS.errText ? PS.errText(e) : e) + '); saving will use the app\'s own storage');
+      apply(); if (done) done(savedInfo);
+    });
+  }
+  // Save the colours in use as a theme called `name`. done({ ok, where: 'file' | 'storage', file, why }).
+  function saveTheme(name, done) {
+    var nm = String(name || '').replace(/\s+/g, ' ').replace(/^ | $/g, '').slice(0, 30) || 'My theme', fileName = slugify(nm) + '.json', id = 'saved-' + slugify(nm);
+    var obj = { id: id, name: nm, note: 'Saved from Push Planner', colours: palette() };
+    var text = JSON.stringify(obj, null, 1);
+    function viaStorage(why) {
+      var n = 0, k;
+      for (k = 1; k <= SLOT_COUNT; k++) { if (slots[k] && slots[k].name === nm) { n = k; break; } }
+      if (!n) { for (k = 1; k <= SLOT_COUNT; k++) { if (!slots[k]) { n = k; break; } } }
+      if (!n) { if (done) done({ ok: false, why: 'The files module is not available and all ' + SLOT_COUNT + ' storage slots are used.' }); return; }
+      api.saveSlot(n, nm);
+      PS.log('theme', 'theme "' + nm + '" saved in the app\'s own storage (slot ' + n + '): ' + why);
+      if (done) done({ ok: true, where: 'storage', slot: n });
+    }
+    if (!PS.wasmFiles || typeof PS.wasmFiles.save !== 'function') { viaStorage('no files client'); return; }
+    PS.wasmFiles.save(fileName, text).then(function (r) {
+      if (!r || !r.ok) { viaStorage('the files module said: ' + (r && r.detail ? r.detail : 'no')); return; }
+      PS.log('theme', 'theme "' + nm + '" saved as ' + fileName);
+      loadSaved(function () {
+        if (find(id)) { state.id = id; state.custom = {}; save(); apply(); }
+        if (done) done({ ok: true, where: 'file', file: fileName, folder: WORK_FOLDER });
+      });
+    }, function (e) { viaStorage('the files module did not answer'); });
+  }
+  function deleteSaved(fileName, done) {
+    if (!PS.wasmFiles || typeof PS.wasmFiles.remove !== 'function') { if (done) done({ ok: false, why: 'no files module' }); return; }
+    PS.wasmFiles.remove(fileName).then(function (r) {
+      PS.log('theme', 'saved theme file ' + fileName + (r && r.ok ? ' deleted' : ' not deleted: ' + (r && r.detail ? r.detail : 'no')));
+      loadSaved(function () { if (done) done({ ok: !!(r && r.ok), why: r && r.detail }); });
+    }, function (e) { if (done) done({ ok: false, why: PS.errText ? PS.errText(e) : String(e) }); });
+  }
+
   // ---- theme files in the package ----
   // The package ships the presets as files (themes/index.json lists them) which are read here when the app starts: what is in them wins over the built-in
   // copy of the same id, and a file with a new id adds a theme. So a theme can be added or changed by editing the files, no rebuild of the app.
@@ -239,7 +319,7 @@ PS.theme = (function () {
   load();
   resolve();
 
-  return {
+  var api = {
     ROLE_GROUPS: ROLE_GROUPS, ROLES: ALL_ROLES, THEMES: THEMES, byId: byId,
     mix: mix, parse: parse, hex: hex, isHex: isHex, normalise: normalise, luminance: luminance, contrast: contrast,
     fillRoles: fillRoles, derive: derive, palette: palette, css: cssText,
@@ -267,6 +347,7 @@ PS.theme = (function () {
       apply();
       return true;
     },
+    workFolder: WORK_FOLDER, workFolderNote: WORK_FOLDER_NOTE, loadSaved: loadSaved, saveTheme: saveTheme, deleteSaved: deleteSaved, savedStatus: function () { return savedInfo; }, slugify: slugify, ingestSaved: ingestSaved,
     loadFiles: loadFiles, ingest: ingest, validateThemeFile: validateThemeFile, fileStatus: function () { return files; }, themeBase: themeBase,
     selectedId: function () { return find(state.id) ? state.id : THEMES[0].id; },
     // The theme's own colour for a role (ignoring the user's changes), to reset to.
@@ -302,4 +383,5 @@ PS.theme = (function () {
       return out;
     }
   };
+  return api;
 })();

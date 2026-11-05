@@ -65,11 +65,13 @@ PS.colourPanel = function () {
       var tokens = T.derive(T.fillRoles(th.p));
       var card = h('button', { type: 'button', class: 'ps-themecard' + (on ? ' on' : ''), title: th.note, onclick: function () {
         T.select(th.id); PS.log('settings', 'theme: ' + th.name);
-      } }, PS.themePreview(tokens), h('div', { class: 'ps-themename', text: th.name }), h('div', { class: 'ps-themenote', text: (th.fromFile ? 'file: ' : '') + th.note }));
+      } }, PS.themePreview(tokens), h('div', { class: 'ps-themename', text: th.name }), h('div', { class: 'ps-themenote', text: (th.fromFile ? 'file: ' : '') + (th.fromSaved ? 'saved: ' : '') + th.note }));
       grid.appendChild(card);
     });
     themesBox.appendChild(grid);
-    themesBox.appendChild(ui.note('Airline themes are inspired by those liveries (approximate colours, not official). Pick one, then change any colour on the My colours tab and save it to a slot: slots show here too. Theme files in the package (user1.json to user8.json) show here as well.'));
+    themesBox.appendChild(ui.note('Airline themes are inspired by those liveries (approximate colours, not official). Pick one, then change any colour on the My colours tab and save it: saved themes show here too, as do the package\'s theme files.'));
+    var sv = T.savedStatus();
+    themesBox.appendChild(h('div', { class: 'ps-kv', text: sv.state === 'done' ? 'Saved themes: ' + sv.count + ' file(s) in the files module\'s work folder' + (sv.failed.length ? '. Not read: ' + sv.failed.map(function (f) { return f.file + ' (' + f.why + ')'; }).join(', ') : '') : sv.state === 'failed' ? 'Files module not found: saved themes use the app\'s own storage' : sv.state === 'loading' ? 'Reading saved themes...' : '' }));
     // Theme files in the package: what was read, and a button to read them again (after editing them).
     var fs = T.fileStatus();
     var status = fs.state === 'loading' ? 'Reading theme files...'
@@ -109,35 +111,37 @@ PS.colourPanel = function () {
         }
       });
     });
-    // Save the colours in use to one of the slots (kept in the app's storage; they show on the Themes tab and survive restarts).
+    // Save the colours in use as a theme: a .json file named after it in the files module's work folder (or the app's own storage if that module is not there).
     var cur = T.byId(T.selectedId());
-    if (cur.fromSlot && !nameTouched) saveName = cur.name;
-    customBox.appendChild(h('div', { class: 'ps-colgroup', text: 'Save these colours to a slot' }));
+    if ((cur.fromSlot || cur.fromSaved) && !nameTouched) saveName = cur.name;
+    customBox.appendChild(h('div', { class: 'ps-colgroup', text: 'Save these colours as a theme' }));
     var nameInput = h('input', { type: 'text', class: 'ps-input ps-themename-input', value: saveName, placeholder: 'Theme name' });
     nameInput.addEventListener('input', function () { saveName = nameInput.value; nameTouched = true; });
-    customBox.appendChild(h('div', { class: 'ps-btnrow' }, nameInput));
-    var slotRow = h('div', { class: 'ps-btnrow' });
-    for (var n = 1; n <= T.SLOT_COUNT; n++) {
-      (function (slot) {
-        var info = T.slotInfo(slot);
-        // Fixed-size buttons: the slot number on top and the name (cut short if long) underneath, so a long name never changes the layout.
-        var btn = h('button', { type: 'button', class: 'ps-btn ps-small ps-slotbtn' + (info.filled ? '' : ' ps-ghost') + (cur.fromSlot === slot ? ' on' : ''), title: info.filled ? info.name : 'Free slot', onclick: function () {
-          var had = T.slotInfo(slot);
-          T.saveSlot(slot, nameInput.value);
-          nameTouched = false; saveMsg.textContent = (had.filled ? 'Replaced ' : 'Saved to ') + 'slot ' + slot + ' as "' + T.slotInfo(slot).name + '".';
-          PS.log('settings', 'theme saved to slot ' + slot + ' as "' + T.slotInfo(slot).name + '"');
-        } }, h('span', { class: 'ps-slotnum', text: 'Slot ' + slot }), h('span', { class: 'ps-slotname', text: info.filled ? info.name : 'free' }));
-        slotRow.appendChild(btn);
-      })(n);
-    }
-    customBox.appendChild(slotRow);
+    var saveBtn = ui.iconButton('check', 'Save theme', function () {
+      saveMsg.textContent = 'Saving...';
+      T.saveTheme(nameInput.value, function (r) {
+        nameTouched = false;
+        if (!r.ok) { saveMsg.textContent = r.why || 'Could not save.'; return; }
+        saveMsg.textContent = r.where === 'file'
+          ? 'Saved as ' + r.file + ' in the folder ' + r.folder + ' (a Steam install keeps it elsewhere: search for pusher-probe.txt).'
+          : 'The files module is not installed, so the theme was kept in the app\'s own storage (slot ' + r.slot + '). Install PusherFiles.wasm to save real files.';
+      });
+    }, 'ps-small');
+    customBox.appendChild(h('div', { class: 'ps-btnrow' }, nameInput, saveBtn));
     var actions = h('div', { class: 'ps-btnrow' },
       ui.button('Reset all my colours', function () { T.resetAll(); PS.log('settings', 'all custom colours reset'); }, 'ps-small ps-ghost'));
+    if (cur.fromSaved) {
+      actions.appendChild(ui.iconButton('trash', 'Delete ' + cur.fromSaved, function () {
+        saveMsg.textContent = 'Deleting...';
+        T.deleteSaved(cur.fromSaved, function (r) { saveMsg.textContent = r.ok ? 'Deleted ' + cur.fromSaved + '.' : 'Could not delete: ' + (r.why || 'unknown'); });
+      }, 'ps-small ps-ghost'));
+    }
     if (cur.fromSlot) {
       actions.appendChild(ui.button('Clear slot ' + cur.fromSlot, function () { var nn = cur.fromSlot; T.clearSlot(nn); saveMsg.textContent = 'Slot ' + nn + ' cleared.'; PS.log('settings', 'theme slot ' + nn + ' cleared'); }, 'ps-small ps-ghost'));
     }
     customBox.appendChild(actions);
     customBox.appendChild(saveMsg);
+    customBox.appendChild(ui.note(T.workFolderNote));
   }
 
   function show(which) {

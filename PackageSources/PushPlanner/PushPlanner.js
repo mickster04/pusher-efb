@@ -2,7 +2,7 @@
 (function () {
 'use strict';
 var PS = {};
-PS.CSS = ".ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: @bg@; color: @text@; font: 15px/1.35 Arial, sans-serif; } .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; } .ps-header { padding: 10px 16px 6px; background: @bgDeep@; } .ps-title { font-size: 20px; font-weight: bold; color: @accent@; margin-right: 12px; } .ps-sub { color: @textDim@; font-size: 13px; } .ps-nav { display: flex; flex-wrap: wrap; background: @bgDeep@; padding: 0 10px 8px; } .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid @border@; border-radius: 8px; background: @panel@; color: @text2@; font-size: 15px; } .ps-navbtn.on { background: @accent@; color: @accentText@; border-color: @accent@; font-weight: bold; } .ps-body { position: relative; flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding: 12px 14px 24px; } .ps-footer { padding: 5px 14px; background: @bgDeeper@; color: @dim4@; font-size: 12px; white-space: nowrap; overflow: hidden; } .ps-panel { background: @panel@; border: 1px solid @border@; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; } .ps-panel-title { font-weight: bold; margin-bottom: 8px; color: @accent@; } .ps-note { color: @dim2@; font-size: 13px; margin-top: 8px; } .ps-note.warn { color: @warn@; } .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; } .ps-row > * { margin: 0 10px 8px 0; } .ps-field { display: block; } .ps-field-label { display: block; font-size: 12px; color: @textDim@; margin-bottom: 3px; } .ps-input { padding: 9px 10px; border: 1px solid @border2@; border-radius: 6px; background: @input@; color: @text@; font-size: 15px; min-width: 120px; box-sizing: border-box; } .ps-check { display: block; padding: 8px 0; font-size: 14px; color: @text2@; } .ps-btn { padding: 11px 16px; border: 1px solid @border2@; border-radius: 8px; background: @button@; color: @buttonText@; font-size: 15px; } .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; } .ps-btn.ps-warn { background: @accentDeep@; border-color: @accent@; } .ps-btn.ps-danger { background: @badDeep@; border-color: @bad@; font-weight: bold; } .ps-btn.ps-ghost { background: transparent; } .ps-toggle { display: flex; flex-wrap: wrap; } .ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text2@; font-size: 15px; } .ps-toggle-btn.on { background: @accent@; color: @accentText@; font-weight: bold; } .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; } .ps-pill.ok { background: @goodDeep@; color: @goodSoft@; } .ps-pill.bad { background: @badDeeper@; color: @badSoft@; } .ps-kv { font-size: 13px; color: @dim3@; margin-bottom: 6px; white-space: pre-wrap; } .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: @input@; font-size: 14px; word-wrap: break-word; } .ps-result.ok { border-left: 4px solid @good@; } .ps-result.bad { border-left: 4px solid @bad@; color: @badSoft@; } .ps-mono { font-family: Consolas, monospace; font-size: 13px; } .ps-tablewrap { overflow-x: auto; } .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; } .ps-table th { text-align: left; color: @textDim@; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid @border@; } .ps-table td { padding: 5px 8px; border-bottom: 1px solid @borderSoft@; } .ps-val { font-family: Consolas, monospace; color: @goodSoft@; word-break: break-all; } .ps-val.bad { color: @badSoft@; } .ps-table tr.ps-hot td { background: @accentDeeper@; } .ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: @bgDeeper@; border-radius: 6px; color: @dim3@; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; } .ps-raw { max-height: 260px; } .ps-logwrap .ps-btn { margin-top: 6px; } .ps-canvas { display: block; border-radius: 8px; background: @input@; touch-action: none; -ms-touch-action: none; -webkit-user-select: none; user-select: none; } .ps-mount { margin-top: 8px; min-height: 0; } .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; } .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: @panelHi@; border: 2px solid @accent@; box-shadow: 0 4px 14px rgba(0,0,0,.5); } .ps-toast-brake { border-color: @bad@; } .ps-toast-warn { border-color: @warn@; } .ps-toast-info { border-color: @routeFwd@; } .ps-toast-title { font-weight: bold; font-size: 16px; } .ps-toast-msg { margin: 4px 0 8px; color: @text@; } .ps-toast-actions .ps-btn { margin-right: 8px; } .ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; } .ps-overlay-bar { margin-bottom: 8px; } .ps-overlay-bar .ps-btn { margin-left: 10px; } .ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: @bgDeeper@; color: @text2@; border: 1px solid @border2@; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; } .ps-stepper { display: flex; align-items: center; } .ps-stepper .ps-btn { margin: 0 8px 0 0; } .ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-weight: bold; color: @accent@; } .ps-canvas.ps-pinmode { cursor: crosshair; outline: 2px solid @accent@; } .ps-sug { display: block; width: 100%; text-align: left; margin: 0 0 6px 0; padding: 9px 12px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text@; font-size: 14px; } .ps-sug.on { border-color: @accent2@; background: @accent2Deep@; } .ps-sug-title { font-weight: bold; } .ps-sug-detail { color: @dim2@; font-size: 12px; } .ps-pinrow { padding: 4px 0; border-bottom: 1px solid @borderSoft@; font-size: 13px; } .ps-pinrow .ps-btn { margin-left: 10px; } .ps-pinrow.on { background: @accentFaint@; } .ps-body::-webkit-scrollbar { width: 18px; } .ps-body::-webkit-scrollbar-track { background: @bgDeeper@; } .ps-body::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 9px; border: 3px solid @bgDeeper@; min-height: 40px; } .ps-body::-webkit-scrollbar-thumb:hover { background: @accent@; } .ps-log::-webkit-scrollbar, .ps-tablewrap::-webkit-scrollbar { width: 12px; height: 12px; } .ps-log::-webkit-scrollbar-track, .ps-tablewrap::-webkit-scrollbar-track { background: @bgDeeper@; } .ps-log::-webkit-scrollbar-thumb, .ps-tablewrap::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 6px; } .ps-big { font-size: 34px; font-weight: bold; color: @accent@; margin: 2px 0 6px; } .ps-bar { height: 14px; background: @bgDeeper@; border-radius: 7px; overflow: hidden; margin: 6px 0 10px; border: 1px solid @border@; } .ps-bar > div { height: 100%; background: @accent2@; } .ps-btn:disabled { opacity: 0.4; } .ps-compact .ps-btn { padding: 5px 10px; font-size: 13px; } .ps-compact .ps-step-label { font-size: 14px; min-width: 56px; margin: 0 8px 0 2px; } .ps-help { position: relative; display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border: 1px solid @dim5@; border-radius: 12px; color: @dim3@; font-size: 14px; font-weight: bold; cursor: default; } .ps-help-pop { position: fixed; left: 8%; right: 8%; top: 130px; z-index: 60; background: @bgDeep@; border: 1px solid @accent@; border-radius: 10px; padding: 12px 16px; text-align: left; font-weight: normal; box-shadow: 0 4px 24px rgba(0,0,0,0.6); pointer-events: none; } .ps-help-title { color: @accent@; font-weight: bold; margin-bottom: 6px; } .ps-help-line { color: @text2@; font-size: 13px; margin-bottom: 5px; } .ps-toprow { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 8px; } .ps-toprow > * { margin: 0 8px 6px 0; } .ps-toprow .ps-spacer { flex: 1; min-width: 8px; margin: 0; } .ps-toprow .ps-right { display: flex; align-items: center; margin-right: 0; } .ps-toprow .ps-right > * { margin-left: 8px; margin-right: 0; } .ps-toprow .ps-btn, .ps-compact .ps-btn { padding: 6px 12px; font-size: 13px; } .ps-toprow .ps-stepper .ps-btn { margin: 0 6px 0 0; } .ps-toprow .ps-step-label { font-size: 14px; min-width: 54px; margin: 0 8px 0 2px; } .ps-cols { display: block; } .ps-landscape .ps-cols { display: flex; align-items: flex-start; } .ps-landscape .ps-col-main { flex: 3; min-width: 0; } .ps-landscape .ps-col-side { flex: 2; min-width: 0; margin-left: 14px; } .ps-landscape .ps-col-first { order: -1; } .ps-btnrow { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 6px; } .ps-btnrow > * { margin: 0 8px 8px 0; } .ps-btn:disabled { opacity: 0.38; } .ps-pinrow { padding: 6px 0; } .ps-pindesc { margin-bottom: 4px; } .ps-pinbtns { margin-bottom: 0; } .ps-pinbtns > * { margin: 0 8px 0 0; } .ps-pinrow .ps-btn { margin-left: 0; } .ps-btn, .ps-toggle-btn, .ps-navbtn { font-family: Arial, sans-serif; } .ps-pairbtns { display: inline-block; } .ps-pairbtns .ps-btn { margin: 0 8px 0 0; } .ps-icon { vertical-align: middle; } .ps-iconbtn { display: inline-flex; align-items: center; } .ps-iconbtn .ps-iconbtn-label { margin-left: 6px; } .ps-themegrid { display: flex; flex-wrap: wrap; } .ps-themecard { width: 150px; margin: 0 10px 10px 0; padding: 8px; border: 2px solid @border@; border-radius: 12px; background: @panel@; color: @text@; text-align: center; } .ps-themecard.on { border-color: @accent@; background: @panelHi@; } .ps-themecard svg { display: block; margin: 0 auto 6px; } .ps-themename { font-size: 14px; font-weight: bold; } .ps-themenote { font-size: 11px; color: @textDim@; margin-top: 2px; } .ps-colgroup { margin: 12px 0 6px; font-weight: bold; color: @accent@; } .ps-colrow { display: flex; align-items: center; padding: 4px 0; border-bottom: 1px solid @borderSoft@; } .ps-colrow.changed { background: @accentFaint@; } .ps-collabel { flex: 1; font-size: 14px; } .ps-colswatch { width: 44px; height: 28px; margin: 0 10px; border: 2px solid @border2@; border-radius: 6px; } .ps-hex { width: 96px; min-width: 96px; margin-right: 10px; padding: 5px 8px; font-size: 14px; } .ps-cgrid { display: flex; flex-wrap: wrap; padding: 8px 0 10px; } .ps-cswatch { width: 30px; height: 26px; margin: 0 3px 3px 0; border: 1px solid @border@; border-radius: 4px; } .ps-import { display: block; width: 100%; height: 70px; margin: 10px 0 6px; font-size: 12px; } .ps-ip { stroke: @buttonText@; fill: none; } .ps-ipf { fill: @buttonText@; stroke: none; } .ps-icon { flex: none; } .ps-btn.ps-requested { border-color: @accent@; color: @accent@; } .ps-btn.ps-requested .ps-ip { stroke: @accent@; } .ps-themename-input { width: 260px; } .ps-slotbtn { width: 118px; height: 46px; padding: 4px 8px; text-align: left; box-sizing: border-box; overflow: hidden; } .ps-slotnum { display: block; font-size: 13px; font-weight: bold; } .ps-slotname { display: block; font-size: 11px; color: @textDim@; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; } .ps-slotbtn.on { border-color: @accent@; }";
+PS.CSS = ".ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: @bg@; color: @text@; font: 15px/1.35 Arial, sans-serif; } .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; } .ps-header { padding: 10px 16px 6px; background: @bgDeep@; } .ps-title { font-size: 20px; font-weight: bold; color: @accent@; margin-right: 12px; } .ps-sub { color: @textDim@; font-size: 13px; } .ps-nav { display: flex; flex-wrap: wrap; background: @bgDeep@; padding: 0 10px 8px; } .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid @border@; border-radius: 8px; background: @panel@; color: @text2@; font-size: 15px; } .ps-navbtn.on { background: @accent@; color: @accentText@; border-color: @accent@; font-weight: bold; } .ps-body { position: relative; flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding: 12px 14px 24px; } .ps-footer { padding: 5px 14px; background: @bgDeeper@; color: @dim4@; font-size: 12px; white-space: nowrap; overflow: hidden; } .ps-panel { background: @panel@; border: 1px solid @border@; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; } .ps-panel-title { font-weight: bold; margin-bottom: 8px; color: @accent@; } .ps-note { color: @dim2@; font-size: 13px; margin-top: 8px; } .ps-note.warn { color: @warn@; } .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; } .ps-row > * { margin: 0 10px 8px 0; } .ps-field { display: block; } .ps-field-label { display: block; font-size: 12px; color: @textDim@; margin-bottom: 3px; } .ps-input { padding: 9px 10px; border: 1px solid @border2@; border-radius: 6px; background: @input@; color: @text@; font-size: 15px; min-width: 120px; box-sizing: border-box; } .ps-check { display: block; padding: 8px 0; font-size: 14px; color: @text2@; } .ps-btn { padding: 11px 16px; border: 1px solid @border2@; border-radius: 8px; background: @button@; color: @buttonText@; font-size: 15px; } .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; } .ps-btn.ps-warn { background: @accentDeep@; border-color: @accent@; } .ps-btn.ps-danger { background: @badDeep@; border-color: @bad@; font-weight: bold; } .ps-btn.ps-ghost { background: transparent; } .ps-toggle { display: flex; flex-wrap: wrap; } .ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text2@; font-size: 15px; } .ps-toggle-btn.on { background: @accent@; color: @accentText@; font-weight: bold; } .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; } .ps-pill.ok { background: @goodDeep@; color: @goodSoft@; } .ps-pill.bad { background: @badDeeper@; color: @badSoft@; } .ps-kv { font-size: 13px; color: @dim3@; margin-bottom: 6px; white-space: pre-wrap; } .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: @input@; font-size: 14px; word-wrap: break-word; } .ps-result.ok { border-left: 4px solid @good@; } .ps-result.bad { border-left: 4px solid @bad@; color: @badSoft@; } .ps-mono { font-family: Consolas, monospace; font-size: 13px; } .ps-tablewrap { overflow-x: auto; } .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; } .ps-table th { text-align: left; color: @textDim@; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid @border@; } .ps-table td { padding: 5px 8px; border-bottom: 1px solid @borderSoft@; } .ps-val { font-family: Consolas, monospace; color: @goodSoft@; word-break: break-all; } .ps-val.bad { color: @badSoft@; } .ps-table tr.ps-hot td { background: @accentDeeper@; } .ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: @bgDeeper@; border-radius: 6px; color: @dim3@; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; } .ps-raw { max-height: 260px; } .ps-logwrap .ps-btn { margin-top: 6px; } .ps-canvas { display: block; border-radius: 8px; background: @input@; touch-action: none; -ms-touch-action: none; -webkit-user-select: none; user-select: none; } .ps-mount { margin-top: 8px; min-height: 0; } .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; } .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: @panelHi@; border: 2px solid @accent@; box-shadow: 0 4px 14px rgba(0,0,0,.5); } .ps-toast-brake { border-color: @bad@; } .ps-toast-warn { border-color: @warn@; } .ps-toast-info { border-color: @routeFwd@; } .ps-toast-title { font-weight: bold; font-size: 16px; } .ps-toast-msg { margin: 4px 0 8px; color: @text@; } .ps-toast-actions .ps-btn { margin-right: 8px; } .ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; } .ps-overlay-bar { margin-bottom: 8px; } .ps-overlay-bar .ps-btn { margin-left: 10px; } .ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: @bgDeeper@; color: @text2@; border: 1px solid @border2@; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; } .ps-stepper { display: flex; align-items: center; } .ps-stepper .ps-btn { margin: 0 8px 0 0; } .ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-weight: bold; color: @accent@; } .ps-canvas.ps-pinmode { cursor: crosshair; outline: 2px solid @accent@; } .ps-sug { display: block; width: 100%; text-align: left; margin: 0 0 6px 0; padding: 9px 12px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text@; font-size: 14px; } .ps-sug.on { border-color: @accent2@; background: @accent2Deep@; } .ps-sug-title { font-weight: bold; } .ps-sug-detail { color: @dim2@; font-size: 12px; } .ps-pinrow { padding: 4px 0; border-bottom: 1px solid @borderSoft@; font-size: 13px; } .ps-pinrow .ps-btn { margin-left: 10px; } .ps-pinrow.on { background: @accentFaint@; } .ps-body::-webkit-scrollbar { width: 18px; } .ps-body::-webkit-scrollbar-track { background: @bgDeeper@; } .ps-body::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 9px; border: 3px solid @bgDeeper@; min-height: 40px; } .ps-body::-webkit-scrollbar-thumb:hover { background: @accent@; } .ps-log::-webkit-scrollbar, .ps-tablewrap::-webkit-scrollbar { width: 12px; height: 12px; } .ps-log::-webkit-scrollbar-track, .ps-tablewrap::-webkit-scrollbar-track { background: @bgDeeper@; } .ps-log::-webkit-scrollbar-thumb, .ps-tablewrap::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 6px; } .ps-big { font-size: 34px; font-weight: bold; color: @accent@; margin: 2px 0 6px; } .ps-bar { height: 14px; background: @bgDeeper@; border-radius: 7px; overflow: hidden; margin: 6px 0 10px; border: 1px solid @border@; } .ps-bar > div { height: 100%; background: @accent2@; } .ps-btn:disabled { opacity: 0.4; } .ps-compact .ps-btn { padding: 5px 10px; font-size: 13px; } .ps-compact .ps-step-label { font-size: 14px; min-width: 56px; margin: 0 8px 0 2px; } .ps-help { position: relative; display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border: 1px solid @dim5@; border-radius: 12px; color: @dim3@; font-size: 14px; font-weight: bold; cursor: default; } .ps-help-pop { position: fixed; left: 8%; right: 8%; top: 130px; z-index: 60; background: @bgDeep@; border: 1px solid @accent@; border-radius: 10px; padding: 12px 16px; text-align: left; font-weight: normal; box-shadow: 0 4px 24px rgba(0,0,0,0.6); pointer-events: none; } .ps-help-title { color: @accent@; font-weight: bold; margin-bottom: 6px; } .ps-help-line { color: @text2@; font-size: 13px; margin-bottom: 5px; } .ps-toprow { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 8px; } .ps-toprow > * { margin: 0 8px 6px 0; } .ps-toprow .ps-spacer { flex: 1; min-width: 8px; margin: 0; } .ps-toprow .ps-right { display: flex; align-items: center; margin-right: 0; } .ps-toprow .ps-right > * { margin-left: 8px; margin-right: 0; } .ps-toprow .ps-btn, .ps-compact .ps-btn { padding: 6px 12px; font-size: 13px; } .ps-toprow .ps-stepper .ps-btn { margin: 0 6px 0 0; } .ps-toprow .ps-step-label { font-size: 14px; min-width: 54px; margin: 0 8px 0 2px; } .ps-cols { display: block; } .ps-landscape .ps-cols { display: flex; align-items: flex-start; } .ps-landscape .ps-col-main { flex: 3; min-width: 0; } .ps-landscape .ps-col-side { flex: 2; min-width: 0; margin-left: 14px; } .ps-landscape .ps-col-first { order: -1; } .ps-btnrow { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 6px; } .ps-btnrow > * { margin: 0 8px 8px 0; } .ps-btn:disabled { opacity: 0.38; } .ps-pinrow { padding: 6px 0; } .ps-pindesc { margin-bottom: 4px; } .ps-pinbtns { margin-bottom: 0; } .ps-pinbtns > * { margin: 0 8px 0 0; } .ps-pinrow .ps-btn { margin-left: 0; } .ps-btn, .ps-toggle-btn, .ps-navbtn { font-family: Arial, sans-serif; } .ps-pairbtns { display: inline-block; } .ps-pairbtns .ps-btn { margin: 0 8px 0 0; } .ps-icon { vertical-align: middle; } .ps-iconbtn { display: inline-flex; align-items: center; } .ps-iconbtn .ps-iconbtn-label { margin-left: 6px; } .ps-themegrid { display: flex; flex-wrap: wrap; } .ps-themecard { width: 150px; margin: 0 10px 10px 0; padding: 8px; border: 2px solid @border@; border-radius: 12px; background: @panel@; color: @text@; text-align: center; } .ps-themecard.on { border-color: @accent@; background: @panelHi@; } .ps-themecard svg { display: block; margin: 0 auto 6px; } .ps-themename { font-size: 14px; font-weight: bold; } .ps-themenote { font-size: 11px; color: @textDim@; margin-top: 2px; } .ps-colgroup { margin: 12px 0 6px; font-weight: bold; color: @accent@; } .ps-colrow { display: flex; align-items: center; padding: 4px 0; border-bottom: 1px solid @borderSoft@; } .ps-colrow.changed { background: @accentFaint@; } .ps-collabel { flex: 1; font-size: 14px; } .ps-colswatch { width: 44px; height: 28px; margin: 0 10px; border: 2px solid @border2@; border-radius: 6px; } .ps-hex { width: 96px; min-width: 96px; margin-right: 10px; padding: 5px 8px; font-size: 14px; } .ps-cgrid { display: flex; flex-wrap: wrap; padding: 8px 0 10px; } .ps-cswatch { width: 30px; height: 26px; margin: 0 3px 3px 0; border: 1px solid @border@; border-radius: 4px; } .ps-import { display: block; width: 100%; height: 70px; margin: 10px 0 6px; font-size: 12px; } .ps-ip { stroke: @buttonText@; fill: none; } .ps-ipf { fill: @buttonText@; stroke: none; } .ps-icon { flex: none; } .ps-btn.ps-requested { border-color: @accent@; color: @accent@; } .ps-btn.ps-requested .ps-ip { stroke: @accent@; } .ps-themename-input { width: 260px; } .ps-slotbtn { width: 118px; height: 46px; padding: 4px 8px; text-align: left; box-sizing: border-box; overflow: hidden; } .ps-slotnum { display: block; font-size: 13px; font-weight: bold; } .ps-slotname { display: block; font-size: 11px; color: @textDim@; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; } .ps-slotbtn.on { border-color: @accent@; } .ps-themename-input { width: 240px; }";
 PS.ICONS = {"arrowDown":["M12 5v14","M5 12l7 7 7-7"],"arrowLeft":["M19 12H5","M12 5l-7 7 7 7"],"arrowRight":["M5 12h14","M12 5l7 7-7 7"],"arrowUp":["M12 19V5","M5 12l7-7 7 7"],"baggage":["M5 7h14a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z","M9 7V4h6v3","M9 11v6","M15 11v6"],"brake":["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z","M10 16V8h3a2.5 2.5 0 0 1 0 5h-3"],"catering":["M7 3v8","M4 3v5a3 3 0 0 0 6 0V3","M7 11v10","M17 21V3","M17 3c-2 2-3 5-3 8h3"],"check":["M5 13l4 4 10-10"],"chevDown":["M6 9l6 6 6-6"],"chevLeft":["M15 6l-6 6 6 6"],"chevRight":["M9 6l6 6-6 6"],"chevUp":["M6 15l6-6 6 6"],"cross":["M6 6l12 12","M18 6L6 18"],"flag":["M5 21V4","M5 4h12l-2 4 2 4H5"],"fuel":["M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16","M3 21h12","M6 8h6","M14 9l3 2v6a1.5 1.5 0 0 0 3 0V9l-3-3"],"gear":["M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z","M12 2v3","M12 19v3","M2 12h3","M19 12h3","M5 5l2 2","M17 17l2 2","M19 5l-2 2","M7 17l-2 2"],"help":["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z","M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7","M12 17v.5"],"home":["M3 11l9-8 9 8","M5 10v10h5v-6h4v6h5V10"],"info":["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z","M12 11v6","M12 7.5v.5"],"jetbridge":["M2 5v14","M2 10h11","M2 15h11","M13 8h5a3 3 0 0 1 0 8h-5z"],"list":["M8 6h13","M8 12h13","M8 18h13","M3 6h.5","M3 12h.5","M3 18h.5"],"minus":["M5 12h14"],"pause":["#M7 5h4v14H7z","#M13 5h4v14h-4z"],"pin":["M12 21s-6-6-6-11a6 6 0 0 1 12 0c0 5-6 11-6 11z","M12 8a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"],"plane":["#M12 2l2 7 8 4v2l-8-1.5-.5 5 2.5 1.5V22l-4-1-4 1v-1.5l2.5-1.5-.5-5L2 15v-2l8-4z"],"play":["#M8 5l11 7-11 7z"],"plus":["M12 5v14","M5 12h14"],"power":["M9 3v5","M15 3v5","M6 8h12v3a6 6 0 0 1-12 0z","M12 17v4"],"redo":["M15 14l5-5-5-5","M20 9H10a6 6 0 0 0 0 12h3"],"stop":["#M6 6h12v12H6z"],"swap":["M7 4l-4 4 4 4","M3 8h14","M17 20l4-4-4-4","M21 16H7"],"target":["M12 3v4","M12 17v4","M3 12h4","M17 12h4","M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"],"trash":["M4 7h16","M9 7V4h6v3","M6 7l1 13h10l1-13","M10 11v6","M14 11v6"],"tug":["M3 16h18","M5 16V9h8l3 3v4","M7 19a1.5 1.5 0 1 0 0 .1","M17 19a1.5 1.5 0 1 0 0 .1"],"turnRound":["M20 12a8 8 0 1 1-2.5-5.8","M20 4v5h-5"],"undo":["M9 14L4 9l5-5","M4 9h10a6 6 0 0 1 0 12h-3"],"warning":["M12 3l10 18H2z","M12 10v5","M12 18v.5"],"zoomIn":["M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z","M21 21l-5-5","M8 11h6","M11 8v6"],"zoomOut":["M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z","M21 21l-5-5","M8 11h6"]};
 PS.BUILTIN_THEMES = [{"id":"default","name":"Push Planner","note":"The original dark theme with amber","colours":{"bg":"#131c24","bgDeep":"#0e151b","panel":"#1b2630","border":"#2a3a47","text":"#dfe7ee","textDim":"#8aa0b2","accent":"#f0a830","accentText":"#131c24","button":"#2a3a47","buttonText":"#eef4f8","input":"#0f171e","good":"#4cd18a","warn":"#ffd37a","bad":"#ff5c6c","accent2":"#34d2c8","runway":"#8aa3b8","pathOther":"#4d6275","routeBack":"#ffffff","routeFwd":"#5aa8ff","routeDone":"#4d6275","pin":"#e8f0f6","pinEnd":"#ff9f43","traffic":"#ff5c5c","handle":"#ffe14d","outline":"#0b1116","mapText":"#6f8294"}},{"id":"contrast","name":"High contrast","note":"Black and white with strong colours","colours":{"bg":"#000000","bgDeep":"#000000","panel":"#0c0c0c","border":"#8a8a8a","text":"#ffffff","textDim":"#d2d2d2","accent":"#ffd400","accentText":"#000000","button":"#262626","buttonText":"#ffffff","input":"#000000","good":"#00ff7f","warn":"#ffd400","bad":"#ff4545","accent2":"#00e5ff","routeFwd":"#4da6ff","mapGrid":"#6a6a6a","mapText":"#d2d2d2","outline":"#000000"}},{"id":"night","name":"Night (red)","note":"Dim reds that keep night vision","colours":{"bg":"#0c0202","bgDeep":"#070101","panel":"#170505","border":"#421212","text":"#e8665a","textDim":"#b04a40","accent":"#ff3b2f","accentText":"#120000","button":"#2b0c0c","buttonText":"#ff8a7a","input":"#080101","good":"#d9803a","warn":"#ffa060","bad":"#ff2a2a","accent2":"#c0392b","routeBack":"#ff9a8a","routeFwd":"#c0392b","routeDone":"#5a2420","runway":"#b4574c","pathOther":"#5a2420","pin":"#ff8a7a","pinEnd":"#ffa060","traffic":"#ff6a5a","handle":"#ffa060","outline":"#060000"}},{"id":"day","name":"Daylight","note":"Light, for a bright cockpit","colours":{"bg":"#eef2f6","bgDeep":"#d9e1e8","panel":"#ffffff","border":"#c0ccd6","text":"#1b2630","textDim":"#566678","accent":"#c46a00","accentText":"#ffffff","button":"#e1e8ee","buttonText":"#1b2630","input":"#f7f9fb","good":"#17854e","warn":"#8f6200","bad":"#c62f3d","accent2":"#0e8f89","mapBg":"#f7f9fb","mapGrid":"#c0ccd6","mapText":"#566678","taxiway":"#c46a00","runway":"#566678","pathOther":"#9aa8b4","routeBack":"#1b2630","routeFwd":"#1565c0","routeBad":"#c62f3d","routeDone":"#a3b0bb","aircraft":"#17854e","pin":"#1b2630","pinEnd":"#e06a00","traffic":"#c62f3d","handle":"#b8860b","outline":"#ffffff"}},{"id":"delta","name":"Delta","note":"Navy and red","colours":{"bg":"#0a1f3c","bgDeep":"#06142a","panel":"#0f2b52","border":"#1d4580","text":"#f2f5f9","textDim":"#9db2cf","accent":"#e01933","accentText":"#ffffff","button":"#16376a","buttonText":"#ffffff","input":"#081a33","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677","accent2":"#7fb6ff","routeFwd":"#6fb0ff","taxiway":"#e01933"}},{"id":"ba","name":"British Airways","note":"Speedbird navy, red and silver","colours":{"bg":"#06132e","bgDeep":"#040d20","panel":"#0c2152","border":"#1f4290","text":"#f4f6fb","textDim":"#a7b6d4","accent":"#eb2226","accentText":"#ffffff","button":"#12306b","buttonText":"#ffffff","input":"#050f26","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a6e","accent2":"#c8ccd4","taxiway":"#d6d9e0","routeFwd":"#7aa8ff"}},{"id":"lufthansa","name":"Lufthansa","note":"Deep blue with the crane yellow","colours":{"bg":"#0a1544","bgDeep":"#060e30","panel":"#102060","border":"#263d8c","text":"#f5f6fb","textDim":"#a6b0d8","accent":"#ffad00","accentText":"#05164d","button":"#1a2c7c","buttonText":"#ffffff","input":"#080f36","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677","accent2":"#ffad00","routeFwd":"#7fb0ff"}},{"id":"airnz","name":"Air New Zealand","note":"Black and white with koru teal","colours":{"bg":"#0d0d0d","bgDeep":"#000000","panel":"#1a1a1a","border":"#3c3c3c","text":"#ffffff","textDim":"#a8a8a8","accent":"#1fb5ac","accentText":"#000000","button":"#2a2a2a","buttonText":"#ffffff","input":"#080808","good":"#4cd18a","warn":"#ffd37a","bad":"#ff5c6c","accent2":"#8be0da","taxiway":"#1fb5ac","routeFwd":"#6fc4ff"}},{"id":"eurowings","name":"Eurowings","note":"Aubergine and magenta","colours":{"bg":"#1d0a2e","bgDeep":"#14061f","panel":"#2b1243","border":"#4b2472","text":"#fbf4fa","textDim":"#c4a4d0","accent":"#e6007e","accentText":"#ffffff","button":"#3e1b5e","buttonText":"#ffffff","input":"#120519","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a8a","accent2":"#ff7ac0","taxiway":"#ff7ac0","routeFwd":"#8fb4ff"}},{"id":"qantas","name":"Qantas","note":"Kangaroo red on black","colours":{"bg":"#0e0e10","bgDeep":"#070708","panel":"#1b1b1f","border":"#3d2c2f","text":"#ffffff","textDim":"#b3a9aa","accent":"#e40000","accentText":"#ffffff","button":"#2b2224","buttonText":"#ffffff","input":"#09090a","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a5a","accent2":"#ffffff","taxiway":"#ff5a4a","routeFwd":"#6fb0ff"}},{"id":"emirates","name":"Emirates","note":"Charcoal, red and gold","colours":{"bg":"#1a1614","bgDeep":"#100d0c","panel":"#272120","border":"#4d4136","text":"#f6f1ea","textDim":"#b9ab98","accent":"#d71921","accentText":"#ffffff","button":"#372e2b","buttonText":"#ffffff","input":"#120f0e","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a6e","accent2":"#c9a56a","taxiway":"#c9a56a","routeFwd":"#7ab6ff"}},{"id":"klm","name":"KLM","note":"Royal blue and sky blue","colours":{"bg":"#04204a","bgDeep":"#021632","panel":"#0a3068","border":"#1b5aa8","text":"#ffffff","textDim":"#a9c7e8","accent":"#00a1de","accentText":"#00203f","button":"#14407f","buttonText":"#ffffff","input":"#031a3c","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677","accent2":"#7fd6ff","taxiway":"#00a1de","routeFwd":"#9ad4ff"}},{"id":"sia","name":"Singapore Airlines","note":"Navy and gold","colours":{"bg":"#031637","bgDeep":"#020e24","panel":"#072a63","border":"#1a4690","text":"#ffffff","textDim":"#a8b9d8","accent":"#f99f1c","accentText":"#031637","button":"#10388a","buttonText":"#ffffff","input":"#02112b","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677","accent2":"#f9c46a","routeFwd":"#7fb6ff"}},{"id":"airfrance","name":"Air France","note":"Navy with the tricolour red","colours":{"bg":"#00163d","bgDeep":"#000e29","panel":"#00255a","border":"#143f82","text":"#ffffff","textDim":"#a9b9d8","accent":"#e1000f","accentText":"#ffffff","button":"#0c3478","buttonText":"#ffffff","input":"#00112f","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a74","accent2":"#6aa0ff","taxiway":"#ff4a55","routeFwd":"#7fb0ff"}},{"id":"ryanair","name":"Ryanair","note":"Bright blue and yellow","colours":{"bg":"#05205f","bgDeep":"#031542","panel":"#0a3180","border":"#2050b4","text":"#ffffff","textDim":"#b3c4ee","accent":"#f1c933","accentText":"#05205f","button":"#144098","buttonText":"#ffffff","input":"#041a50","good":"#4cd18a","warn":"#f1c933","bad":"#ff6677","accent2":"#f1c933","routeFwd":"#8dc0ff"}},{"id":"easyjet","name":"easyJet","note":"Charcoal and orange","colours":{"bg":"#1c1c1c","bgDeep":"#111111","panel":"#2a2a2a","border":"#474747","text":"#ffffff","textDim":"#b5b5b5","accent":"#ff6600","accentText":"#111111","button":"#3a3a3a","buttonText":"#ffffff","input":"#131313","good":"#4cd18a","warn":"#ffd37a","bad":"#ff5c6c","accent2":"#ffa466","taxiway":"#ff6600","routeFwd":"#6fb0ff"}},{"id":"qatar","name":"Qatar Airways","note":"Burgundy and muted gold","colours":{"bg":"#2a0415","bgDeep":"#1c020e","panel":"#3d0a24","border":"#6b1a3f","text":"#f7eef2","textDim":"#c9a5b5","accent":"#c8a165","accentText":"#2a0415","button":"#541030","buttonText":"#ffffff","input":"#1f030f","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a8a","accent2":"#e6c991","taxiway":"#c8a165","routeFwd":"#8fb4ff"}}];
 /* ---- core/core.js ---- */
@@ -730,6 +730,86 @@ PS.theme = (function () {
     }
   }
 
+  // ---- saved themes: real files in the files module's work folder ----
+  // The page cannot write files and nothing inside the package can be written by a module (the sim refuses), but the files module can read and write its
+  // own work folder (found by the probe). A theme saved there is a .json file named after the theme, found again at every start (the module lists the
+  // folder), and can be copied out to share or dropped in from someone else. If the files module is not installed, saving falls back to the in-app slots.
+  // Where the files are on disk. Found with the probe on a Microsoft Store install; a Steam install keeps its WASM work folders under a different root, so the
+  // hint says how to find it from the probe file the files module leaves there.
+  var WORK_FOLDER = '%LOCALAPPDATA%\\Packages\\Microsoft.Limitless_8wekyb3d8bbwe\\LocalState\\WASM\\MSFS2024\\push-planner\\work';
+  var WORK_FOLDER_NOTE = 'Saved themes are .json files in ' + WORK_FOLDER + ' (Microsoft Store install). A Steam install keeps it under a different root: search your drive for pusher-probe.txt to find the folder. Copy a file out to share it; drop one in and reload to use it.';
+  var savedInfo = { state: 'idle', module: 'unknown', count: 0, failed: [], at: 0 };
+  function slugify(name) {
+    var t = String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+    return t || 'my-theme';
+  }
+  // Add the theme files the module listed ([{ name, text }]) as themes, replacing the ones listed last time.
+  function ingestSaved(list) {
+    for (var i = THEMES.length - 1; i >= 0; i--) { if (THEMES[i].fromSaved) THEMES.splice(i, 1); }
+    var failed = [], count = 0;
+    list.forEach(function (it) {
+      var t;
+      try { t = JSON.parse(it.text); } catch (e) { failed.push({ file: it.name, why: 'not valid JSON' }); return; }
+      if (t && t.empty === true) return;
+      var why = validateThemeFile(t);
+      if (why) { failed.push({ file: it.name, why: why }); return; }
+      var cols = {}, k, src = t.colours || t.colors;
+      for (k in src) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(src[k])) cols[k] = normalise(src[k]); }
+      var id = t.id, clash = find(id);
+      if (clash && !clash.fromSaved) id = id + '-saved';                    // a saved file never replaces a preset
+      THEMES.push({ id: id, name: typeof t.name === 'string' && t.name ? t.name : id, note: typeof t.note === 'string' ? t.note : 'Saved theme', p: cols, fromFile: false, fromSaved: it.name });
+      count++;
+    });
+    refreshSlots();
+    return { count: count, failed: failed };
+  }
+  function loadSaved(done) {
+    if (!PS.wasmFiles || typeof PS.wasmFiles.list !== 'function') { savedInfo = { state: 'failed', module: 'no', count: 0, failed: [], at: Date.now() }; if (done) done(savedInfo); return; }
+    savedInfo.state = 'loading';
+    PS.wasmFiles.list().then(function (files) {
+      var r = ingestSaved(files);
+      savedInfo = { state: 'done', module: 'yes', count: r.count, failed: r.failed, at: Date.now() };
+      PS.log('theme', 'saved themes: ' + r.count + ' file(s) in the files module\'s work folder' + (r.failed.length ? '; not read: ' + r.failed.map(function (f) { return f.file + ' ' + f.why; }).join(', ') : ''));
+      if (!find(state.id)) { state.id = THEMES[0].id; state.custom = {}; save(); }
+      apply(); if (done) done(savedInfo);
+    }, function (e) {
+      savedInfo = { state: 'failed', module: 'no', count: 0, failed: [], at: Date.now() };
+      PS.log('theme', 'saved themes: the files module did not answer (' + (PS.errText ? PS.errText(e) : e) + '); saving will use the app\'s own storage');
+      apply(); if (done) done(savedInfo);
+    });
+  }
+  // Save the colours in use as a theme called `name`. done({ ok, where: 'file' | 'storage', file, why }).
+  function saveTheme(name, done) {
+    var nm = String(name || '').replace(/\s+/g, ' ').replace(/^ | $/g, '').slice(0, 30) || 'My theme', fileName = slugify(nm) + '.json', id = 'saved-' + slugify(nm);
+    var obj = { id: id, name: nm, note: 'Saved from Push Planner', colours: palette() };
+    var text = JSON.stringify(obj, null, 1);
+    function viaStorage(why) {
+      var n = 0, k;
+      for (k = 1; k <= SLOT_COUNT; k++) { if (slots[k] && slots[k].name === nm) { n = k; break; } }
+      if (!n) { for (k = 1; k <= SLOT_COUNT; k++) { if (!slots[k]) { n = k; break; } } }
+      if (!n) { if (done) done({ ok: false, why: 'The files module is not available and all ' + SLOT_COUNT + ' storage slots are used.' }); return; }
+      api.saveSlot(n, nm);
+      PS.log('theme', 'theme "' + nm + '" saved in the app\'s own storage (slot ' + n + '): ' + why);
+      if (done) done({ ok: true, where: 'storage', slot: n });
+    }
+    if (!PS.wasmFiles || typeof PS.wasmFiles.save !== 'function') { viaStorage('no files client'); return; }
+    PS.wasmFiles.save(fileName, text).then(function (r) {
+      if (!r || !r.ok) { viaStorage('the files module said: ' + (r && r.detail ? r.detail : 'no')); return; }
+      PS.log('theme', 'theme "' + nm + '" saved as ' + fileName);
+      loadSaved(function () {
+        if (find(id)) { state.id = id; state.custom = {}; save(); apply(); }
+        if (done) done({ ok: true, where: 'file', file: fileName, folder: WORK_FOLDER });
+      });
+    }, function (e) { viaStorage('the files module did not answer'); });
+  }
+  function deleteSaved(fileName, done) {
+    if (!PS.wasmFiles || typeof PS.wasmFiles.remove !== 'function') { if (done) done({ ok: false, why: 'no files module' }); return; }
+    PS.wasmFiles.remove(fileName).then(function (r) {
+      PS.log('theme', 'saved theme file ' + fileName + (r && r.ok ? ' deleted' : ' not deleted: ' + (r && r.detail ? r.detail : 'no')));
+      loadSaved(function () { if (done) done({ ok: !!(r && r.ok), why: r && r.detail }); });
+    }, function (e) { if (done) done({ ok: false, why: PS.errText ? PS.errText(e) : String(e) }); });
+  }
+
   // ---- theme files in the package ----
   // The package ships the presets as files (themes/index.json lists them) which are read here when the app starts: what is in them wins over the built-in
   // copy of the same id, and a file with a new id adds a theme. So a theme can be added or changed by editing the files, no rebuild of the app.
@@ -823,7 +903,7 @@ PS.theme = (function () {
   load();
   resolve();
 
-  return {
+  var api = {
     ROLE_GROUPS: ROLE_GROUPS, ROLES: ALL_ROLES, THEMES: THEMES, byId: byId,
     mix: mix, parse: parse, hex: hex, isHex: isHex, normalise: normalise, luminance: luminance, contrast: contrast,
     fillRoles: fillRoles, derive: derive, palette: palette, css: cssText,
@@ -851,6 +931,7 @@ PS.theme = (function () {
       apply();
       return true;
     },
+    workFolder: WORK_FOLDER, workFolderNote: WORK_FOLDER_NOTE, loadSaved: loadSaved, saveTheme: saveTheme, deleteSaved: deleteSaved, savedStatus: function () { return savedInfo; }, slugify: slugify, ingestSaved: ingestSaved,
     loadFiles: loadFiles, ingest: ingest, validateThemeFile: validateThemeFile, fileStatus: function () { return files; }, themeBase: themeBase,
     selectedId: function () { return find(state.id) ? state.id : THEMES[0].id; },
     // The theme's own colour for a role (ignoring the user's changes), to reset to.
@@ -886,6 +967,7 @@ PS.theme = (function () {
       return out;
     }
   };
+  return api;
 })();
 
 /* ---- data/traffic-data.js ---- */
@@ -1351,6 +1433,85 @@ PS.wasmTaxi = (function () {
     _deliver: onMessage,
     isAlive: function () { return alive; },
     version: function () { return version; }
+  };
+})();
+
+/* ---- data/wasm-files.js ---- */
+// Client for the files module (PusherFiles.wasm, wasm/files/files_module.cpp): a second WASM module kept apart from the taxi module. It keeps the user's
+// saved themes as real .json files in the module's work folder (the sim lets a module write there and nowhere inside the package), and answers a probe of
+// what a module can do with files.
+// Events (JS to module): PusherFilesPing, PusherFilesProbe, PusherFilesList, PusherFilesSave, PusherFilesDelete; answers on PusherFilesResponse. Small JSON strings.
+
+PS.wasmFiles = (function () {
+  var EVT_PING = 'PusherFilesPing', EVT_PROBE = 'PusherFilesProbe', EVT_LIST = 'PusherFilesList', EVT_SAVE = 'PusherFilesSave', EVT_DELETE = 'PusherFilesDelete', EVT_RESPONSE = 'PusherFilesResponse';
+  var listener = null, waiters = {}, nextId = 1, alive = false, version = '';
+
+  function onMessage(raw) {
+    var msg;
+    try { msg = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch (e) { PS.log('files', 'unreadable message: ' + PS.errText(e)); return; }
+    if (!msg || typeof msg.id !== 'number') return;
+    var w = waiters[msg.id];
+    if (!w) return;
+    if (msg.kind === 'pong') { alive = true; version = msg.version || ''; }
+    if (w.collect) { var done = w.collect(msg); if (!done) return; }       // a list comes as several messages
+    delete waiters[msg.id]; clearTimeout(w.timer); w.resolve(w.result ? w.result() : msg);
+  }
+
+  function ensureListener() {
+    return new Promise(function (resolve, reject) {
+      if (listener) { resolve(listener); return; }
+      function attach() {
+        try { listener = RegisterCommBusListener(function () { PS.log('files', 'CommBus listener registered'); }); listener.on(EVT_RESPONSE, onMessage); resolve(listener); }
+        catch (e) { reject(e); }
+      }
+      if (typeof RegisterCommBusListener === 'function') { attach(); return; }
+      if (typeof Include !== 'undefined' && Include && typeof Include.addScript === 'function') { try { Include.addScript('/JS/Services/CommBus.js'); } catch (e) { /* the taxi client asks too */ } }
+      var tries = 0, t = setInterval(function () {
+        if (typeof RegisterCommBusListener === 'function') { clearInterval(t); attach(); }
+        else if (++tries > 30) { clearInterval(t); reject(new Error('RegisterCommBusListener is not available')); }
+      }, 100);
+    });
+  }
+
+  function callWasm(name, obj) {
+    var json = JSON.stringify(obj);
+    if (listener && typeof listener.callWasm === 'function') return listener.callWasm(name, json);
+    var co = PS.coherent();
+    if (co && co.call) return co.call('COMM_BUS_WASM_CALLBACK', name, json);
+    throw new Error('no way to call a WASM event');
+  }
+
+  function ask(event, timeoutMs, what, payload, collector) {
+    return ensureListener().then(function () {
+      return new Promise(function (resolve, reject) {
+        var id = nextId++;
+        var timer = setTimeout(function () { delete waiters[id]; reject(new Error('no reply from the files module for ' + what + ' (is PusherFiles.wasm installed in the package modules folder?)')); }, timeoutMs || 6000);
+        waiters[id] = { resolve: resolve, reject: reject, timer: timer };
+        if (collector) { var c = collector(); waiters[id].collect = c.collect; waiters[id].result = c.result; }
+        var body = { id: id }, k;
+        if (payload) { for (k in payload) body[k] = payload[k]; }
+        try { callWasm(event, body); } catch (e) { delete waiters[id]; clearTimeout(timer); reject(e); }
+      });
+    });
+  }
+
+  return {
+    ping: function (t) { return ask(EVT_PING, t, 'a ping'); },
+    // What the module can do with files: { version, tries: [{ path, op, ok, detail }], dirs: [{ path, ok, names, detail }] }
+    probe: function (t) { return ask(EVT_PROBE, t, 'the file test'); },
+    // The .json files in the module's work folder: resolves with [{ name, text }].
+    list: function (t) {
+      return ask(EVT_LIST, t || 8000, 'the file list', null, function () {
+        var files = [];
+        return { collect: function (m) { if (m.kind === 'file') files.push({ name: m.name, text: m.text }); return m.kind === 'end'; }, result: function () { return files; } };
+      });
+    },
+    // Write (or replace) a file: resolves with { ok, detail }. The module accepts only plain names ending in .json.
+    save: function (name, text, t) { return ask(EVT_SAVE, t, 'saving ' + name, { name: name, text: text }); },
+    remove: function (name, t) { return ask(EVT_DELETE, t, 'deleting ' + name, { name: name }); },
+    isAlive: function () { return alive; },
+    version: function () { return version; },
+    _deliver: onMessage
   };
 })();
 
@@ -4971,11 +5132,13 @@ PS.colourPanel = function () {
       var tokens = T.derive(T.fillRoles(th.p));
       var card = h('button', { type: 'button', class: 'ps-themecard' + (on ? ' on' : ''), title: th.note, onclick: function () {
         T.select(th.id); PS.log('settings', 'theme: ' + th.name);
-      } }, PS.themePreview(tokens), h('div', { class: 'ps-themename', text: th.name }), h('div', { class: 'ps-themenote', text: (th.fromFile ? 'file: ' : '') + th.note }));
+      } }, PS.themePreview(tokens), h('div', { class: 'ps-themename', text: th.name }), h('div', { class: 'ps-themenote', text: (th.fromFile ? 'file: ' : '') + (th.fromSaved ? 'saved: ' : '') + th.note }));
       grid.appendChild(card);
     });
     themesBox.appendChild(grid);
-    themesBox.appendChild(ui.note('Airline themes are inspired by those liveries (approximate colours, not official). Pick one, then change any colour on the My colours tab and save it to a slot: slots show here too. Theme files in the package (user1.json to user8.json) show here as well.'));
+    themesBox.appendChild(ui.note('Airline themes are inspired by those liveries (approximate colours, not official). Pick one, then change any colour on the My colours tab and save it: saved themes show here too, as do the package\'s theme files.'));
+    var sv = T.savedStatus();
+    themesBox.appendChild(h('div', { class: 'ps-kv', text: sv.state === 'done' ? 'Saved themes: ' + sv.count + ' file(s) in the files module\'s work folder' + (sv.failed.length ? '. Not read: ' + sv.failed.map(function (f) { return f.file + ' (' + f.why + ')'; }).join(', ') : '') : sv.state === 'failed' ? 'Files module not found: saved themes use the app\'s own storage' : sv.state === 'loading' ? 'Reading saved themes...' : '' }));
     // Theme files in the package: what was read, and a button to read them again (after editing them).
     var fs = T.fileStatus();
     var status = fs.state === 'loading' ? 'Reading theme files...'
@@ -5015,35 +5178,37 @@ PS.colourPanel = function () {
         }
       });
     });
-    // Save the colours in use to one of the slots (kept in the app's storage; they show on the Themes tab and survive restarts).
+    // Save the colours in use as a theme: a .json file named after it in the files module's work folder (or the app's own storage if that module is not there).
     var cur = T.byId(T.selectedId());
-    if (cur.fromSlot && !nameTouched) saveName = cur.name;
-    customBox.appendChild(h('div', { class: 'ps-colgroup', text: 'Save these colours to a slot' }));
+    if ((cur.fromSlot || cur.fromSaved) && !nameTouched) saveName = cur.name;
+    customBox.appendChild(h('div', { class: 'ps-colgroup', text: 'Save these colours as a theme' }));
     var nameInput = h('input', { type: 'text', class: 'ps-input ps-themename-input', value: saveName, placeholder: 'Theme name' });
     nameInput.addEventListener('input', function () { saveName = nameInput.value; nameTouched = true; });
-    customBox.appendChild(h('div', { class: 'ps-btnrow' }, nameInput));
-    var slotRow = h('div', { class: 'ps-btnrow' });
-    for (var n = 1; n <= T.SLOT_COUNT; n++) {
-      (function (slot) {
-        var info = T.slotInfo(slot);
-        // Fixed-size buttons: the slot number on top and the name (cut short if long) underneath, so a long name never changes the layout.
-        var btn = h('button', { type: 'button', class: 'ps-btn ps-small ps-slotbtn' + (info.filled ? '' : ' ps-ghost') + (cur.fromSlot === slot ? ' on' : ''), title: info.filled ? info.name : 'Free slot', onclick: function () {
-          var had = T.slotInfo(slot);
-          T.saveSlot(slot, nameInput.value);
-          nameTouched = false; saveMsg.textContent = (had.filled ? 'Replaced ' : 'Saved to ') + 'slot ' + slot + ' as "' + T.slotInfo(slot).name + '".';
-          PS.log('settings', 'theme saved to slot ' + slot + ' as "' + T.slotInfo(slot).name + '"');
-        } }, h('span', { class: 'ps-slotnum', text: 'Slot ' + slot }), h('span', { class: 'ps-slotname', text: info.filled ? info.name : 'free' }));
-        slotRow.appendChild(btn);
-      })(n);
-    }
-    customBox.appendChild(slotRow);
+    var saveBtn = ui.iconButton('check', 'Save theme', function () {
+      saveMsg.textContent = 'Saving...';
+      T.saveTheme(nameInput.value, function (r) {
+        nameTouched = false;
+        if (!r.ok) { saveMsg.textContent = r.why || 'Could not save.'; return; }
+        saveMsg.textContent = r.where === 'file'
+          ? 'Saved as ' + r.file + ' in the folder ' + r.folder + ' (a Steam install keeps it elsewhere: search for pusher-probe.txt).'
+          : 'The files module is not installed, so the theme was kept in the app\'s own storage (slot ' + r.slot + '). Install PusherFiles.wasm to save real files.';
+      });
+    }, 'ps-small');
+    customBox.appendChild(h('div', { class: 'ps-btnrow' }, nameInput, saveBtn));
     var actions = h('div', { class: 'ps-btnrow' },
       ui.button('Reset all my colours', function () { T.resetAll(); PS.log('settings', 'all custom colours reset'); }, 'ps-small ps-ghost'));
+    if (cur.fromSaved) {
+      actions.appendChild(ui.iconButton('trash', 'Delete ' + cur.fromSaved, function () {
+        saveMsg.textContent = 'Deleting...';
+        T.deleteSaved(cur.fromSaved, function (r) { saveMsg.textContent = r.ok ? 'Deleted ' + cur.fromSaved + '.' : 'Could not delete: ' + (r.why || 'unknown'); });
+      }, 'ps-small ps-ghost'));
+    }
     if (cur.fromSlot) {
       actions.appendChild(ui.button('Clear slot ' + cur.fromSlot, function () { var nn = cur.fromSlot; T.clearSlot(nn); saveMsg.textContent = 'Slot ' + nn + ' cleared.'; PS.log('settings', 'theme slot ' + nn + ' cleared'); }, 'ps-small ps-ghost'));
     }
     customBox.appendChild(actions);
     customBox.appendChild(saveMsg);
+    customBox.appendChild(ui.note(T.workFolderNote));
   }
 
   function show(which) {
@@ -5077,6 +5242,20 @@ PS.pages.push({
     var SNAP_STEPS = [10, 20, 30, 50, 75, 100, 150];
     var snapDist = ui.stepper(SNAP_STEPS, SNAP_STEPS.indexOf(PS.settings.get('snapM')) >= 0 ? PS.settings.get('snapM') : 50, function (v) { PS.settings.set('snapM', v); }, 'settings', ['Closer  -', 'Further  +'], function (v) { return v + ' m'; });
     var engines = ui.toggle([{ value: 'on', label: 'Wait for an engine' }, { value: 'off', label: 'Dismiss any time' }], PS.settings.get('requireEngines') ? 'on' : 'off', function (v) { PS.settings.set('requireEngines', v === 'on'); });
+    // File-saving test for the taxi module (needs the files module, PusherFiles.wasm): reports what it can write and read, to the log and here.
+    var probeOut = h('div', { class: 'ps-kv', text: '' });
+    var probeBtn = ui.iconButton('list', 'Test file saving', function () {
+      probeOut.textContent = 'Asking the module...';
+      PS.wasmFiles.probe().then(function (r) {
+        var lines = ['file test, module ' + r.version + ':'];
+        (r.tries || []).forEach(function (t) { lines.push('  ' + t.op + ' ' + t.path + ': ' + (t.ok ? 'OK' : 'failed') + (t.detail ? ' (' + t.detail + ')' : '')); });
+        (r.dirs || []).forEach(function (d) { lines.push('  list ' + d.path + ': ' + (d.ok ? (d.names.length ? d.names.join(', ') : '(empty)') : 'failed (' + d.detail + ')')); });
+        lines.forEach(function (l) { PS.log('wasm', l); });
+        var work = (r.tries || []).filter(function (t) { return /work/.test(t.path) && t.op === 'write'; });
+        var pkg = (r.tries || []).filter(function (t) { return /pkg/.test(t.path) && t.op === 'write'; });
+        probeOut.textContent = 'Saving in the module\'s work folder: ' + (work.some(function (t) { return t.ok; }) ? 'works' : 'does not work') + '. Writing inside the package: ' + (pkg.some(function (t) { return t.ok; }) ? 'works' : 'does not work') + '. Details are in the log below.';
+      }, function (e) { probeOut.textContent = 'File test failed: ' + PS.errText(e); PS.log('wasm', 'file test failed: ' + PS.errText(e)); });
+    }, 'ps-small ps-ghost');
     var tab = ui.toggle([{ value: 'suggested', label: 'Suggested pushes' }, { value: 'pins', label: 'Custom pins' }], PS.settings.get('planTab'), function (v) { PS.settings.set('planTab', v); });
     return {
       el: h('div', { class: 'ps-page' },
@@ -5094,6 +5273,7 @@ PS.pages.push({
           ui.field('Plan tab opens on', tab.el),
           ui.note('Which list the Plan tab shows first. It also switches by itself: placing a pin shows the pins, picking a suggestion shows the suggestions.')),
         PS.colourPanel(),
+        ui.panel('Diagnostics', h('div', { class: 'ps-btnrow' }, probeBtn), probeOut),
         ui.panel('Log', ui.logBox(null, { copy: function () { PS.copyAllLogs(); }, label: 'Copy all logs', clearable: true, buttonsAbove: true }))),
       onShow: function () {}, onHide: function () {}
     };
@@ -5257,6 +5437,7 @@ PS.createViewClass = function (sdk) {
       try {
         PS.injectStyle();
         PS.theme.loadFiles();
+        PS.theme.loadSaved();
         PS.hbStart();
         PS.rafStart();
         this.shell = PS.buildShell(root);

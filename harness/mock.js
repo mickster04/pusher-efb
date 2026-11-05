@@ -128,6 +128,17 @@
       callWasm: function (name, json) {
         var req = JSON.parse(json);
         var reply = function (obj, delay) { setTimeout(function () { if (handlers.PusherTaxiResponse) handlers.PusherTaxiResponse(JSON.stringify(obj)); }, delay || 5); };
+        // The files module: saved themes kept in memory (it keeps them as .json files in its work folder in the sim). Set window.__noFilesModule = true to leave it out.
+        if (/^PusherFiles/.test(name)) {
+          if (window.__noFilesModule) return Promise.resolve();
+          window.__mockFiles = window.__mockFiles || {};
+          var fr = function (m) { setTimeout(function () { if (handlers.PusherFilesResponse) handlers.PusherFilesResponse(JSON.stringify(m)); }, 5); };
+          if (name === 'PusherFilesPing') fr({ id: req.id, kind: 'pong', version: '0.2.0-mock' });
+          else if (name === 'PusherFilesList') { Object.keys(window.__mockFiles).forEach(function (n) { fr({ id: req.id, kind: 'file', name: n, text: window.__mockFiles[n] }); }); setTimeout(function () { fr({ id: req.id, kind: 'end', count: Object.keys(window.__mockFiles).length }); }, 20); }
+          else if (name === 'PusherFilesSave') { window.__mockFiles[req.name] = req.text; fr({ id: req.id, kind: 'saved', name: req.name, ok: true, detail: '' }); }
+          else if (name === 'PusherFilesDelete') { var had = req.name in window.__mockFiles; delete window.__mockFiles[req.name]; fr({ id: req.id, kind: 'deleted', name: req.name, ok: had, detail: had ? '' : 'missing' }); }
+          return Promise.resolve();
+        }
         if (window.__noTaxiModule) return Promise.resolve();
         if (name === 'PusherTaxiPing') reply({ id: req.id, kind: 'pong', version: '0.1.0-mock' });
         else if (name === 'PusherTaxiRequest') {

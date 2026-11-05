@@ -1,4 +1,8 @@
-# Pusher taxi module (WASM)
+# Pusher WASM modules
+
+Two standalone modules, kept apart so experiments with one cannot break the other: **PusherTaxi** (below; proven in the sim) and **PusherFiles** (`wasm/files/files_module.cpp`, EFB client `src/data/wasm-files.js`; unverified). PusherFiles has no SimConnect, only the CommBus and plain C file calls. It keeps the user's **saved themes** as `.json` files in its work folder (the probe showed a module can read, write and list `\work\` and nothing inside the package, so `layout.json` cannot be edited from the sim). Events: `PusherFilesPing`, `PusherFilesProbe` (what files can do), `PusherFilesList` (one message per `.json` file, then an end message), `PusherFilesSave` and `PusherFilesDelete` (plain names ending `.json` only), answered on `PusherFilesResponse`. Host test: `test/wasm-files.test.mjs` compiles the module with stand-in MSFS headers and a temporary work folder. On a Microsoft Store install the folder is `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalState\WASM\MSFS2024\push-planner\work`; a Steam install keeps it under a different root (search for `pusher-probe.txt`). `bash wasm/build.sh` builds both modules and copies `PusherTaxi.wasm` and `PusherFiles.wasm` to `PackageSources/modules/` (the package copies that folder, so reinstall and restart the sim after a build).
+
+## Pusher taxi module
 
 A standalone MSFS 2024 WASM module. It reads an airport's taxi points, parking spots, taxi paths and taxiway names from
 SimConnect facility data (the same data the original Pusher bridge used) and sends them to the EFB app as JSON over the

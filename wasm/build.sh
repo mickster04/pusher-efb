@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# EXPERIMENTAL command-line build of the taxi module without Visual Studio, for Git Bash on Windows.
+# EXPERIMENTAL command-line build of the taxi module (PusherTaxi.wasm) and the files module (PusherFiles.wasm) without Visual Studio, for Git Bash on Windows.
 # Run from anywhere:  bash wasm/build.sh        (optional SDK folder:  bash wasm/build.sh "/g/MSFS 2024 SDK")
 #
 # UNVERIFIED. The MSFS 2024 platform toolset's real flags are not published, so these are reconstructed from the SDK folder layout
@@ -63,3 +63,18 @@ echo "link PusherTaxi.wasm"
 
 cp "$OUT/PusherTaxi.wasm" "$DEST/PusherTaxi.wasm"
 echo "Built $(wc -c < "$OUT/PusherTaxi.wasm") bytes -> $DEST/PusherTaxi.wasm"
+
+echo "build the files module (kept separate from the taxi module above, which is proven)"
+echo "compile files_module.cpp"
+"$CLANG" "${CFLAGS[@]}" "$(W "$HERE/files/files_module.cpp")" -o "$(W "$OUT/files_module.o")"
+echo "link PusherFiles.wasm"
+"$LD" --no-entry --allow-undefined --strip-all --export-table \
+  --export=module_init --export=module_deinit \
+  --export=malloc --export=free \
+  -o "$(W "$OUT/PusherFiles.wasm")" \
+  "$(W "$OUT/files_module.o")" \
+  "$(W "$SDK/WASM/WasmVersions/MSFS_WasmVersions.a")" \
+  -L"$(W "$SYSROOT/lib/wasm32-wasi")" -lc++ -lc++abi -lc \
+  "$(W "$SYSROOT/lib/wasm32-wasi/libclang_rt.builtins-wasm32.a")"
+cp "$OUT/PusherFiles.wasm" "$DEST/PusherFiles.wasm"
+echo "Built $(wc -c < "$OUT/PusherFiles.wasm") bytes -> $DEST/PusherFiles.wasm"

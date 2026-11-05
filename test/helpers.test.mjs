@@ -118,3 +118,28 @@ test('wheel zoom: a notch is one step, small trackpad deltas add up, lines and p
   assert.equal(b(1, 1), 0, 'a single line is 33: not yet'); assert.equal(b(1, 1), 1, 'two lines: a step');
   assert.equal(PS.ui.wheelAccum()(1, 2), 1, 'a page is a step');
 });
+
+test('files module client: a probe, a list of several files, a save and a delete go to the module and the answers come back', async () => {
+  const handlers = {}, store = { 'one.json': '{"id":"one"}', 'two.json': '{"id":"two"}' }, seen = [];
+  globalThis.RegisterCommBusListener = (cb) => { if (cb) setTimeout(cb, 0); return { on: (n, h) => { handlers[n] = h; }, callWasm: (name, json) => {
+    const req = JSON.parse(json); seen.push(name);
+    const out = (m) => setTimeout(() => handlers.PusherFilesResponse(JSON.stringify(m)), 2);
+    if (name === 'PusherFilesPing') out({ id: req.id, kind: 'pong', version: '0.2.0' });
+    else if (name === 'PusherFilesProbe') out({ id: req.id, kind: 'fsprobe', version: '0.2.0', tries: [{ path: '\\work\\x', op: 'write', ok: true, detail: '' }], dirs: [] });
+    else if (name === 'PusherFilesList') { Object.keys(store).forEach((n) => out({ id: req.id, kind: 'file', name: n, text: store[n] })); out({ id: req.id, kind: 'end', count: 2 }); }
+    else if (name === 'PusherFilesSave') { store[req.name] = req.text; out({ id: req.id, kind: 'saved', name: req.name, ok: true, detail: '' }); }
+    else if (name === 'PusherFilesDelete') { delete store[req.name]; out({ id: req.id, kind: 'deleted', name: req.name, ok: true, detail: '' }); }
+  } }; };
+  try {
+    const pong = await PS.wasmFiles.ping(500);
+    assert.equal(pong.version, '0.2.0'); assert.ok(PS.wasmFiles.isAlive());
+    const r = await PS.wasmFiles.probe(500);
+    assert.equal(r.kind, 'fsprobe'); assert.equal(r.tries[0].ok, true);
+    assert.deepEqual((await PS.wasmFiles.list(500)).map((f) => f.name), ['one.json', 'two.json']);
+    assert.equal((await PS.wasmFiles.save('three.json', '{"id":"three"}', 500)).ok, true);
+    assert.equal(store['three.json'], '{"id":"three"}');
+    assert.equal((await PS.wasmFiles.list(500)).length, 3);
+    assert.equal((await PS.wasmFiles.remove('one.json', 500)).ok, true);
+    assert.ok(!('one.json' in store));
+  } finally { delete globalThis.RegisterCommBusListener; }
+});

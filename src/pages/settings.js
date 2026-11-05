@@ -17,6 +17,20 @@ PS.pages.push({
     var SNAP_STEPS = [10, 20, 30, 50, 75, 100, 150];
     var snapDist = ui.stepper(SNAP_STEPS, SNAP_STEPS.indexOf(PS.settings.get('snapM')) >= 0 ? PS.settings.get('snapM') : 50, function (v) { PS.settings.set('snapM', v); }, 'settings', ['Closer  -', 'Further  +'], function (v) { return v + ' m'; });
     var engines = ui.toggle([{ value: 'on', label: 'Wait for an engine' }, { value: 'off', label: 'Dismiss any time' }], PS.settings.get('requireEngines') ? 'on' : 'off', function (v) { PS.settings.set('requireEngines', v === 'on'); });
+    // File-saving test for the taxi module (needs the files module, PusherFiles.wasm): reports what it can write and read, to the log and here.
+    var probeOut = h('div', { class: 'ps-kv', text: '' });
+    var probeBtn = ui.iconButton('list', 'Test file saving', function () {
+      probeOut.textContent = 'Asking the module...';
+      PS.wasmFiles.probe().then(function (r) {
+        var lines = ['file test, module ' + r.version + ':'];
+        (r.tries || []).forEach(function (t) { lines.push('  ' + t.op + ' ' + t.path + ': ' + (t.ok ? 'OK' : 'failed') + (t.detail ? ' (' + t.detail + ')' : '')); });
+        (r.dirs || []).forEach(function (d) { lines.push('  list ' + d.path + ': ' + (d.ok ? (d.names.length ? d.names.join(', ') : '(empty)') : 'failed (' + d.detail + ')')); });
+        lines.forEach(function (l) { PS.log('wasm', l); });
+        var work = (r.tries || []).filter(function (t) { return /work/.test(t.path) && t.op === 'write'; });
+        var pkg = (r.tries || []).filter(function (t) { return /pkg/.test(t.path) && t.op === 'write'; });
+        probeOut.textContent = 'Saving in the module\'s work folder: ' + (work.some(function (t) { return t.ok; }) ? 'works' : 'does not work') + '. Writing inside the package: ' + (pkg.some(function (t) { return t.ok; }) ? 'works' : 'does not work') + '. Details are in the log below.';
+      }, function (e) { probeOut.textContent = 'File test failed: ' + PS.errText(e); PS.log('wasm', 'file test failed: ' + PS.errText(e)); });
+    }, 'ps-small ps-ghost');
     var tab = ui.toggle([{ value: 'suggested', label: 'Suggested pushes' }, { value: 'pins', label: 'Custom pins' }], PS.settings.get('planTab'), function (v) { PS.settings.set('planTab', v); });
     return {
       el: h('div', { class: 'ps-page' },
@@ -34,6 +48,7 @@ PS.pages.push({
           ui.field('Plan tab opens on', tab.el),
           ui.note('Which list the Plan tab shows first. It also switches by itself: placing a pin shows the pins, picking a suggestion shows the suggestions.')),
         PS.colourPanel(),
+        ui.panel('Diagnostics', h('div', { class: 'ps-btnrow' }, probeBtn), probeOut),
         ui.panel('Log', ui.logBox(null, { copy: function () { PS.copyAllLogs(); }, label: 'Copy all logs', clearable: true, buttonsAbove: true }))),
       onShow: function () {}, onHide: function () {}
     };
