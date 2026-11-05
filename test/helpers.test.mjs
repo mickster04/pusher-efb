@@ -194,3 +194,15 @@ test('the theme carries the map style, and a nested theme file is read', () => {
   assert.equal(PS.theme.validateThemeFile(file), '');
   assert.equal(PS.theme.validateThemeFile({ id: 'flat', colours: { bg: '#102030', text: '#eeeeee', accent: '#ff8800' } }), '', 'the older flat shape still works');
 });
+
+test('map line widths can be set in the app, reset, and are kept by a theme change only until another is chosen', () => {
+  const T = PS.theme;
+  assert.equal(T.setMapValue('runway', 40), true);
+  assert.equal(T.mapStyle().runway, 40);
+  assert.equal(T.setMapValue('nope', 3), false);
+  assert.equal(T.setMapValue('runway', 500), false);
+  T.resetMap();
+  assert.equal(T.mapStyle().runway, 32);
+  T.setMapValue('gap', 4); T.select('default');
+  assert.equal(T.mapStyle().gap, 9, 'choosing a theme clears the overrides');
+});

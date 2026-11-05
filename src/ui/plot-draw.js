@@ -147,7 +147,10 @@ PS.plotDraw = (function () {
       var hd = it.headingDeg === null ? 0 : it.headingDeg;
       if (it.turnaround) { aircraftMarker(g, q[0], q[1], hd, null, PS.theme.c('textDim'), 0.8); labelAt(g, 'turn', q[0] + 14, q[1] - 12); return; }
       aircraftMarker(g, q[0], q[1], hd, isEnd ? PS.theme.c('pinEnd') : PS.theme.c('pin'), PS.theme.c('outline'), isEnd ? 1.15 : 1);
-      labelAt(g, isEnd ? 'End' : String(it.userIndex + 1), q[0] + 16, q[1] - 14);
+      // The pin number sits in the centre of the aircraft, upright, in the outline colour on the pin colour (the End pin keeps its word beside it too).
+      var num = String(it.userIndex + 1);
+      g.save(); g.font = 'bold 13px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = PS.theme.c('outline'); g.fillText(num, q[0], q[1] + 1); g.restore();
+      if (isEnd) labelAt(g, 'End', q[0] + 16, q[1] - 14);
     });
   }
 

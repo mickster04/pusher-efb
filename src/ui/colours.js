@@ -104,6 +104,14 @@ PS.colourPanel = function () {
         }
       });
     });
+    // The map's line widths and label size, in pixels: part of the theme, set here and saved with it.
+    customBox.appendChild(h('div', { class: 'ps-colgroup', text: 'Map lines (pixels)' }));
+    var range = function (a, b, s) { var o = []; for (var i = a; i <= b; i += s) o.push(i); return o; };
+    [['unnamed', 'Unnamed paths', range(1, 10, 1)], ['named', 'Named taxiways', range(2, 20, 1)], ['runway', 'Runways', range(4, 60, 2)], ['label', 'Label size', range(10, 26, 1)], ['gap', 'Gap round labels', range(0, 20, 1)]].forEach(function (m) {
+      var st = ui.stepper(m[2], T.mapStyle()[m[0]], function (v) { T.setMapValue(m[0], v); }, null, ['-', '+'], function (v) { return v + ' px'; });
+      customBox.appendChild(h('div', { class: 'ps-colrow' }, h('div', { class: 'ps-collabel', text: m[1] }), st.el));
+    });
+    customBox.appendChild(ui.button('Reset map lines', function () { T.resetMap(); }, 'ps-small ps-ghost'));
     // Save the colours in use as a theme: a .json file named after it in the files module's work folder (or the app's own storage if that module is not there).
     var cur = T.byId(T.selectedId());
     if ((cur.fromSlot || cur.fromSaved) && !nameTouched) saveName = cur.name;

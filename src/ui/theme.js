@@ -144,7 +144,7 @@ PS.theme = (function () {
   function byId(id) { return find(id) || THEMES[0]; }
 
   // ---- the chosen theme and the user's own colours on top of it ----
-  var state = { id: 'default', custom: {} };
+  var state = { id: 'default', custom: {}, customMap: {} };
   var current = null;      // the resolved tokens
   var listeners = [];
   var styleEl = null;
@@ -153,7 +153,8 @@ PS.theme = (function () {
     try {
       var saved = JSON.parse(window.localStorage.getItem(KEY) || 'null');
       if (saved && typeof saved === 'object') {
-        if (typeof saved.id === 'string') state.id = saved.id;     // kept even if it is not known yet: it may be a theme file still to be read
+        if (typeof saved.id === 'string') state.id = saved.id;
+        if (saved.customMap && typeof saved.customMap === 'object') state.customMap = cleanMap(saved.customMap);     // kept even if it is not known yet: it may be a theme file still to be read
         if (saved.custom && typeof saved.custom === 'object') { for (var k in saved.custom) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(saved.custom[k])) state.custom[k] = normalise(saved.custom[k]); } }
       }
     } catch (e) { /* defaults */ }
@@ -170,7 +171,7 @@ PS.theme = (function () {
   // The map style of the chosen theme: its own values over the defaults.
   function mapStyle() {
     var theme = byId(state.id), out = {}, k;
-    for (k in MAP_DEFAULT) out[k] = (theme && theme.m && theme.m[k] !== undefined) ? theme.m[k] : MAP_DEFAULT[k];
+    for (k in MAP_DEFAULT) out[k] = state.customMap[k] !== undefined ? state.customMap[k] : ((theme && theme.m && theme.m[k] !== undefined) ? theme.m[k] : MAP_DEFAULT[k]);
     return out;
   }
   function resolve() { current = derive(palette()); return current; }
@@ -252,7 +253,7 @@ PS.theme = (function () {
       var r = ingestSaved(files);
       savedInfo = { state: 'done', module: 'yes', count: r.count, failed: r.failed, at: Date.now() };
       PS.log('theme', 'saved themes: ' + r.count + ' file(s) in the files module\'s work folder' + (r.failed.length ? '; not read: ' + r.failed.map(function (f) { return f.file + ' ' + f.why; }).join(', ') : ''));
-      if (!find(state.id)) { state.id = THEMES[0].id; state.custom = {}; save(); }
+      if (!find(state.id)) { state.id = THEMES[0].id; state.custom = {}; state.customMap = {}; save(); }
       apply(); if (done) done(savedInfo);
     }, function (e) {
       savedInfo = { state: 'failed', module: 'no', count: 0, failed: [], at: Date.now() };
@@ -280,7 +281,7 @@ PS.theme = (function () {
       if (!r || !r.ok) { viaStorage('the files module said: ' + (r && r.detail ? r.detail : 'no')); return; }
       PS.log('theme', 'theme "' + nm + '" saved as ' + fileName);
       loadSaved(function () {
-        if (find(id)) { state.id = id; state.custom = {}; save(); apply(); }
+        if (find(id)) { state.id = id; state.custom = {}; state.customMap = {}; save(); apply(); }
         if (done) done({ ok: true, where: 'file', file: fileName, folder: WORK_FOLDER, folderSteam: WORK_FOLDER_STEAM });
       });
     }, function (e) { viaStorage('the files module did not answer'); });
@@ -374,7 +375,7 @@ PS.theme = (function () {
     PS.log('theme', 'index.json names ' + files.names.length + ' theme(s): ' + files.names.join(', '));
     PS.log('theme', 'theme files: ' + files.loaded + ' of ' + (files.listed - files.empty) + ' read, ' + files.empty + ' free slot(s) (' + r.added + ' new, ' + r.replaced + ' replaced the built-in)' + (r.failed.length ? '; failed: ' + r.failed.map(function (f) { return f.file + ' ' + f.why; }).join(', ') : ''));
     // the saved theme may be one of the files: look again now they are in (and fall back if it is gone)
-    if (!find(state.id)) { PS.log('theme', 'the saved theme "' + state.id + '" is not available: using ' + THEMES[0].name); state.id = THEMES[0].id; state.custom = {}; save(); }
+    if (!find(state.id)) { PS.log('theme', 'the saved theme "' + state.id + '" is not available: using ' + THEMES[0].name); state.id = THEMES[0].id; state.custom = {}; state.customMap = {}; save(); }
     notify(done);
   }
   function notify(done) { apply(); if (done) done(files); }
@@ -401,14 +402,14 @@ PS.theme = (function () {
       var nm = String(name || '').replace(/^\s+|\s+$/g, '').slice(0, 30) || 'My theme';
       slots[n] = { name: nm, colours: palette() };
       saveSlots(); refreshSlots();
-      state.id = 'slot' + n; state.custom = {}; save(); apply();
+      state.id = 'slot' + n; state.custom = {}; state.customMap = {}; save(); apply();
       return true;
     },
     clearSlot: function (n) {
       n = Number(n);
       if (!slots[n]) return false;
       delete slots[n]; saveSlots(); refreshSlots();
-      if (state.id === 'slot' + n) { state.id = THEMES[0].id; state.custom = {}; save(); }
+      if (state.id === 'slot' + n) { state.id = THEMES[0].id; state.custom = {}; state.customMap = {}; save(); }
       apply();
       return true;
     },
@@ -420,10 +421,14 @@ PS.theme = (function () {
     isChanged: function (role) { return state.custom[role] !== undefined; },
     // Style element to keep up to date (the app makes it).
     attach: function (el) { styleEl = el; },
-    select: function (id) { state.id = byId(id).id; state.custom = {}; save(); apply(); },
+    select: function (id) { state.id = byId(id).id; state.custom = {}; state.customMap = {}; save(); apply(); },
     setColour: function (role, value) { if (ALL_ROLES.indexOf(role) < 0 || !isHex(value)) return false; state.custom[role] = normalise(value); save(); apply(); return true; },
     resetColour: function (role) { delete state.custom[role]; save(); apply(); },
-    resetAll: function () { state.custom = {}; save(); apply(); },
+    // The map's line widths and label size (keys of MAP_DEFAULT), set in the app instead of editing the theme file; saved with a saved theme.
+    setMapValue: function (key, v) { if (MAP_DEFAULT[key] === undefined) return false; v = Number(v); if (!isFinite(v) || v < 0 || v > 80) return false; state.customMap[key] = v; save(); apply(); return true; },
+    resetMap: function () { state.customMap = {}; save(); apply(); },
+    mapChanged: function () { return Object.keys(state.customMap).length > 0; },
+    resetAll: function () { state.custom = {}; state.customMap = {}; save(); apply(); },
     onChange: function (fn) { listeners.push(fn); },
     // A theme as text to share, and back. Only roles that differ from the base theme are written.
     exportText: function () { return JSON.stringify({ app: 'PushPlanner', id: 'my-theme', name: 'My theme', note: 'Saved from Push Planner', theme: state.id, colours: palette() }, null, 1); },

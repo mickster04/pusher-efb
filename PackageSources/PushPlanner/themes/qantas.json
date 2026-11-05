@@ -1,44 +1,50 @@
 {
  "id": "qantas",
  "name": "Qantas",
- "note": "Kangaroo red on black",
+ "note": "Kangaroo red on white",
  "page": {
   "surface": {
-   "bg": "#0e0e10",
-   "bgDeep": "#070708",
-   "panel": "#1b1b1f",
-   "border": "#3d2c2f",
-   "input": "#09090a"
+   "bg": "#ffffff",
+   "bgDeep": "#f1e4e4",
+   "panel": "#faf5f5",
+   "border": "#dcc6c6",
+   "input": "#ffffff"
   },
   "text": {
-   "text": "#ffffff",
-   "textDim": "#b3a9aa",
+   "text": "#1c1214",
+   "textDim": "#6b5659",
    "accentText": "#ffffff",
-   "buttonText": "#ffffff"
+   "buttonText": "#1c1214"
   },
   "controls": {
    "accent": "#e40000",
-   "accent2": "#ffffff",
-   "button": "#2b2224"
+   "accent2": "#8a0000",
+   "button": "#f0e2e2"
   },
   "status": {
-   "good": "#4cd18a",
-   "warn": "#ffd37a",
-   "bad": "#ff6a5a"
+   "good": "#17854e",
+   "warn": "#8f5a00",
+   "bad": "#c40000"
   }
  },
  "map": {
+  "surface": {
+   "mapBg": "#ffffff",
+   "mapGrid": "#dcc6c6",
+   "mapText": "#6b5659",
+   "outline": "#ffffff"
+  },
   "paths": {
    "runway": {
-    "colour": "#cac3c4",
+    "colour": "#4a3a3d",
     "width": 32
    },
    "taxiway": {
-    "colour": "#ff5a4a",
+    "colour": "#e40000",
     "width": 6
    },
    "unnamed": {
-    "colour": "#615c5d",
+    "colour": "#b8a8aa",
     "width": 3
    }
   },
@@ -47,7 +53,17 @@
    "gap": 9
   },
   "route": {
-   "routeFwd": "#6fb0ff"
+   "routeBack": "#1c1214",
+   "routeFwd": "#1565c0",
+   "routeBad": "#c62f3d",
+   "routeDone": "#c8b8ba"
+  },
+  "markers": {
+   "aircraft": "#17854e",
+   "pin": "#1b2630",
+   "pinEnd": "#e40000",
+   "traffic": "#6a3fa0",
+   "handle": "#b8860b"
   }
  }
 }
