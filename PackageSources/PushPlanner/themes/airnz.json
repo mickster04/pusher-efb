@@ -1,13 +1,13 @@
 {
  "id": "airnz",
  "name": "Air New Zealand",
- "note": "Black and white with koru teal",
+ "note": "Black and white with koru purple (colours approximate)",
  "page": {
   "surface": {
    "bg": "#0d0d0d",
    "bgDeep": "#000000",
    "panel": "#1a1a1a",
-   "border": "#3c3c3c",
+   "border": "#3a2f4a",
    "input": "#080808"
   },
   "text": {
@@ -17,9 +17,9 @@
    "buttonText": "#ffffff"
   },
   "controls": {
-   "accent": "#1fb5ac",
-   "accent2": "#8be0da",
-   "button": "#2a2a2a"
+   "accent": "#9a6bd6",
+   "accent2": "#c4a5ee",
+   "button": "#2a2233"
   },
   "status": {
    "good": "#4cd18a",
@@ -34,7 +34,7 @@
     "width": 32
    },
    "taxiway": {
-    "colour": "#1fb5ac",
+    "colour": "#b48ae6",
     "width": 6
    },
    "unnamed": {

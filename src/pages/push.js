@@ -68,7 +68,7 @@ PS.pages.push({
       var running = !!RUNNING[v.status], waiting = v.status === 'waitBrake' || v.status === 'attaching';
       var paused = v.status === 'paused' || (v.status === 'stopping' && v.reason === 'paused');
       var c = PS.push.canStart();
-      finishMode = v.status === 'done' || (v.status === 'ready' && PS.plan.count() === 0);
+      finishMode = PS.push.finishMode(v.status, PS.plan.count());
       startBtn.setLabel(finishMode ? 'Finish push' : 'Start push'); startBtn.setIcon(finishMode ? 'flag' : 'play');
       startBtn.disabled = finishMode ? !v.canFinish : !c.ok;
       returnBtn.disabled = !v.canReturn.ok;

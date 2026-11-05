@@ -109,6 +109,9 @@ PS.push = (function () {
   }
 
   // ---------------- control ----------------
+  // The big button on the Push tab is Finish push when the push is over and nothing new is planned (the pins are deleted when a push finishes), and
+  // Start push as soon as there are pins again, so adjusting or planning another push after one has finished is never a dead end.
+  function finishMode(status, pins) { return (status === 'done' || status === 'ready') && pins === 0; }
   function canStart(isReturn) {
     if (!isReturn && PS.plan.count() === 0) return { ok: false, why: 'There is no plan yet: make one on the Plan tab.' };
     if ({ settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1, waitBrake: 1, attaching: 1 }[S.status]) return { ok: false, why: 'A push is already under way.' };
@@ -420,6 +423,6 @@ PS.push = (function () {
   S.attached = PS.tug.isAttached();
   if (S.attached) { S.status = 'ready'; S.reason = 'the tug is already attached'; ensureLoop(); }
 
-  return { view: view, canStart: canStart, canReturn: canReturn, requestStart: requestStart, pause: pause, resume: resume, stop: stop, emergencyStop: emergencyStop, toggleTug: toggleTug, dismissTug: dismissTug, toggleBrake: toggleBrake, finish: finishPush,
+  return { view: view, finishMode: finishMode, canStart: canStart, canReturn: canReturn, requestStart: requestStart, pause: pause, resume: resume, stop: stop, emergencyStop: emergencyStop, toggleTug: toggleTug, dismissTug: dismissTug, toggleBrake: toggleBrake, finish: finishPush,
     releaseBrake: releaseBrake, setBrake: setBrake, setSpeedPercent: setSpeedPercent, route: function () { return S.plan; }, forgetLoop: forgetLoop };
 })();

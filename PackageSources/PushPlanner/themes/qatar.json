@@ -7,7 +7,7 @@
    "bg": "#2a0415",
    "bgDeep": "#1c020e",
    "panel": "#3d0a24",
-   "border": "#6b1a3f",
+   "border": "#662046",
    "input": "#1f030f"
   },
   "text": {
@@ -19,7 +19,7 @@
   "controls": {
    "accent": "#c8a165",
    "accent2": "#e6c991",
-   "button": "#541030"
+   "button": "#4a1633"
   },
   "status": {
    "good": "#4cd18a",

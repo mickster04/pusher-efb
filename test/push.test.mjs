@@ -103,6 +103,10 @@ test('push: attach, wait for the brake, then drive the plan to its end', () => {
   assert.ok(endErr < 1.6, 'ended ' + endErr.toFixed(2) + ' m from the end pin');
   assert.ok(Math.abs(sim.velZ) < 0.01, 'stopped');
   assert.ok(PS.toasts.items.some((t) => t.id === 'push-done'), 'the finished prompt is up');
+  assert.equal(PS.push.finishMode('done', PS.plan.count()), true, 'finished with no pins: the button is Finish push');
+  planBack(30);                                  // the pilot plans another push after this one
+  assert.equal(PS.push.finishMode('done', PS.plan.count()), false, 'new pins after a finished push: the button is Start push again');
+  assert.equal(PS.push.canStart().ok, true, 'and a new push can start: ' + PS.push.canStart().why);
   });
 });
 

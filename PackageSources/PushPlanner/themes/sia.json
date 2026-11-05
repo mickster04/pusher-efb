@@ -17,7 +17,7 @@
    "buttonText": "#ffffff"
   },
   "controls": {
-   "accent": "#f99f1c",
+   "accent": "#fcb130",
    "accent2": "#f9c46a",
    "button": "#10388a"
   },
@@ -34,7 +34,7 @@
     "width": 32
    },
    "taxiway": {
-    "colour": "#f99f1c",
+    "colour": "#fcb130",
     "width": 6
    },
    "unnamed": {
