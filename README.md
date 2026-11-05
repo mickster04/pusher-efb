@@ -73,4 +73,4 @@ Everything generated is ignored: `PackageSources/PushPlanner/PushPlanner.js` and
 
 ## Licence and contributing
 
-Not yet chosen: see [docs/release-checklist.md](docs/release-checklist.md). Until a licence file is added, all rights are reserved.
+MIT, (c) 2026 Mike Cleaver: see [LICENSE](LICENSE). Parts derive from the original Pusher app, also MIT: see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Both files are shipped in the package. Pull requests are welcome; by sending one you agree it is under the same MIT licence. Run `npm test` first.

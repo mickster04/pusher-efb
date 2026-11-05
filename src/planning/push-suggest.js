@@ -1,3 +1,4 @@
+// Derived in part from the original Pusher app (MIT, (c) Palm Coasty Simulations): see THIRD_PARTY_NOTICES.md.
 // Suggested pushbacks: a port of the original app's apps/windows/src/taxiSuggest.ts, built on the route planner in 06-route-planner.js.
 //
 // Same logic as the original: the nearest named taxiways, links and apron lanes; end pins slid along the centreline to where the planner

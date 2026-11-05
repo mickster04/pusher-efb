@@ -1,3 +1,4 @@
+// Derived in part from the original Pusher app (MIT, (c) Palm Coasty Simulations): see THIRD_PARTY_NOTICES.md.
 // Taxiway data: category names, extraction from whatever the sim returns, aggregation for the table, sample data.
 // The shape the original app used: paths [{ name, type, widthM, points: [[lat, lon], [lat, lon]] }], parking [...].
 

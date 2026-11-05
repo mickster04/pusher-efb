@@ -1,3 +1,4 @@
+// Derived in part from the original Pusher app (MIT, (c) Palm Coasty Simulations): see THIRD_PARTY_NOTICES.md.
 // Pusher taxi module: MSFS 2024 standalone WASM module.
 //
 // UNVERIFIED: this glue has not been compiled or run against the MSFS SDK (written on a machine without it). The logic it

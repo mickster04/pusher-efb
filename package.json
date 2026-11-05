@@ -11,5 +11,7 @@
     "build:wasm": "bash wasm/build.sh",
     "build:all": "npm test && npm run build:wasm",
     "harness": "node build.mjs && node harness/serve.mjs"
-  }
+  },
+  "license": "MIT",
+  "author": "Mike Cleaver"
 }

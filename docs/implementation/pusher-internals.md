@@ -1,5 +1,7 @@
 # Original Pusher internals the port must reproduce
 
+*Derived in part from the original Pusher app (MIT, (c) Palm Coasty Simulations): see THIRD_PARTY_NOTICES.md.*
+
 Source of truth is the sibling repo `../msfs-pusher-main` (C# bridge in `bridge/`, shared types in `packages/shared/api/types.ts`, UI in `apps/windows/src`). This file records the details that are easy to miss. Check the named file for the current value before relying on a number.
 
 ## Driving the tug (`bridge/TugDrive.cs`, `bridge/Constants.cs`)

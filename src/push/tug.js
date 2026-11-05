@@ -1,3 +1,4 @@
+// Derived in part from the original Pusher app (MIT, (c) Palm Coasty Simulations): see THIRD_PARTY_NOTICES.md.
 // The parking brake and the tug: the sim-facing layer under the Push tab. Ported from the original bridge (bridge/SimService.cs brake handling,
 // bridge/TugDrive.cs) and from the sequence proven in the sim by the earlier Tug test page: hold the tug (PUSHBACK WAIT on), TOGGLE_PUSHBACK, wait
 // for PUSHBACK ATTACHED; then, every tick, write PUSHBACK WAIT 0, VELOCITY BODY Y 0, ROTATION VELOCITY BODY X 0, VELOCITY BODY Z (ft/s, + forward)

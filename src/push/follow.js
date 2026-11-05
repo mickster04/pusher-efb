@@ -1,3 +1,4 @@
+// Derived in part from the original Pusher app (MIT, (c) Palm Coasty Simulations): see THIRD_PARTY_NOTICES.md.
 // Path follower: turns "where is the aircraft and which way does it point" into a speed and a turn rate that keep it on the planned route.
 // Pure logic (no sim access), so it can be tested against a simulated tug. Based on the original bridge's pure-pursuit steering
 // (bridge/PushbackController.cs, bridge/Constants.cs) but simpler: no learned yaw calibration yet, no straight-stretch slack, and the route is

@@ -1,3 +1,4 @@
+// Derived in part from the original Pusher app (MIT, (c) Palm Coasty Simulations): see THIRD_PARTY_NOTICES.md.
 // Route planner: a port of the original app's planned-route code (apps/windows/src/mapGeo.ts, "Planned route" to the end), which mirrors
 // the bridge's FilletPath planner (bridge/Constants.cs). It answers "what line does the tug follow through these pins, in which direction
 // does it drive each stretch, and can it make it?". The suggested pushes are built on it, and so is the pin route drawn on the plot.

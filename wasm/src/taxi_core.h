@@ -1,3 +1,4 @@
+// Derived in part from the original Pusher app (MIT, (c) Palm Coasty Simulations): see THIRD_PARTY_NOTICES.md.
 // Pusher taxi module: the logic that has no MSFS dependency.
 //
 // Collects the facility records SimConnect returns for an airport (taxi points, parking, paths, names), turns them into
