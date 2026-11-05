@@ -4,14 +4,12 @@
 // UNVERIFIED in the sim. Compile with the same flags as the taxi module (wasm/build.sh builds both).
 //
 // Events (JS to module, then the answer on "PusherFilesResponse"):
-//   "PusherFilesPing"  {"id":1}   -> {"id":1,"kind":"pong","version":"0.1.0"}
-//   "PusherFilesProbe" {"id":2}   -> {"id":2,"kind":"fsprobe","version":...,"tries":[{path,op,ok,detail}],"dirs":[{path,ok,names,detail}]}
-//   "PusherFilesList"  {"id":3}   -> one {"id":3,"kind":"file","name":"x.json","text":"..."} per *.json file in the work folder, then {"id":3,"kind":"end","count":n}
-//   "PusherFilesSave"  {"id":4,"name":"x.json","text":"..."} -> {"id":4,"kind":"saved","name":"x.json","ok":true,"detail":""}
+//   "PusherFilesPing"   {"id":1}   -> {"id":1,"kind":"pong","version":"0.2.1"}
+//   "PusherFilesList"   {"id":3}   -> one {"id":3,"kind":"file","name":"x.json","text":"..."} per *.json file in the work folder, then {"id":3,"kind":"end","count":n}
+//   "PusherFilesSave"   {"id":4,"name":"x.json","text":"..."} -> {"id":4,"kind":"saved","name":"x.json","ok":true,"detail":""}
 //   "PusherFilesDelete" {"id":5,"name":"x.json"}              -> {"id":5,"kind":"deleted","name":"x.json","ok":true,"detail":""}
-// The files are the user's saved themes. The probe (above) found out that a module can read, write and list its work folder and nothing inside the package.
-// The probe finds out what a module can do with files in this sim: write and read back under \\work\\, list directories, and whether anything inside the
-// installed package can be read or written. The answer decides how themes can be saved as real files.
+// The files are the user's saved themes. What the sim allows (found with a probe on 5 Nov 2026, since removed): a module can read, write and list its own
+// work folder, and nothing inside the installed package (so layout.json cannot be edited from here).
 #include <MSFS/MSFS.h>
 #include <MSFS/MSFS_CommBus.h>
 #include <MSFS/MSFS_WindowsTypes.h>
@@ -33,18 +31,17 @@
 #endif
 #endif
 
-// The folder the files live in. In the sim modules write under \\work\\ (the probe showed both \\work\\ and /work/ work). The host test sets another one.
+// The folder the files live in. In the sim modules write under \\work\\ (both \\work\\ and /work/ worked). The host test sets another one.
 #ifndef PUSHER_WORK_DIR
 #define PUSHER_WORK_DIR "\\work\\"
 #endif
 
 namespace {
 
-const char* const kVersion = "0.2.0";
+const char* const kVersion = "0.2.1";
 const char* const kWorkDir = PUSHER_WORK_DIR;
 const size_t kMaxFileBytes = 16 * 1024;
 const char* const kEventPing = "PusherFilesPing";
-const char* const kEventProbe = "PusherFilesProbe";
 const char* const kEventList = "PusherFilesList";
 const char* const kEventSave = "PusherFilesSave";
 const char* const kEventDelete = "PusherFilesDelete";
@@ -64,100 +61,9 @@ uint32_t parseId(const char* json, unsigned int size) {
   return static_cast<uint32_t>(std::strtoul(s.c_str() + at + 1, nullptr, 10));
 }
 
-// ---- file access probe ----
-// A one-off experiment to find out what a module can do with files in this sim: write and read back under \work\ (where modules are meant to keep
-// files), list a directory, and whether anything inside the installed package can be read or written. The answer decides how themes can be saved as
-// real files. The result goes back as one message: { id, kind: "fsprobe", version, tries: [{ path, op, ok, detail }], dirs: [{ path, ok, names }] }.
-std::string jsonEscape(const std::string& in) {
-  std::string out;
-  for (size_t i = 0; i < in.size(); ++i) {
-    unsigned char c = static_cast<unsigned char>(in[i]);
-    if (c == '\\' || c == '"') { out += '\\'; out += static_cast<char>(c); }
-    else if (c < 0x20) { out += '?'; }
-    else out += static_cast<char>(c);
-  }
-  return out;
-}
-
 std::string errnoText() {
   const char* t = std::strerror(errno);
   return std::string("errno ") + std::to_string(errno) + (t ? std::string(": ") + t : std::string());
-}
-
-void probeWrite(std::vector<std::string>* tries, const std::string& path) {
-  std::string entry;
-  std::FILE* f = std::fopen(path.c_str(), "wb");
-  bool wrote = false;
-  std::string detail;
-  if (!f) detail = errnoText();
-  else {
-    const char* text = "pusher probe";
-    wrote = std::fwrite(text, 1, std::strlen(text), f) == std::strlen(text);
-    if (!wrote) detail = errnoText();
-    std::fclose(f);
-  }
-  tries->push_back("{\"path\":\"" + jsonEscape(path) + "\",\"op\":\"write\",\"ok\":" + (wrote ? "true" : "false") + ",\"detail\":\"" + jsonEscape(detail) + "\"}");
-  if (!wrote) return;
-  std::FILE* r = std::fopen(path.c_str(), "rb");
-  char buf[64] = {0};
-  size_t got = r ? std::fread(buf, 1, sizeof(buf) - 1, r) : 0;
-  if (r) std::fclose(r);
-  tries->push_back("{\"path\":\"" + jsonEscape(path) + "\",\"op\":\"read back\",\"ok\":" + (got > 0 ? "true" : "false") + ",\"detail\":\"" + jsonEscape(got > 0 ? std::string(buf, got) : errnoText()) + "\"}");
-}
-
-void probeRead(std::vector<std::string>* tries, const std::string& path) {
-  std::FILE* f = std::fopen(path.c_str(), "rb");
-  std::string detail;
-  bool ok = f != nullptr;
-  if (!f) detail = errnoText();
-  else {
-    std::fseek(f, 0, SEEK_END);
-    detail = "size " + std::to_string(static_cast<long>(std::ftell(f)));
-    std::fclose(f);
-  }
-  tries->push_back("{\"path\":\"" + jsonEscape(path) + "\",\"op\":\"read\",\"ok\":" + (ok ? "true" : "false") + ",\"detail\":\"" + jsonEscape(detail) + "\"}");
-}
-
-void probeDir(std::vector<std::string>* dirs, const std::string& path) {
-#ifdef PUSHER_HAVE_DIRENT
-  DIR* d = opendir(path.c_str());
-  if (!d) { dirs->push_back("{\"path\":\"" + jsonEscape(path) + "\",\"ok\":false,\"names\":[],\"detail\":\"" + jsonEscape(errnoText()) + "\"}"); return; }
-  std::string names;
-  int count = 0;
-  while (struct dirent* e = readdir(d)) {
-    if (count++ >= 40) break;
-    if (!names.empty()) names += ",";
-    names += "\"" + jsonEscape(e->d_name) + "\"";
-  }
-  closedir(d);
-  dirs->push_back("{\"path\":\"" + jsonEscape(path) + "\",\"ok\":true,\"names\":[" + names + "],\"detail\":\"\"}");
-#else
-  dirs->push_back("{\"path\":\"" + jsonEscape(path) + "\",\"ok\":false,\"names\":[],\"detail\":\"dirent.h is not available in this build\"}");
-#endif
-}
-
-void onProbe(const char* args, unsigned int size, void* /*ctx*/) {
-  uint32_t id = parseId(args, size);
-  std::vector<std::string> tries, dirs;
-  // where modules are meant to keep files
-  probeWrite(&tries, "\\work\\pusher-probe.txt");
-  probeWrite(&tries, "/work/pusher-probe.txt");
-  // inside the installed package: can anything be written, or even read? (guesses at the mount point)
-  probeWrite(&tries, "\\pkg\\pusher-probe.txt");
-  probeWrite(&tries, "\\pkg\\push-planner\\pusher-probe.txt");
-  probeWrite(&tries, "\\pkg\\push-planner\\html_ui\\efb_ui\\efb_apps\\pushplanner\\themes\\pusher-probe.json");
-  probeRead(&tries, "\\pkg\\layout.json");
-  probeRead(&tries, "\\pkg\\push-planner\\layout.json");
-  probeRead(&tries, "\\pkg\\push-planner\\html_ui\\efb_ui\\efb_apps\\pushplanner\\themes\\index.json");
-  probeDir(&dirs, "\\work\\");
-  probeDir(&dirs, "/work/");
-  probeDir(&dirs, "\\pkg\\");
-  std::string json = "{\"id\":" + std::to_string(id) + ",\"kind\":\"fsprobe\",\"version\":\"" + kVersion + "\",\"tries\":[";
-  for (size_t i = 0; i < tries.size(); ++i) json += (i ? "," : "") + tries[i];
-  json += "],\"dirs\":[";
-  for (size_t i = 0; i < dirs.size(); ++i) json += (i ? "," : "") + dirs[i];
-  json += "]}";
-  send(json);
 }
 
 // ---- saved files ----
@@ -289,7 +195,6 @@ void onPing(const char* args, unsigned int size, void* /*ctx*/) {
 extern "C" MSFS_CALLBACK void module_init(void) {
   std::fprintf(stderr, "[PusherFiles] module_init, version %s\n", kVersion);
   fsCommBusRegister(kEventPing, onPing);
-  fsCommBusRegister(kEventProbe, onProbe);
   fsCommBusRegister(kEventList, onList);
   fsCommBusRegister(kEventSave, onSave);
   fsCommBusRegister(kEventDelete, onDelete);

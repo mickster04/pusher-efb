@@ -2,22 +2,52 @@
  "id": "sia",
  "name": "Singapore Airlines",
  "note": "Navy and gold",
- "colours": {
-  "bg": "#031637",
-  "bgDeep": "#020e24",
-  "panel": "#072a63",
-  "border": "#1a4690",
-  "text": "#ffffff",
-  "textDim": "#a8b9d8",
-  "accent": "#f99f1c",
-  "accentText": "#031637",
-  "button": "#10388a",
-  "buttonText": "#ffffff",
-  "input": "#02112b",
-  "good": "#4cd18a",
-  "warn": "#ffd37a",
-  "bad": "#ff6677",
-  "accent2": "#f9c46a",
-  "routeFwd": "#7fb6ff"
+ "page": {
+  "surface": {
+   "bg": "#031637",
+   "bgDeep": "#020e24",
+   "panel": "#072a63",
+   "border": "#1a4690",
+   "input": "#02112b"
+  },
+  "text": {
+   "text": "#ffffff",
+   "textDim": "#a8b9d8",
+   "accentText": "#031637",
+   "buttonText": "#ffffff"
+  },
+  "controls": {
+   "accent": "#f99f1c",
+   "accent2": "#f9c46a",
+   "button": "#10388a"
+  },
+  "status": {
+   "good": "#4cd18a",
+   "warn": "#ffd37a",
+   "bad": "#ff6677"
+  }
+ },
+ "map": {
+  "paths": {
+   "runway": {
+    "colour": "#c2cee4",
+    "width": 32
+   },
+   "taxiway": {
+    "colour": "#f99f1c",
+    "width": 6
+   },
+   "unnamed": {
+    "colour": "#566888",
+    "width": 3
+   }
+  },
+  "labels": {
+   "size": 15,
+   "gap": 9
+  },
+  "route": {
+   "routeFwd": "#7fb6ff"
+  }
  }
 }

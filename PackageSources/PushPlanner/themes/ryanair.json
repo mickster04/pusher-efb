@@ -2,22 +2,52 @@
  "id": "ryanair",
  "name": "Ryanair",
  "note": "Bright blue and yellow",
- "colours": {
-  "bg": "#05205f",
-  "bgDeep": "#031542",
-  "panel": "#0a3180",
-  "border": "#2050b4",
-  "text": "#ffffff",
-  "textDim": "#b3c4ee",
-  "accent": "#f1c933",
-  "accentText": "#05205f",
-  "button": "#144098",
-  "buttonText": "#ffffff",
-  "input": "#041a50",
-  "good": "#4cd18a",
-  "warn": "#f1c933",
-  "bad": "#ff6677",
-  "accent2": "#f1c933",
-  "routeFwd": "#8dc0ff"
+ "page": {
+  "surface": {
+   "bg": "#05205f",
+   "bgDeep": "#031542",
+   "panel": "#0a3180",
+   "border": "#2050b4",
+   "input": "#041a50"
+  },
+  "text": {
+   "text": "#ffffff",
+   "textDim": "#b3c4ee",
+   "accentText": "#05205f",
+   "buttonText": "#ffffff"
+  },
+  "controls": {
+   "accent": "#f1c933",
+   "accent2": "#f1c933",
+   "button": "#144098"
+  },
+  "status": {
+   "good": "#4cd18a",
+   "warn": "#f1c933",
+   "bad": "#ff6677"
+  }
+ },
+ "map": {
+  "paths": {
+   "runway": {
+    "colour": "#cad6f3",
+    "width": 32
+   },
+   "taxiway": {
+    "colour": "#f1c933",
+    "width": 6
+   },
+   "unnamed": {
+    "colour": "#5c72a7",
+    "width": 3
+   }
+  },
+  "labels": {
+   "size": 15,
+   "gap": 9
+  },
+  "route": {
+   "routeFwd": "#8dc0ff"
+  }
  }
 }

@@ -59,6 +59,7 @@ PS.colourPanel = function () {
   // ---------- Themes ----------
   function renderThemes() {
     PS.clear(themesBox);
+    themesBox.appendChild(ui.note('Airline themes are inspired by those liveries (approximate colours, not official). Pick one, then change any colour on the My colours tab and save it: saved themes show here too, as do the package\'s theme files.'));
     var grid = h('div', { class: 'ps-themegrid' });
     T.THEMES.forEach(function (th) {
       var on = T.selectedId() === th.id;
@@ -69,16 +70,8 @@ PS.colourPanel = function () {
       grid.appendChild(card);
     });
     themesBox.appendChild(grid);
-    themesBox.appendChild(ui.note('Airline themes are inspired by those liveries (approximate colours, not official). Pick one, then change any colour on the My colours tab and save it: saved themes show here too, as do the package\'s theme files.'));
     var sv = T.savedStatus();
     themesBox.appendChild(h('div', { class: 'ps-kv', text: sv.state === 'done' ? 'Saved themes: ' + sv.count + ' file(s) in the files module\'s work folder' + (sv.failed.length ? '. Not read: ' + sv.failed.map(function (f) { return f.file + ' (' + f.why + ')'; }).join(', ') : '') : sv.state === 'failed' ? 'Files module not found: saved themes use the app\'s own storage' : sv.state === 'loading' ? 'Reading saved themes...' : '' }));
-    // Theme files in the package: what was read, and a button to read them again (after editing them).
-    var fs = T.fileStatus();
-    var status = fs.state === 'loading' ? 'Reading theme files...'
-      : fs.state === 'done' ? 'Theme files: ' + fs.loaded + ' of ' + (fs.listed - fs.empty) + ' read from the package' + (fs.empty ? ', ' + fs.empty + ' free slots (user1.json to user' + fs.empty + '.json)' : '') + (fs.added ? ', ' + fs.added + ' new' : '') + (fs.failed.length ? '. Not read: ' + fs.failed.map(function (f) { return f.file + ' (' + f.why + ')'; }).join(', ') : '')
-      : fs.state === 'failed' ? 'Theme files could not be read (' + (fs.failed[0] ? fs.failed[0].file + ' ' + fs.failed[0].why : 'unknown') + '): using the built-in themes'
-      : 'Theme files not read yet';
-    themesBox.appendChild(h('div', { class: 'ps-btnrow' }, ui.iconButton('swap', 'Reload theme files', function () { T.loadFiles(); }, 'ps-small ps-ghost'), h('div', { class: 'ps-kv', text: status })));
   }
 
   // ---------- My colours ----------
@@ -122,9 +115,8 @@ PS.colourPanel = function () {
       T.saveTheme(nameInput.value, function (r) {
         nameTouched = false;
         if (!r.ok) { saveMsg.textContent = r.why || 'Could not save.'; return; }
-        saveMsg.textContent = r.where === 'file'
-          ? 'Saved as ' + r.file + ' in the folder ' + r.folder + ' (a Steam install keeps it elsewhere: search for pusher-probe.txt).'
-          : 'The files module is not installed, so the theme was kept in the app\'s own storage (slot ' + r.slot + '). Install PusherFiles.wasm to save real files.';
+        saveMsg.textContent = '';
+        PS.toasts.show({ kind: 'info', title: 'Theme saved', ttlMs: 3000, message: r.where === 'file' ? r.file + ' is in the push-planner work folder.' : 'Kept in the app\'s own storage (slot ' + r.slot + '); install PusherFiles.wasm to save real files.' });
       });
     }, 'ps-small');
     customBox.appendChild(h('div', { class: 'ps-btnrow' }, nameInput, saveBtn));
@@ -133,7 +125,7 @@ PS.colourPanel = function () {
     if (cur.fromSaved) {
       actions.appendChild(ui.iconButton('trash', 'Delete ' + cur.fromSaved, function () {
         saveMsg.textContent = 'Deleting...';
-        T.deleteSaved(cur.fromSaved, function (r) { saveMsg.textContent = r.ok ? 'Deleted ' + cur.fromSaved + '.' : 'Could not delete: ' + (r.why || 'unknown'); });
+        T.deleteSaved(cur.fromSaved, function (r) { if (r.ok) { saveMsg.textContent = ''; PS.toasts.show({ kind: 'info', title: 'Theme deleted', message: cur.fromSaved + ' was removed.', ttlMs: 3000 }); } else saveMsg.textContent = 'Could not delete: ' + (r.why || 'unknown'); });
       }, 'ps-small ps-ghost'));
     }
     if (cur.fromSlot) {

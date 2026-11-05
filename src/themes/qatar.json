@@ -2,23 +2,52 @@
  "id": "qatar",
  "name": "Qatar Airways",
  "note": "Burgundy and muted gold",
- "colours": {
-  "bg": "#2a0415",
-  "bgDeep": "#1c020e",
-  "panel": "#3d0a24",
-  "border": "#6b1a3f",
-  "text": "#f7eef2",
-  "textDim": "#c9a5b5",
-  "accent": "#c8a165",
-  "accentText": "#2a0415",
-  "button": "#541030",
-  "buttonText": "#ffffff",
-  "input": "#1f030f",
-  "good": "#4cd18a",
-  "warn": "#ffd37a",
-  "bad": "#ff6a8a",
-  "accent2": "#e6c991",
-  "taxiway": "#c8a165",
-  "routeFwd": "#8fb4ff"
+ "page": {
+  "surface": {
+   "bg": "#2a0415",
+   "bgDeep": "#1c020e",
+   "panel": "#3d0a24",
+   "border": "#6b1a3f",
+   "input": "#1f030f"
+  },
+  "text": {
+   "text": "#f7eef2",
+   "textDim": "#c9a5b5",
+   "accentText": "#2a0415",
+   "buttonText": "#ffffff"
+  },
+  "controls": {
+   "accent": "#c8a165",
+   "accent2": "#e6c991",
+   "button": "#541030"
+  },
+  "status": {
+   "good": "#4cd18a",
+   "warn": "#ffd37a",
+   "bad": "#ff6a8a"
+  }
+ },
+ "map": {
+  "paths": {
+   "runway": {
+    "colour": "#d7bbc7",
+    "width": 32
+   },
+   "taxiway": {
+    "colour": "#c8a165",
+    "width": 6
+   },
+   "unnamed": {
+    "colour": "#7a5565",
+    "width": 3
+   }
+  },
+  "labels": {
+   "size": 15,
+   "gap": 9
+  },
+  "route": {
+   "routeFwd": "#8fb4ff"
+  }
  }
 }

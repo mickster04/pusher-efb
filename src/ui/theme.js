@@ -49,7 +49,67 @@ PS.theme = (function () {
   // ---- the themes ----
   // Page roles are required; map roles are optional (filled from the page roles). The presets are the JSON files in src/themes/ (built into the bundle as
   // PS.BUILTIN_THEMES, so there is always a set to use) and the same files are shipped in the package, where loadFiles() reads them at run time.
-  function fromFileShape(t) { return { id: t.id, name: t.name, note: t.note || '', p: t.colours || {}, fromFile: false }; }
+  // Map line weights and label size (pixels) are part of a theme: a "map" object in the theme file, any of unnamed, named, runway, label, gap.
+  var MAP_DEFAULT = { unnamed: 3, named: 6, runway: 32, label: 15, gap: 9 };
+  function cleanMap(m) {
+    var out = {}, k, v;
+    if (m && typeof m === 'object') { for (k in MAP_DEFAULT) { v = Number(m[k]); if (isFinite(v) && v >= 0 && v <= 80) out[k] = v; } }
+    return out;
+  }
+  // In a theme file each kind of path is an object with its own colour and width: map.paths.runway / taxiway (named) / unnamed { "colour", "width" }, and
+  // map.labels { "size", "gap" }. (The older map.lines and flat map shapes still load.)
+  var PATH_KEYS = { runway: ['runway', 'runway'], taxiway: ['taxiway', 'named'], unnamed: ['pathOther', 'unnamed'] };   // file key -> [colour role, width key]
+  function mapLines(t) {
+    var m = t && t.map && typeof t.map === 'object' ? t.map : null, flat = {}, k, p;
+    if (!m) return {};
+    if (m.lines && typeof m.lines === 'object') flat = cleanMap(m.lines); else flat = cleanMap(m);
+    if (m.paths && typeof m.paths === 'object') {
+      for (k in PATH_KEYS) { p = m.paths[k]; if (p && typeof p === 'object') { var w = cleanMap((function () { var o = {}; o[PATH_KEYS[k][1]] = p.width; return o; })()); if (w[PATH_KEYS[k][1]] !== undefined) flat[PATH_KEYS[k][1]] = w[PATH_KEYS[k][1]]; } }
+    }
+    if (m.labels && typeof m.labels === 'object') {
+      var l = cleanMap({ label: m.labels.size, gap: m.labels.gap });
+      if (l.label !== undefined) flat.label = l.label;
+      if (l.gap !== undefined) flat.gap = l.gap;
+    }
+    return flat;
+  }
+  // The colours of a theme file, however they are grouped: every valid colour for a known role, found at any depth under the file's groups (page, map, or
+  // the older flat "colours"), so the grouping is for people to read and the app does not care where a role sits.
+  function fileColours(t) {
+    var out = {};
+    (function walk(o, depth) {
+      var k;
+      if (!o || typeof o !== 'object' || depth > 4) return;
+      for (k in o) {
+        if (depth === 0 && (k === 'id' || k === 'name' || k === 'note')) continue;
+        if (typeof o[k] === 'string') { if (ALL_ROLES.indexOf(k) >= 0 && isHex(o[k])) out[k] = normalise(o[k]); }
+        else walk(o[k], depth + 1);
+      }
+    })(t, 0);
+    var paths = t && t.map && t.map.paths, k;
+    if (paths && typeof paths === 'object') { for (k in PATH_KEYS) { if (paths[k] && typeof paths[k] === 'object' && isHex(paths[k].colour)) out[PATH_KEYS[k][0]] = normalise(paths[k].colour); } }
+    return out;
+  }
+  // The same colours grouped for a theme file: page and map, each in small groups, and the map's line weights.
+  var FILE_GROUPS = {
+    page: { surface: ['bg', 'bgDeep', 'panel', 'border', 'input'], text: ['text', 'textDim', 'accentText', 'buttonText'], controls: ['accent', 'accent2', 'button'], status: ['good', 'warn', 'bad'] },
+    map: { surface: ['mapBg', 'mapGrid', 'mapText', 'outline'], route: ['routeBack', 'routeFwd', 'routeBad', 'routeDone'], markers: ['aircraft', 'pin', 'pinEnd', 'traffic', 'handle'] }
+  };
+  function nestPalette(pal, ms) {
+    var out = {}, sec, grp;
+    for (sec in FILE_GROUPS) {
+      out[sec] = {};
+      for (grp in FILE_GROUPS[sec]) {
+        out[sec][grp] = {};
+        FILE_GROUPS[sec][grp].forEach(function (r) { if (pal[r]) out[sec][grp][r] = pal[r]; });
+      }
+    }
+    out.map.paths = {};
+    for (grp in PATH_KEYS) out.map.paths[grp] = { colour: pal[PATH_KEYS[grp][0]], width: ms[PATH_KEYS[grp][1]] };
+    out.map.labels = { size: ms.label, gap: ms.gap };
+    return out;
+  }
+  function fromFileShape(t) { return { id: t.id, name: t.name, note: t.note || '', p: fileColours(t), m: mapLines(t), fromFile: false }; }
   var THEMES = (PS.BUILTIN_THEMES || []).map(fromFileShape);
   if (!THEMES.length) THEMES.push({ id: 'default', name: 'Push Planner', note: '', p: { bg: '#131c24', text: '#dfe7ee', accent: '#f0a830' } });
 
@@ -107,6 +167,12 @@ PS.theme = (function () {
     for (k in over) base[k] = over[k];
     return fillRoles(base);
   }
+  // The map style of the chosen theme: its own values over the defaults.
+  function mapStyle() {
+    var theme = byId(state.id), out = {}, k;
+    for (k in MAP_DEFAULT) out[k] = (theme && theme.m && theme.m[k] !== undefined) ? theme.m[k] : MAP_DEFAULT[k];
+    return out;
+  }
   function resolve() { current = derive(palette()); return current; }
   function cssText() {
     var t = current || resolve();
@@ -148,12 +214,13 @@ PS.theme = (function () {
 
   // ---- saved themes: real files in the files module's work folder ----
   // The page cannot write files and nothing inside the package can be written by a module (the sim refuses), but the files module can read and write its
-  // own work folder (found by the probe). A theme saved there is a .json file named after the theme, found again at every start (the module lists the
+  // own work folder (found with a probe, since removed). A theme saved there is a .json file named after the theme, found again at every start (the module lists the
   // folder), and can be copied out to share or dropped in from someone else. If the files module is not installed, saving falls back to the in-app slots.
-  // Where the files are on disk. Found with the probe on a Microsoft Store install; a Steam install keeps its WASM work folders under a different root, so the
-  // hint says how to find it from the probe file the files module leaves there.
+  // Where the files are on disk. The Microsoft Store path was read from a working install; the Steam one is by the same layout (Steam keeps the sim's data under
+  // %APPDATA%\Microsoft Flight Simulator 2024 where the Store keeps it under LocalState) and matches community reports, but has not been checked on a Steam install.
   var WORK_FOLDER = '%LOCALAPPDATA%\\Packages\\Microsoft.Limitless_8wekyb3d8bbwe\\LocalState\\WASM\\MSFS2024\\push-planner\\work';
-  var WORK_FOLDER_NOTE = 'Saved themes are .json files in ' + WORK_FOLDER + ' (Microsoft Store install). A Steam install keeps it under a different root: search your drive for pusher-probe.txt to find the folder. Copy a file out to share it; drop one in and reload to use it.';
+  var WORK_FOLDER_STEAM = '%APPDATA%\\Microsoft Flight Simulator 2024\\WASM\\MSFS2024\\push-planner\\work';
+  var WORK_FOLDER_NOTE = 'Saved themes are .json files in the push-planner work folder. Microsoft Store install: ' + WORK_FOLDER + '. Steam install: ' + WORK_FOLDER_STEAM + ' (from community reports; not checked here). Copy a file out to share it; drop one in and reload to use it.';
   var savedInfo = { state: 'idle', module: 'unknown', count: 0, failed: [], at: 0 };
   function slugify(name) {
     var t = String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
@@ -169,11 +236,10 @@ PS.theme = (function () {
       if (t && t.empty === true) return;
       var why = validateThemeFile(t);
       if (why) { failed.push({ file: it.name, why: why }); return; }
-      var cols = {}, k, src = t.colours || t.colors;
-      for (k in src) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(src[k])) cols[k] = normalise(src[k]); }
+      var cols = fileColours(t);
       var id = t.id, clash = find(id);
       if (clash && !clash.fromSaved) id = id + '-saved';                    // a saved file never replaces a preset
-      THEMES.push({ id: id, name: typeof t.name === 'string' && t.name ? t.name : id, note: typeof t.note === 'string' ? t.note : 'Saved theme', p: cols, fromFile: false, fromSaved: it.name });
+      THEMES.push({ id: id, name: typeof t.name === 'string' && t.name ? t.name : id, note: typeof t.note === 'string' ? t.note : 'Saved theme', p: cols, m: mapLines(t), fromFile: false, fromSaved: it.name });
       count++;
     });
     refreshSlots();
@@ -197,7 +263,8 @@ PS.theme = (function () {
   // Save the colours in use as a theme called `name`. done({ ok, where: 'file' | 'storage', file, why }).
   function saveTheme(name, done) {
     var nm = String(name || '').replace(/\s+/g, ' ').replace(/^ | $/g, '').slice(0, 30) || 'My theme', fileName = slugify(nm) + '.json', id = 'saved-' + slugify(nm);
-    var obj = { id: id, name: nm, note: 'Saved from Push Planner', colours: palette() };
+    var obj = { id: id, name: nm, note: 'Saved from Push Planner' };
+    var nested = nestPalette(palette(), mapStyle()); obj.page = nested.page; obj.map = nested.map;
     var text = JSON.stringify(obj, null, 1);
     function viaStorage(why) {
       var n = 0, k;
@@ -214,7 +281,7 @@ PS.theme = (function () {
       PS.log('theme', 'theme "' + nm + '" saved as ' + fileName);
       loadSaved(function () {
         if (find(id)) { state.id = id; state.custom = {}; save(); apply(); }
-        if (done) done({ ok: true, where: 'file', file: fileName, folder: WORK_FOLDER });
+        if (done) done({ ok: true, where: 'file', file: fileName, folder: WORK_FOLDER, folderSteam: WORK_FOLDER_STEAM });
       });
     }, function (e) { viaStorage('the files module did not answer'); });
   }
@@ -229,18 +296,17 @@ PS.theme = (function () {
   // ---- theme files in the package ----
   // The package ships the presets as files (themes/index.json lists them) which are read here when the app starts: what is in them wins over the built-in
   // copy of the same id, and a file with a new id adds a theme. So a theme can be added or changed by editing the files, no rebuild of the app.
-  // A theme file is { "id": "my-theme", "name": "My theme", "note": "...", "colours": { "bg": "#112233", ... } } (roles as on the My colours tab; leave out
-  // the ones you do not care about). It needs a valid bg and text at least. index.json is { "themes": ["id", ...] } (an entry may also be "file.json").
+  // A theme file is { "id", "name", "note", "page": { "surface": { "bg": "#112233", ... }, "text": {...}, "controls": {...}, "status": {...} },
+  // "map": { "surface": {...}, "paths": {...}, "route": {...}, "markers": {...}, "lines": { "unnamed": 3, "named": 6, "runway": 32, "label": 15, "gap": 9 } } }
+  // (roles as on the My colours tab; leave out the ones you do not care about; the older flat "colours" object still works). It needs a valid bg and text at least. index.json is { "themes": ["id", ...] } (an entry may also be "file.json").
   var files = { state: 'idle', names: [], empty: 0, base: '', listed: 0, loaded: 0, added: 0, replaced: 0, failed: [], at: 0 };
   var ID_RE = /^[a-z0-9][a-z0-9_-]{0,40}$/i;
 
   function validateThemeFile(t) {
     if (!t || typeof t !== 'object') return 'not an object';
     if (typeof t.id !== 'string' || !ID_RE.test(t.id)) return 'needs an "id" of letters, digits, - or _';
-    var cols = t.colours || t.colors;
-    if (!cols || typeof cols !== 'object') return 'needs a "colours" object';
-    var n = 0, k;
-    for (k in cols) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(cols[k])) n++; }
+    var cols = fileColours(t), n = 0, k;
+    for (k in cols) n++;
     if (!isHex(cols.bg) || !isHex(cols.text)) return 'needs a valid "bg" and "text" colour';
     return n < 3 ? 'has hardly any valid colours' : '';
   }
@@ -254,9 +320,8 @@ PS.theme = (function () {
       if (t && t.empty === true) { res.empty++; return; }        // a free slot (user1.json ...): nothing to load yet
       var why = validateThemeFile(t);
       if (why) { res.failed.push({ file: it.file, why: why }); return; }
-      var cols = {}, k, src = t.colours || t.colors;
-      for (k in src) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(src[k])) cols[k] = normalise(src[k]); }
-      var entry = { id: t.id, name: typeof t.name === 'string' && t.name ? t.name : t.id, note: typeof t.note === 'string' ? t.note : '', p: cols, fromFile: true }, existing = find(t.id);
+      var cols = fileColours(t);
+      var entry = { id: t.id, name: typeof t.name === 'string' && t.name ? t.name : t.id, note: typeof t.note === 'string' ? t.note : '', p: cols, m: mapLines(t), fromFile: true }, existing = find(t.id);
       if (existing) { THEMES[THEMES.indexOf(existing)] = entry; res.replaced++; } else { THEMES.push(entry); res.added++; }
     });
     refreshSlots();
@@ -322,7 +387,7 @@ PS.theme = (function () {
   var api = {
     ROLE_GROUPS: ROLE_GROUPS, ROLES: ALL_ROLES, THEMES: THEMES, byId: byId,
     mix: mix, parse: parse, hex: hex, isHex: isHex, normalise: normalise, luminance: luminance, contrast: contrast,
-    fillRoles: fillRoles, derive: derive, palette: palette, css: cssText,
+    mapStyle: mapStyle, fillRoles: fillRoles, derive: derive, palette: palette, css: cssText,
     // c('routeBack') -> the colour now. Used by the map drawing.
     c: function (role) { return (current || resolve())[role] || '#ff00ff'; },
     all: function () { return current || resolve(); },
@@ -347,7 +412,7 @@ PS.theme = (function () {
       apply();
       return true;
     },
-    workFolder: WORK_FOLDER, workFolderNote: WORK_FOLDER_NOTE, loadSaved: loadSaved, saveTheme: saveTheme, deleteSaved: deleteSaved, savedStatus: function () { return savedInfo; }, slugify: slugify, ingestSaved: ingestSaved,
+    workFolder: WORK_FOLDER, workFolderSteam: WORK_FOLDER_STEAM, workFolderNote: WORK_FOLDER_NOTE, loadSaved: loadSaved, saveTheme: saveTheme, deleteSaved: deleteSaved, savedStatus: function () { return savedInfo; }, slugify: slugify, ingestSaved: ingestSaved,
     loadFiles: loadFiles, ingest: ingest, validateThemeFile: validateThemeFile, fileStatus: function () { return files; }, themeBase: themeBase,
     selectedId: function () { return find(state.id) ? state.id : THEMES[0].id; },
     // The theme's own colour for a role (ignoring the user's changes), to reset to.

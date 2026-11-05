@@ -2,32 +2,64 @@
  "id": "default",
  "name": "Push Planner",
  "note": "The original dark theme with amber",
- "colours": {
-  "bg": "#131c24",
-  "bgDeep": "#0e151b",
-  "panel": "#1b2630",
-  "border": "#2a3a47",
-  "text": "#dfe7ee",
-  "textDim": "#8aa0b2",
-  "accent": "#f0a830",
-  "accentText": "#131c24",
-  "button": "#2a3a47",
-  "buttonText": "#eef4f8",
-  "input": "#0f171e",
-  "good": "#4cd18a",
-  "warn": "#ffd37a",
-  "bad": "#ff5c6c",
-  "accent2": "#34d2c8",
-  "runway": "#8aa3b8",
-  "pathOther": "#4d6275",
-  "routeBack": "#ffffff",
-  "routeFwd": "#5aa8ff",
-  "routeDone": "#4d6275",
-  "pin": "#e8f0f6",
-  "pinEnd": "#ff9f43",
-  "traffic": "#ff5c5c",
-  "handle": "#ffe14d",
-  "outline": "#0b1116",
-  "mapText": "#6f8294"
+ "page": {
+  "surface": {
+   "bg": "#131c24",
+   "bgDeep": "#0e151b",
+   "panel": "#1b2630",
+   "border": "#2a3a47",
+   "input": "#0f171e"
+  },
+  "text": {
+   "text": "#dfe7ee",
+   "textDim": "#8aa0b2",
+   "accentText": "#131c24",
+   "buttonText": "#eef4f8"
+  },
+  "controls": {
+   "accent": "#f0a830",
+   "accent2": "#34d2c8",
+   "button": "#2a3a47"
+  },
+  "status": {
+   "good": "#4cd18a",
+   "warn": "#ffd37a",
+   "bad": "#ff5c6c"
+  }
+ },
+ "map": {
+  "surface": {
+   "mapText": "#6f8294",
+   "outline": "#0b1116"
+  },
+  "paths": {
+   "runway": {
+    "colour": "#8aa3b8",
+    "width": 32
+   },
+   "taxiway": {
+    "colour": "#f0a830",
+    "width": 6
+   },
+   "unnamed": {
+    "colour": "#4d6275",
+    "width": 3
+   }
+  },
+  "labels": {
+   "size": 15,
+   "gap": 9
+  },
+  "route": {
+   "routeBack": "#ffffff",
+   "routeFwd": "#5aa8ff",
+   "routeDone": "#4d6275"
+  },
+  "markers": {
+   "pin": "#e8f0f6",
+   "pinEnd": "#ff9f43",
+   "traffic": "#ff5c5c",
+   "handle": "#ffe14d"
+  }
  }
 }

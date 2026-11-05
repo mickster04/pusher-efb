@@ -2,23 +2,52 @@
  "id": "qantas",
  "name": "Qantas",
  "note": "Kangaroo red on black",
- "colours": {
-  "bg": "#0e0e10",
-  "bgDeep": "#070708",
-  "panel": "#1b1b1f",
-  "border": "#3d2c2f",
-  "text": "#ffffff",
-  "textDim": "#b3a9aa",
-  "accent": "#e40000",
-  "accentText": "#ffffff",
-  "button": "#2b2224",
-  "buttonText": "#ffffff",
-  "input": "#09090a",
-  "good": "#4cd18a",
-  "warn": "#ffd37a",
-  "bad": "#ff6a5a",
-  "accent2": "#ffffff",
-  "taxiway": "#ff5a4a",
-  "routeFwd": "#6fb0ff"
+ "page": {
+  "surface": {
+   "bg": "#0e0e10",
+   "bgDeep": "#070708",
+   "panel": "#1b1b1f",
+   "border": "#3d2c2f",
+   "input": "#09090a"
+  },
+  "text": {
+   "text": "#ffffff",
+   "textDim": "#b3a9aa",
+   "accentText": "#ffffff",
+   "buttonText": "#ffffff"
+  },
+  "controls": {
+   "accent": "#e40000",
+   "accent2": "#ffffff",
+   "button": "#2b2224"
+  },
+  "status": {
+   "good": "#4cd18a",
+   "warn": "#ffd37a",
+   "bad": "#ff6a5a"
+  }
+ },
+ "map": {
+  "paths": {
+   "runway": {
+    "colour": "#cac3c4",
+    "width": 32
+   },
+   "taxiway": {
+    "colour": "#ff5a4a",
+    "width": 6
+   },
+   "unnamed": {
+    "colour": "#615c5d",
+    "width": 3
+   }
+  },
+  "labels": {
+   "size": 15,
+   "gap": 9
+  },
+  "route": {
+   "routeFwd": "#6fb0ff"
+  }
  }
 }

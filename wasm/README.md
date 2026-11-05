@@ -1,6 +1,6 @@
 # Pusher WASM modules
 
-Two standalone modules, kept apart so experiments with one cannot break the other: **PusherTaxi** (below; proven in the sim) and **PusherFiles** (`wasm/files/files_module.cpp`, EFB client `src/data/wasm-files.js`; unverified). PusherFiles has no SimConnect, only the CommBus and plain C file calls. It keeps the user's **saved themes** as `.json` files in its work folder (the probe showed a module can read, write and list `\work\` and nothing inside the package, so `layout.json` cannot be edited from the sim). Events: `PusherFilesPing`, `PusherFilesProbe` (what files can do), `PusherFilesList` (one message per `.json` file, then an end message), `PusherFilesSave` and `PusherFilesDelete` (plain names ending `.json` only), answered on `PusherFilesResponse`. Host test: `test/wasm-files.test.mjs` compiles the module with stand-in MSFS headers and a temporary work folder. On a Microsoft Store install the folder is `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalState\WASM\MSFS2024\push-planner\work`; a Steam install keeps it under a different root (search for `pusher-probe.txt`). `bash wasm/build.sh` builds both modules and copies `PusherTaxi.wasm` and `PusherFiles.wasm` to `PackageSources/modules/` (the package copies that folder, so reinstall and restart the sim after a build).
+Two standalone modules, kept apart so experiments with one cannot break the other: **PusherTaxi** (below; proven in the sim) and **PusherFiles** (`wasm/files/files_module.cpp`, EFB client `src/data/wasm-files.js`; unverified). PusherFiles has no SimConnect, only the CommBus and plain C file calls. It keeps the user's **saved themes** as `.json` files in its work folder (a module can read, write and list `\work\` and nothing inside the package, so `layout.json` cannot be edited from the sim). Events: `PusherFilesPing`, `PusherFilesList` (one message per `.json` file, then an end message), `PusherFilesSave` and `PusherFilesDelete` (plain names ending `.json` only), answered on `PusherFilesResponse`. Host test: `test/wasm-files.test.mjs` compiles the module with stand-in MSFS headers and a temporary work folder. On a Microsoft Store install the folder is `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalState\WASM\MSFS2024\push-planner\work`; a Steam install is expected at `%APPDATA%\Microsoft Flight Simulator 2024\WASM\MSFS2024\push-planner\work` (from community reports; not checked here). `bash wasm/build.sh` builds both modules and copies `PusherTaxi.wasm` and `PusherFiles.wasm` to `PackageSources/modules/` (the package copies that folder, so reinstall and restart the sim after a build).
 
 ## Pusher taxi module
 
@@ -46,6 +46,26 @@ It also links `MSFS_WasmVersions.a`, `libc`, `libc++`, `libc++abi` and `libclang
 3. In the sim log look for `WASM: Module path is ...pushertaxi.wasm`, then `loaded` and `initialized`, then `[PusherTaxi] module_init`. In the EFB, page 3 **Check taxi module** should say found.
 
 Sim load errors seen and what they mean: `Error getting indirect function table` (add `--export-table`), `Error get malloc function pointer` (export `malloc`). The sim's other warnings for optional exports (`get_pages_state`, `mallinfo` and similar) are harmless.
+
+## Using the WASM files as they are, in another project
+
+The two `.wasm` files are self-contained and know nothing about Push Planner, so they can be copied into any MSFS 2024 package (the `.wasm` files are build output and are not committed: build them with `bash wasm/build.sh`, or take them from a copy of the built package). Each is a standalone module that talks to JavaScript only over the sim's CommBus.
+
+1. **Copy** `PusherTaxi.wasm` and/or `PusherFiles.wasm` from `PackageSources/modules/` into your own package's `PackageSources/modules/`. The folder must be called `modules`, and the file names are the module names the sim logs (it lower-cases them: `pushertaxi.wasm`). Use both, or only the one you need; they do not depend on each other.
+2. **Build the package** (Project Editor) so the files are copied to the package's `modules/` folder and listed in its `layout.json`, install it in the Community folder and **restart the sim**: modules load only at start-up. Look for `WASM: Module path is ...` and `[PusherTaxi] module_init` (or the files module's equivalent) in the sim log.
+3. **Talk to a module from your page or EFB app** with the CommBus. Load `/JS/Services/CommBus.js`, call `RegisterCommBusListener`, listen for the module's response event, and send a request with `listener.callWasm(eventName, jsonString)`. The easiest start is to copy the matching client, which has no dependency on the rest of the app other than a log function (`PS.log`) and an error-text helper (`PS.errText`): `src/data/wasm-taxi.js` for the taxi module, `src/data/wasm-files.js` for the files module. Both send a ping first (`{"id":1}` answers `pong` with the version), which is the way to check the module is loaded.
+
+| Module | Request events | Answers on | What it gives you |
+|---|---|---|---|
+| `PusherTaxi` | `PusherTaxiPing`, `PusherTaxiRequest {"id","icao"}` | `PusherTaxiResponse` | an airport's taxi points, parking, taxi paths and taxiway names (from SimConnect facility data) as chunked JSON; message shapes are in the header of `src/data/wasm-taxi.js` |
+| `PusherFiles` | `PusherFilesPing`, `PusherFilesList`, `PusherFilesSave {"id","name","text"}`, `PusherFilesDelete {"id","name"}` | `PusherFilesResponse` | read, write, list and delete small `.json` files in the module's work folder; names are letters, digits, `-`, `_`, `.` and must end `.json` (64 characters at most), 16 KB per file; shapes are in the header of `wasm/files/files_module.cpp` |
+
+Things to know when reusing them:
+
+- **The work folder is named after your package**, not this one: `...\WASM\MSFS2024\<your-package-folder>\work` (Microsoft Store root `%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalState`; Steam, from community reports and not checked, `%APPDATA%\Microsoft Flight Simulator 2024`). Check the sim log or look for the folder after the first save.
+- **Event names are fixed** in the binaries (`PusherTaxi...`, `PusherFiles...`). Two packages that both ship one of these modules would share the events; to avoid that, rename the events in the C++ source and rebuild.
+- The files module only touches its own work folder and cannot write inside the package, so it is not a way to change a package's own files.
+- To change behaviour, edit `wasm/src` (taxi) or `wasm/files/files_module.cpp` (files), then rebuild with the flags in the build section above.
 
 ## Protocol
 

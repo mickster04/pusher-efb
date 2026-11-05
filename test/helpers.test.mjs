@@ -119,13 +119,12 @@ test('wheel zoom: a notch is one step, small trackpad deltas add up, lines and p
   assert.equal(PS.ui.wheelAccum()(1, 2), 1, 'a page is a step');
 });
 
-test('files module client: a probe, a list of several files, a save and a delete go to the module and the answers come back', async () => {
+test('files module client: a ping, a list of several files, a save and a delete go to the module and the answers come back', async () => {
   const handlers = {}, store = { 'one.json': '{"id":"one"}', 'two.json': '{"id":"two"}' }, seen = [];
   globalThis.RegisterCommBusListener = (cb) => { if (cb) setTimeout(cb, 0); return { on: (n, h) => { handlers[n] = h; }, callWasm: (name, json) => {
     const req = JSON.parse(json); seen.push(name);
     const out = (m) => setTimeout(() => handlers.PusherFilesResponse(JSON.stringify(m)), 2);
     if (name === 'PusherFilesPing') out({ id: req.id, kind: 'pong', version: '0.2.0' });
-    else if (name === 'PusherFilesProbe') out({ id: req.id, kind: 'fsprobe', version: '0.2.0', tries: [{ path: '\\work\\x', op: 'write', ok: true, detail: '' }], dirs: [] });
     else if (name === 'PusherFilesList') { Object.keys(store).forEach((n) => out({ id: req.id, kind: 'file', name: n, text: store[n] })); out({ id: req.id, kind: 'end', count: 2 }); }
     else if (name === 'PusherFilesSave') { store[req.name] = req.text; out({ id: req.id, kind: 'saved', name: req.name, ok: true, detail: '' }); }
     else if (name === 'PusherFilesDelete') { delete store[req.name]; out({ id: req.id, kind: 'deleted', name: req.name, ok: true, detail: '' }); }
@@ -133,8 +132,6 @@ test('files module client: a probe, a list of several files, a save and a delete
   try {
     const pong = await PS.wasmFiles.ping(500);
     assert.equal(pong.version, '0.2.0'); assert.ok(PS.wasmFiles.isAlive());
-    const r = await PS.wasmFiles.probe(500);
-    assert.equal(r.kind, 'fsprobe'); assert.equal(r.tries[0].ok, true);
     assert.deepEqual((await PS.wasmFiles.list(500)).map((f) => f.name), ['one.json', 'two.json']);
     assert.equal((await PS.wasmFiles.save('three.json', '{"id":"three"}', 500)).ok, true);
     assert.equal(store['three.json'], '{"id":"three"}');
@@ -142,4 +139,58 @@ test('files module client: a probe, a list of several files, a save and a delete
     assert.equal((await PS.wasmFiles.remove('one.json', 500)).ok, true);
     assert.ok(!('one.json' in store));
   } finally { delete globalThis.RegisterCommBusListener; }
+});
+
+function recordingContext() {
+  const g = { strokes: [], arcs: 0, texts: [], lineWidth: 1, strokeStyle: '', fillStyle: '', font: '',
+    beginPath() {}, moveTo() {}, lineTo() {}, stroke() { this.strokes.push({ width: this.lineWidth, color: this.strokeStyle }); }, arc() { this.arcs++; },
+    fillRect() {}, fillText(t) { this.texts.push(['fill', t, this.font]); }, strokeText(t) { this.texts.push(['halo', t, this.lineWidth, this.strokeStyle]); } };
+  return g;
+}
+const mapView = { scale: 1, toPx: (lat, lon) => [200 + lon * 100, 200 + lat * 100] };
+const mapItems = [
+  { category: 'Taxiway', name: 'A', rawName: 'A', points: [[0, 0], [0, 1]] },
+  { category: 'Taxiway', name: '(unnamed)', rawName: '', points: [[1, 0], [1, 1]] },
+  { category: 'Parking connector', name: '(unnamed)', rawName: '', points: [[2, 0], [2, 1]] },
+  { category: 'Runway', name: '02/20', rawName: '', points: [[-1, 0], [-1, 1]] }
+];
+
+test('map lines: a named taxiway is at least twice as thick as an unnamed path and a runway at least four times, drawn runway first', () => {
+  const g = recordingContext();
+  PS.plotDraw.backdrop(g, mapView, 400, 400, 300, [200, 200], { items: mapItems, parking: [] });
+  const drawn = g.strokes.slice(1);                                  // (the first stroke is the scale bar)
+  const widths = drawn.map((s) => s.width);
+  const runway = Math.max(...widths), named = widths.filter((w) => w < runway).sort((a, b) => b - a)[0], unnamed = Math.min(...widths);
+  assert.ok(named >= 2 * unnamed, 'named ' + named + ' vs unnamed ' + unnamed);
+  assert.ok(runway >= 4 * unnamed, 'runway ' + runway + ' vs unnamed ' + unnamed);
+  assert.equal(widths[0], runway, 'the runway is drawn first (underneath)');
+  assert.equal(widths[widths.length - 1], named, 'the named taxiways are drawn last (on top)');
+});
+
+test('map labels: taxiway and runway names are bold, centred on the line, with a gap in the background colour round them', () => {
+  const g = recordingContext();
+  PS.plotDraw.backdrop(g, mapView, 400, 400, 300, [200, 200], { items: mapItems, parking: [] });
+  const fills = g.texts.filter((t) => t[0] === 'fill' && (t[1] === 'A' || t[1] === '02/20')), halos = g.texts.filter((t) => t[0] === 'halo');
+  assert.equal(fills.length, 2); fills.forEach((f) => assert.match(f[2], /^bold 1[4-9]px/, 'bold and not small: ' + f[2]));
+  ['A', '02/20'].forEach((n) => { const h = halos.find((x) => x[1] === n); assert.ok(h && h[2] >= 7, 'a wide gap behind ' + n); });
+  assert.ok(g.texts.findIndex((t) => t[0] === 'halo' && t[1] === 'A') < g.texts.findIndex((t) => t[0] === 'fill' && t[1] === 'A'), 'the gap is drawn before the text');
+});
+
+test('map: range rings are off by default and can be switched on', () => {
+  const g = recordingContext();
+  PS.plotDraw.backdrop(g, mapView, 400, 400, 300, [200, 200], null);
+  assert.equal(g.arcs, 0, 'no rings by default');
+  PS.settings.set('rings', true);
+  const g2 = recordingContext();
+  PS.plotDraw.backdrop(g2, mapView, 400, 400, 300, [200, 200], null);
+  assert.equal(g2.arcs, 4);
+  PS.settings.set('rings', false);
+});
+
+test('the theme carries the map style, and a nested theme file is read', () => {
+  const d = PS.theme.mapStyle();
+  assert.deepEqual([d.unnamed, d.named, d.runway, d.label, d.gap], [3, 6, 32, 15, 9]);
+  const file = { id: 'nested', name: 'Nested', page: { surface: { bg: '#102030' }, text: { text: '#eeeeee' }, controls: { accent: '#ff8800' } }, map: { paths: { runway: '#abcdef' }, lines: { runway: 20 } } };
+  assert.equal(PS.theme.validateThemeFile(file), '');
+  assert.equal(PS.theme.validateThemeFile({ id: 'flat', colours: { bg: '#102030', text: '#eeeeee', accent: '#ff8800' } }), '', 'the older flat shape still works');
 });

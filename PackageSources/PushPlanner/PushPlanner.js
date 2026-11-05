@@ -4,7 +4,7 @@
 var PS = {};
 PS.CSS = ".ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: @bg@; color: @text@; font: 15px/1.35 Arial, sans-serif; } .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; } .ps-header { padding: 10px 16px 6px; background: @bgDeep@; } .ps-title { font-size: 20px; font-weight: bold; color: @accent@; margin-right: 12px; } .ps-sub { color: @textDim@; font-size: 13px; } .ps-nav { display: flex; flex-wrap: wrap; background: @bgDeep@; padding: 0 10px 8px; } .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid @border@; border-radius: 8px; background: @panel@; color: @text2@; font-size: 15px; } .ps-navbtn.on { background: @accent@; color: @accentText@; border-color: @accent@; font-weight: bold; } .ps-body { position: relative; flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding: 12px 14px 24px; } .ps-footer { padding: 5px 14px; background: @bgDeeper@; color: @dim4@; font-size: 12px; white-space: nowrap; overflow: hidden; } .ps-panel { background: @panel@; border: 1px solid @border@; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; } .ps-panel-title { font-weight: bold; margin-bottom: 8px; color: @accent@; } .ps-note { color: @dim2@; font-size: 13px; margin-top: 8px; } .ps-note.warn { color: @warn@; } .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; } .ps-row > * { margin: 0 10px 8px 0; } .ps-field { display: block; } .ps-field-label { display: block; font-size: 12px; color: @textDim@; margin-bottom: 3px; } .ps-input { padding: 9px 10px; border: 1px solid @border2@; border-radius: 6px; background: @input@; color: @text@; font-size: 15px; min-width: 120px; box-sizing: border-box; } .ps-check { display: block; padding: 8px 0; font-size: 14px; color: @text2@; } .ps-btn { padding: 11px 16px; border: 1px solid @border2@; border-radius: 8px; background: @button@; color: @buttonText@; font-size: 15px; } .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; } .ps-btn.ps-warn { background: @accentDeep@; border-color: @accent@; } .ps-btn.ps-danger { background: @badDeep@; border-color: @bad@; font-weight: bold; } .ps-btn.ps-ghost { background: transparent; } .ps-toggle { display: flex; flex-wrap: wrap; } .ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text2@; font-size: 15px; } .ps-toggle-btn.on { background: @accent@; color: @accentText@; font-weight: bold; } .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; } .ps-pill.ok { background: @goodDeep@; color: @goodSoft@; } .ps-pill.bad { background: @badDeeper@; color: @badSoft@; } .ps-kv { font-size: 13px; color: @dim3@; margin-bottom: 6px; white-space: pre-wrap; } .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: @input@; font-size: 14px; word-wrap: break-word; } .ps-result.ok { border-left: 4px solid @good@; } .ps-result.bad { border-left: 4px solid @bad@; color: @badSoft@; } .ps-mono { font-family: Consolas, monospace; font-size: 13px; } .ps-tablewrap { overflow-x: auto; } .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; } .ps-table th { text-align: left; color: @textDim@; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid @border@; } .ps-table td { padding: 5px 8px; border-bottom: 1px solid @borderSoft@; } .ps-val { font-family: Consolas, monospace; color: @goodSoft@; word-break: break-all; } .ps-val.bad { color: @badSoft@; } .ps-table tr.ps-hot td { background: @accentDeeper@; } .ps-log { margin: 0; max-height: 200px; overflow-y: auto; padding: 8px; background: @bgDeeper@; border-radius: 6px; color: @dim3@; font: 12px/1.35 Consolas, monospace; white-space: pre-wrap; word-wrap: break-word; } .ps-raw { max-height: 260px; } .ps-logwrap .ps-btn { margin-top: 6px; } .ps-canvas { display: block; border-radius: 8px; background: @input@; touch-action: none; -ms-touch-action: none; -webkit-user-select: none; user-select: none; } .ps-mount { margin-top: 8px; min-height: 0; } .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; } .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: @panelHi@; border: 2px solid @accent@; box-shadow: 0 4px 14px rgba(0,0,0,.5); } .ps-toast-brake { border-color: @bad@; } .ps-toast-warn { border-color: @warn@; } .ps-toast-info { border-color: @routeFwd@; } .ps-toast-title { font-weight: bold; font-size: 16px; } .ps-toast-msg { margin: 4px 0 8px; color: @text@; } .ps-toast-actions .ps-btn { margin-right: 8px; } .ps-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 100; background: rgba(8, 12, 16, 0.96); padding: 14px; box-sizing: border-box; } .ps-overlay-bar { margin-bottom: 8px; } .ps-overlay-bar .ps-btn { margin-left: 10px; } .ps-overlay-text { position: absolute; left: 14px; right: 14px; top: 60px; bottom: 14px; width: auto; box-sizing: border-box; background: @bgDeeper@; color: @text2@; border: 1px solid @border2@; border-radius: 6px; padding: 8px; font: 12px/1.35 Consolas, monospace; } .ps-stepper { display: flex; align-items: center; } .ps-stepper .ps-btn { margin: 0 8px 0 0; } .ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-weight: bold; color: @accent@; } .ps-canvas.ps-pinmode { cursor: crosshair; outline: 2px solid @accent@; } .ps-sug { display: block; width: 100%; text-align: left; margin: 0 0 6px 0; padding: 9px 12px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text@; font-size: 14px; } .ps-sug.on { border-color: @accent2@; background: @accent2Deep@; } .ps-sug-title { font-weight: bold; } .ps-sug-detail { color: @dim2@; font-size: 12px; } .ps-pinrow { padding: 4px 0; border-bottom: 1px solid @borderSoft@; font-size: 13px; } .ps-pinrow .ps-btn { margin-left: 10px; } .ps-pinrow.on { background: @accentFaint@; } .ps-body::-webkit-scrollbar { width: 18px; } .ps-body::-webkit-scrollbar-track { background: @bgDeeper@; } .ps-body::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 9px; border: 3px solid @bgDeeper@; min-height: 40px; } .ps-body::-webkit-scrollbar-thumb:hover { background: @accent@; } .ps-log::-webkit-scrollbar, .ps-tablewrap::-webkit-scrollbar { width: 12px; height: 12px; } .ps-log::-webkit-scrollbar-track, .ps-tablewrap::-webkit-scrollbar-track { background: @bgDeeper@; } .ps-log::-webkit-scrollbar-thumb, .ps-tablewrap::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 6px; } .ps-big { font-size: 34px; font-weight: bold; color: @accent@; margin: 2px 0 6px; } .ps-bar { height: 14px; background: @bgDeeper@; border-radius: 7px; overflow: hidden; margin: 6px 0 10px; border: 1px solid @border@; } .ps-bar > div { height: 100%; background: @accent2@; } .ps-btn:disabled { opacity: 0.4; } .ps-compact .ps-btn { padding: 5px 10px; font-size: 13px; } .ps-compact .ps-step-label { font-size: 14px; min-width: 56px; margin: 0 8px 0 2px; } .ps-help { position: relative; display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border: 1px solid @dim5@; border-radius: 12px; color: @dim3@; font-size: 14px; font-weight: bold; cursor: default; } .ps-help-pop { position: fixed; left: 8%; right: 8%; top: 130px; z-index: 60; background: @bgDeep@; border: 1px solid @accent@; border-radius: 10px; padding: 12px 16px; text-align: left; font-weight: normal; box-shadow: 0 4px 24px rgba(0,0,0,0.6); pointer-events: none; } .ps-help-title { color: @accent@; font-weight: bold; margin-bottom: 6px; } .ps-help-line { color: @text2@; font-size: 13px; margin-bottom: 5px; } .ps-toprow { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 8px; } .ps-toprow > * { margin: 0 8px 6px 0; } .ps-toprow .ps-spacer { flex: 1; min-width: 8px; margin: 0; } .ps-toprow .ps-right { display: flex; align-items: center; margin-right: 0; } .ps-toprow .ps-right > * { margin-left: 8px; margin-right: 0; } .ps-toprow .ps-btn, .ps-compact .ps-btn { padding: 6px 12px; font-size: 13px; } .ps-toprow .ps-stepper .ps-btn { margin: 0 6px 0 0; } .ps-toprow .ps-step-label { font-size: 14px; min-width: 54px; margin: 0 8px 0 2px; } .ps-cols { display: block; } .ps-landscape .ps-cols { display: flex; align-items: flex-start; } .ps-landscape .ps-col-main { flex: 3; min-width: 0; } .ps-landscape .ps-col-side { flex: 2; min-width: 0; margin-left: 14px; } .ps-landscape .ps-col-first { order: -1; } .ps-btnrow { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 6px; } .ps-btnrow > * { margin: 0 8px 8px 0; } .ps-btn:disabled { opacity: 0.38; } .ps-pinrow { padding: 6px 0; } .ps-pindesc { margin-bottom: 4px; } .ps-pinbtns { margin-bottom: 0; } .ps-pinbtns > * { margin: 0 8px 0 0; } .ps-pinrow .ps-btn { margin-left: 0; } .ps-btn, .ps-toggle-btn, .ps-navbtn { font-family: Arial, sans-serif; } .ps-pairbtns { display: inline-block; } .ps-pairbtns .ps-btn { margin: 0 8px 0 0; } .ps-icon { vertical-align: middle; } .ps-iconbtn { display: inline-flex; align-items: center; } .ps-iconbtn .ps-iconbtn-label { margin-left: 6px; } .ps-themegrid { display: flex; flex-wrap: wrap; } .ps-themecard { width: 150px; margin: 0 10px 10px 0; padding: 8px; border: 2px solid @border@; border-radius: 12px; background: @panel@; color: @text@; text-align: center; } .ps-themecard.on { border-color: @accent@; background: @panelHi@; } .ps-themecard svg { display: block; margin: 0 auto 6px; } .ps-themename { font-size: 14px; font-weight: bold; } .ps-themenote { font-size: 11px; color: @textDim@; margin-top: 2px; } .ps-colgroup { margin: 12px 0 6px; font-weight: bold; color: @accent@; } .ps-colrow { display: flex; align-items: center; padding: 4px 0; border-bottom: 1px solid @borderSoft@; } .ps-colrow.changed { background: @accentFaint@; } .ps-collabel { flex: 1; font-size: 14px; } .ps-colswatch { width: 44px; height: 28px; margin: 0 10px; border: 2px solid @border2@; border-radius: 6px; } .ps-hex { width: 96px; min-width: 96px; margin-right: 10px; padding: 5px 8px; font-size: 14px; } .ps-cgrid { display: flex; flex-wrap: wrap; padding: 8px 0 10px; } .ps-cswatch { width: 30px; height: 26px; margin: 0 3px 3px 0; border: 1px solid @border@; border-radius: 4px; } .ps-import { display: block; width: 100%; height: 70px; margin: 10px 0 6px; font-size: 12px; } .ps-ip { stroke: @buttonText@; fill: none; } .ps-ipf { fill: @buttonText@; stroke: none; } .ps-icon { flex: none; } .ps-btn.ps-requested { border-color: @accent@; color: @accent@; } .ps-btn.ps-requested .ps-ip { stroke: @accent@; } .ps-themename-input { width: 260px; } .ps-slotbtn { width: 118px; height: 46px; padding: 4px 8px; text-align: left; box-sizing: border-box; overflow: hidden; } .ps-slotnum { display: block; font-size: 13px; font-weight: bold; } .ps-slotname { display: block; font-size: 11px; color: @textDim@; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; } .ps-slotbtn.on { border-color: @accent@; } .ps-themename-input { width: 240px; }";
 PS.ICONS = {"arrowDown":["M12 5v14","M5 12l7 7 7-7"],"arrowLeft":["M19 12H5","M12 5l-7 7 7 7"],"arrowRight":["M5 12h14","M12 5l7 7-7 7"],"arrowUp":["M12 19V5","M5 12l7-7 7 7"],"baggage":["M5 7h14a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z","M9 7V4h6v3","M9 11v6","M15 11v6"],"brake":["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z","M10 16V8h3a2.5 2.5 0 0 1 0 5h-3"],"catering":["M7 3v8","M4 3v5a3 3 0 0 0 6 0V3","M7 11v10","M17 21V3","M17 3c-2 2-3 5-3 8h3"],"check":["M5 13l4 4 10-10"],"chevDown":["M6 9l6 6 6-6"],"chevLeft":["M15 6l-6 6 6 6"],"chevRight":["M9 6l6 6-6 6"],"chevUp":["M6 15l6-6 6 6"],"cross":["M6 6l12 12","M18 6L6 18"],"flag":["M5 21V4","M5 4h12l-2 4 2 4H5"],"fuel":["M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16","M3 21h12","M6 8h6","M14 9l3 2v6a1.5 1.5 0 0 0 3 0V9l-3-3"],"gear":["M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z","M12 2v3","M12 19v3","M2 12h3","M19 12h3","M5 5l2 2","M17 17l2 2","M19 5l-2 2","M7 17l-2 2"],"help":["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z","M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7","M12 17v.5"],"home":["M3 11l9-8 9 8","M5 10v10h5v-6h4v6h5V10"],"info":["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z","M12 11v6","M12 7.5v.5"],"jetbridge":["M2 5v14","M2 10h11","M2 15h11","M13 8h5a3 3 0 0 1 0 8h-5z"],"list":["M8 6h13","M8 12h13","M8 18h13","M3 6h.5","M3 12h.5","M3 18h.5"],"minus":["M5 12h14"],"pause":["#M7 5h4v14H7z","#M13 5h4v14h-4z"],"pin":["M12 21s-6-6-6-11a6 6 0 0 1 12 0c0 5-6 11-6 11z","M12 8a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"],"plane":["#M12 2l2 7 8 4v2l-8-1.5-.5 5 2.5 1.5V22l-4-1-4 1v-1.5l2.5-1.5-.5-5L2 15v-2l8-4z"],"play":["#M8 5l11 7-11 7z"],"plus":["M12 5v14","M5 12h14"],"power":["M9 3v5","M15 3v5","M6 8h12v3a6 6 0 0 1-12 0z","M12 17v4"],"redo":["M15 14l5-5-5-5","M20 9H10a6 6 0 0 0 0 12h3"],"stop":["#M6 6h12v12H6z"],"swap":["M7 4l-4 4 4 4","M3 8h14","M17 20l4-4-4-4","M21 16H7"],"target":["M12 3v4","M12 17v4","M3 12h4","M17 12h4","M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"],"trash":["M4 7h16","M9 7V4h6v3","M6 7l1 13h10l1-13","M10 11v6","M14 11v6"],"tug":["M3 16h18","M5 16V9h8l3 3v4","M7 19a1.5 1.5 0 1 0 0 .1","M17 19a1.5 1.5 0 1 0 0 .1"],"turnRound":["M20 12a8 8 0 1 1-2.5-5.8","M20 4v5h-5"],"undo":["M9 14L4 9l5-5","M4 9h10a6 6 0 0 1 0 12h-3"],"warning":["M12 3l10 18H2z","M12 10v5","M12 18v.5"],"zoomIn":["M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z","M21 21l-5-5","M8 11h6","M11 8v6"],"zoomOut":["M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z","M21 21l-5-5","M8 11h6"]};
-PS.BUILTIN_THEMES = [{"id":"default","name":"Push Planner","note":"The original dark theme with amber","colours":{"bg":"#131c24","bgDeep":"#0e151b","panel":"#1b2630","border":"#2a3a47","text":"#dfe7ee","textDim":"#8aa0b2","accent":"#f0a830","accentText":"#131c24","button":"#2a3a47","buttonText":"#eef4f8","input":"#0f171e","good":"#4cd18a","warn":"#ffd37a","bad":"#ff5c6c","accent2":"#34d2c8","runway":"#8aa3b8","pathOther":"#4d6275","routeBack":"#ffffff","routeFwd":"#5aa8ff","routeDone":"#4d6275","pin":"#e8f0f6","pinEnd":"#ff9f43","traffic":"#ff5c5c","handle":"#ffe14d","outline":"#0b1116","mapText":"#6f8294"}},{"id":"contrast","name":"High contrast","note":"Black and white with strong colours","colours":{"bg":"#000000","bgDeep":"#000000","panel":"#0c0c0c","border":"#8a8a8a","text":"#ffffff","textDim":"#d2d2d2","accent":"#ffd400","accentText":"#000000","button":"#262626","buttonText":"#ffffff","input":"#000000","good":"#00ff7f","warn":"#ffd400","bad":"#ff4545","accent2":"#00e5ff","routeFwd":"#4da6ff","mapGrid":"#6a6a6a","mapText":"#d2d2d2","outline":"#000000"}},{"id":"night","name":"Night (red)","note":"Dim reds that keep night vision","colours":{"bg":"#0c0202","bgDeep":"#070101","panel":"#170505","border":"#421212","text":"#e8665a","textDim":"#b04a40","accent":"#ff3b2f","accentText":"#120000","button":"#2b0c0c","buttonText":"#ff8a7a","input":"#080101","good":"#d9803a","warn":"#ffa060","bad":"#ff2a2a","accent2":"#c0392b","routeBack":"#ff9a8a","routeFwd":"#c0392b","routeDone":"#5a2420","runway":"#b4574c","pathOther":"#5a2420","pin":"#ff8a7a","pinEnd":"#ffa060","traffic":"#ff6a5a","handle":"#ffa060","outline":"#060000"}},{"id":"day","name":"Daylight","note":"Light, for a bright cockpit","colours":{"bg":"#eef2f6","bgDeep":"#d9e1e8","panel":"#ffffff","border":"#c0ccd6","text":"#1b2630","textDim":"#566678","accent":"#c46a00","accentText":"#ffffff","button":"#e1e8ee","buttonText":"#1b2630","input":"#f7f9fb","good":"#17854e","warn":"#8f6200","bad":"#c62f3d","accent2":"#0e8f89","mapBg":"#f7f9fb","mapGrid":"#c0ccd6","mapText":"#566678","taxiway":"#c46a00","runway":"#566678","pathOther":"#9aa8b4","routeBack":"#1b2630","routeFwd":"#1565c0","routeBad":"#c62f3d","routeDone":"#a3b0bb","aircraft":"#17854e","pin":"#1b2630","pinEnd":"#e06a00","traffic":"#c62f3d","handle":"#b8860b","outline":"#ffffff"}},{"id":"delta","name":"Delta","note":"Navy and red","colours":{"bg":"#0a1f3c","bgDeep":"#06142a","panel":"#0f2b52","border":"#1d4580","text":"#f2f5f9","textDim":"#9db2cf","accent":"#e01933","accentText":"#ffffff","button":"#16376a","buttonText":"#ffffff","input":"#081a33","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677","accent2":"#7fb6ff","routeFwd":"#6fb0ff","taxiway":"#e01933"}},{"id":"ba","name":"British Airways","note":"Speedbird navy, red and silver","colours":{"bg":"#06132e","bgDeep":"#040d20","panel":"#0c2152","border":"#1f4290","text":"#f4f6fb","textDim":"#a7b6d4","accent":"#eb2226","accentText":"#ffffff","button":"#12306b","buttonText":"#ffffff","input":"#050f26","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a6e","accent2":"#c8ccd4","taxiway":"#d6d9e0","routeFwd":"#7aa8ff"}},{"id":"lufthansa","name":"Lufthansa","note":"Deep blue with the crane yellow","colours":{"bg":"#0a1544","bgDeep":"#060e30","panel":"#102060","border":"#263d8c","text":"#f5f6fb","textDim":"#a6b0d8","accent":"#ffad00","accentText":"#05164d","button":"#1a2c7c","buttonText":"#ffffff","input":"#080f36","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677","accent2":"#ffad00","routeFwd":"#7fb0ff"}},{"id":"airnz","name":"Air New Zealand","note":"Black and white with koru teal","colours":{"bg":"#0d0d0d","bgDeep":"#000000","panel":"#1a1a1a","border":"#3c3c3c","text":"#ffffff","textDim":"#a8a8a8","accent":"#1fb5ac","accentText":"#000000","button":"#2a2a2a","buttonText":"#ffffff","input":"#080808","good":"#4cd18a","warn":"#ffd37a","bad":"#ff5c6c","accent2":"#8be0da","taxiway":"#1fb5ac","routeFwd":"#6fc4ff"}},{"id":"eurowings","name":"Eurowings","note":"Aubergine and magenta","colours":{"bg":"#1d0a2e","bgDeep":"#14061f","panel":"#2b1243","border":"#4b2472","text":"#fbf4fa","textDim":"#c4a4d0","accent":"#e6007e","accentText":"#ffffff","button":"#3e1b5e","buttonText":"#ffffff","input":"#120519","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a8a","accent2":"#ff7ac0","taxiway":"#ff7ac0","routeFwd":"#8fb4ff"}},{"id":"qantas","name":"Qantas","note":"Kangaroo red on black","colours":{"bg":"#0e0e10","bgDeep":"#070708","panel":"#1b1b1f","border":"#3d2c2f","text":"#ffffff","textDim":"#b3a9aa","accent":"#e40000","accentText":"#ffffff","button":"#2b2224","buttonText":"#ffffff","input":"#09090a","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a5a","accent2":"#ffffff","taxiway":"#ff5a4a","routeFwd":"#6fb0ff"}},{"id":"emirates","name":"Emirates","note":"Charcoal, red and gold","colours":{"bg":"#1a1614","bgDeep":"#100d0c","panel":"#272120","border":"#4d4136","text":"#f6f1ea","textDim":"#b9ab98","accent":"#d71921","accentText":"#ffffff","button":"#372e2b","buttonText":"#ffffff","input":"#120f0e","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a6e","accent2":"#c9a56a","taxiway":"#c9a56a","routeFwd":"#7ab6ff"}},{"id":"klm","name":"KLM","note":"Royal blue and sky blue","colours":{"bg":"#04204a","bgDeep":"#021632","panel":"#0a3068","border":"#1b5aa8","text":"#ffffff","textDim":"#a9c7e8","accent":"#00a1de","accentText":"#00203f","button":"#14407f","buttonText":"#ffffff","input":"#031a3c","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677","accent2":"#7fd6ff","taxiway":"#00a1de","routeFwd":"#9ad4ff"}},{"id":"sia","name":"Singapore Airlines","note":"Navy and gold","colours":{"bg":"#031637","bgDeep":"#020e24","panel":"#072a63","border":"#1a4690","text":"#ffffff","textDim":"#a8b9d8","accent":"#f99f1c","accentText":"#031637","button":"#10388a","buttonText":"#ffffff","input":"#02112b","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677","accent2":"#f9c46a","routeFwd":"#7fb6ff"}},{"id":"airfrance","name":"Air France","note":"Navy with the tricolour red","colours":{"bg":"#00163d","bgDeep":"#000e29","panel":"#00255a","border":"#143f82","text":"#ffffff","textDim":"#a9b9d8","accent":"#e1000f","accentText":"#ffffff","button":"#0c3478","buttonText":"#ffffff","input":"#00112f","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a74","accent2":"#6aa0ff","taxiway":"#ff4a55","routeFwd":"#7fb0ff"}},{"id":"ryanair","name":"Ryanair","note":"Bright blue and yellow","colours":{"bg":"#05205f","bgDeep":"#031542","panel":"#0a3180","border":"#2050b4","text":"#ffffff","textDim":"#b3c4ee","accent":"#f1c933","accentText":"#05205f","button":"#144098","buttonText":"#ffffff","input":"#041a50","good":"#4cd18a","warn":"#f1c933","bad":"#ff6677","accent2":"#f1c933","routeFwd":"#8dc0ff"}},{"id":"easyjet","name":"easyJet","note":"Charcoal and orange","colours":{"bg":"#1c1c1c","bgDeep":"#111111","panel":"#2a2a2a","border":"#474747","text":"#ffffff","textDim":"#b5b5b5","accent":"#ff6600","accentText":"#111111","button":"#3a3a3a","buttonText":"#ffffff","input":"#131313","good":"#4cd18a","warn":"#ffd37a","bad":"#ff5c6c","accent2":"#ffa466","taxiway":"#ff6600","routeFwd":"#6fb0ff"}},{"id":"qatar","name":"Qatar Airways","note":"Burgundy and muted gold","colours":{"bg":"#2a0415","bgDeep":"#1c020e","panel":"#3d0a24","border":"#6b1a3f","text":"#f7eef2","textDim":"#c9a5b5","accent":"#c8a165","accentText":"#2a0415","button":"#541030","buttonText":"#ffffff","input":"#1f030f","good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a8a","accent2":"#e6c991","taxiway":"#c8a165","routeFwd":"#8fb4ff"}}];
+PS.BUILTIN_THEMES = [{"id":"default","name":"Push Planner","note":"The original dark theme with amber","page":{"surface":{"bg":"#131c24","bgDeep":"#0e151b","panel":"#1b2630","border":"#2a3a47","input":"#0f171e"},"text":{"text":"#dfe7ee","textDim":"#8aa0b2","accentText":"#131c24","buttonText":"#eef4f8"},"controls":{"accent":"#f0a830","accent2":"#34d2c8","button":"#2a3a47"},"status":{"good":"#4cd18a","warn":"#ffd37a","bad":"#ff5c6c"}},"map":{"surface":{"mapText":"#6f8294","outline":"#0b1116"},"paths":{"runway":{"colour":"#8aa3b8","width":32},"taxiway":{"colour":"#f0a830","width":6},"unnamed":{"colour":"#4d6275","width":3}},"labels":{"size":15,"gap":9},"route":{"routeBack":"#ffffff","routeFwd":"#5aa8ff","routeDone":"#4d6275"},"markers":{"pin":"#e8f0f6","pinEnd":"#ff9f43","traffic":"#ff5c5c","handle":"#ffe14d"}}},{"id":"contrast","name":"High contrast","note":"Black and white with strong colours","page":{"surface":{"bg":"#000000","bgDeep":"#000000","panel":"#0c0c0c","border":"#8a8a8a","input":"#000000"},"text":{"text":"#ffffff","textDim":"#d2d2d2","accentText":"#000000","buttonText":"#ffffff"},"controls":{"accent":"#ffd400","accent2":"#00e5ff","button":"#262626"},"status":{"good":"#00ff7f","warn":"#ffd400","bad":"#ff4545"}},"map":{"surface":{"mapGrid":"#6a6a6a","mapText":"#d2d2d2","outline":"#000000"},"paths":{"runway":{"colour":"#e0e0e0","width":32},"taxiway":{"colour":"#ffd400","width":6},"unnamed":{"colour":"#696969","width":3}},"labels":{"size":15,"gap":9},"route":{"routeFwd":"#4da6ff"}}},{"id":"night","name":"Night (red)","note":"Dim reds that keep night vision","page":{"surface":{"bg":"#0c0202","bgDeep":"#070101","panel":"#170505","border":"#421212","input":"#080101"},"text":{"text":"#e8665a","textDim":"#b04a40","accentText":"#120000","buttonText":"#ff8a7a"},"controls":{"accent":"#ff3b2f","accent2":"#c0392b","button":"#2b0c0c"},"status":{"good":"#d9803a","warn":"#ffa060","bad":"#ff2a2a"}},"map":{"surface":{"outline":"#060000"},"paths":{"runway":{"colour":"#b4574c","width":32},"taxiway":{"colour":"#ff3b2f","width":6},"unnamed":{"colour":"#5a2420","width":3}},"labels":{"size":15,"gap":9},"route":{"routeBack":"#ff9a8a","routeFwd":"#c0392b","routeDone":"#5a2420"},"markers":{"pin":"#ff8a7a","pinEnd":"#ffa060","traffic":"#ff6a5a","handle":"#ffa060"}}},{"id":"day","name":"Daylight","note":"Light, for a bright cockpit","page":{"surface":{"bg":"#eef2f6","bgDeep":"#d9e1e8","panel":"#ffffff","border":"#c0ccd6","input":"#f7f9fb"},"text":{"text":"#1b2630","textDim":"#566678","accentText":"#ffffff","buttonText":"#1b2630"},"controls":{"accent":"#c46a00","accent2":"#0e8f89","button":"#e1e8ee"},"status":{"good":"#17854e","warn":"#8f6200","bad":"#c62f3d"}},"map":{"surface":{"mapBg":"#f7f9fb","mapGrid":"#c0ccd6","mapText":"#566678","outline":"#ffffff"},"paths":{"runway":{"colour":"#566678","width":32},"taxiway":{"colour":"#c46a00","width":6},"unnamed":{"colour":"#9aa8b4","width":3}},"labels":{"size":15,"gap":9},"route":{"routeBack":"#1b2630","routeFwd":"#1565c0","routeBad":"#c62f3d","routeDone":"#a3b0bb"},"markers":{"aircraft":"#17854e","pin":"#1b2630","pinEnd":"#e06a00","traffic":"#c62f3d","handle":"#b8860b"}}},{"id":"delta","name":"Delta","note":"Navy and red","page":{"surface":{"bg":"#0a1f3c","bgDeep":"#06142a","panel":"#0f2b52","border":"#1d4580","input":"#081a33"},"text":{"text":"#f2f5f9","textDim":"#9db2cf","accentText":"#ffffff","buttonText":"#ffffff"},"controls":{"accent":"#e01933","accent2":"#7fb6ff","button":"#16376a"},"status":{"good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677"}},"map":{"paths":{"runway":{"colour":"#b7c6dc","width":32},"taxiway":{"colour":"#e01933","width":6},"unnamed":{"colour":"#546986","width":3}},"labels":{"size":15,"gap":9},"route":{"routeFwd":"#6fb0ff"}}},{"id":"ba","name":"British Airways","note":"Speedbird navy, red and silver","page":{"surface":{"bg":"#06132e","bgDeep":"#040d20","panel":"#0c2152","border":"#1f4290","input":"#050f26"},"text":{"text":"#f4f6fb","textDim":"#a7b6d4","accentText":"#ffffff","buttonText":"#ffffff"},"controls":{"accent":"#eb2226","accent2":"#c8ccd4","button":"#12306b"},"status":{"good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a6e"}},"map":{"paths":{"runway":{"colour":"#bec9e0","width":32},"taxiway":{"colour":"#d6d9e0","width":6},"unnamed":{"colour":"#576581","width":3}},"labels":{"size":15,"gap":9},"route":{"routeFwd":"#7aa8ff"}}},{"id":"lufthansa","name":"Lufthansa","note":"Deep blue with the crane yellow","page":{"surface":{"bg":"#0a1544","bgDeep":"#060e30","panel":"#102060","border":"#263d8c","input":"#080f36"},"text":{"text":"#f5f6fb","textDim":"#a6b0d8","accentText":"#05164d","buttonText":"#ffffff"},"controls":{"accent":"#ffad00","accent2":"#ffad00","button":"#1a2c7c"},"status":{"good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677"}},"map":{"paths":{"runway":{"colour":"#bec5e3","width":32},"taxiway":{"colour":"#ffad00","width":6},"unnamed":{"colour":"#58638e","width":3}},"labels":{"size":15,"gap":9},"route":{"routeFwd":"#7fb0ff"}}},{"id":"airnz","name":"Air New Zealand","note":"Black and white with koru teal","page":{"surface":{"bg":"#0d0d0d","bgDeep":"#000000","panel":"#1a1a1a","border":"#3c3c3c","input":"#080808"},"text":{"text":"#ffffff","textDim":"#a8a8a8","accentText":"#000000","buttonText":"#ffffff"},"controls":{"accent":"#1fb5ac","accent2":"#8be0da","button":"#2a2a2a"},"status":{"good":"#4cd18a","warn":"#ffd37a","bad":"#ff5c6c"}},"map":{"paths":{"runway":{"colour":"#c2c2c2","width":32},"taxiway":{"colour":"#1fb5ac","width":6},"unnamed":{"colour":"#5b5b5b","width":3}},"labels":{"size":15,"gap":9},"route":{"routeFwd":"#6fc4ff"}}},{"id":"eurowings","name":"Eurowings","note":"Aubergine and magenta","page":{"surface":{"bg":"#1d0a2e","bgDeep":"#14061f","panel":"#2b1243","border":"#4b2472","input":"#120519"},"text":{"text":"#fbf4fa","textDim":"#c4a4d0","accentText":"#ffffff","buttonText":"#ffffff"},"controls":{"accent":"#e6007e","accent2":"#ff7ac0","button":"#3e1b5e"},"status":{"good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a8a"}},"map":{"paths":{"runway":{"colour":"#d5bcdd","width":32},"taxiway":{"colour":"#ff7ac0","width":6},"unnamed":{"colour":"#71577f","width":3}},"labels":{"size":15,"gap":9},"route":{"routeFwd":"#8fb4ff"}}},{"id":"qantas","name":"Qantas","note":"Kangaroo red on black","page":{"surface":{"bg":"#0e0e10","bgDeep":"#070708","panel":"#1b1b1f","border":"#3d2c2f","input":"#09090a"},"text":{"text":"#ffffff","textDim":"#b3a9aa","accentText":"#ffffff","buttonText":"#ffffff"},"controls":{"accent":"#e40000","accent2":"#ffffff","button":"#2b2224"},"status":{"good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a5a"}},"map":{"paths":{"runway":{"colour":"#cac3c4","width":32},"taxiway":{"colour":"#ff5a4a","width":6},"unnamed":{"colour":"#615c5d","width":3}},"labels":{"size":15,"gap":9},"route":{"routeFwd":"#6fb0ff"}}},{"id":"emirates","name":"Emirates","note":"Charcoal, red and gold","page":{"surface":{"bg":"#1a1614","bgDeep":"#100d0c","panel":"#272120","border":"#4d4136","input":"#120f0e"},"text":{"text":"#f6f1ea","textDim":"#b9ab98","accentText":"#ffffff","buttonText":"#ffffff"},"controls":{"accent":"#d71921","accent2":"#c9a56a","button":"#372e2b"},"status":{"good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a6e"}},"map":{"paths":{"runway":{"colour":"#cbc0b1","width":32},"taxiway":{"colour":"#c9a56a","width":6},"unnamed":{"colour":"#6a6156","width":3}},"labels":{"size":15,"gap":9},"route":{"routeFwd":"#7ab6ff"}}},{"id":"klm","name":"KLM","note":"Royal blue and sky blue","page":{"surface":{"bg":"#04204a","bgDeep":"#021632","panel":"#0a3068","border":"#1b5aa8","input":"#031a3c"},"text":{"text":"#ffffff","textDim":"#a9c7e8","accentText":"#00203f","buttonText":"#ffffff"},"controls":{"accent":"#00a1de","accent2":"#7fd6ff","button":"#14407f"},"status":{"good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677"}},"map":{"paths":{"runway":{"colour":"#c3d8ef","width":32},"taxiway":{"colour":"#00a1de","width":6},"unnamed":{"colour":"#577499","width":3}},"labels":{"size":15,"gap":9},"route":{"routeFwd":"#9ad4ff"}}},{"id":"sia","name":"Singapore Airlines","note":"Navy and gold","page":{"surface":{"bg":"#031637","bgDeep":"#020e24","panel":"#072a63","border":"#1a4690","input":"#02112b"},"text":{"text":"#ffffff","textDim":"#a8b9d8","accentText":"#031637","buttonText":"#ffffff"},"controls":{"accent":"#f99f1c","accent2":"#f9c46a","button":"#10388a"},"status":{"good":"#4cd18a","warn":"#ffd37a","bad":"#ff6677"}},"map":{"paths":{"runway":{"colour":"#c2cee4","width":32},"taxiway":{"colour":"#f99f1c","width":6},"unnamed":{"colour":"#566888","width":3}},"labels":{"size":15,"gap":9},"route":{"routeFwd":"#7fb6ff"}}},{"id":"airfrance","name":"Air France","note":"Navy with the tricolour red","page":{"surface":{"bg":"#00163d","bgDeep":"#000e29","panel":"#00255a","border":"#143f82","input":"#00112f"},"text":{"text":"#ffffff","textDim":"#a9b9d8","accentText":"#ffffff","buttonText":"#ffffff"},"controls":{"accent":"#e1000f","accent2":"#6aa0ff","button":"#0c3478"},"status":{"good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a74"}},"map":{"paths":{"runway":{"colour":"#c3cee4","width":32},"taxiway":{"colour":"#ff4a55","width":6},"unnamed":{"colour":"#55688b","width":3}},"labels":{"size":15,"gap":9},"route":{"routeFwd":"#7fb0ff"}}},{"id":"ryanair","name":"Ryanair","note":"Bright blue and yellow","page":{"surface":{"bg":"#05205f","bgDeep":"#031542","panel":"#0a3180","border":"#2050b4","input":"#041a50"},"text":{"text":"#ffffff","textDim":"#b3c4ee","accentText":"#05205f","buttonText":"#ffffff"},"controls":{"accent":"#f1c933","accent2":"#f1c933","button":"#144098"},"status":{"good":"#4cd18a","warn":"#f1c933","bad":"#ff6677"}},"map":{"paths":{"runway":{"colour":"#cad6f3","width":32},"taxiway":{"colour":"#f1c933","width":6},"unnamed":{"colour":"#5c72a7","width":3}},"labels":{"size":15,"gap":9},"route":{"routeFwd":"#8dc0ff"}}},{"id":"easyjet","name":"easyJet","note":"Charcoal and orange","page":{"surface":{"bg":"#1c1c1c","bgDeep":"#111111","panel":"#2a2a2a","border":"#474747","input":"#131313"},"text":{"text":"#ffffff","textDim":"#b5b5b5","accentText":"#111111","buttonText":"#ffffff"},"controls":{"accent":"#ff6600","accent2":"#ffa466","button":"#3a3a3a"},"status":{"good":"#4cd18a","warn":"#ffd37a","bad":"#ff5c6c"}},"map":{"paths":{"runway":{"colour":"#cbcbcb","width":32},"taxiway":{"colour":"#ff6600","width":6},"unnamed":{"colour":"#696969","width":3}},"labels":{"size":15,"gap":9},"route":{"routeFwd":"#6fb0ff"}}},{"id":"qatar","name":"Qatar Airways","note":"Burgundy and muted gold","page":{"surface":{"bg":"#2a0415","bgDeep":"#1c020e","panel":"#3d0a24","border":"#6b1a3f","input":"#1f030f"},"text":{"text":"#f7eef2","textDim":"#c9a5b5","accentText":"#2a0415","buttonText":"#ffffff"},"controls":{"accent":"#c8a165","accent2":"#e6c991","button":"#541030"},"status":{"good":"#4cd18a","warn":"#ffd37a","bad":"#ff6a8a"}},"map":{"paths":{"runway":{"colour":"#d7bbc7","width":32},"taxiway":{"colour":"#c8a165","width":6},"unnamed":{"colour":"#7a5565","width":3}},"labels":{"size":15,"gap":9},"route":{"routeFwd":"#8fb4ff"}}}];
 /* ---- core/core.js ---- */
 // Core: constants, sim access wrappers, logging, DOM helper, heartbeat, toasts.
 // Nothing here touches the DOM or starts timers at load time (so node tests can load the bundle).
@@ -633,7 +633,67 @@ PS.theme = (function () {
   // ---- the themes ----
   // Page roles are required; map roles are optional (filled from the page roles). The presets are the JSON files in src/themes/ (built into the bundle as
   // PS.BUILTIN_THEMES, so there is always a set to use) and the same files are shipped in the package, where loadFiles() reads them at run time.
-  function fromFileShape(t) { return { id: t.id, name: t.name, note: t.note || '', p: t.colours || {}, fromFile: false }; }
+  // Map line weights and label size (pixels) are part of a theme: a "map" object in the theme file, any of unnamed, named, runway, label, gap.
+  var MAP_DEFAULT = { unnamed: 3, named: 6, runway: 32, label: 15, gap: 9 };
+  function cleanMap(m) {
+    var out = {}, k, v;
+    if (m && typeof m === 'object') { for (k in MAP_DEFAULT) { v = Number(m[k]); if (isFinite(v) && v >= 0 && v <= 80) out[k] = v; } }
+    return out;
+  }
+  // In a theme file each kind of path is an object with its own colour and width: map.paths.runway / taxiway (named) / unnamed { "colour", "width" }, and
+  // map.labels { "size", "gap" }. (The older map.lines and flat map shapes still load.)
+  var PATH_KEYS = { runway: ['runway', 'runway'], taxiway: ['taxiway', 'named'], unnamed: ['pathOther', 'unnamed'] };   // file key -> [colour role, width key]
+  function mapLines(t) {
+    var m = t && t.map && typeof t.map === 'object' ? t.map : null, flat = {}, k, p;
+    if (!m) return {};
+    if (m.lines && typeof m.lines === 'object') flat = cleanMap(m.lines); else flat = cleanMap(m);
+    if (m.paths && typeof m.paths === 'object') {
+      for (k in PATH_KEYS) { p = m.paths[k]; if (p && typeof p === 'object') { var w = cleanMap((function () { var o = {}; o[PATH_KEYS[k][1]] = p.width; return o; })()); if (w[PATH_KEYS[k][1]] !== undefined) flat[PATH_KEYS[k][1]] = w[PATH_KEYS[k][1]]; } }
+    }
+    if (m.labels && typeof m.labels === 'object') {
+      var l = cleanMap({ label: m.labels.size, gap: m.labels.gap });
+      if (l.label !== undefined) flat.label = l.label;
+      if (l.gap !== undefined) flat.gap = l.gap;
+    }
+    return flat;
+  }
+  // The colours of a theme file, however they are grouped: every valid colour for a known role, found at any depth under the file's groups (page, map, or
+  // the older flat "colours"), so the grouping is for people to read and the app does not care where a role sits.
+  function fileColours(t) {
+    var out = {};
+    (function walk(o, depth) {
+      var k;
+      if (!o || typeof o !== 'object' || depth > 4) return;
+      for (k in o) {
+        if (depth === 0 && (k === 'id' || k === 'name' || k === 'note')) continue;
+        if (typeof o[k] === 'string') { if (ALL_ROLES.indexOf(k) >= 0 && isHex(o[k])) out[k] = normalise(o[k]); }
+        else walk(o[k], depth + 1);
+      }
+    })(t, 0);
+    var paths = t && t.map && t.map.paths, k;
+    if (paths && typeof paths === 'object') { for (k in PATH_KEYS) { if (paths[k] && typeof paths[k] === 'object' && isHex(paths[k].colour)) out[PATH_KEYS[k][0]] = normalise(paths[k].colour); } }
+    return out;
+  }
+  // The same colours grouped for a theme file: page and map, each in small groups, and the map's line weights.
+  var FILE_GROUPS = {
+    page: { surface: ['bg', 'bgDeep', 'panel', 'border', 'input'], text: ['text', 'textDim', 'accentText', 'buttonText'], controls: ['accent', 'accent2', 'button'], status: ['good', 'warn', 'bad'] },
+    map: { surface: ['mapBg', 'mapGrid', 'mapText', 'outline'], route: ['routeBack', 'routeFwd', 'routeBad', 'routeDone'], markers: ['aircraft', 'pin', 'pinEnd', 'traffic', 'handle'] }
+  };
+  function nestPalette(pal, ms) {
+    var out = {}, sec, grp;
+    for (sec in FILE_GROUPS) {
+      out[sec] = {};
+      for (grp in FILE_GROUPS[sec]) {
+        out[sec][grp] = {};
+        FILE_GROUPS[sec][grp].forEach(function (r) { if (pal[r]) out[sec][grp][r] = pal[r]; });
+      }
+    }
+    out.map.paths = {};
+    for (grp in PATH_KEYS) out.map.paths[grp] = { colour: pal[PATH_KEYS[grp][0]], width: ms[PATH_KEYS[grp][1]] };
+    out.map.labels = { size: ms.label, gap: ms.gap };
+    return out;
+  }
+  function fromFileShape(t) { return { id: t.id, name: t.name, note: t.note || '', p: fileColours(t), m: mapLines(t), fromFile: false }; }
   var THEMES = (PS.BUILTIN_THEMES || []).map(fromFileShape);
   if (!THEMES.length) THEMES.push({ id: 'default', name: 'Push Planner', note: '', p: { bg: '#131c24', text: '#dfe7ee', accent: '#f0a830' } });
 
@@ -691,6 +751,12 @@ PS.theme = (function () {
     for (k in over) base[k] = over[k];
     return fillRoles(base);
   }
+  // The map style of the chosen theme: its own values over the defaults.
+  function mapStyle() {
+    var theme = byId(state.id), out = {}, k;
+    for (k in MAP_DEFAULT) out[k] = (theme && theme.m && theme.m[k] !== undefined) ? theme.m[k] : MAP_DEFAULT[k];
+    return out;
+  }
   function resolve() { current = derive(palette()); return current; }
   function cssText() {
     var t = current || resolve();
@@ -732,12 +798,13 @@ PS.theme = (function () {
 
   // ---- saved themes: real files in the files module's work folder ----
   // The page cannot write files and nothing inside the package can be written by a module (the sim refuses), but the files module can read and write its
-  // own work folder (found by the probe). A theme saved there is a .json file named after the theme, found again at every start (the module lists the
+  // own work folder (found with a probe, since removed). A theme saved there is a .json file named after the theme, found again at every start (the module lists the
   // folder), and can be copied out to share or dropped in from someone else. If the files module is not installed, saving falls back to the in-app slots.
-  // Where the files are on disk. Found with the probe on a Microsoft Store install; a Steam install keeps its WASM work folders under a different root, so the
-  // hint says how to find it from the probe file the files module leaves there.
+  // Where the files are on disk. The Microsoft Store path was read from a working install; the Steam one is by the same layout (Steam keeps the sim's data under
+  // %APPDATA%\Microsoft Flight Simulator 2024 where the Store keeps it under LocalState) and matches community reports, but has not been checked on a Steam install.
   var WORK_FOLDER = '%LOCALAPPDATA%\\Packages\\Microsoft.Limitless_8wekyb3d8bbwe\\LocalState\\WASM\\MSFS2024\\push-planner\\work';
-  var WORK_FOLDER_NOTE = 'Saved themes are .json files in ' + WORK_FOLDER + ' (Microsoft Store install). A Steam install keeps it under a different root: search your drive for pusher-probe.txt to find the folder. Copy a file out to share it; drop one in and reload to use it.';
+  var WORK_FOLDER_STEAM = '%APPDATA%\\Microsoft Flight Simulator 2024\\WASM\\MSFS2024\\push-planner\\work';
+  var WORK_FOLDER_NOTE = 'Saved themes are .json files in the push-planner work folder. Microsoft Store install: ' + WORK_FOLDER + '. Steam install: ' + WORK_FOLDER_STEAM + ' (from community reports; not checked here). Copy a file out to share it; drop one in and reload to use it.';
   var savedInfo = { state: 'idle', module: 'unknown', count: 0, failed: [], at: 0 };
   function slugify(name) {
     var t = String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
@@ -753,11 +820,10 @@ PS.theme = (function () {
       if (t && t.empty === true) return;
       var why = validateThemeFile(t);
       if (why) { failed.push({ file: it.name, why: why }); return; }
-      var cols = {}, k, src = t.colours || t.colors;
-      for (k in src) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(src[k])) cols[k] = normalise(src[k]); }
+      var cols = fileColours(t);
       var id = t.id, clash = find(id);
       if (clash && !clash.fromSaved) id = id + '-saved';                    // a saved file never replaces a preset
-      THEMES.push({ id: id, name: typeof t.name === 'string' && t.name ? t.name : id, note: typeof t.note === 'string' ? t.note : 'Saved theme', p: cols, fromFile: false, fromSaved: it.name });
+      THEMES.push({ id: id, name: typeof t.name === 'string' && t.name ? t.name : id, note: typeof t.note === 'string' ? t.note : 'Saved theme', p: cols, m: mapLines(t), fromFile: false, fromSaved: it.name });
       count++;
     });
     refreshSlots();
@@ -781,7 +847,8 @@ PS.theme = (function () {
   // Save the colours in use as a theme called `name`. done({ ok, where: 'file' | 'storage', file, why }).
   function saveTheme(name, done) {
     var nm = String(name || '').replace(/\s+/g, ' ').replace(/^ | $/g, '').slice(0, 30) || 'My theme', fileName = slugify(nm) + '.json', id = 'saved-' + slugify(nm);
-    var obj = { id: id, name: nm, note: 'Saved from Push Planner', colours: palette() };
+    var obj = { id: id, name: nm, note: 'Saved from Push Planner' };
+    var nested = nestPalette(palette(), mapStyle()); obj.page = nested.page; obj.map = nested.map;
     var text = JSON.stringify(obj, null, 1);
     function viaStorage(why) {
       var n = 0, k;
@@ -798,7 +865,7 @@ PS.theme = (function () {
       PS.log('theme', 'theme "' + nm + '" saved as ' + fileName);
       loadSaved(function () {
         if (find(id)) { state.id = id; state.custom = {}; save(); apply(); }
-        if (done) done({ ok: true, where: 'file', file: fileName, folder: WORK_FOLDER });
+        if (done) done({ ok: true, where: 'file', file: fileName, folder: WORK_FOLDER, folderSteam: WORK_FOLDER_STEAM });
       });
     }, function (e) { viaStorage('the files module did not answer'); });
   }
@@ -813,18 +880,17 @@ PS.theme = (function () {
   // ---- theme files in the package ----
   // The package ships the presets as files (themes/index.json lists them) which are read here when the app starts: what is in them wins over the built-in
   // copy of the same id, and a file with a new id adds a theme. So a theme can be added or changed by editing the files, no rebuild of the app.
-  // A theme file is { "id": "my-theme", "name": "My theme", "note": "...", "colours": { "bg": "#112233", ... } } (roles as on the My colours tab; leave out
-  // the ones you do not care about). It needs a valid bg and text at least. index.json is { "themes": ["id", ...] } (an entry may also be "file.json").
+  // A theme file is { "id", "name", "note", "page": { "surface": { "bg": "#112233", ... }, "text": {...}, "controls": {...}, "status": {...} },
+  // "map": { "surface": {...}, "paths": {...}, "route": {...}, "markers": {...}, "lines": { "unnamed": 3, "named": 6, "runway": 32, "label": 15, "gap": 9 } } }
+  // (roles as on the My colours tab; leave out the ones you do not care about; the older flat "colours" object still works). It needs a valid bg and text at least. index.json is { "themes": ["id", ...] } (an entry may also be "file.json").
   var files = { state: 'idle', names: [], empty: 0, base: '', listed: 0, loaded: 0, added: 0, replaced: 0, failed: [], at: 0 };
   var ID_RE = /^[a-z0-9][a-z0-9_-]{0,40}$/i;
 
   function validateThemeFile(t) {
     if (!t || typeof t !== 'object') return 'not an object';
     if (typeof t.id !== 'string' || !ID_RE.test(t.id)) return 'needs an "id" of letters, digits, - or _';
-    var cols = t.colours || t.colors;
-    if (!cols || typeof cols !== 'object') return 'needs a "colours" object';
-    var n = 0, k;
-    for (k in cols) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(cols[k])) n++; }
+    var cols = fileColours(t), n = 0, k;
+    for (k in cols) n++;
     if (!isHex(cols.bg) || !isHex(cols.text)) return 'needs a valid "bg" and "text" colour';
     return n < 3 ? 'has hardly any valid colours' : '';
   }
@@ -838,9 +904,8 @@ PS.theme = (function () {
       if (t && t.empty === true) { res.empty++; return; }        // a free slot (user1.json ...): nothing to load yet
       var why = validateThemeFile(t);
       if (why) { res.failed.push({ file: it.file, why: why }); return; }
-      var cols = {}, k, src = t.colours || t.colors;
-      for (k in src) { if (ALL_ROLES.indexOf(k) >= 0 && isHex(src[k])) cols[k] = normalise(src[k]); }
-      var entry = { id: t.id, name: typeof t.name === 'string' && t.name ? t.name : t.id, note: typeof t.note === 'string' ? t.note : '', p: cols, fromFile: true }, existing = find(t.id);
+      var cols = fileColours(t);
+      var entry = { id: t.id, name: typeof t.name === 'string' && t.name ? t.name : t.id, note: typeof t.note === 'string' ? t.note : '', p: cols, m: mapLines(t), fromFile: true }, existing = find(t.id);
       if (existing) { THEMES[THEMES.indexOf(existing)] = entry; res.replaced++; } else { THEMES.push(entry); res.added++; }
     });
     refreshSlots();
@@ -906,7 +971,7 @@ PS.theme = (function () {
   var api = {
     ROLE_GROUPS: ROLE_GROUPS, ROLES: ALL_ROLES, THEMES: THEMES, byId: byId,
     mix: mix, parse: parse, hex: hex, isHex: isHex, normalise: normalise, luminance: luminance, contrast: contrast,
-    fillRoles: fillRoles, derive: derive, palette: palette, css: cssText,
+    mapStyle: mapStyle, fillRoles: fillRoles, derive: derive, palette: palette, css: cssText,
     // c('routeBack') -> the colour now. Used by the map drawing.
     c: function (role) { return (current || resolve())[role] || '#ff00ff'; },
     all: function () { return current || resolve(); },
@@ -931,7 +996,7 @@ PS.theme = (function () {
       apply();
       return true;
     },
-    workFolder: WORK_FOLDER, workFolderNote: WORK_FOLDER_NOTE, loadSaved: loadSaved, saveTheme: saveTheme, deleteSaved: deleteSaved, savedStatus: function () { return savedInfo; }, slugify: slugify, ingestSaved: ingestSaved,
+    workFolder: WORK_FOLDER, workFolderSteam: WORK_FOLDER_STEAM, workFolderNote: WORK_FOLDER_NOTE, loadSaved: loadSaved, saveTheme: saveTheme, deleteSaved: deleteSaved, savedStatus: function () { return savedInfo; }, slugify: slugify, ingestSaved: ingestSaved,
     loadFiles: loadFiles, ingest: ingest, validateThemeFile: validateThemeFile, fileStatus: function () { return files; }, themeBase: themeBase,
     selectedId: function () { return find(state.id) ? state.id : THEMES[0].id; },
     // The theme's own colour for a role (ignoring the user's changes), to reset to.
@@ -1438,12 +1503,11 @@ PS.wasmTaxi = (function () {
 
 /* ---- data/wasm-files.js ---- */
 // Client for the files module (PusherFiles.wasm, wasm/files/files_module.cpp): a second WASM module kept apart from the taxi module. It keeps the user's
-// saved themes as real .json files in the module's work folder (the sim lets a module write there and nowhere inside the package), and answers a probe of
-// what a module can do with files.
-// Events (JS to module): PusherFilesPing, PusherFilesProbe, PusherFilesList, PusherFilesSave, PusherFilesDelete; answers on PusherFilesResponse. Small JSON strings.
+// saved themes as real .json files in the module's work folder (the sim lets a module write there and nowhere inside the package).
+// Events (JS to module): PusherFilesPing, PusherFilesList, PusherFilesSave, PusherFilesDelete; answers on PusherFilesResponse. Small JSON strings.
 
 PS.wasmFiles = (function () {
-  var EVT_PING = 'PusherFilesPing', EVT_PROBE = 'PusherFilesProbe', EVT_LIST = 'PusherFilesList', EVT_SAVE = 'PusherFilesSave', EVT_DELETE = 'PusherFilesDelete', EVT_RESPONSE = 'PusherFilesResponse';
+  var EVT_PING = 'PusherFilesPing', EVT_LIST = 'PusherFilesList', EVT_SAVE = 'PusherFilesSave', EVT_DELETE = 'PusherFilesDelete', EVT_RESPONSE = 'PusherFilesResponse';
   var listener = null, waiters = {}, nextId = 1, alive = false, version = '';
 
   function onMessage(raw) {
@@ -1497,8 +1561,6 @@ PS.wasmFiles = (function () {
 
   return {
     ping: function (t) { return ask(EVT_PING, t, 'a ping'); },
-    // What the module can do with files: { version, tries: [{ path, op, ok, detail }], dirs: [{ path, ok, names, detail }] }
-    probe: function (t) { return ask(EVT_PROBE, t, 'the file test'); },
     // The .json files in the module's work folder: resolves with [{ name, text }].
     list: function (t) {
       return ask(EVT_LIST, t || 8000, 'the file list', null, function () {
@@ -1580,32 +1642,64 @@ PS.plotDraw = (function () {
   }
 
   // Background, range rings (centred on `ringCentre`, a canvas point), taxiways with names, runways and stands. Returns the number of taxi items drawn.
+  // Line weights in pixels: an unnamed path (apron lane, connector) is the base; a named taxiway is at least twice that, a runway several times.
+  // They come from the theme (PS.theme.mapStyle()).
+  function lineWeight(it, ms) {
+    if (it.category === 'Runway') return ms.runway;
+    if (it.category === 'Taxiway' && it.rawName) return ms.named;
+    return ms.unnamed;
+  }
+  // A scale bar in the bottom left: a round length (1, 2 or 5 x a power of ten metres) of about a quarter of the range.
+  function scaleBar(g, view, h, range) {
+    var target = range / 4, pow = Math.pow(10, Math.floor(Math.log(target) / Math.LN10)), n = target / pow, nice = (n >= 5 ? 5 : (n >= 2 ? 2 : 1)) * pow, px = nice * view.scale;
+    var x = 12, y = h - 14;
+    g.strokeStyle = PS.theme.c('mapText'); g.fillStyle = PS.theme.c('mapText'); g.lineWidth = 2; g.lineCap = 'butt';
+    g.beginPath(); g.moveTo(x, y - 4); g.lineTo(x, y); g.lineTo(x + px, y); g.lineTo(x + px, y - 4); g.stroke();
+    g.font = '11px Arial'; g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.fillText(PS.fmt.dist(nice), x + 2, y - 7);
+  }
+  // A label centred on its line, with a gap in the background colour all round it so the line stops short of the text.
+  function haloLabel(g, text, x, y, color, size, gap) {
+    g.font = 'bold ' + size + 'px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+    g.lineWidth = gap; g.strokeStyle = PS.theme.c('mapBg'); g.strokeText(text, x, y);
+    g.fillStyle = color; g.fillText(text, x, y);
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  }
   function backdrop(g, view, w, h, range, ringCentre, taxi) {
     g.fillStyle = PS.theme.c('mapBg'); g.fillRect(0, 0, w, h);
     g.lineWidth = 1; g.strokeStyle = PS.theme.c('mapGrid'); g.fillStyle = PS.theme.c('mapText'); g.font = '11px Arial';
-    [0.25, 0.5, 0.75, 1].forEach(function (f) {
-      g.beginPath(); g.arc(ringCentre[0], ringCentre[1], range * f * view.scale, 0, Math.PI * 2); g.stroke();
-      g.fillText(PS.fmt.dist(range * f), ringCentre[0] + 4, ringCentre[1] - range * f * view.scale + 12);
-    });
+    // Range rings are optional (Settings), off by default; the scale bar is always there.
+    if (PS.settings && PS.settings.get('rings')) {
+      [0.25, 0.5, 0.75, 1].forEach(function (f) {
+        g.beginPath(); g.arc(ringCentre[0], ringCentre[1], range * f * view.scale, 0, Math.PI * 2); g.stroke();
+        g.fillText(PS.fmt.dist(range * f), ringCentre[0] + 4, ringCentre[1] - range * f * view.scale + 12);
+      });
+    }
+    scaleBar(g, view, h, range);
     g.fillStyle = PS.theme.c('textDim'); g.font = 'bold 12px Arial'; g.fillText('N', 8, 16);
-    var drawn = 0, labels = {};
+    var ms = PS.theme.mapStyle(), drawn = 0, labels = {}, runwayLabels = [];
     if (!taxi) return drawn;
-    taxi.items.forEach(function (it) {
-      if (!it.points.length) return;
-      g.strokeStyle = it.category === 'Runway' ? PS.theme.c('runway') : (it.category === 'Taxiway' ? PS.theme.c('taxiway') : PS.theme.c('pathOther'));
-      g.lineWidth = it.category === 'Runway' ? 4 : 2;
-      g.beginPath();
-      var first = null, last = null;
-      it.points.forEach(function (p, i) { var q = view.toPx(p[0], p[1]); if (i === 0) { g.moveTo(q[0], q[1]); first = q; } else g.lineTo(q[0], q[1]); last = q; });
-      g.stroke(); drawn++;
-      var nm = it.rawName;
-      if (range <= 1000 && nm && it.category === 'Taxiway' && first && last && !labels[nm]) {
+    // Runways first (the thickest, underneath), then unnamed paths, then named taxiways on top.
+    var pass = [function (it) { return it.category === 'Runway'; }, function (it) { return it.category !== 'Runway' && !(it.category === 'Taxiway' && it.rawName); }, function (it) { return it.category === 'Taxiway' && !!it.rawName; }];
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    pass.forEach(function (want) {
+      taxi.items.forEach(function (it) {
+        if (!it.points.length || !want(it)) return;
+        g.strokeStyle = it.category === 'Runway' ? PS.theme.c('runway') : (it.category === 'Taxiway' ? PS.theme.c('taxiway') : PS.theme.c('pathOther'));
+        g.lineWidth = lineWeight(it, ms);
+        g.beginPath();
+        var first = null, last = null;
+        it.points.forEach(function (p, i) { var q = view.toPx(p[0], p[1]); if (i === 0) { g.moveTo(q[0], q[1]); first = q; } else g.lineTo(q[0], q[1]); last = q; });
+        g.stroke(); drawn++;
+        if (range > 1000 || !first || !last) return;
         var mx = (first[0] + last[0]) / 2, my = (first[1] + last[1]) / 2;
-        if (mx > 0 && mx < w && my > 0 && my < h) labels[nm] = [mx, my];
-      }
+        if (mx < 0 || mx > w || my < 0 || my > h) return;
+        if (it.category === 'Taxiway' && it.rawName && !labels[it.rawName]) labels[it.rawName] = [mx, my];
+        else if (it.category === 'Runway' && it.name && it.name !== '(unnamed)') runwayLabels.push([it.name, mx, my]);
+      });
     });
-    g.lineWidth = 1; g.font = '11px Arial'; g.fillStyle = PS.theme.c('warn');
-    Object.keys(labels).forEach(function (nm) { g.fillText(nm, labels[nm][0] + 3, labels[nm][1] - 3); });
+    g.lineCap = 'butt'; g.lineWidth = 1;
+    Object.keys(labels).forEach(function (nm) { haloLabel(g, nm, labels[nm][0], labels[nm][1], PS.theme.c('warn'), ms.label, ms.gap); });
+    runwayLabels.forEach(function (r) { haloLabel(g, r[0], r[1], r[2], PS.theme.c('text'), ms.label, ms.gap); });
     if (range <= 300) {
       g.fillStyle = PS.theme.c('runway'); g.font = '10px Arial';
       (taxi.parking || []).forEach(function (p) {
@@ -3230,7 +3324,7 @@ PS.plan = (function () {
 
 PS.settings = (function () {
   var KEY = 'pushplanner.settings';
-  var defaults = { snap: true, snapM: 50, planTab: 'suggested', tightest: 26, insetTop: 40, insetBottom: 56, requireEngines: true };
+  var defaults = { snap: true, snapM: 50, planTab: 'suggested', tightest: 26, insetTop: 40, insetBottom: 56, requireEngines: true, rings: false };
   var values = {}, k;
   for (k in defaults) values[k] = defaults[k];
   try {
@@ -5126,6 +5220,7 @@ PS.colourPanel = function () {
   // ---------- Themes ----------
   function renderThemes() {
     PS.clear(themesBox);
+    themesBox.appendChild(ui.note('Airline themes are inspired by those liveries (approximate colours, not official). Pick one, then change any colour on the My colours tab and save it: saved themes show here too, as do the package\'s theme files.'));
     var grid = h('div', { class: 'ps-themegrid' });
     T.THEMES.forEach(function (th) {
       var on = T.selectedId() === th.id;
@@ -5136,16 +5231,8 @@ PS.colourPanel = function () {
       grid.appendChild(card);
     });
     themesBox.appendChild(grid);
-    themesBox.appendChild(ui.note('Airline themes are inspired by those liveries (approximate colours, not official). Pick one, then change any colour on the My colours tab and save it: saved themes show here too, as do the package\'s theme files.'));
     var sv = T.savedStatus();
     themesBox.appendChild(h('div', { class: 'ps-kv', text: sv.state === 'done' ? 'Saved themes: ' + sv.count + ' file(s) in the files module\'s work folder' + (sv.failed.length ? '. Not read: ' + sv.failed.map(function (f) { return f.file + ' (' + f.why + ')'; }).join(', ') : '') : sv.state === 'failed' ? 'Files module not found: saved themes use the app\'s own storage' : sv.state === 'loading' ? 'Reading saved themes...' : '' }));
-    // Theme files in the package: what was read, and a button to read them again (after editing them).
-    var fs = T.fileStatus();
-    var status = fs.state === 'loading' ? 'Reading theme files...'
-      : fs.state === 'done' ? 'Theme files: ' + fs.loaded + ' of ' + (fs.listed - fs.empty) + ' read from the package' + (fs.empty ? ', ' + fs.empty + ' free slots (user1.json to user' + fs.empty + '.json)' : '') + (fs.added ? ', ' + fs.added + ' new' : '') + (fs.failed.length ? '. Not read: ' + fs.failed.map(function (f) { return f.file + ' (' + f.why + ')'; }).join(', ') : '')
-      : fs.state === 'failed' ? 'Theme files could not be read (' + (fs.failed[0] ? fs.failed[0].file + ' ' + fs.failed[0].why : 'unknown') + '): using the built-in themes'
-      : 'Theme files not read yet';
-    themesBox.appendChild(h('div', { class: 'ps-btnrow' }, ui.iconButton('swap', 'Reload theme files', function () { T.loadFiles(); }, 'ps-small ps-ghost'), h('div', { class: 'ps-kv', text: status })));
   }
 
   // ---------- My colours ----------
@@ -5189,9 +5276,8 @@ PS.colourPanel = function () {
       T.saveTheme(nameInput.value, function (r) {
         nameTouched = false;
         if (!r.ok) { saveMsg.textContent = r.why || 'Could not save.'; return; }
-        saveMsg.textContent = r.where === 'file'
-          ? 'Saved as ' + r.file + ' in the folder ' + r.folder + ' (a Steam install keeps it elsewhere: search for pusher-probe.txt).'
-          : 'The files module is not installed, so the theme was kept in the app\'s own storage (slot ' + r.slot + '). Install PusherFiles.wasm to save real files.';
+        saveMsg.textContent = '';
+        PS.toasts.show({ kind: 'info', title: 'Theme saved', ttlMs: 3000, message: r.where === 'file' ? r.file + ' is in the push-planner work folder.' : 'Kept in the app\'s own storage (slot ' + r.slot + '); install PusherFiles.wasm to save real files.' });
       });
     }, 'ps-small');
     customBox.appendChild(h('div', { class: 'ps-btnrow' }, nameInput, saveBtn));
@@ -5200,7 +5286,7 @@ PS.colourPanel = function () {
     if (cur.fromSaved) {
       actions.appendChild(ui.iconButton('trash', 'Delete ' + cur.fromSaved, function () {
         saveMsg.textContent = 'Deleting...';
-        T.deleteSaved(cur.fromSaved, function (r) { saveMsg.textContent = r.ok ? 'Deleted ' + cur.fromSaved + '.' : 'Could not delete: ' + (r.why || 'unknown'); });
+        T.deleteSaved(cur.fromSaved, function (r) { if (r.ok) { saveMsg.textContent = ''; PS.toasts.show({ kind: 'info', title: 'Theme deleted', message: cur.fromSaved + ' was removed.', ttlMs: 3000 }); } else saveMsg.textContent = 'Could not delete: ' + (r.why || 'unknown'); });
       }, 'ps-small ps-ghost'));
     }
     if (cur.fromSlot) {
@@ -5242,20 +5328,7 @@ PS.pages.push({
     var SNAP_STEPS = [10, 20, 30, 50, 75, 100, 150];
     var snapDist = ui.stepper(SNAP_STEPS, SNAP_STEPS.indexOf(PS.settings.get('snapM')) >= 0 ? PS.settings.get('snapM') : 50, function (v) { PS.settings.set('snapM', v); }, 'settings', ['Closer  -', 'Further  +'], function (v) { return v + ' m'; });
     var engines = ui.toggle([{ value: 'on', label: 'Wait for an engine' }, { value: 'off', label: 'Dismiss any time' }], PS.settings.get('requireEngines') ? 'on' : 'off', function (v) { PS.settings.set('requireEngines', v === 'on'); });
-    // File-saving test for the taxi module (needs the files module, PusherFiles.wasm): reports what it can write and read, to the log and here.
-    var probeOut = h('div', { class: 'ps-kv', text: '' });
-    var probeBtn = ui.iconButton('list', 'Test file saving', function () {
-      probeOut.textContent = 'Asking the module...';
-      PS.wasmFiles.probe().then(function (r) {
-        var lines = ['file test, module ' + r.version + ':'];
-        (r.tries || []).forEach(function (t) { lines.push('  ' + t.op + ' ' + t.path + ': ' + (t.ok ? 'OK' : 'failed') + (t.detail ? ' (' + t.detail + ')' : '')); });
-        (r.dirs || []).forEach(function (d) { lines.push('  list ' + d.path + ': ' + (d.ok ? (d.names.length ? d.names.join(', ') : '(empty)') : 'failed (' + d.detail + ')')); });
-        lines.forEach(function (l) { PS.log('wasm', l); });
-        var work = (r.tries || []).filter(function (t) { return /work/.test(t.path) && t.op === 'write'; });
-        var pkg = (r.tries || []).filter(function (t) { return /pkg/.test(t.path) && t.op === 'write'; });
-        probeOut.textContent = 'Saving in the module\'s work folder: ' + (work.some(function (t) { return t.ok; }) ? 'works' : 'does not work') + '. Writing inside the package: ' + (pkg.some(function (t) { return t.ok; }) ? 'works' : 'does not work') + '. Details are in the log below.';
-      }, function (e) { probeOut.textContent = 'File test failed: ' + PS.errText(e); PS.log('wasm', 'file test failed: ' + PS.errText(e)); });
-    }, 'ps-small ps-ghost');
+    var rings = ui.toggle([{ value: 'off', label: 'Rings off' }, { value: 'on', label: 'Rings on' }], PS.settings.get('rings') ? 'on' : 'off', function (v) { PS.settings.set('rings', v === 'on'); });
     var tab = ui.toggle([{ value: 'suggested', label: 'Suggested pushes' }, { value: 'pins', label: 'Custom pins' }], PS.settings.get('planTab'), function (v) { PS.settings.set('planTab', v); });
     return {
       el: h('div', { class: 'ps-page' },
@@ -5272,8 +5345,8 @@ PS.pages.push({
           ui.field('Snap reach (how close to a taxiway a pin must be)', snapDist.el),
           ui.field('Plan tab opens on', tab.el),
           ui.note('Which list the Plan tab shows first. It also switches by itself: placing a pin shows the pins, picking a suggestion shows the suggestions.')),
+        ui.panel('Map', ui.field('Range rings', rings.el), ui.note('Circles at a quarter, half, three quarters and the full range of the map. Off by default: a scale bar in the bottom left always shows the distance.')),
         PS.colourPanel(),
-        ui.panel('Diagnostics', h('div', { class: 'ps-btnrow' }, probeBtn), probeOut),
         ui.panel('Log', ui.logBox(null, { copy: function () { PS.copyAllLogs(); }, label: 'Copy all logs', clearable: true, buttonsAbove: true }))),
       onShow: function () {}, onHide: function () {}
     };

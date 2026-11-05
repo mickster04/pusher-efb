@@ -2,23 +2,52 @@
  "id": "delta",
  "name": "Delta",
  "note": "Navy and red",
- "colours": {
-  "bg": "#0a1f3c",
-  "bgDeep": "#06142a",
-  "panel": "#0f2b52",
-  "border": "#1d4580",
-  "text": "#f2f5f9",
-  "textDim": "#9db2cf",
-  "accent": "#e01933",
-  "accentText": "#ffffff",
-  "button": "#16376a",
-  "buttonText": "#ffffff",
-  "input": "#081a33",
-  "good": "#4cd18a",
-  "warn": "#ffd37a",
-  "bad": "#ff6677",
-  "accent2": "#7fb6ff",
-  "routeFwd": "#6fb0ff",
-  "taxiway": "#e01933"
+ "page": {
+  "surface": {
+   "bg": "#0a1f3c",
+   "bgDeep": "#06142a",
+   "panel": "#0f2b52",
+   "border": "#1d4580",
+   "input": "#081a33"
+  },
+  "text": {
+   "text": "#f2f5f9",
+   "textDim": "#9db2cf",
+   "accentText": "#ffffff",
+   "buttonText": "#ffffff"
+  },
+  "controls": {
+   "accent": "#e01933",
+   "accent2": "#7fb6ff",
+   "button": "#16376a"
+  },
+  "status": {
+   "good": "#4cd18a",
+   "warn": "#ffd37a",
+   "bad": "#ff6677"
+  }
+ },
+ "map": {
+  "paths": {
+   "runway": {
+    "colour": "#b7c6dc",
+    "width": 32
+   },
+   "taxiway": {
+    "colour": "#e01933",
+    "width": 6
+   },
+   "unnamed": {
+    "colour": "#546986",
+    "width": 3
+   }
+  },
+  "labels": {
+   "size": 15,
+   "gap": 9
+  },
+  "route": {
+   "routeFwd": "#6fb0ff"
+  }
  }
 }

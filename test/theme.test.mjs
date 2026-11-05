@@ -146,7 +146,7 @@ test('saved themes: saving writes a file named after the theme through the files
     assert.equal(r.ok, true); assert.equal(r.where, 'file'); assert.equal(r.file, 'delta-night.json');
     assert.match(r.folder, /push-planner\\work$/, 'the folder is reported');
     const saved = JSON.parse(files['delta-night.json']);
-    assert.equal(saved.name, 'Delta night!'); assert.equal(saved.colours.accent, '#00ff00'); assert.equal(T.validateThemeFile(saved), '', 'a valid theme file that can be shared');
+    assert.equal(saved.name, 'Delta night!'); assert.equal(saved.page.controls.accent, '#00ff00'); assert.equal(T.validateThemeFile(saved), '', 'a valid theme file that can be shared');
     assert.ok(T.THEMES.some((t) => t.fromSaved === 'delta-night.json'), 'listed as a theme');
     assert.equal(T.byId(T.selectedId()).fromSaved, 'delta-night.json', 'and selected');
     assert.equal(T.c('accent'), '#00ff00');

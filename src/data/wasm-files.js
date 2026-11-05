@@ -1,10 +1,9 @@
 // Client for the files module (PusherFiles.wasm, wasm/files/files_module.cpp): a second WASM module kept apart from the taxi module. It keeps the user's
-// saved themes as real .json files in the module's work folder (the sim lets a module write there and nowhere inside the package), and answers a probe of
-// what a module can do with files.
-// Events (JS to module): PusherFilesPing, PusherFilesProbe, PusherFilesList, PusherFilesSave, PusherFilesDelete; answers on PusherFilesResponse. Small JSON strings.
+// saved themes as real .json files in the module's work folder (the sim lets a module write there and nowhere inside the package).
+// Events (JS to module): PusherFilesPing, PusherFilesList, PusherFilesSave, PusherFilesDelete; answers on PusherFilesResponse. Small JSON strings.
 
 PS.wasmFiles = (function () {
-  var EVT_PING = 'PusherFilesPing', EVT_PROBE = 'PusherFilesProbe', EVT_LIST = 'PusherFilesList', EVT_SAVE = 'PusherFilesSave', EVT_DELETE = 'PusherFilesDelete', EVT_RESPONSE = 'PusherFilesResponse';
+  var EVT_PING = 'PusherFilesPing', EVT_LIST = 'PusherFilesList', EVT_SAVE = 'PusherFilesSave', EVT_DELETE = 'PusherFilesDelete', EVT_RESPONSE = 'PusherFilesResponse';
   var listener = null, waiters = {}, nextId = 1, alive = false, version = '';
 
   function onMessage(raw) {
@@ -58,8 +57,6 @@ PS.wasmFiles = (function () {
 
   return {
     ping: function (t) { return ask(EVT_PING, t, 'a ping'); },
-    // What the module can do with files: { version, tries: [{ path, op, ok, detail }], dirs: [{ path, ok, names, detail }] }
-    probe: function (t) { return ask(EVT_PROBE, t, 'the file test'); },
     // The .json files in the module's work folder: resolves with [{ name, text }].
     list: function (t) {
       return ask(EVT_LIST, t || 8000, 'the file list', null, function () {

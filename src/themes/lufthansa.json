@@ -2,22 +2,52 @@
  "id": "lufthansa",
  "name": "Lufthansa",
  "note": "Deep blue with the crane yellow",
- "colours": {
-  "bg": "#0a1544",
-  "bgDeep": "#060e30",
-  "panel": "#102060",
-  "border": "#263d8c",
-  "text": "#f5f6fb",
-  "textDim": "#a6b0d8",
-  "accent": "#ffad00",
-  "accentText": "#05164d",
-  "button": "#1a2c7c",
-  "buttonText": "#ffffff",
-  "input": "#080f36",
-  "good": "#4cd18a",
-  "warn": "#ffd37a",
-  "bad": "#ff6677",
-  "accent2": "#ffad00",
-  "routeFwd": "#7fb0ff"
+ "page": {
+  "surface": {
+   "bg": "#0a1544",
+   "bgDeep": "#060e30",
+   "panel": "#102060",
+   "border": "#263d8c",
+   "input": "#080f36"
+  },
+  "text": {
+   "text": "#f5f6fb",
+   "textDim": "#a6b0d8",
+   "accentText": "#05164d",
+   "buttonText": "#ffffff"
+  },
+  "controls": {
+   "accent": "#ffad00",
+   "accent2": "#ffad00",
+   "button": "#1a2c7c"
+  },
+  "status": {
+   "good": "#4cd18a",
+   "warn": "#ffd37a",
+   "bad": "#ff6677"
+  }
+ },
+ "map": {
+  "paths": {
+   "runway": {
+    "colour": "#bec5e3",
+    "width": 32
+   },
+   "taxiway": {
+    "colour": "#ffad00",
+    "width": 6
+   },
+   "unnamed": {
+    "colour": "#58638e",
+    "width": 3
+   }
+  },
+  "labels": {
+   "size": 15,
+   "gap": 9
+  },
+  "route": {
+   "routeFwd": "#7fb0ff"
+  }
  }
 }

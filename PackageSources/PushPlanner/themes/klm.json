@@ -2,23 +2,52 @@
  "id": "klm",
  "name": "KLM",
  "note": "Royal blue and sky blue",
- "colours": {
-  "bg": "#04204a",
-  "bgDeep": "#021632",
-  "panel": "#0a3068",
-  "border": "#1b5aa8",
-  "text": "#ffffff",
-  "textDim": "#a9c7e8",
-  "accent": "#00a1de",
-  "accentText": "#00203f",
-  "button": "#14407f",
-  "buttonText": "#ffffff",
-  "input": "#031a3c",
-  "good": "#4cd18a",
-  "warn": "#ffd37a",
-  "bad": "#ff6677",
-  "accent2": "#7fd6ff",
-  "taxiway": "#00a1de",
-  "routeFwd": "#9ad4ff"
+ "page": {
+  "surface": {
+   "bg": "#04204a",
+   "bgDeep": "#021632",
+   "panel": "#0a3068",
+   "border": "#1b5aa8",
+   "input": "#031a3c"
+  },
+  "text": {
+   "text": "#ffffff",
+   "textDim": "#a9c7e8",
+   "accentText": "#00203f",
+   "buttonText": "#ffffff"
+  },
+  "controls": {
+   "accent": "#00a1de",
+   "accent2": "#7fd6ff",
+   "button": "#14407f"
+  },
+  "status": {
+   "good": "#4cd18a",
+   "warn": "#ffd37a",
+   "bad": "#ff6677"
+  }
+ },
+ "map": {
+  "paths": {
+   "runway": {
+    "colour": "#c3d8ef",
+    "width": 32
+   },
+   "taxiway": {
+    "colour": "#00a1de",
+    "width": 6
+   },
+   "unnamed": {
+    "colour": "#577499",
+    "width": 3
+   }
+  },
+  "labels": {
+   "size": 15,
+   "gap": 9
+  },
+  "route": {
+   "routeFwd": "#9ad4ff"
+  }
  }
 }

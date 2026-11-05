@@ -62,32 +62,64 @@ PS.plotDraw = (function () {
   }
 
   // Background, range rings (centred on `ringCentre`, a canvas point), taxiways with names, runways and stands. Returns the number of taxi items drawn.
+  // Line weights in pixels: an unnamed path (apron lane, connector) is the base; a named taxiway is at least twice that, a runway several times.
+  // They come from the theme (PS.theme.mapStyle()).
+  function lineWeight(it, ms) {
+    if (it.category === 'Runway') return ms.runway;
+    if (it.category === 'Taxiway' && it.rawName) return ms.named;
+    return ms.unnamed;
+  }
+  // A scale bar in the bottom left: a round length (1, 2 or 5 x a power of ten metres) of about a quarter of the range.
+  function scaleBar(g, view, h, range) {
+    var target = range / 4, pow = Math.pow(10, Math.floor(Math.log(target) / Math.LN10)), n = target / pow, nice = (n >= 5 ? 5 : (n >= 2 ? 2 : 1)) * pow, px = nice * view.scale;
+    var x = 12, y = h - 14;
+    g.strokeStyle = PS.theme.c('mapText'); g.fillStyle = PS.theme.c('mapText'); g.lineWidth = 2; g.lineCap = 'butt';
+    g.beginPath(); g.moveTo(x, y - 4); g.lineTo(x, y); g.lineTo(x + px, y); g.lineTo(x + px, y - 4); g.stroke();
+    g.font = '11px Arial'; g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.fillText(PS.fmt.dist(nice), x + 2, y - 7);
+  }
+  // A label centred on its line, with a gap in the background colour all round it so the line stops short of the text.
+  function haloLabel(g, text, x, y, color, size, gap) {
+    g.font = 'bold ' + size + 'px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+    g.lineWidth = gap; g.strokeStyle = PS.theme.c('mapBg'); g.strokeText(text, x, y);
+    g.fillStyle = color; g.fillText(text, x, y);
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  }
   function backdrop(g, view, w, h, range, ringCentre, taxi) {
     g.fillStyle = PS.theme.c('mapBg'); g.fillRect(0, 0, w, h);
     g.lineWidth = 1; g.strokeStyle = PS.theme.c('mapGrid'); g.fillStyle = PS.theme.c('mapText'); g.font = '11px Arial';
-    [0.25, 0.5, 0.75, 1].forEach(function (f) {
-      g.beginPath(); g.arc(ringCentre[0], ringCentre[1], range * f * view.scale, 0, Math.PI * 2); g.stroke();
-      g.fillText(PS.fmt.dist(range * f), ringCentre[0] + 4, ringCentre[1] - range * f * view.scale + 12);
-    });
+    // Range rings are optional (Settings), off by default; the scale bar is always there.
+    if (PS.settings && PS.settings.get('rings')) {
+      [0.25, 0.5, 0.75, 1].forEach(function (f) {
+        g.beginPath(); g.arc(ringCentre[0], ringCentre[1], range * f * view.scale, 0, Math.PI * 2); g.stroke();
+        g.fillText(PS.fmt.dist(range * f), ringCentre[0] + 4, ringCentre[1] - range * f * view.scale + 12);
+      });
+    }
+    scaleBar(g, view, h, range);
     g.fillStyle = PS.theme.c('textDim'); g.font = 'bold 12px Arial'; g.fillText('N', 8, 16);
-    var drawn = 0, labels = {};
+    var ms = PS.theme.mapStyle(), drawn = 0, labels = {}, runwayLabels = [];
     if (!taxi) return drawn;
-    taxi.items.forEach(function (it) {
-      if (!it.points.length) return;
-      g.strokeStyle = it.category === 'Runway' ? PS.theme.c('runway') : (it.category === 'Taxiway' ? PS.theme.c('taxiway') : PS.theme.c('pathOther'));
-      g.lineWidth = it.category === 'Runway' ? 4 : 2;
-      g.beginPath();
-      var first = null, last = null;
-      it.points.forEach(function (p, i) { var q = view.toPx(p[0], p[1]); if (i === 0) { g.moveTo(q[0], q[1]); first = q; } else g.lineTo(q[0], q[1]); last = q; });
-      g.stroke(); drawn++;
-      var nm = it.rawName;
-      if (range <= 1000 && nm && it.category === 'Taxiway' && first && last && !labels[nm]) {
+    // Runways first (the thickest, underneath), then unnamed paths, then named taxiways on top.
+    var pass = [function (it) { return it.category === 'Runway'; }, function (it) { return it.category !== 'Runway' && !(it.category === 'Taxiway' && it.rawName); }, function (it) { return it.category === 'Taxiway' && !!it.rawName; }];
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    pass.forEach(function (want) {
+      taxi.items.forEach(function (it) {
+        if (!it.points.length || !want(it)) return;
+        g.strokeStyle = it.category === 'Runway' ? PS.theme.c('runway') : (it.category === 'Taxiway' ? PS.theme.c('taxiway') : PS.theme.c('pathOther'));
+        g.lineWidth = lineWeight(it, ms);
+        g.beginPath();
+        var first = null, last = null;
+        it.points.forEach(function (p, i) { var q = view.toPx(p[0], p[1]); if (i === 0) { g.moveTo(q[0], q[1]); first = q; } else g.lineTo(q[0], q[1]); last = q; });
+        g.stroke(); drawn++;
+        if (range > 1000 || !first || !last) return;
         var mx = (first[0] + last[0]) / 2, my = (first[1] + last[1]) / 2;
-        if (mx > 0 && mx < w && my > 0 && my < h) labels[nm] = [mx, my];
-      }
+        if (mx < 0 || mx > w || my < 0 || my > h) return;
+        if (it.category === 'Taxiway' && it.rawName && !labels[it.rawName]) labels[it.rawName] = [mx, my];
+        else if (it.category === 'Runway' && it.name && it.name !== '(unnamed)') runwayLabels.push([it.name, mx, my]);
+      });
     });
-    g.lineWidth = 1; g.font = '11px Arial'; g.fillStyle = PS.theme.c('warn');
-    Object.keys(labels).forEach(function (nm) { g.fillText(nm, labels[nm][0] + 3, labels[nm][1] - 3); });
+    g.lineCap = 'butt'; g.lineWidth = 1;
+    Object.keys(labels).forEach(function (nm) { haloLabel(g, nm, labels[nm][0], labels[nm][1], PS.theme.c('warn'), ms.label, ms.gap); });
+    runwayLabels.forEach(function (r) { haloLabel(g, r[0], r[1], r[2], PS.theme.c('text'), ms.label, ms.gap); });
     if (range <= 300) {
       g.fillStyle = PS.theme.c('runway'); g.font = '10px Arial';
       (taxi.parking || []).forEach(function (p) {
