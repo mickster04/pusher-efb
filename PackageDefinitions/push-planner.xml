@@ -3,8 +3,8 @@
 	<ItemSettings>
 		<ContentType>MISC</ContentType>
 		<Title>Push Planner (EFB)</Title>
-		<Manufacturer/>
-		<Creator>Pusher</Creator>
+		<Manufacturer>Tuatara Airlines</Manufacturer>
+		<Creator>Mike Cleaver</Creator>
 	</ItemSettings>
 	<Flags>
 		<VisibleInStore>false</VisibleInStore>
