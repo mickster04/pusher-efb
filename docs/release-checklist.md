@@ -2,7 +2,7 @@
 
 Open items before the first release, in the order we agreed. Tick them off here.
 
-- [x] Licence: MIT (`LICENSE`, `THIRD_PARTY_NOTICES.md`, shipped in the package). Still to do: ask Palm Coasty to add a `LICENSE` file to the original Pusher repo and tell us the copyright year, then update the notices.
+- [x] Licence: MIT (`LICENSE`, `THIRD_PARTY_NOTICES.md`, shipped in the package). Still to do: ask Palm Coasty to add a `LICENSE` file to the original Pusher repo and confirm the copyright line (the notices use "2026 Palm Coasty Simulations", taken from the original's `electron-builder.yml`), then adjust the notices if they differ.
 - [ ] **Verify in the sim:** the files module 0.2.1 (rebuild with `npm run build:wasm`, rebuild the package, restart the sim, then Settings > Diagnostics shows Files module OK) and the Steam work-folder path (needs a Steam user).
 - [ ] **Package metadata (reminder, owner to do):** Creator is "Pusher" and Manufacturer is empty in `PackageDefinitions/push-planner.xml`; choose a name, set a thumbnail, tidy the title, and decide on `VisibleInStore` (false means Community-folder only).
 - [x] Airline themes: "not affiliated, colours approximate" is in the app (Settings > Colours) and the README.

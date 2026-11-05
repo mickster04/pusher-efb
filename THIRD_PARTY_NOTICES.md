@@ -2,7 +2,7 @@
 
 Push Planner as a whole is licensed under the MIT licence in `LICENSE`. Some of it was derived from the original **Pusher** desktop app (MSFS pushback manager; its Credits page says "Built by Palm Coasty Simulations" and "Pusher is open source (MIT)"). Those parts stay under the licence of the original, reproduced below, which also covers our changes to them.
 
-The original repository we started from carried no `LICENSE` file, only that statement of intent. No copyright year was given, so none is given here either. If the copyright holder states one, it replaces the line below.
+The original repository we started from carried no `LICENSE` file, only that statement of intent. The original's installer configuration (`electron-builder.yml`) states "Copyright © 2026 Palm Coasty Simulations", so that year and name are used below. If the copyright holder states something different, it replaces the line below.
 
 ## What is derived from Pusher
 
@@ -23,7 +23,7 @@ Everything else (the map drawing, themes, Diagnostics, the files module, setting
 
 MIT License
 
-Copyright (c) Palm Coasty Simulations (year not stated by the original)
+Copyright (c) 2026 Palm Coasty Simulations
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
