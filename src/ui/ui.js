@@ -27,6 +27,15 @@ PS.ui = {
     b._iconName = icon;
     return b;
   },
+  // A round selector (a ring with a dot in it when on), for picking one item in a list. label is its accessible name.
+  radioDot: function (on, label, onclick) {
+    var b = PS.h('button', { class: 'ps-radio' + (on ? ' on' : ''), type: 'button', onclick: onclick });
+    b.title = label;
+    b.setAttribute('aria-label', label);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.appendChild(PS.h('span', { class: 'ps-radio-dot' }));
+    return b;
+  },
   panel: function (title) {
     var kids = Array.prototype.slice.call(arguments, 1);
     return PS.h('div', { class: 'ps-panel' }, title ? PS.h('div', { class: 'ps-panel-title', text: title }) : null, kids);

@@ -26,6 +26,11 @@
 .ps-btn.ps-warn { background: @accentDeep@; border-color: @accent@; }
 .ps-btn.ps-danger { background: @badDeep@; border-color: @bad@; font-weight: bold; }
 .ps-btn.ps-ghost { background: transparent; }
+.ps-btn.ps-chk.on { background: @accent@; color: @accentText@; font-weight: bold; }
+.ps-radio { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 2px solid @border2@; border-radius: 50%; background: transparent; }
+.ps-radio-dot { width: 14px; height: 14px; border-radius: 50%; background: transparent; }
+.ps-radio.on { border-color: @accent@; }
+.ps-radio.on .ps-radio-dot { background: @accent@; }
 
 .ps-toggle { display: flex; flex-wrap: wrap; }
 .ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text2@; font-size: 15px; }
@@ -131,6 +136,7 @@
 .ps-pinbtns { margin-bottom: 0; }
 .ps-pinbtns > * { margin: 0 8px 0 0; }
 .ps-pinrow .ps-btn { margin-left: 0; }
+.ps-pinbtns .ps-pindel { margin-left: auto; margin-right: 0; }
 /* buttons did not take the page font, and their own font has no degree sign */
 .ps-btn, .ps-toggle-btn, .ps-navbtn { font-family: Arial, sans-serif; }
 

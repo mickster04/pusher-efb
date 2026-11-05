@@ -220,7 +220,8 @@ PS.pages.push({
       var legs = PS.routeLegs(own, pins),
         sel = PS.plan.selected();
       pins.forEach(function (p, i) {
-        var hd = pinHeading(i);
+        var hd = pinHeading(i),
+          auto = !p.headingUser || !!p.snapped;
         pinList.appendChild(
           h(
             'div',
@@ -235,23 +236,19 @@ PS.pages.push({
                 Math.round(legs.legs[i].bearingDeg) +
                 ' deg, nose ' +
                 (hd === null ? '?' : Math.round(hd) + ' deg') +
-                (p.headingUser ? ' (set by you)' : ' (auto)')
+                (auto ? ' (auto)' : ' (set by you)')
             }),
             h(
               'div',
               { class: 'ps-btnrow ps-pinbtns' },
-              ui.button(
-                i === sel ? 'Selected' : 'Select',
-                function () {
-                  PS.plan.select(i);
-                  planChanged();
-                },
-                'ps-small ps-ghost'
-              ),
+              ui.radioDot(i === sel, 'Select pin ' + (i + 1), function () {
+                PS.plan.select(i);
+                planChanged();
+              }),
               (function () {
                 var up = ui.iconButton(
                   'arrowUp',
-                  'Earlier',
+                  '',
                   function () {
                     if (PS.plan.reorder(i, -1)) {
                       dropSuggestionHighlight();
@@ -264,7 +261,7 @@ PS.pages.push({
                 );
                 var down = ui.iconButton(
                   'arrowDown',
-                  'Later',
+                  '',
                   function () {
                     if (PS.plan.reorder(i, 1)) {
                       dropSuggestionHighlight();
@@ -275,42 +272,38 @@ PS.pages.push({
                   },
                   'ps-small ps-ghost'
                 );
+                up.title = 'Earlier';
+                down.title = 'Later';
                 up.disabled = i === 0;
                 down.disabled = i === pins.length - 1;
                 return h('span', { class: 'ps-pairbtns' }, up, down);
               })(),
-              ui.iconButton(
-                'turnRound',
-                'Turn round',
+              // On for a new pin (and for one snapped to a taxiway: the snap is automatic too). Off once its nose has been set by hand: turning it
+              // off keeps the nose where it is, and turning it on again hands the heading back to the planner.
+              ui.button(
+                'Auto heading',
                 function () {
-                  var cur = pinHeading(i);
-                  if (cur !== null && cur !== undefined) {
+                  if (auto) {
+                    var cur = pinHeading(i);
+                    if (cur === null || cur === undefined) return;
                     PS.plan.setHeading(i, cur);
-                    PS.plan.flip(i);
-                    log('pin ' + (i + 1) + ' flipped to ' + PS.plan.list()[i].headingDeg + ' deg');
-                    planChanged();
+                    log('pin ' + (i + 1) + ' heading fixed at ' + PS.plan.list()[i].headingDeg + ' deg');
+                  } else {
+                    PS.plan.resetHeading(i);
+                    snap(i);
+                    log('pin ' + (i + 1) + ' heading back to auto');
                   }
+                  planChanged();
                 },
-                'ps-small ps-ghost'
+                'ps-small ps-ghost ps-chk' + (auto ? ' on' : '')
               ),
-              p.headingUser
-                ? ui.button(
-                    'Auto heading',
-                    function () {
-                      PS.plan.resetHeading(i);
-                      log('pin ' + (i + 1) + ' heading back to auto');
-                      planChanged();
-                    },
-                    'ps-small ps-ghost'
-                  )
-                : null,
               ui.iconButton(
                 'trash',
                 'Delete',
                 function () {
                   deletePin(i);
                 },
-                'ps-small ps-ghost'
+                'ps-small ps-ghost ps-pindel'
               )
             )
           )
