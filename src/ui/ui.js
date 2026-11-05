@@ -7,12 +7,23 @@ PS.ui = {
   // A button with one of our icons (and a label, if given).
   iconButton: function (icon, label, onclick, cls) {
     var b = PS.h('button', { class: 'ps-btn ps-iconbtn' + (cls ? ' ' + cls : ''), type: 'button', onclick: onclick });
-    var svg = PS.icon(icon, 18), span = PS.h('span', { class: 'ps-iconbtn-label', text: label || '' });
+    var svg = PS.icon(icon, 18),
+      span = PS.h('span', { class: 'ps-iconbtn-label', text: label || '' });
     if (!label) span.style.display = 'none';
-    b.appendChild(svg); b.appendChild(span);
+    b.appendChild(svg);
+    b.appendChild(span);
     // The label and icon can change later (Pause becomes Resume, Call the tug becomes Dismiss the tug).
-    b.setLabel = function (text) { if (span.textContent !== text) span.textContent = text; span.style.display = text ? '' : 'none'; };
-    b.setIcon = function (name) { if (b._iconName === name) return; var n = PS.icon(name, 18); b.replaceChild(n, svg); svg = n; b._iconName = name; };
+    b.setLabel = function (text) {
+      if (span.textContent !== text) span.textContent = text;
+      span.style.display = text ? '' : 'none';
+    };
+    b.setIcon = function (name) {
+      if (b._iconName === name) return;
+      var n = PS.icon(name, 18);
+      b.replaceChild(n, svg);
+      svg = n;
+      b._iconName = name;
+    };
     b._iconName = icon;
     return b;
   },
@@ -20,7 +31,9 @@ PS.ui = {
     var kids = Array.prototype.slice.call(arguments, 1);
     return PS.h('div', { class: 'ps-panel' }, title ? PS.h('div', { class: 'ps-panel-title', text: title }) : null, kids);
   },
-  note: function (text, cls) { return PS.h('div', { class: 'ps-note' + (cls ? ' ' + cls : ''), text: text }); },
+  note: function (text, cls) {
+    return PS.h('div', { class: 'ps-note' + (cls ? ' ' + cls : ''), text: text });
+  },
   field: function (label, input) {
     // A div, not a <label>: a label around a group of buttons can forward a click on any of them to the first one
     // (the first button ended up selected whatever was pressed).
@@ -38,12 +51,22 @@ PS.ui = {
   // A choice control. Rendered as buttons, not a <select>: the sim's dropdown could not be changed in the EFB.
   // Behaves like a select for callers: read and write `.value`, and `onchange` fires when the choice changes.
   select: function (options, value, onchange) {
-    var t = PS.ui.toggle(options.map(function (o) { return { value: String(o.value), label: o.label }; }), String(value), function () {
-      if (onchange) onchange();
-    });
+    var t = PS.ui.toggle(
+      options.map(function (o) {
+        return { value: String(o.value), label: o.label };
+      }),
+      String(value),
+      function () {
+        if (onchange) onchange();
+      }
+    );
     Object.defineProperty(t.el, 'value', {
-      get: function () { return t.get(); },
-      set: function (v) { t.set(String(v)); }
+      get: function () {
+        return t.get();
+      },
+      set: function (v) {
+        t.set(String(v));
+      }
     });
     return t.el;
   },
@@ -58,44 +81,98 @@ PS.ui = {
     var label = PS.h('span', { class: 'ps-step-label', text: fmt(steps[idx]) });
     function go(delta, which, how) {
       var next = Math.max(0, Math.min(steps.length - 1, idx + delta));
-      if (tag) PS.log(tag, (how || 'button pressed (' + labels[which] + ')') + ': ' + fmt(steps[idx]) + ' -> ' + fmt(steps[next]));
+      if (tag) PS.logv(tag, (how || 'button pressed (' + labels[which] + ')') + ': ' + fmt(steps[idx]) + ' -> ' + fmt(steps[next]));
       if (next === idx) return;
-      idx = next; label.textContent = fmt(steps[idx]);
+      idx = next;
+      label.textContent = fmt(steps[idx]);
       if (onchange) onchange(steps[idx]);
     }
-    var el = PS.h('div', { class: 'ps-stepper' },
-      zoomIcons ? PS.ui.iconButton('zoomOut', '', function () { go(1, 0); }) : PS.ui.button(labels[0], function () { go(invert ? 1 : -1, 0); }),
+    var el = PS.h(
+      'div',
+      { class: 'ps-stepper' },
+      zoomIcons
+        ? PS.ui.iconButton('zoomOut', '', function () {
+            go(1, 0);
+          })
+        : PS.ui.button(labels[0], function () {
+            go(invert ? 1 : -1, 0);
+          }),
       label,
-      zoomIcons ? PS.ui.iconButton('zoomIn', '', function () { go(-1, 1); }) : PS.ui.button(labels[1], function () { go(invert ? -1 : 1, 1); }));
+      zoomIcons
+        ? PS.ui.iconButton('zoomIn', '', function () {
+            go(-1, 1);
+          })
+        : PS.ui.button(labels[1], function () {
+            go(invert ? -1 : 1, 1);
+          })
+    );
     // zoom(+1) zooms in (a smaller range, for a stepper made with `invert`), zoom(-1) zooms out: for the mouse wheel
-    return { el: el, zoom: function (dir, how) { go(dir > 0 ? -1 : 1, dir > 0 ? 1 : 0, how); }, get: function () { return steps[idx]; }, set: function (v2) { idx = Math.max(0, steps.indexOf(v2)); label.textContent = fmt(steps[idx]); } };
+    return {
+      el: el,
+      zoom: function (dir, how) {
+        go(dir > 0 ? -1 : 1, dir > 0 ? 1 : 0, how);
+      },
+      get: function () {
+        return steps[idx];
+      },
+      set: function (v2) {
+        idx = Math.max(0, steps.indexOf(v2));
+        label.textContent = fmt(steps[idx]);
+      }
+    };
   },
   // Mouse wheel and trackpad scrolling turned into zoom steps: a notch (about 100) is one step, small trackpad deltas add up to one. Returns a function
   // (deltaY, deltaMode) -> -1 (scroll up: zoom in), +1 (scroll down: zoom out) or 0 for no step yet.
   wheelAccum: function () {
-    var acc = 0, NOTCH = 50;
+    var acc = 0,
+      NOTCH = 50;
     return function (deltaY, deltaMode) {
       var d = Number(deltaY) || 0;
-      if (deltaMode === 1) d *= 33; else if (deltaMode === 2) d *= 400;     // lines or pages
+      if (deltaMode === 1) d *= 33;
+      else if (deltaMode === 2) d *= 400; // lines or pages
       acc += d;
-      if (acc <= -NOTCH) { acc = 0; return -1; }
-      if (acc >= NOTCH) { acc = 0; return 1; }
+      if (acc <= -NOTCH) {
+        acc = 0;
+        return -1;
+      }
+      if (acc >= NOTCH) {
+        acc = 0;
+        return 1;
+      }
       return 0;
     };
   },
   // Zoom with the wheel over `el` (a canvas): cb(dir, event) with dir +1 = zoom in, -1 = zoom out. The page does not scroll while the pointer is over it.
   wheelZoom: function (el, cb) {
-    var accum = PS.ui.wheelAccum(), sawWheel = false, logged = false;
+    var accum = PS.ui.wheelAccum(),
+      sawWheel = false,
+      logged = false;
     function handle(e, deltaY, mode) {
       if (e.preventDefault) e.preventDefault();
       if (e.stopPropagation) e.stopPropagation();
-      if (!logged) { logged = true; PS.log('ui', 'map wheel event received (deltaY ' + Math.round(deltaY) + ', mode ' + mode + '): zooming with the wheel works here'); }
+      if (!logged) {
+        logged = true;
+        PS.logv('ui', 'map wheel event received (deltaY ' + Math.round(deltaY) + ', mode ' + mode + '): zooming with the wheel works here');
+      }
       var step = accum(deltaY, mode);
       if (step) cb(-step, e);
     }
-    el.addEventListener('wheel', function (e) { sawWheel = true; handle(e, e.deltaY, e.deltaMode); }, false);
+    el.addEventListener(
+      'wheel',
+      function (e) {
+        sawWheel = true;
+        handle(e, e.deltaY, e.deltaMode);
+      },
+      false
+    );
     // older engines only send mousewheel (wheelDelta is the other way round and in steps of 120); skip it once real wheel events arrive
-    el.addEventListener('mousewheel', function (e) { if (!sawWheel) handle(e, -(e.wheelDelta || 0) * 0.8, 0); }, false);
+    el.addEventListener(
+      'mousewheel',
+      function (e) {
+        if (!sawWheel) handle(e, -(e.wheelDelta || 0) * 0.8, 0);
+      },
+      false
+    );
   },
   // Segmented toggle. options: [{value,label}], returns { el, get(), set(v) }
   toggle: function (options, value, onchange) {
@@ -103,26 +180,61 @@ PS.ui = {
     var wrap = PS.h('div', { class: 'ps-toggle' });
     var btns = {};
     function paint() {
-      for (var k in btns) { btns[k].className = 'ps-toggle-btn' + (k === current ? ' on' : ''); }
+      for (var k in btns) {
+        btns[k].className = 'ps-toggle-btn' + (k === current ? ' on' : '');
+      }
     }
     options.forEach(function (o) {
-      btns[o.value] = PS.h('button', { type: 'button', class: 'ps-toggle-btn', text: o.label, onclick: function () {
-        if (current === o.value) return;
-        current = o.value; paint(); if (onchange) onchange(current);
-      } });
+      btns[o.value] = PS.h('button', {
+        type: 'button',
+        class: 'ps-toggle-btn',
+        text: o.label,
+        onclick: function () {
+          if (current === o.value) return;
+          current = o.value;
+          paint();
+          if (onchange) onchange(current);
+        }
+      });
       wrap.appendChild(btns[o.value]);
     });
     paint();
-    return { el: wrap, get: function () { return current; }, set: function (v) { current = v; paint(); } };
+    return {
+      el: wrap,
+      get: function () {
+        return current;
+      },
+      set: function (v) {
+        current = v;
+        paint();
+      }
+    };
   },
   // A small "?" that shows `text` in a card while the pointer is over it (or after a tap, for touch). Keeps explanations off the page.
   help: function (title, text) {
     var pop = PS.h('div', { class: 'ps-help-pop' }, PS.h('div', { class: 'ps-help-title', text: title }));
-    (Array.isArray(text) ? text : [text]).forEach(function (t) { pop.appendChild(PS.h('div', { class: 'ps-help-line', text: t })); });
+    (Array.isArray(text) ? text : [text]).forEach(function (t) {
+      pop.appendChild(PS.h('div', { class: 'ps-help-line', text: t }));
+    });
     pop.style.display = 'none';
     var open = false;
-    function show(on) { open = on; pop.style.display = on ? 'block' : 'none'; }
-    var icon = PS.h('span', { class: 'ps-help', text: '?', onmouseenter: function () { show(true); }, onmouseleave: function () { show(false); }, onclick: function () { show(!open); } });
+    function show(on) {
+      open = on;
+      pop.style.display = on ? 'block' : 'none';
+    }
+    var icon = PS.h('span', {
+      class: 'ps-help',
+      text: '?',
+      onmouseenter: function () {
+        show(true);
+      },
+      onmouseleave: function () {
+        show(false);
+      },
+      onclick: function () {
+        show(!open);
+      }
+    });
     icon.appendChild(pop);
     return icon;
   },
@@ -131,8 +243,11 @@ PS.ui = {
   logBox: function (channels, opts) {
     opts = opts || {};
     var box = PS.h('pre', { class: 'ps-log' });
-    function match(e) { return !channels || channels.indexOf(e.ch) >= 0; }
+    function match(e) {
+      return !channels || channels.indexOf(e.ch) >= 0;
+    }
     function render() {
+      if (opts.active && !opts.active()) return; // hidden (the Diagnostics panel): not worth redrawing on every line
       var lines = [];
       for (var i = Math.max(0, PS.logs.length - 150); i < PS.logs.length; i++) {
         if (match(PS.logs[i])) lines.push(PS.fmtLog(PS.logs[i]));
@@ -140,30 +255,58 @@ PS.ui = {
       box.textContent = lines.join('\n');
       box.scrollTop = box.scrollHeight;
     }
-    PS.logListeners.push(function (e) { if (match(e)) render(); });
+    PS.logListeners.push(function (e) {
+      if (match(e)) render();
+    });
     render();
-    var copyBtn = PS.ui.iconButton('list', opts.label || 'Copy log', function () {
-      if (opts.copy) { opts.copy(); return; }
-      var text = box.textContent;
-      var ok = PS.ui.copyText(text);
-      PS.log('ui', ok ? 'log copied to clipboard' : 'clipboard copy not available; showing text to select');
-      if (!ok) PS.ui.showText(text, 'Log (select all and copy)');
-    }, 'ps-small');
+    var copyBtn = PS.ui.iconButton(
+      'list',
+      opts.label || 'Copy log',
+      function () {
+        if (opts.copy) {
+          opts.copy();
+          return;
+        }
+        var text = box.textContent;
+        var ok = PS.ui.copyText(text);
+        PS.log('ui', ok ? 'log copied to clipboard' : 'clipboard copy not available; showing text to select');
+        if (!ok) PS.ui.showText(text, 'Log (select all and copy)');
+      },
+      'ps-small'
+    );
     var buttons = [copyBtn];
     if (opts.clearable) {
-      buttons.push(PS.ui.iconButton('trash', 'Clear logs', function () {
-        var n = PS.logs.length;
-        PS.logs.length = 0;
-        render();
-        PS.log('ui', 'logs cleared (' + n + ' lines)');
-      }, 'ps-small ps-ghost'));
+      buttons.push(
+        PS.ui.iconButton(
+          'trash',
+          'Clear logs',
+          function () {
+            var n = PS.logs.length;
+            PS.logs.length = 0;
+            render();
+            PS.log('ui', 'logs cleared (' + n + ' lines)');
+          },
+          'ps-small ps-ghost'
+        )
+      );
     }
     var bar = PS.h('div', { class: 'ps-btnrow' }, buttons);
     var wrap = opts.buttonsAbove ? PS.h('div', { class: 'ps-logwrap' }, bar, box) : PS.h('div', { class: 'ps-logwrap' }, box, bar);
+    wrap.refresh = render;
     return wrap;
   },
   table: function (headers) {
-    var thead = PS.h('thead', null, PS.h('tr', null, headers.map(function (t) { return PS.h('th', { text: t }); })));
+    var thead = PS.h(
+      'thead',
+      null,
+      PS.h(
+        'tr',
+        null,
+        headers.map(function (t) {
+          return PS.h('th', { text: t });
+        })
+      )
+    );
     var tbody = PS.h('tbody');
     var table = PS.h('table', { class: 'ps-table' }, thead, tbody);
     return { el: PS.h('div', { class: 'ps-tablewrap' }, table), body: tbody };
@@ -179,25 +322,53 @@ PS.ui = {
 // element's style with !important. Colour: not 'currentColor' (it came out black or white in the sim whatever the button's colour was) but the
 // theme's button text colour, set by the stylesheet (.ps-ip / .ps-ipf, which follow the theme) and, as a fallback, on the element.
 PS.icon = function (name, size, color) {
-  var NS = 'http://www.w3.org/2000/svg', paths = PS.ICONS[name] || [], px = size || 18;
+  var NS = 'http://www.w3.org/2000/svg',
+    paths = PS.ICONS[name] || [],
+    px = size || 18;
   var col = color || (PS.theme ? PS.theme.c('buttonText') : '#ffffff');
   var svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('width', String(px)); svg.setAttribute('height', String(px));
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('width', String(px));
+  svg.setAttribute('height', String(px));
   svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   svg.setAttribute('class', 'ps-icon');
-  svg.setAttribute('style', 'width:' + px + 'px!important;height:' + px + 'px!important;min-width:' + px + 'px!important;max-width:' + px + 'px!important;min-height:' + px + 'px!important;max-height:' + px + 'px!important;flex:none;display:inline-block');
-  svg.setAttribute('fill', 'none'); svg.setAttribute('stroke-width', '2');
-  svg.setAttribute('stroke-linecap', 'round'); svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute(
+    'style',
+    'width:' +
+      px +
+      'px!important;height:' +
+      px +
+      'px!important;min-width:' +
+      px +
+      'px!important;max-width:' +
+      px +
+      'px!important;min-height:' +
+      px +
+      'px!important;max-height:' +
+      px +
+      'px!important;flex:none;display:inline-block'
+  );
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
   paths.forEach(function (d) {
-    var el = document.createElementNS(NS, 'path'), filled = d.charAt(0) === '#';
+    var el = document.createElementNS(NS, 'path'),
+      filled = d.charAt(0) === '#';
     el.setAttribute('d', filled ? d.slice(1) : d);
-    if (filled) { el.setAttribute('class', color ? '' : 'ps-ipf'); el.setAttribute('fill', col); el.setAttribute('stroke', 'none'); }
-    else { el.setAttribute('class', color ? '' : 'ps-ip'); el.setAttribute('fill', 'none'); el.setAttribute('stroke', col); }
+    if (filled) {
+      el.setAttribute('class', color ? '' : 'ps-ipf');
+      el.setAttribute('fill', col);
+      el.setAttribute('stroke', 'none');
+    } else {
+      el.setAttribute('class', color ? '' : 'ps-ip');
+      el.setAttribute('fill', 'none');
+      el.setAttribute('stroke', col);
+    }
     svg.appendChild(el);
   });
   return svg;
 };
-
 
 PS.ui.copyText = function (text) {
   try {
@@ -218,11 +389,32 @@ PS.ui.showText = function (text, title) {
   var host = PS.rootEl || document.body;
   var ta = PS.h('textarea', { class: 'ps-overlay-text', readonly: true });
   ta.value = text;
-  var overlay = PS.h('div', { class: 'ps-overlay' },
-    PS.h('div', { class: 'ps-overlay-bar' }, PS.h('span', { class: 'ps-panel-title', text: title || 'Text' }),
-      PS.ui.button('Select all', function () { ta.focus(); ta.select(); }, 'ps-small'),
-      PS.ui.button('Close', function () { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 'ps-small ps-ghost')),
-    ta);
+  var overlay = PS.h(
+    'div',
+    { class: 'ps-overlay' },
+    PS.h(
+      'div',
+      { class: 'ps-overlay-bar' },
+      PS.h('span', { class: 'ps-panel-title', text: title || 'Text' }),
+      PS.ui.button(
+        'Select all',
+        function () {
+          ta.focus();
+          ta.select();
+        },
+        'ps-small'
+      ),
+      PS.ui.button(
+        'Close',
+        function () {
+          if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        },
+        'ps-small ps-ghost'
+      )
+    ),
+    ta
+  );
   host.appendChild(overlay);
-  ta.focus(); ta.select();
+  ta.focus();
+  ta.select();
 };

@@ -26,18 +26,32 @@ const srcDir = join(root, 'src');
 const out = join(root, 'PackageSources', 'PushPlanner', 'PushPlanner.js');
 
 const ORDER = [
-  'core/core.js', 'core/geo.js',
+  'core/core.js',
+  'core/geo.js',
   'data/taxi-data.js',
   'ui/theme.js',
   'data/traffic-data.js',
   'ui/ui.js',
-  'data/wasm-taxi.js', 'data/wasm-files.js',
-  'ui/plot-draw.js', 'ui/plot-math.js',
-  'planning/route-planner.js', 'planning/push-suggest.js', 'planning/plan.js',
+  'data/wasm-taxi.js',
+  'data/wasm-files.js',
+  'ui/plot-draw.js',
+  'ui/plot-math.js',
+  'planning/route-planner.js',
+  'planning/push-suggest.js',
+  'planning/plan.js',
   'core/settings.js',
-  'push/tug.js', 'push/follow.js', 'push/gate.js', 'push/engines.js', 'push/push.js', 'push/services.js',
-  'data/facility.js', 'data/air-traffic.js',
-  'pages/plan.js', 'pages/push.js',
+  'push/tug.js',
+  'push/follow.js',
+  'push/gate.js',
+  'push/engines.js',
+  'push/push.js',
+  'push/services.js',
+  'data/facility.js',
+  'data/air-traffic.js',
+  'diag/checks.js',
+  'ui/diag-panel.js',
+  'pages/plan.js',
+  'pages/push.js',
   'ui/colours.js',
   'pages/settings.js',
   'app.js'
@@ -47,15 +61,23 @@ function walk(dir) {
   const found = [];
   for (const name of readdirSync(dir)) {
     const full = join(dir, name);
-    if (statSync(full).isDirectory()) found.push(...walk(full)); else found.push(full);
+    if (statSync(full).isDirectory()) found.push(...walk(full));
+    else found.push(full);
   }
   return found;
 }
-const onDisk = walk(srcDir).map((f) => relative(srcDir, f).split(sep).join('/')).filter((f) => f.endsWith('.js'));
+const onDisk = walk(srcDir)
+  .map((f) => relative(srcDir, f).split(sep).join('/'))
+  .filter((f) => f.endsWith('.js'));
 const missing = onDisk.filter((f) => !ORDER.includes(f));
 const gone = ORDER.filter((f) => !onDisk.includes(f));
 if (missing.length || gone.length) {
-  console.error('build.mjs ORDER is out of step with src/. Not listed: ' + (missing.join(', ') || 'none') + '. Listed but missing: ' + (gone.join(', ') || 'none'));
+  console.error(
+    'build.mjs ORDER is out of step with src/. Not listed: ' +
+      (missing.join(', ') || 'none') +
+      '. Listed but missing: ' +
+      (gone.join(', ') || 'none')
+  );
   process.exit(1);
 }
 
@@ -67,7 +89,9 @@ const css = readFileSync(join(srcDir, 'styles', 'styles.css'), 'utf8')
 // icons/*.svg -> { camelName: ['d', '#filled d', ...] }
 const icons = {};
 const iconDir = join(srcDir, 'icons');
-for (const f of readdirSync(iconDir).filter((n) => n.endsWith('.svg')).sort()) {
+for (const f of readdirSync(iconDir)
+  .filter((n) => n.endsWith('.svg'))
+  .sort()) {
   const svg = readFileSync(join(iconDir, f), 'utf8');
   const key = f.slice(0, -4).replace(/-([a-z0-9])/g, (m, c) => c.toUpperCase());
   const paths = [];
@@ -85,7 +109,7 @@ for (const f of readdirSync(iconDir).filter((n) => n.endsWith('.svg')).sort()) {
 // themes/*.json (listed in themes/index.json) -> built in, and copied to the package folder the app reads at run time
 const themeDir = join(srcDir, 'themes');
 const themeIds = JSON.parse(readFileSync(join(themeDir, 'index.json'), 'utf8')).themes;
-const themes = themeIds.map((id) => JSON.parse(readFileSync(join(themeDir, id + '.json'), 'utf8'))).filter((t) => !t.empty);   // (user1..user8 are empty slots: shipped, not built in)
+const themes = themeIds.map((id) => JSON.parse(readFileSync(join(themeDir, id + '.json'), 'utf8'))).filter((t) => !t.empty); // (user1..user8 are empty slots: shipped, not built in)
 const themeOut = join(root, 'PackageSources', 'PushPlanner', 'themes');
 if (existsSync(themeOut)) rmSync(themeOut, { recursive: true });
 mkdirSync(themeOut, { recursive: true });
@@ -99,7 +123,7 @@ const parts = [
   'var PS = {};',
   'PS.CSS = ' + JSON.stringify(css) + ';',
   'PS.ICONS = ' + JSON.stringify(icons) + ';',
-  'PS.BUILTIN_THEMES = ' + JSON.stringify(themes) + ';',
+  'PS.BUILTIN_THEMES = ' + JSON.stringify(themes) + ';'
 ];
 for (const f of ORDER) {
   parts.push('/* ---- ' + f + ' ---- */');

@@ -5,10 +5,10 @@ PS.VERSION = '0.1.0';
 PS.APP_NAME = 'Push Planner';
 PS.INTERNAL_NAME = 'PushPlanner';
 PS.pages = [];
-PS.closeHooks = [];   // called when the view closes or pauses (e.g. stop the tug)
+PS.closeHooks = []; // called when the view closes or pauses (e.g. stop the tug)
 PS.state = { appOpen: true, taxi: null, contacts: [], pins: [], notificationManager: null, bus: null };
 
-PS.global = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : {});
+PS.global = typeof window !== 'undefined' ? window : typeof globalThis !== 'undefined' ? globalThis : {};
 
 // SimVar / Coherent may be script-scope globals rather than window properties, so use the bare name.
 PS.simVar = function () {
@@ -41,17 +41,34 @@ PS.log = function (channel, msg) {
   PS.logs.push(entry);
   if (PS.logs.length > 3000) PS.logs.shift();
   for (var i = 0; i < PS.logListeners.length; i++) {
-    try { PS.logListeners[i](entry); } catch (e) { /* listener errors must not break the app */ }
+    try {
+      PS.logListeners[i](entry);
+    } catch (e) {
+      /* listener errors must not break the app */
+    }
   }
   return entry;
 };
+// Two levels. PS.log is the normal log: what happened and what went wrong (actions, results, failures). PS.logv is the detail: it is kept only while
+// detailed logging is on (the Diagnostics panel's switch) or a diagnostic check is running, so a normal session log stays short.
+PS.detail = { on: false, running: 0 };
+PS.logv = function (channel, msg) {
+  if (PS.detail.on || PS.detail.running > 0) return PS.log(channel, msg);
+  return null;
+};
 PS.fmtLog = function (e) {
   var d = new Date(e.t);
-  function p(n, w) { n = String(n); while (n.length < (w || 2)) n = '0' + n; return n; }
+  function p(n, w) {
+    n = String(n);
+    while (n.length < (w || 2)) n = '0' + n;
+    return n;
+  }
   return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + '.' + p(d.getMilliseconds(), 3) + ' [' + e.ch + '] ' + e.msg;
 };
 
-function errText(e) { return String((e && e.message) || e); }
+function errText(e) {
+  return String((e && e.message) || e);
+}
 PS.errText = errText;
 
 // ---- sim access ----
@@ -72,7 +89,9 @@ PS.setVar = function (name, unit, value) {
   try {
     var r = sv.SetSimVarValue(name, unit, value);
     if (r && typeof r.then === 'function') {
-      r.then(null, function (e) { PS.log('set', 'async failure ' + name + ': ' + errText(e)); });
+      r.then(null, function (e) {
+        PS.log('set', 'async failure ' + name + ': ' + errText(e));
+      });
     }
     return { ok: true };
   } catch (e) {
@@ -89,7 +108,9 @@ PS.keyEvent = function (name, value, method) {
       if (!co || !co.call) return { ok: false, error: 'Coherent not available' };
       var r = co.call('TRIGGER_KEY_EVENT', name, v);
       if (r && typeof r.then === 'function') {
-        r.then(null, function (e) { PS.log('key', 'async failure ' + name + ': ' + errText(e)); });
+        r.then(null, function (e) {
+          PS.log('key', 'async failure ' + name + ': ' + errText(e));
+        });
       }
       return { ok: true };
     }
@@ -104,7 +125,10 @@ PS.readOwn = function () {
   var lat = PS.getVar('PLANE LATITUDE', 'degrees');
   var lon = PS.getVar('PLANE LONGITUDE', 'degrees');
   if (!lat.ok || !lon.ok || typeof lat.value !== 'number' || typeof lon.value !== 'number') return null;
-  function num(name, unit) { var r = PS.getVar(name, unit); return r.ok && typeof r.value === 'number' ? r.value : 0; }
+  function num(name, unit) {
+    var r = PS.getVar(name, unit);
+    return r.ok && typeof r.value === 'number' ? r.value : 0;
+  }
   return {
     lat: lat.value,
     lon: lon.value,
@@ -132,14 +156,19 @@ PS.h = function (tag, attrs) {
   }
   function add(c) {
     if (c === null || c === undefined || c === false) return;
-    if (Array.isArray(c)) { for (var j = 0; j < c.length; j++) add(c[j]); return; }
+    if (Array.isArray(c)) {
+      for (var j = 0; j < c.length; j++) add(c[j]);
+      return;
+    }
     el.appendChild(typeof c === 'object' ? c : document.createTextNode(String(c)));
   }
   for (var i = 2; i < arguments.length; i++) add(arguments[i]);
   return el;
 };
 
-PS.clear = function (el) { while (el.firstChild) el.removeChild(el.firstChild); };
+PS.clear = function (el) {
+  while (el.firstChild) el.removeChild(el.firstChild);
+};
 
 // ---- formatting ----
 PS.fmt = {
@@ -151,7 +180,13 @@ PS.fmt = {
     if (v === undefined || v === null) return '-';
     if (typeof v === 'number') return isFinite(v) ? String(Math.round(v * 10000) / 10000) : String(v);
     if (typeof v === 'boolean') return v ? 'true' : 'false';
-    if (typeof v === 'object') { try { return JSON.stringify(v); } catch (e) { return String(v); } }
+    if (typeof v === 'object') {
+      try {
+        return JSON.stringify(v);
+      } catch (e) {
+        return String(v);
+      }
+    }
     return String(v);
   },
   dist: function (m) {
@@ -166,15 +201,26 @@ PS.fmt = {
 
 // ---- heartbeat: does anything keep ticking while the app is hidden? ----
 PS.hb = {
-  timer: null, ticks: 0, frames: 0, paused: false,
-  raf: 0, rafOn: false, rafAtPause: 0, hooks: {},
-  startedAt: 0, last: 0, maxGapMs: 0,
-  pausedAt: 0, ticksAtPause: 0, framesAtPause: 0, lastPause: null
+  timer: null,
+  ticks: 0,
+  frames: 0,
+  paused: false,
+  raf: 0,
+  rafOn: false,
+  rafAtPause: 0,
+  hooks: {},
+  startedAt: 0,
+  last: 0,
+  maxGapMs: 0,
+  pausedAt: 0,
+  ticksAtPause: 0,
+  framesAtPause: 0,
+  lastPause: null
 };
 // Counts every EFB lifecycle hook call (logs the first of each) to see which ones the EFB really calls.
 PS.hook = function (name) {
   var hooks = PS.hb.hooks;
-  if (!hooks[name]) PS.log('hook', name + ' called for the first time');
+  if (!hooks[name]) PS.logv('hook', name + ' called for the first time');
   hooks[name] = (hooks[name] || 0) + 1;
 };
 // Independent of the EFB's own onUpdate: counts the browser's animation frames (these normally stop when hidden).
@@ -200,52 +246,108 @@ PS.hbStart = function () {
   }, 500);
 };
 PS.hbStop = function () {
-  if (PS.hb.timer !== null) { clearInterval(PS.hb.timer); PS.hb.timer = null; }
+  if (PS.hb.timer !== null) {
+    clearInterval(PS.hb.timer);
+    PS.hb.timer = null;
+  }
   PS.hb.rafOn = false;
 };
-PS.frameHooks = [];   // called on every EFB onUpdate (while the app is visible); pages use it as a second redraw trigger
+PS.frameHooks = []; // called on every EFB onUpdate (while the app is visible); pages use it as a second redraw trigger
 PS.hbFrame = function () {
   PS.hb.frames++;
-  for (var i = 0; i < PS.frameHooks.length; i++) { try { PS.frameHooks[i](); } catch (e) { /* a hook must not break the update loop */ } }
+  for (var i = 0; i < PS.frameHooks.length; i++) {
+    try {
+      PS.frameHooks[i]();
+    } catch (e) {
+      /* a hook must not break the update loop */
+    }
+  }
 };
 PS.hbPause = function () {
   var hb = PS.hb;
   if (hb.paused) return;
-  hb.paused = true; hb.pausedAt = Date.now(); hb.ticksAtPause = hb.ticks; hb.framesAtPause = hb.frames; hb.rafAtPause = hb.raf;
+  hb.paused = true;
+  hb.pausedAt = Date.now();
+  hb.ticksAtPause = hb.ticks;
+  hb.framesAtPause = hb.frames;
+  hb.rafAtPause = hb.raf;
 };
 PS.hbResume = function () {
   var hb = PS.hb;
   if (!hb.paused) return;
-  hb.lastPause = { ms: Date.now() - hb.pausedAt, ticks: hb.ticks - hb.ticksAtPause, frames: hb.frames - hb.framesAtPause, raf: hb.raf - hb.rafAtPause };
+  hb.lastPause = {
+    ms: Date.now() - hb.pausedAt,
+    ticks: hb.ticks - hb.ticksAtPause,
+    frames: hb.frames - hb.framesAtPause,
+    raf: hb.raf - hb.rafAtPause
+  };
   hb.paused = false;
-  PS.log('heartbeat', 'resumed after ' + Math.round(hb.lastPause.ms / 1000) + ' s hidden: ' + hb.lastPause.ticks +
-    ' timer ticks, ' + hb.lastPause.frames + ' onUpdate frames, ' + hb.lastPause.raf + ' animation frames while hidden');
+  PS.logv(
+    'heartbeat',
+    'resumed after ' +
+      Math.round(hb.lastPause.ms / 1000) +
+      ' s hidden: ' +
+      hb.lastPause.ticks +
+      ' timer ticks, ' +
+      hb.lastPause.frames +
+      ' onUpdate frames, ' +
+      hb.lastPause.raf +
+      ' animation frames while hidden'
+  );
 };
 
 // ---- toasts (in-tablet popups with action buttons) ----
 PS.toasts = {
-  items: [], listeners: [], seq: 0,
-  subscribe: function (fn) { this.listeners.push(fn); },
-  emit: function () { for (var i = 0; i < this.listeners.length; i++) { try { this.listeners[i](this.items); } catch (e) { /* ignore */ } } },
+  items: [],
+  listeners: [],
+  seq: 0,
+  subscribe: function (fn) {
+    this.listeners.push(fn);
+  },
+  emit: function () {
+    for (var i = 0; i < this.listeners.length; i++) {
+      try {
+        this.listeners[i](this.items);
+      } catch (e) {
+        /* ignore */
+      }
+    }
+  },
   // opts: { id?, kind, title, message, actions: [{label, onClick}], persistent?, ttlMs? }
   show: function (opts) {
     var self = this;
-    var id = opts.id || ('t' + (++this.seq));
+    var id = opts.id || 't' + ++this.seq;
     // efbOnly: for a message that only matters while the app is not on screen (the Push tab shows the same thing). With the app open it
     // is not shown at all; with it closed it goes to the EFB's own notifications, once per id until dismissed.
     if (opts.efbOnly) {
-      if (PS.state.appOpen) { this.dismiss(id); return id; }
+      if (PS.state.appOpen) {
+        this.dismiss(id);
+        return id;
+      }
       this.notifyEfb(id, opts);
     }
-    var item = { id: id, kind: opts.kind || 'info', title: opts.title || '', message: opts.message || '',
-      actions: opts.actions || [], persistent: !!opts.persistent, createdAt: Date.now(), efbOnly: !!opts.efbOnly };
+    var item = {
+      id: id,
+      kind: opts.kind || 'info',
+      title: opts.title || '',
+      message: opts.message || '',
+      actions: opts.actions || [],
+      persistent: !!opts.persistent,
+      createdAt: Date.now(),
+      efbOnly: !!opts.efbOnly
+    };
     var replaced = false;
     for (var i = 0; i < this.items.length; i++) {
-      if (this.items[i].id === id) { this.items[i] = item; replaced = true; }
+      if (this.items[i].id === id) {
+        this.items[i] = item;
+        replaced = true;
+      }
     }
     if (!replaced) this.items.push(item);
     if (!item.persistent) {
-      setTimeout(function () { self.dismiss(id); }, opts.ttlMs || 6000);
+      setTimeout(function () {
+        self.dismiss(id);
+      }, opts.ttlMs || 6000);
     }
     this.emit();
     return id;
@@ -255,18 +357,35 @@ PS.toasts = {
     var nm = PS.state.notificationManager;
     if (this.sentToEfb[id] || !nm || typeof nm.showNotification !== 'function') return;
     this.sentToEfb[id] = true;
-    try { nm.showNotification({ title: opts.title || '', description: opts.message || '', type: opts.kind === 'brake' ? 'WARNING' : 'MESSAGE', duration: opts.persistent ? 10000 : (opts.ttlMs || 6000) }); PS.log('app', 'EFB notification: ' + (opts.title || id)); }
-    catch (e) { PS.log('app', 'EFB notification failed: ' + PS.errText(e)); }
+    try {
+      nm.showNotification({
+        title: opts.title || '',
+        description: opts.message || '',
+        type: opts.kind === 'brake' ? 'WARNING' : 'MESSAGE',
+        duration: opts.persistent ? 10000 : opts.ttlMs || 6000
+      });
+      PS.logv('app', 'EFB notification: ' + (opts.title || id));
+    } catch (e) {
+      PS.log('app', 'EFB notification failed: ' + PS.errText(e));
+    }
   },
   // The app went on or off screen: messages meant only for while it is off screen are dropped when it comes back.
   setAppOpen: function (open) {
     PS.state.appOpen = !!open;
-    if (open) { this.sentToEfb = {}; this.items = this.items.filter(function (t) { return !t.efbOnly; }); this.emit(); }
+    if (open) {
+      this.sentToEfb = {};
+      this.items = this.items.filter(function (t) {
+        return !t.efbOnly;
+      });
+      this.emit();
+    }
   },
   update: function (id, patch) {
     for (var i = 0; i < this.items.length; i++) {
       if (this.items[i].id === id) {
-        for (var k in patch) { if (Object.prototype.hasOwnProperty.call(patch, k)) this.items[i][k] = patch[k]; }
+        for (var k in patch) {
+          if (Object.prototype.hasOwnProperty.call(patch, k)) this.items[i][k] = patch[k];
+        }
         this.emit();
         return true;
       }
@@ -276,10 +395,15 @@ PS.toasts = {
   dismiss: function (id) {
     delete this.sentToEfb[id];
     var n = this.items.length;
-    this.items = this.items.filter(function (t) { return t.id !== id; });
+    this.items = this.items.filter(function (t) {
+      return t.id !== id;
+    });
     if (this.items.length !== n) this.emit();
   },
-  clear: function () { this.items = []; this.emit(); }
+  clear: function () {
+    this.items = [];
+    this.emit();
+  }
 };
 
 // ---- variables shown on the telemetry page (names and units follow the original bridge) ----

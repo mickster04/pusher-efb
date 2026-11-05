@@ -10,9 +10,13 @@ PS.taxi = (function () {
     return CATEGORY[type] || (type === undefined || type === null ? 'Unknown' : 'Other (' + type + ')');
   }
 
-  function num(v) { return typeof v === 'number' && isFinite(v) ? v : null; }
+  function num(v) {
+    return typeof v === 'number' && isFinite(v) ? v : null;
+  }
   function pick(o, keys) {
-    for (var i = 0; i < keys.length; i++) { if (o[keys[i]] !== undefined && o[keys[i]] !== null) return o[keys[i]]; }
+    for (var i = 0; i < keys.length; i++) {
+      if (o[keys[i]] !== undefined && o[keys[i]] !== null) return o[keys[i]];
+    }
     return undefined;
   }
   function pointOf(o) {
@@ -23,9 +27,14 @@ PS.taxi = (function () {
     return lat !== null && lon !== null ? [lat, lon] : null;
   }
   function pointsOf(item) {
-    var out = [], i, p;
+    var out = [],
+      i,
+      p;
     if (Array.isArray(item.points)) {
-      for (i = 0; i < item.points.length; i++) { p = pointOf(item.points[i]); if (p) out.push(p); }
+      for (i = 0; i < item.points.length; i++) {
+        p = pointOf(item.points[i]);
+        if (p) out.push(p);
+      }
     }
     if (!out.length) {
       p = pointOf(item.start) || pointOf({ lat: item.startLat, lon: item.startLon });
@@ -33,7 +42,10 @@ PS.taxi = (function () {
       if (p) out.push(p);
       if (q) out.push(q);
     }
-    if (!out.length) { p = pointOf(item); if (p) out.push(p); }
+    if (!out.length) {
+      p = pointOf(item);
+      if (p) out.push(p);
+    }
     return out;
   }
 
@@ -50,7 +62,10 @@ PS.taxi = (function () {
   // items: [{ name, category, lengthM, widthM, headingDeg, points }]
   function extract(raw) {
     var res = { items: [], parking: [], keys: [], notes: [] };
-    if (!raw || typeof raw !== 'object') { res.notes.push('Nothing to extract: no object returned.'); return res; }
+    if (!raw || typeof raw !== 'object') {
+      res.notes.push('Nothing to extract: no object returned.');
+      return res;
+    }
     res.keys = Object.keys(raw);
 
     arraysByKey(raw, /^runways?$/i).forEach(function (g) {
@@ -67,7 +82,12 @@ PS.taxi = (function () {
         res.items.push({
           name: name !== undefined ? String(name) : 'Runway',
           category: 'Runway',
-          lengthM: num(pick(r, ['length', 'lengthM'])) !== null ? num(pick(r, ['length', 'lengthM'])) : (pts.length > 1 ? G.polylineLengthM(pts) : null),
+          lengthM:
+            num(pick(r, ['length', 'lengthM'])) !== null
+              ? num(pick(r, ['length', 'lengthM']))
+              : pts.length > 1
+                ? G.polylineLengthM(pts)
+                : null,
           widthM: num(pick(r, ['width', 'widthM'])),
           headingDeg: num(pick(r, ['direction', 'heading', 'headingDeg'])),
           points: pts
@@ -99,7 +119,8 @@ PS.taxi = (function () {
         var pt = pointOf(p);
         res.parking.push({
           name: String(pick(p, ['name', 'designation']) || '(stand)'),
-          lat: pt ? pt[0] : null, lon: pt ? pt[1] : null,
+          lat: pt ? pt[0] : null,
+          lon: pt ? pt[1] : null,
           headingDeg: num(pick(p, ['headingDeg', 'heading'])),
           radiusM: num(pick(p, ['radiusM', 'radius']))
         });
@@ -120,10 +141,22 @@ PS.taxi = (function () {
       var key = it.category + '|' + it.name;
       var row = map[key];
       if (!row) {
-        row = map[key] = { name: it.name, category: it.category, segments: 0, lengthM: 0, widthM: null, nearestM: null, bearingDeg: null, hasLength: false };
+        row = map[key] = {
+          name: it.name,
+          category: it.category,
+          segments: 0,
+          lengthM: 0,
+          widthM: null,
+          nearestM: null,
+          bearingDeg: null,
+          hasLength: false
+        };
       }
       row.segments++;
-      if (it.lengthM !== null) { row.lengthM += it.lengthM; row.hasLength = true; }
+      if (it.lengthM !== null) {
+        row.lengthM += it.lengthM;
+        row.hasLength = true;
+      }
       if (it.widthM !== null && (row.widthM === null || it.widthM > row.widthM)) row.widthM = it.widthM;
       if (typeof ownLat === 'number' && typeof ownLon === 'number' && it.points.length) {
         var n = G.nearestOnPolyline(it.points, ownLat, ownLon);
@@ -133,8 +166,12 @@ PS.taxi = (function () {
         }
       }
     });
-    var rows = Object.keys(map).map(function (k) { return map[k]; });
-    rows.forEach(function (r) { if (!r.hasLength) r.lengthM = null; });
+    var rows = Object.keys(map).map(function (k) {
+      return map[k];
+    });
+    rows.forEach(function (r) {
+      if (!r.hasLength) r.lengthM = null;
+    });
     rows.sort(function (a, b) {
       if (a.nearestM === null && b.nearestM === null) return a.name < b.name ? -1 : 1;
       if (a.nearestM === null) return 1;
@@ -151,7 +188,9 @@ PS.taxi = (function () {
       var b = G.offset(refLat, refLon, brg, startDist + len);
       return [a, b];
     }
-    function seg(name, type, width, pts) { return { name: name, type: type, widthM: width, points: pts }; }
+    function seg(name, type, width, pts) {
+      return { name: name, type: type, widthM: width, points: pts };
+    }
     var taxiways = [];
     var alongA = [0, 120, 240, 360];
     for (var i = 0; i < alongA.length; i++) taxiways.push(seg('A', 1, 23, line(90, alongA[i] - 100, 120)));
@@ -162,15 +201,31 @@ PS.taxi = (function () {
     taxiways.push(seg('', 3, 12, line(225, 0, 80)));
     taxiways.push(seg('LINK', 1, 15, line(135, 50, 200)));
     taxiways.push(seg('', 4, 0, line(270, 20, 90)));
-    var rwA = G.offset(refLat, refLon, 0, 700), rwB = G.offset(refLat, refLon, 0, 2700);
+    var rwA = G.offset(refLat, refLon, 0, 700),
+      rwB = G.offset(refLat, refLon, 0, 2700);
     return {
       icao: 'SAMPLE',
-      refLat: refLat, refLon: refLon,
+      refLat: refLat,
+      refLon: refLon,
       runways: [{ designation: '09/27', length: 2000, width: 45, direction: 90, points: [rwA, rwB] }],
       paths: taxiways,
       parking: [
-        { name: 'Gate A 1', type: 1, lat: G.offset(refLat, refLon, 270, 30)[0], lon: G.offset(refLat, refLon, 270, 30)[1], headingDeg: 90, radiusM: 30 },
-        { name: 'Gate A 2', type: 1, lat: G.offset(refLat, refLon, 270, 90)[0], lon: G.offset(refLat, refLon, 270, 90)[1], headingDeg: 90, radiusM: 30 }
+        {
+          name: 'Gate A 1',
+          type: 1,
+          lat: G.offset(refLat, refLon, 270, 30)[0],
+          lon: G.offset(refLat, refLon, 270, 30)[1],
+          headingDeg: 90,
+          radiusM: 30
+        },
+        {
+          name: 'Gate A 2',
+          type: 1,
+          lat: G.offset(refLat, refLon, 270, 90)[0],
+          lon: G.offset(refLat, refLon, 270, 90)[1],
+          headingDeg: 90,
+          radiusM: 30
+        }
       ]
     };
   }

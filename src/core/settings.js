@@ -3,25 +3,45 @@
 
 PS.settings = (function () {
   var KEY = 'pushplanner.settings';
-  var defaults = { snap: true, snapM: 50, planTab: 'suggested', tightest: 26, insetTop: 40, insetBottom: 56, requireEngines: true, rings: false };
-  var values = {}, k;
+  var defaults = {
+    snap: true,
+    snapM: 50,
+    planTab: 'suggested',
+    tightest: 26,
+    insetTop: 40,
+    insetBottom: 56,
+    requireEngines: true,
+    rings: false
+  };
+  var values = {},
+    k;
   for (k in defaults) values[k] = defaults[k];
   try {
     var saved = JSON.parse(window.localStorage.getItem(KEY) || '{}');
-    for (k in defaults) { if (saved[k] !== undefined && typeof saved[k] === typeof defaults[k]) values[k] = saved[k]; }
+    for (k in defaults) {
+      if (saved[k] !== undefined && typeof saved[k] === typeof defaults[k]) values[k] = saved[k];
+    }
     // the tightest turn used to have a key of its own
     var old = Number(window.localStorage.getItem('pushplanner.tightest'));
     if (saved.tightest === undefined && old >= 10 && old <= 40) values.tightest = old;
-  } catch (e) { /* defaults */ }
+  } catch (e) {
+    /* defaults */
+  }
   if (values.tightest < 10 || values.tightest > 40) values.tightest = defaults.tightest;
   PS.plan.setMinRadius(values.tightest);
 
-  function get(name) { return values[name]; }
+  function get(name) {
+    return values[name];
+  }
   function set(name, v) {
     values[name] = v;
     if (name === 'tightest') PS.plan.setMinRadius(v);
     if ((name === 'insetTop' || name === 'insetBottom') && PS.applyInsets) PS.applyInsets();
-    try { window.localStorage.setItem(KEY, JSON.stringify(values)); } catch (e) { /* not saved */ }
+    try {
+      window.localStorage.setItem(KEY, JSON.stringify(values));
+    } catch (e) {
+      /* not saved */
+    }
     PS.log('settings', name + ' = ' + v);
   }
   return { get: get, set: set };

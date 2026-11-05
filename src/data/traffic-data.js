@@ -42,7 +42,8 @@ PS.traffic = (function () {
   function advance(c, dtSec) {
     var d = (c.gsKt || 0) * G.KT_TO_MS * dtSec;
     var p = G.offset(c.lat, c.lon, c.hdgDeg || 0, d);
-    c.lat = p[0]; c.lon = p[1];
+    c.lat = p[0];
+    c.lon = p[1];
     return c;
   }
 

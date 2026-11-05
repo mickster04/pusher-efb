@@ -5,7 +5,11 @@
   "description": "Push Planner: plans and drives a pushback from the MSFS 2024 EFB. Plain JS, no dependencies.",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node build.mjs && node --test \"test/*.test.mjs\"",
+    "lint": "node tools/lint.mjs",
+    "format": "npx --yes prettier@3.3.3 --write \"src/**/*.js\" build.mjs tools/*.mjs",
+    "test": "node build.mjs && node tools/lint.mjs && node --test \"test/*.test.mjs\"",
+    "build:wasm": "bash wasm/build.sh",
+    "build:all": "npm test && npm run build:wasm",
     "harness": "node build.mjs && node harness/serve.mjs"
   }
 }

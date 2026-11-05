@@ -244,6 +244,7 @@ test('snap: the log names the taxiway a pin snapped to', () => {
   PS.state.taxi = { items: [{ name: 'L36', category: 'Taxiway', points: [e, f] }] };
   const p = at(180, 4), i = plan.add(p[0], p[1]);
   PS.logs.length = 0;
+  PS.detail.on = true; // the snap line is detail
   assert.ok(plan.snapPin(i, { lat: ref.lat, lon: ref.lon, hdgDeg: 0 }));
   plan.evaluate({ lat: ref.lat, lon: ref.lon, hdgDeg: 0 });
   const text = PS.logs.map((l) => PS.fmtLog(l)).join('\n');
@@ -251,5 +252,6 @@ test('snap: the log names the taxiway a pin snapped to', () => {
   plan.setHeading(i, 90);
   PS.logs.length = 0; plan.evaluate({ lat: ref.lat, lon: ref.lon, hdgDeg: 0 });
   assert.doesNotMatch(PS.logs.map((l) => PS.fmtLog(l)).join('\n'), /snapped to/);
+  PS.detail.on = false;
   plan.clear(); PS.state.taxi = null;
 });
