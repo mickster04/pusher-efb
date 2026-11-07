@@ -216,7 +216,11 @@ PS.plotDraw = (function () {
         g.lineWidth = lineWeight(it, ms);
         g.beginPath();
         var first = null,
-          last = null;
+          last = null,
+          x0 = Infinity,
+          x1 = -Infinity,
+          y0 = Infinity,
+          y1 = -Infinity;
         it.points.forEach(function (p, i) {
           var q = view.toPx(p[0], p[1]);
           if (i === 0) {
@@ -224,7 +228,12 @@ PS.plotDraw = (function () {
             first = q;
           } else g.lineTo(q[0], q[1]);
           last = q;
+          if (q[0] < x0) x0 = q[0];
+          if (q[0] > x1) x1 = q[0];
+          if (q[1] < y0) y0 = q[1];
+          if (q[1] > y1) y1 = q[1];
         });
+        if (x1 < -40 || x0 > w + 40 || y1 < -40 || y0 > h + 40) return; // wholly off the canvas (40 px covers the line width): not worth stroking
         g.stroke();
         drawn++;
         if (range > 1000 || !first || !last) return;

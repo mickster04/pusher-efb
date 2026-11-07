@@ -222,7 +222,8 @@ PS.pages.push({
       var g = canvas.getContext && canvas.getContext('2d');
       if (!g) return;
       D.fitCanvas(canvas, 120);
-      var own = PS.readOwn() || { lat: 0, lon: 0, hdgDeg: 0 },
+      var ownRead = PS.readOwn(),
+        own = ownRead || { lat: 0, lon: 0, hdgDeg: 0 }, // (no reading: nothing is planned from here, a route from 0,0 would be nonsense)
         w = canvas.width,
         hgt = canvas.height,
         range = mapRange.get();
@@ -231,7 +232,7 @@ PS.pages.push({
         cy = view.cy;
       var running = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1, done: 1 }[v.status];
       // While pushing, the route drawn is the one the push is driving (not re-planned as the aircraft moves, so no warnings come and go).
-      var plan = running && v.plan ? v.plan : PS.plan.evaluate(own);
+      var plan = running && v.plan ? v.plan : ownRead ? PS.plan.evaluate(own) : { empty: true };
       D.backdrop(g, view, w, hgt, range, [cx, cy], PS.state.taxi);
       if (!plan.empty) D.planRoute(g, view, plan, { pinCount: PS.plan.count(), doneLegs: running ? v.leg : 0 });
       PS.airTraffic.poll();

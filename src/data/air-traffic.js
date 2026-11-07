@@ -67,8 +67,10 @@ PS.airTraffic = {
   poll: function () {
     var T = PS.airTraffic;
     if (!T.started) T.start();
-    if (!T.listener || !T.ready || T.busy) return;
+    // (a call that never settles, say a listener torn down on a flight reload, must not stop the polling for good: the flag lapses after 5 s)
+    if (!T.listener || !T.ready || (T.busy && Date.now() - T.busyAt < 5000)) return;
     T.busy = true;
+    T.busyAt = Date.now();
     var r;
     try {
       r = T.listener.call('GET_AIR_TRAFFIC');
@@ -102,7 +104,7 @@ PS.airTraffic = {
           seen = {};
         for (var i = 0; i < data.length; i++) {
           var d = data[i];
-          if (typeof d.lat !== 'number' || typeof d.lon !== 'number') continue;
+          if (!d || typeof d.lat !== 'number' || typeof d.lon !== 'number') continue;
           var prev = T.prev[d.uId];
           var gs = prev ? prev.gsKt : 0;
           var track = prev ? prev.track : d.heading || 0;

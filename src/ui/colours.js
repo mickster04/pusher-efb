@@ -126,7 +126,9 @@ PS.colourPanel = function () {
   var themesBox = h('div'),
     customBox = h('div');
   var editing = false,
-    openRole = null;
+    openRole = null,
+    switchWarned = null, // the theme card whose switch was warned about (unsaved colours)
+    deleteArmed = null; // the saved file whose Delete was tapped once
 
   // ---------- Themes ----------
   function renderThemes() {
@@ -147,6 +149,18 @@ PS.colourPanel = function () {
           class: 'ps-themecard' + (on ? ' on' : ''),
           title: th.note,
           onclick: function () {
+            // Choosing a theme throws away colours changed by hand and not saved: the first tap warns, a second tap on the same card goes ahead.
+            if (T.hasUnsaved() && switchWarned !== th.id) {
+              switchWarned = th.id;
+              PS.toasts.show({
+                kind: 'info',
+                title: 'Unsaved colours',
+                message: 'Switching to ' + th.name + ' discards the colours you changed. Tap it again to switch, or save them first on My colours.',
+                ttlMs: 5000
+              });
+              return;
+            }
+            switchWarned = null;
             T.select(th.id);
             PS.logv('settings', 'theme: ' + th.name);
           }
@@ -361,6 +375,19 @@ PS.colourPanel = function () {
           'trash',
           'Delete ' + cur.fromSaved,
           function () {
+            if (deleteArmed !== cur.fromSaved) {
+              // a file cannot be got back: the first tap asks, a second tap on the same file deletes it
+              deleteArmed = cur.fromSaved;
+              saveMsg.textContent = 'Tap Delete again to remove ' + cur.fromSaved + ' for good.';
+              setTimeout(function () {
+                if (deleteArmed === cur.fromSaved) {
+                  deleteArmed = null;
+                  saveMsg.textContent = '';
+                }
+              }, 4000);
+              return;
+            }
+            deleteArmed = null;
             saveMsg.textContent = 'Deleting...';
             T.deleteSaved(cur.fromSaved, function (r) {
               if (r.ok) {

@@ -174,8 +174,7 @@ PS.suggest = (function () {
       name: '',
       lat: lat + y / M_PER_DEG,
       lon: lon + x / (M_PER_DEG * cos),
-      distM: hyp(x, y),
-      bearingDeg: initialBearing(a[0], a[1], b[0], b[1])
+      distM: hyp(x, y)
     };
   }
 

@@ -138,11 +138,13 @@ PS.wasmFiles = (function () {
     // The .json files in the module's work folder: resolves with [{ name, text }].
     list: function (t) {
       return ask(EVT_LIST, t || 8000, 'the file list', null, function () {
-        var files = [];
+        var files = [],
+          want = null; // the "end" message says how many files there are: an "end" that arrives first must not cut the list short
         return {
           collect: function (m) {
             if (m.kind === 'file') files.push({ name: m.name, text: m.text });
-            return m.kind === 'end';
+            if (m.kind === 'end') want = typeof m.count === 'number' ? m.count : 0;
+            return want !== null && files.length >= want;
           },
           result: function () {
             return files;

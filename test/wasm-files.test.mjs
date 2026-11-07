@@ -88,3 +88,17 @@ test('files module: save, list, overwrite and delete theme files, with unsafe na
     assert.equal(out[1].ok, false);
   } finally { rmSync(m.dir, { recursive: true, force: true }); }
 });
+
+test('files module: a theme name with non-ASCII letters comes back unchanged, a stray byte does not break the reply', { skip: cc ? false : 'no C++ compiler' }, () => {
+  const m = build();
+  try {
+    const theme = JSON.stringify({ id: 'saved-cafe', name: 'Café 日本', colours: { bg: '#101010', text: '#ffffff' } });
+    let out = m.run([`PusherFilesSave ${JSON.stringify({ id: 1, name: 'cafe.json', text: theme })}`]);
+    assert.equal(out[0].ok, true, out[0].detail);
+    writeFileSync(join(m.work, 'bad.json'), Buffer.from([0x7b, 0x22, 0xff, 0x22, 0x7d]));   // not UTF-8: replaced with '?', still a valid reply
+    out = m.run(['PusherFilesList {"id":2}']);
+    const byName = Object.fromEntries(out.filter((o) => o.kind === 'file').map((o) => [o.name, o.text]));
+    assert.equal(byName['cafe.json'], theme, 'Café 日本 survives the round trip');
+    assert.equal(byName['bad.json'], '{"?"}');
+  } finally { rmSync(m.dir, { recursive: true, force: true }); }
+});

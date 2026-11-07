@@ -386,7 +386,9 @@ PS.theme = (function () {
           for (k in e.colours) {
             if (ALL_ROLES.indexOf(k) >= 0 && isHex(e.colours[k])) cols[k] = normalise(e.colours[k]);
           }
-          slots[n] = { name: typeof e.name === 'string' && e.name ? e.name.slice(0, 30) : 'Slot ' + n, colours: cols };
+          var m = {};
+          if (e.m && typeof e.m === 'object') for (k in MAP_DEFAULT) if (typeof e.m[k] === 'number' && isFinite(e.m[k])) m[k] = e.m[k];
+          slots[n] = { name: typeof e.name === 'string' && e.name ? e.name.slice(0, 30) : 'Slot ' + n, colours: cols, m: m };
         }
       }
     } catch (e) {
@@ -407,7 +409,7 @@ PS.theme = (function () {
     }
     for (var n = 1; n <= SLOT_COUNT; n++) {
       if (slots[n])
-        THEMES.push({ id: 'slot' + n, name: slots[n].name, note: 'Saved in slot ' + n, p: slots[n].colours, fromFile: false, fromSlot: n });
+        THEMES.push({ id: 'slot' + n, name: slots[n].name, note: 'Saved in slot ' + n, p: slots[n].colours, m: slots[n].m, fromFile: false, fromSlot: n });
     }
   }
 
@@ -457,7 +459,11 @@ PS.theme = (function () {
       var cols = fileColours(t);
       var id = t.id,
         clash = find(id);
-      if (clash && !clash.fromSaved) id = id + '-saved'; // a saved file never replaces a preset
+      if (clash) {
+        // a saved file never replaces a preset, and two saved files (a copied file) must not share an id, or the second could never be picked
+        id = t.id + (clash.fromSaved ? '' : '-saved');
+        for (var dup = 2; find(id); dup++) id = t.id + '-' + dup;
+      }
       THEMES.push({
         id: id,
         name: typeof t.name === 'string' && t.name ? t.name : id,
@@ -534,8 +540,16 @@ PS.theme = (function () {
           .replace(/\s+/g, ' ')
           .replace(/^ | $/g, '')
           .slice(0, 30) || 'My theme',
-      fileName = slugify(nm) + '.json',
-      id = 'saved-' + slugify(nm);
+      slug = slugify(nm),
+      same = find('saved-' + slug);
+    // "Blue!" and "blue" make the same file name: a different theme already saved under it keeps it, and this one gets the next free name
+    var n = 2;
+    while (same && same.name !== nm) {
+      slug = slugify(nm) + '-' + n++;
+      same = find('saved-' + slug);
+    }
+    var fileName = slug + '.json',
+      id = 'saved-' + slug;
     var obj = { id: id, name: nm, note: 'Saved from Push Planner' };
     var nested = nestPalette(palette(), mapStyle());
     obj.page = nested.page;
@@ -836,7 +850,7 @@ PS.theme = (function () {
         String(name || '')
           .replace(/^\s+|\s+$/g, '')
           .slice(0, 30) || 'My theme';
-      slots[n] = { name: nm, colours: palette() };
+      slots[n] = { name: nm, colours: palette(), m: mapStyle() };
       saveSlots();
       refreshSlots();
       state.id = 'slot' + n;
@@ -888,6 +902,10 @@ PS.theme = (function () {
     // Style element to keep up to date (the app makes it).
     attach: function (el) {
       styleEl = el;
+    },
+    // Colours or map widths changed by hand and not saved as a theme (choosing another theme throws them away).
+    hasUnsaved: function () {
+      return Object.keys(state.custom).length > 0 || Object.keys(state.customMap).length > 0;
     },
     select: function (id) {
       state.id = byId(id).id;

@@ -392,16 +392,16 @@ PS.push = (function () {
       return false;
     }
     var plan = isReturn ? S.returnPlan : PS.plan.evaluate(pose); // planned again from where the aircraft is now (a return to the gate retraces the push)
+    if (plan.empty || !plan.segments.length) {
+      S.reason = 'The plan has no route from here.';
+      log('cannot start: ' + S.reason);
+      return false; // nothing has been changed: a stored Return to gate plan is still there
+    }
     S.isReturn = isReturn;
     if (!isReturn) {
       S.returnPlan = null;
       S.gateLeft = PS.gate.detect();
       log('push starts: ' + PS.gate.describe(S.gateLeft));
-    }
-    if (plan.empty || !plan.segments.length) {
-      S.reason = 'The plan has no route from here.';
-      log('cannot start: ' + S.reason);
-      return false;
     }
     S.plan = plan;
     S.totalM = plan.totalM;
@@ -600,6 +600,7 @@ PS.push = (function () {
   // ---------------- the loop ----------------
   function slowChecks(now) {
     S.attached = PS.tug.isAttached();
+    if (!S.attached && S.moved && S.status !== 'attaching') S.moved = false; // the tug is gone: stop watching the engines for it
     if (S.attached || S.moved) PS.engines.update(false);
     var live = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1 }[S.status];
     if (live && !S.attached) {
@@ -740,7 +741,8 @@ PS.push = (function () {
       S.lastLog = now;
       var gs = PS.getVar('GROUND VELOCITY', 'knots'),
         vz = PS.getVar('VELOCITY BODY Z', 'feet per second');
-      log(
+      PS.logv(
+        'push',
         'drive t=' +
           PS.fmt.num(pose.t, 0) +
           's ' +

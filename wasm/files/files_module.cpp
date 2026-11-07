@@ -101,7 +101,16 @@ bool extractString(const std::string& json, const char* key, std::string* out) {
   return false;
 }
 
-// Text as the inside of a JSON string, keeping line breaks.
+// How many bytes of a well-formed UTF-8 character start at in[i] (0 if it is not one: a stray or truncated byte).
+size_t utf8Len(const std::string& in, size_t i) {
+  unsigned char c = static_cast<unsigned char>(in[i]);
+  size_t n = c >= 0xF0 && c <= 0xF4 ? 4 : c >= 0xE0 ? 3 : c >= 0xC2 && c < 0xE0 ? 2 : 0;
+  if (c >= 0xF5 || n == 0 || i + n > in.size()) return 0;
+  for (size_t k = 1; k < n; ++k) if ((static_cast<unsigned char>(in[i + k]) & 0xC0) != 0x80) return 0;
+  return n;
+}
+
+// Text as the inside of a JSON string, keeping line breaks. Valid UTF-8 (a theme called "Caf\xC3\xA9") passes through; a byte that is not becomes '?'.
 std::string escapeText(const std::string& in) {
   std::string out;
   for (size_t i = 0; i < in.size(); ++i) {
@@ -110,7 +119,12 @@ std::string escapeText(const std::string& in) {
     else if (c == '\n') out += "\\n";
     else if (c == '\r') out += "\\r";
     else if (c == '\t') out += "\\t";
-    else if (c < 0x20 || c >= 0x7F) out += '?';
+    else if (c < 0x20 || c == 0x7F) out += '?';
+    else if (c >= 0x80) {
+      size_t n = utf8Len(in, i);
+      if (n == 0) out += '?';
+      else { out.append(in, i, n); i += n - 1; }
+    }
     else out += static_cast<char>(c);
   }
   return out;

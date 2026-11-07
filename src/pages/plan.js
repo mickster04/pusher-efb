@@ -37,6 +37,7 @@ PS.pages.push({
     var lastView = null,
       lastPlan = null,
       renderedPlan = null,
+      renderedSig = '',
       lastDrawAt = 0,
       lastDrawErr = '',
       lastTouchAt = 0;
@@ -88,6 +89,21 @@ PS.pages.push({
     }
 
     // ---------------- pins ----------------
+    // What the route and pin lists show, as one string: the pins, the planner's warnings, the nose at each pin and the length to the nearest 5 m.
+    function planSig(plan) {
+      return JSON.stringify([
+        PS.plan.list().map(function (p) {
+          return [p.label, p.headingDeg, p.headingUser, p.snapped, p.snapName];
+        }),
+        PS.plan.selected(),
+        plan.empty,
+        plan.warnings,
+        Math.round((plan.totalM || 0) / 5),
+        (plan.items || []).map(function (it) {
+          return Math.round(it.headingDeg);
+        })
+      ]);
+    }
     function planChanged() {
       renderedPlan = null;
       draw();
@@ -164,6 +180,7 @@ PS.pages.push({
     function deletePin(i) {
       PS.plan.remove(i);
       PS.plan.resnapFrom(i, PS.readOwn() || { hdgDeg: 0 });
+      dropSuggestionHighlight();
       log('pin ' + (i + 1) + ' deleted; ' + PS.plan.count() + ' left');
       planChanged();
     }
@@ -488,8 +505,11 @@ PS.pages.push({
     canvas.addEventListener('mouseup', function (e) {
       if (!recentTouch()) inputUp(pointOf(e));
     });
-    canvas.addEventListener('mouseleave', function () {
-      if (!recentTouch()) drag = null;
+    canvas.addEventListener('mouseleave', function (e) {
+      if (recentTouch()) return;
+      // a pin or handle drag that leaves the canvas ends where it is (with its final snap), a pan just stops
+      if (drag && (drag.kind === 'pin' || drag.kind === 'handle')) inputUp(pointOf(e));
+      else drag = null;
     });
     // The wheel zooms, keeping the point under the pointer where it is (the view is re-centred by the difference).
     ui.wheelZoom(canvas, function (dir, e) {
@@ -676,9 +696,16 @@ PS.pages.push({
       var plan = PS.plan.evaluate(own);
       lastPlan = plan;
       if (plan !== renderedPlan) {
+        // While the aircraft moves a new plan object comes every tick, and rebuilding the lists under the finger loses a tap that straddles it:
+        // rebuild only when the lists would read differently (an edit made here always rebuilds: planChanged clears renderedPlan).
+        var forced = renderedPlan === null,
+          sig = planSig(plan);
         renderedPlan = plan;
-        renderRoute(plan);
-        renderPins(plan, own);
+        if (forced || sig !== renderedSig) {
+          renderedSig = sig;
+          renderRoute(plan);
+          renderPins(plan, own);
+        }
       }
 
       var taxi = PS.state.taxi;

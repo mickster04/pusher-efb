@@ -430,18 +430,20 @@ PS.registerApp = function () {
 
 // The EFB OS and this script load independently, so retry for about 15 s (150 x 100 ms), then give up quietly.
 PS.registerWhenReady = function (attempt) {
-  var done = false;
+  var done = false,
+    why = '';
   try {
     done = PS.registerApp();
   } catch (e) {
     done = false;
+    why = PS.errText ? PS.errText(e) : String(e);
   }
   if (!done && attempt < 150) {
     setTimeout(function () {
       PS.registerWhenReady(attempt + 1);
     }, 100);
   } else if (!done) {
-    PS.log('app', 'gave up registering with the EFB after 150 attempts');
+    PS.log('app', 'gave up registering with the EFB after 150 attempts' + (why ? ' (last error: ' + why + ')' : ''));
   }
 };
 

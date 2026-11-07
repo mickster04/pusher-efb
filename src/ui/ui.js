@@ -226,9 +226,7 @@ PS.ui = {
       pop.appendChild(PS.h('div', { class: 'ps-help-line', text: t }));
     });
     pop.style.display = 'none';
-    var open = false;
     function show(on) {
-      open = on;
       pop.style.display = on ? 'block' : 'none';
     }
     var icon = PS.h('span', {
@@ -241,7 +239,7 @@ PS.ui = {
         show(false);
       },
       onclick: function () {
-        show(!open);
+        show(true); // a tap arrives as mouse enter then click: toggling here would open it and shut it again
       }
     });
     icon.appendChild(pop);

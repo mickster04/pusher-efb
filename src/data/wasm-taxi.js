@@ -105,6 +105,7 @@ PS.wasmTaxi = (function () {
       PS.log('wasm', 'unreadable message: ' + PS.errText(e));
       return;
     }
+    if (!msg || typeof msg !== 'object') return; // "null" parses fine but has no id
     var w = waiters[msg.id];
     if (msg.kind === 'pong') {
       alive = true;
