@@ -370,8 +370,8 @@ PS.theme = (function () {
   }
 
   // ---- slots: your own themes, kept in the app's own storage ----
-  // The page cannot write into the package's files (user1.json ...), so "Save to slot n" keeps the theme in the app's storage; it shows up in the Themes
-  // tab like any other and survives restarts. SLOT_COUNT matches the user1.json to user8.json files, which stay the way to bring a theme in from a file.
+  // The page cannot write into the package's files, so "Save to slot n" keeps the theme in the app's storage; it shows up in the Themes
+  // tab like any other and survives restarts.
   var SLOT_KEY = 'pushplanner.themeslots',
     SLOT_COUNT = 8;
   var slots = {};
@@ -449,7 +449,6 @@ PS.theme = (function () {
         failed.push({ file: it.name, why: 'not valid JSON' });
         return;
       }
-      if (t && t.empty === true) return;
       var why = validateThemeFile(t);
       if (why) {
         failed.push({ file: it.name, why: why });
@@ -608,7 +607,7 @@ PS.theme = (function () {
   // A theme file is { "id", "name", "note", "page": { "surface": { "bg": "#112233", ... }, "text": {...}, "controls": {...}, "status": {...} },
   // "map": { "surface": {...}, "paths": {...}, "route": {...}, "markers": {...}, "lines": { "unnamed": 3, "named": 6, "runway": 32, "label": 15, "gap": 9 } } }
   // (roles as on the My colours tab; leave out the ones you do not care about; the older flat "colours" object still works). It needs a valid bg and text at least. index.json is { "themes": ["id", ...] } (an entry may also be "file.json").
-  var files = { state: 'idle', names: [], empty: 0, base: '', listed: 0, loaded: 0, added: 0, replaced: 0, failed: [], at: 0 };
+  var files = { state: 'idle', names: [], base: '', listed: 0, loaded: 0, added: 0, replaced: 0, failed: [], at: 0 };
   var ID_RE = /^[a-z0-9][a-z0-9_-]{0,40}$/i;
 
   function validateThemeFile(t) {
@@ -623,7 +622,7 @@ PS.theme = (function () {
   }
   // list: [{ file, text }] (text is the file's contents, or error is set). Returns { added, replaced, failed: [{ file, why }] }.
   function ingest(list) {
-    var res = { added: 0, replaced: 0, empty: 0, failed: [] };
+    var res = { added: 0, replaced: 0, failed: [] };
     list.forEach(function (it) {
       if (it.error) {
         res.failed.push({ file: it.file, why: it.error });
@@ -636,10 +635,6 @@ PS.theme = (function () {
         res.failed.push({ file: it.file, why: 'not valid JSON' });
         return;
       }
-      if (t && t.empty === true) {
-        res.empty++;
-        return;
-      } // a free slot (user1.json ...): nothing to load yet
       var why = validateThemeFile(t);
       if (why) {
         res.failed.push({ file: it.file, why: why });
@@ -705,7 +700,6 @@ PS.theme = (function () {
     files = {
       state: 'loading',
       names: [],
-      empty: 0,
       base: themeBase(),
       listed: 0,
       loaded: 0,
@@ -752,8 +746,7 @@ PS.theme = (function () {
   }
   function finishLoad(got, done) {
     var r = ingest(got);
-    files.empty = r.empty;
-    files.loaded = got.length - r.failed.length - r.empty;
+    files.loaded = got.length - r.failed.length;
     files.added = r.added;
     files.replaced = r.replaced;
     files.failed = r.failed;
@@ -764,10 +757,8 @@ PS.theme = (function () {
       'theme files: ' +
         files.loaded +
         ' of ' +
-        (files.listed - files.empty) +
-        ' read, ' +
-        files.empty +
-        ' free slot(s) (' +
+        files.listed +
+        ' read (' +
         r.added +
         ' new, ' +
         r.replaced +

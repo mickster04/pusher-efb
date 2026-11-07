@@ -12,8 +12,7 @@
 //   icons/     one SVG file per icon (kebab-case name -> camelCase key, e.g. zoom-in.svg -> 'zoomIn')
 //   themes/    one JSON file per preset colour theme plus index.json (the order). They are built into the bundle (so a theme always works) AND copied to
 //              PackageSources/PushPlanner/themes/, which the package ships; the app reads those files when it starts, so a theme can be edited there.
-//              user1.json to user8.json are empty slots: the sim only serves files the package's layout.json lists, so a new file added later is a 404, but
-//              the contents of a listed file can be replaced, so a user puts their theme in a slot.
+//              (the sim only serves files the package's layout.json lists, so a theme file added to an installed package later is a 404)
 //
 // The modules share one scope and some use others while loading, so the ORDER below matters. Every .js under src/ has to be listed (the build fails
 // if one is missing), so a new file cannot be forgotten.
@@ -109,7 +108,7 @@ for (const f of readdirSync(iconDir)
 // themes/*.json (listed in themes/index.json) -> built in, and copied to the package folder the app reads at run time
 const themeDir = join(srcDir, 'themes');
 const themeIds = JSON.parse(readFileSync(join(themeDir, 'index.json'), 'utf8')).themes;
-const themes = themeIds.map((id) => JSON.parse(readFileSync(join(themeDir, id + '.json'), 'utf8'))).filter((t) => !t.empty); // (user1..user8 are empty slots: shipped, not built in)
+const themes = themeIds.map((id) => JSON.parse(readFileSync(join(themeDir, id + '.json'), 'utf8')));
 const themeOut = join(root, 'PackageSources', 'PushPlanner', 'themes');
 if (existsSync(themeOut)) rmSync(themeOut, { recursive: true });
 mkdirSync(themeOut, { recursive: true });

@@ -44,9 +44,7 @@
 .ps-result { margin: 4px 0; padding: 8px 10px; border-radius: 6px; background: @input@; font-size: 14px; word-wrap: break-word; }
 .ps-result.ok { border-left: 4px solid @good@; }
 .ps-result.bad { border-left: 4px solid @bad@; color: @badSoft@; }
-.ps-mono { font-family: Consolas, monospace; font-size: 13px; }
 
-.ps-tablewrap { overflow-x: auto; }
 .ps-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .ps-table th { text-align: left; color: @textDim@; font-weight: normal; padding: 5px 8px; border-bottom: 1px solid @border@; }
 .ps-table td { padding: 5px 8px; border-bottom: 1px solid @borderSoft@; }
@@ -58,12 +56,10 @@
 .ps-raw { max-height: 260px; }
 .ps-logwrap .ps-btn { margin-top: 6px; }
 .ps-canvas { display: block; border-radius: 8px; background: @input@; touch-action: none; -ms-touch-action: none; -webkit-user-select: none; user-select: none; }
-.ps-mount { margin-top: 8px; min-height: 0; }
 
 .ps-toasts { position: absolute; left: 14px; right: 14px; top: 100px; z-index: 50; }
 .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: @panelHi@; border: 2px solid @accent@; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
 .ps-toast-brake { border-color: @bad@; }
-.ps-toast-warn { border-color: @warn@; }
 .ps-toast-info { border-color: @routeFwd@; }
 .ps-toast-title { font-weight: bold; font-size: 16px; }
 .ps-toast-msg { margin: 4px 0 8px; color: @text@; }
@@ -77,7 +73,6 @@
 .ps-stepper { display: flex; align-items: center; }
 .ps-stepper .ps-btn { margin: 0 8px 0 0; }
 .ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-weight: bold; color: @accent@; }
-.ps-canvas.ps-pinmode { cursor: crosshair; outline: 2px solid @accent@; }
 .ps-sug { display: block; width: 100%; text-align: left; margin: 0 0 6px 0; padding: 9px 12px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text@; font-size: 14px; }
 .ps-sug.on { border-color: @accent2@; background: @accent2Deep@; }
 .ps-sug-title { font-weight: bold; }
@@ -91,18 +86,15 @@
 .ps-body::-webkit-scrollbar-track { background: @bgDeeper@; }
 .ps-body::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 9px; border: 3px solid @bgDeeper@; min-height: 40px; }
 .ps-body::-webkit-scrollbar-thumb:hover { background: @accent@; }
-.ps-log::-webkit-scrollbar, .ps-tablewrap::-webkit-scrollbar { width: 12px; height: 12px; }
-.ps-log::-webkit-scrollbar-track, .ps-tablewrap::-webkit-scrollbar-track { background: @bgDeeper@; }
-.ps-log::-webkit-scrollbar-thumb, .ps-tablewrap::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 6px; }
+.ps-log::-webkit-scrollbar { width: 12px; height: 12px; }
+.ps-log::-webkit-scrollbar-track { background: @bgDeeper@; }
+.ps-log::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 6px; }
 
 .ps-big { font-size: 34px; font-weight: bold; color: @accent@; margin: 2px 0 6px; }
 .ps-bar { height: 14px; background: @bgDeeper@; border-radius: 7px; overflow: hidden; margin: 6px 0 10px; border: 1px solid @border@; }
 .ps-bar > div { height: 100%; background: @accent2@; }
 .ps-btn:disabled { opacity: 0.4; }
 
-/* the map's range control sits under the map and is smaller than the main buttons */
-.ps-compact .ps-btn { padding: 5px 10px; font-size: 13px; }
-.ps-compact .ps-step-label { font-size: 14px; min-width: 56px; margin: 0 8px 0 2px; }
 
 /* help icon and its card */
 .ps-help { position: relative; display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border: 1px solid @dim5@; border-radius: 12px; color: @dim3@; font-size: 14px; font-weight: bold; cursor: default; }
@@ -116,8 +108,7 @@
 .ps-toprow .ps-spacer { flex: 1; min-width: 8px; margin: 0; }
 .ps-toprow .ps-right { display: flex; align-items: center; margin-right: 0; }
 .ps-toprow .ps-right > * { margin-left: 8px; margin-right: 0; }
-.ps-toprow .ps-btn, .ps-compact .ps-btn { padding: 6px 12px; font-size: 13px; }
-.ps-toprow .ps-stepper .ps-btn { margin: 0 6px 0 0; }
+.ps-toprow .ps-btn, .ps-toprow .ps-stepper .ps-btn { margin: 0 6px 0 0; }
 .ps-toprow .ps-step-label { font-size: 14px; min-width: 54px; margin: 0 8px 0 2px; }
 
 /* two columns when the tablet is held landscape (no grid in the sim's browser: flex) */
@@ -176,11 +167,6 @@
 
 .ps-themename-input { width: 260px; }
 
-/* slot buttons: all the same size, whatever the name */
-.ps-slotbtn { width: 118px; height: 46px; padding: 4px 8px; text-align: left; box-sizing: border-box; overflow: hidden; }
-.ps-slotnum { display: block; font-size: 13px; font-weight: bold; }
-.ps-slotname { display: block; font-size: 11px; color: @textDim@; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.ps-slotbtn.on { border-color: @accent@; }
 
 .ps-themename-input { width: 240px; }
 .ps-diagrow { padding: 8px 0; border-top: 1px solid @dim5@; }

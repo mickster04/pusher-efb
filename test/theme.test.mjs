@@ -86,23 +86,18 @@ test('theme files: the presets in the package folder are the ones built in', () 
   const dir = new URL('../PackageSources/PushPlanner/themes/', import.meta.url);
   const index = JSON.parse(fs.readFileSync(new URL('index.json', dir), 'utf8'));
   assert.ok(index.themes.length >= 15);
-  let empties = 0;
   index.themes.forEach((id) => {
     const t = JSON.parse(fs.readFileSync(new URL(id + '.json', dir), 'utf8'));
-    if (t.empty) { empties++; return; }
     assert.equal(T.validateThemeFile(t), '', id);
     assert.equal(T.byId(id).id, id);
   });
-  assert.equal(empties, 8, 'eight free slots to put a theme in');
 });
 
-test('theme files: an empty slot is skipped quietly, and a slot that has been filled in loads', () => {
-  const slot = (n) => JSON.stringify({ id: 'user' + n, name: 'User theme ' + n, empty: true });
+test('theme files: a theme file in the package loads', () => {
   const filled = JSON.stringify({ id: 'my-green', name: 'My green', colours: { bg: '#102010', text: '#e0ffe0', accent: '#44dd44', panel: '#183018' } });
-  const r = T.ingest([{ file: 'user1.json', text: slot(1) }, { file: 'user2.json', text: filled }, { file: 'user3.json', text: slot(3) }]);
-  assert.equal(r.empty, 2); assert.equal(r.added, 1); assert.equal(r.failed.length, 0);
+  const r = T.ingest([{ file: 'my-green.json', text: filled }]);
+  assert.equal(r.added, 1); assert.equal(r.failed.length, 0);
   assert.equal(T.byId('my-green').name, 'My green');
-  assert.ok(!T.THEMES.some((th) => th.id === 'user1'), 'an empty slot is not a theme');
   T.select('default');
 });
 
