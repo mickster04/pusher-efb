@@ -108,7 +108,8 @@
 .ps-toprow .ps-spacer { flex: 1; min-width: 8px; margin: 0; }
 .ps-toprow .ps-right { display: flex; align-items: center; margin-right: 0; }
 .ps-toprow .ps-right > * { margin-left: 8px; margin-right: 0; }
-.ps-toprow .ps-btn, .ps-toprow .ps-stepper .ps-btn { margin: 0 6px 0 0; }
+.ps-toprow .ps-btn { padding: 6px 12px; font-size: 13px; }
+.ps-toprow .ps-stepper .ps-btn { margin: 0 6px 0 0; }
 .ps-toprow .ps-step-label { font-size: 14px; min-width: 54px; margin: 0 8px 0 2px; }
 
 /* two columns when the tablet is held landscape (no grid in the sim's browser: flex) */
