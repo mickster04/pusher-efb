@@ -205,6 +205,10 @@ PS.plan = (function () {
     changed();
     return r;
   }
+  // A snapped pin's heading depends on the pin before it, so after one is moved, deleted or reordered, snap the snapped pins from index `from` on again.
+  function resnapFrom(from, own) {
+    for (var k = Math.max(0, from); k < pins.length; k++) if (pins[k].snapped) snapPin(k, own);
+  }
   // After a pin's heading handle is released: if the nose is within tolerance of the way along the taxiway the pin sits on (either direction),
   // line it up exactly. The heading stays the user's own. Returns { headingDeg, taxiwayDeg, name } if it moved, else null.
   var HANDLE_SNAP_DEG = 12;
@@ -563,6 +567,7 @@ PS.plan = (function () {
     headingFromHandle: headingFromHandle,
     snapAt: snapAt,
     snapPin: snapPin,
+    resnapFrom: resnapFrom,
     snapHandle: snapHandle,
     snapEnabled: function () {
       return !PS.settings || !!PS.settings.get('snap');

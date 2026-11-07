@@ -63,7 +63,19 @@ PS.brake = (function () {
 
   // Bring the brake to `wantSet` (false = released): write the variables, and if it is still not there, toggle it with the PARKING_BRAKES key event.
   // cb({ ok, how }) is called once it is known.
-  function change(wantSet, cb) {
+  // PARKING_BRAKES is a toggle: a second change while one is under way could flip it back. A change takes about a second; the flag lapses after 3 s
+  // so one whose timer never ran cannot block the next.
+  var changingSince = 0;
+  function change(wantSet, cb0) {
+    if (changingSince && Date.now() - changingSince < 3000) {
+      cb0({ ok: false, how: 'another brake change is still under way' });
+      return;
+    }
+    changingSince = Date.now();
+    function cb(r) {
+      changingSince = 0;
+      cb0(r);
+    }
     var s0 = read(true);
     if (s0.set === wantSet) {
       cb({ ok: true, how: 'it was already ' + (wantSet ? 'set' : 'released') });

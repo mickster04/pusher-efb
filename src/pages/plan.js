@@ -163,6 +163,7 @@ PS.pages.push({
     }
     function deletePin(i) {
       PS.plan.remove(i);
+      PS.plan.resnapFrom(i, PS.readOwn() || { hdgDeg: 0 });
       log('pin ' + (i + 1) + ' deleted; ' + PS.plan.count() + ' left');
       planChanged();
     }
@@ -251,6 +252,7 @@ PS.pages.push({
                   '',
                   function () {
                     if (PS.plan.reorder(i, -1)) {
+                      PS.plan.resnapFrom(i - 1, PS.readOwn() || { hdgDeg: 0 });
                       dropSuggestionHighlight();
                       showList('pins', 'pins reordered');
                       log('pin ' + (i + 1) + ' moved earlier, now pin ' + i);
@@ -264,6 +266,7 @@ PS.pages.push({
                   '',
                   function () {
                     if (PS.plan.reorder(i, 1)) {
+                      PS.plan.resnapFrom(i, PS.readOwn() || { hdgDeg: 0 });
                       dropSuggestionHighlight();
                       showList('pins', 'pins reordered');
                       log('pin ' + (i + 1) + ' moved later, now pin ' + (i + 2));
@@ -402,6 +405,7 @@ PS.pages.push({
         PS.plan.move(drag.idx, ll[0], ll[1]);
         var dp = PS.plan.list()[drag.idx];
         if (dp && PS.plan.snapEnabled() && (dp.snapped || !dp.headingUser)) PS.plan.snapPin(drag.idx, PS.readOwn() || { hdgDeg: 0 });
+        PS.plan.resnapFrom(drag.idx + 1, PS.readOwn() || { hdgDeg: 0 });
         draw();
       }
     }

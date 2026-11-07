@@ -415,3 +415,33 @@ test('services: a request sends the key event, and is refused while a push is un
   assert.equal(sim.writes.length, 0, 'nothing sent mid-push');
   });
 });
+
+test('push: a pause longer than the not-moving limit does not abort the push on resume', () => {
+  withClock(30000000, () => {
+  reset(); sim.brake = 0; sim.attached = 1; sim.wait = 0; planBack(80);
+  assert.ok(PS.push.requestStart());
+  run(30, () => { if (PS.push.view().status === 'driving') return false; });
+  run(5);
+  PS.push.pause();
+  run(15);                                                  // longer than the 8 s "not moving" limit
+  assert.equal(PS.push.view().status, 'paused');
+  PS.push.resume();
+  run(3);
+  assert.equal(PS.push.view().status, 'driving', 'still driving after the resume: ' + PS.push.view().status);
+  PS.push.stop('test stop'); run(4);
+  });
+});
+
+test('push: a position that is NaN stops the push and nothing but numbers is written', () => {
+  withClock(31000000, () => {
+  reset(); sim.brake = 0; sim.attached = 1; sim.wait = 0; planBack(80);
+  assert.ok(PS.push.requestStart());
+  run(30, () => { if (PS.push.view().status === 'driving') return false; });
+  run(3);
+  const from = sim.writes.length;
+  sim.x = NaN;
+  run(3);
+  assert.notEqual(PS.push.view().status, 'driving');
+  assert.ok(sim.writes.slice(from).every((w) => Number.isFinite(w[1])), 'no NaN reached the sim');
+  });
+});

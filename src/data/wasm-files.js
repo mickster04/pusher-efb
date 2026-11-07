@@ -38,7 +38,19 @@ PS.wasmFiles = (function () {
     w.resolve(w.result ? w.result() : msg);
   }
 
+  // One registration however many calls arrive before it is ready (two listeners would handle every message twice, and a list would come back doubled).
+  var pendingListener = null;
   function ensureListener() {
+    if (listener) return Promise.resolve(listener);
+    if (!pendingListener) {
+      pendingListener = makeListener();
+      pendingListener.then(null, function () {
+        pendingListener = null; // failed: the next call may try again
+      });
+    }
+    return pendingListener;
+  }
+  function makeListener() {
     return new Promise(function (resolve, reject) {
       if (listener) {
         resolve(listener);

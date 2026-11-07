@@ -44,6 +44,7 @@ PS.push = (function () {
     lastLog: 0,
     lastBrakeCheck: 0,
     poseFails: 0,
+    driveAt: 0, // when driveTick last ran
     prevHdg: null,
     prevHdgAt: 0,
     measuredYaw: null,
@@ -77,8 +78,12 @@ PS.push = (function () {
     var la = PS.getVar('PLANE LATITUDE', 'degrees'),
       lo = PS.getVar('PLANE LONGITUDE', 'degrees'),
       hd = PS.getVar('PLANE HEADING DEGREES TRUE', 'degrees');
-    if (!la.ok || !lo.ok || !hd.ok || typeof la.value !== 'number' || typeof lo.value !== 'number' || typeof hd.value !== 'number')
-      return null;
+    if (!la.ok || !lo.ok || !hd.ok) return null;
+    // a number, and not NaN or infinite (NaN is typeof 'number', and would run on into every write)
+    function num(v) {
+      return typeof v === 'number' && isFinite(v);
+    }
+    if (!num(la.value) || !num(lo.value) || !num(hd.value)) return null;
     return { lat: la.value, lon: lo.value, hdgDeg: hd.value };
   }
   function onGround() {
@@ -630,7 +635,7 @@ PS.push = (function () {
       gapMs = now - S.lastTick,
       dt = clamp(gapMs / 1000, 0.01, 0.12);
     // The timer stalled (the sim throttled a background app): the tug was left on its last speed command, so stop rather than carry on blind.
-    if (gapMs > STALL_MS && (S.status === 'driving' || S.status === 'settling')) {
+    if (gapMs > STALL_MS && (S.status === 'driving' || S.status === 'settling' || S.status === 'stopping')) {
       S.lastTick = now;
       emergencyStop("the app's timer stalled for " + Math.round(gapMs) + ' ms');
       return;
@@ -683,6 +688,8 @@ PS.push = (function () {
       return;
     }
     S.poseFails = 0;
+    if (now - S.driveAt > 1000) S.follower.rearm(); // coming back from a pause or a brake hold
+    S.driveAt = now;
     pose.t = (now - S.startedAt) / 1000;
     var out = S.follower.update(pose, dt, S.cur.speed);
     S.last = {
@@ -715,6 +722,10 @@ PS.push = (function () {
     if (!w.ok) {
       S.failures++;
       S.lastError = w.error;
+    }
+    if (PS.setFailRun >= 40) {
+      emergencyStop('the sim is refusing the tug commands (' + PS.setFailRun + ' failed writes in a row)'); // about 2 s of ticks
+      return;
     }
     // measured nose turn rate and a log line each second, for tuning against the sim
     if (S.prevHdg !== null && now - S.prevHdgAt >= 1000) {

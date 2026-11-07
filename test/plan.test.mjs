@@ -247,3 +247,29 @@ test('snap: the log names the taxiway a pin snapped to', () => {
   PS.detail.on = false;
   plan.clear(); PS.state.taxi = null;
 });
+
+test('snap: deleting a pin snaps the snapped pins after it again (their heading depended on it)', () => {
+  plan.clear();
+  const row = at(180, 60);                                 // a taxiway running east-west, 60 m behind the aircraft
+  PS.state.taxi = { items: [{ name: 'A', category: 'Taxiway', points: [G.offset(row[0], row[1], 90, 300), G.offset(row[0], row[1], 270, 300)] }] };
+  const p1 = G.offset(row[0], row[1], 90, 150), p2 = row; plan.add(p1[0], p1[1]); plan.add(p2[0], p2[1]);
+  plan.snapPin(0, own); plan.snapPin(1, own);
+  const before = plan.list()[1].headingDeg;
+  plan.remove(0);
+  plan.resnapFrom(0, own);
+  const fresh = plan.snapAt(p2[0], p2[1], { fromLat: own.lat, fromLon: own.lon, refDeg: 0 }).headingDeg;
+  assert.equal(plan.list()[0].headingDeg, fresh, 'same as a fresh snap from the aircraft');
+  assert.notEqual(before, fresh, 'it did change (the test is only worth something if it does)');
+  plan.clear(); PS.state.taxi = null;
+});
+
+test('evaluate: a pin on the aircraft itself adds no leg and does not turn the nose', () => {
+  plan.clear();
+  plan.add(own.lat, own.lon);
+  const a = at(0, 80); plan.add(a[0], a[1]);
+  const r = plan.evaluate(own);
+  assert.equal(r.legs.length, 1, 'one leg, the drive ahead');
+  assert.equal(r.legs[0].sign, 1);
+  assert.ok(Math.abs(r.totalM - 80) < 2, 'total ' + r.totalM);
+  plan.clear();
+});

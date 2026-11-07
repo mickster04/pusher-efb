@@ -82,16 +82,24 @@ PS.getVar = function (name, unit) {
   }
 };
 
-// SetSimVarValue returns a promise in the sim; failures there are logged, not thrown.
+// SetSimVarValue returns a promise in the sim; failures there are logged (the first few, then now and again), not thrown.
+// PS.setFailRun counts the writes that failed in a row, so a caller that writes every tick can notice the sim is refusing them.
+PS.setFailRun = 0;
 PS.setVar = function (name, unit, value) {
   var sv = PS.simVar();
   if (!sv || !sv.SetSimVarValue) return { ok: false, error: 'SimVar not available' };
   try {
     var r = sv.SetSimVarValue(name, unit, value);
     if (r && typeof r.then === 'function') {
-      r.then(null, function (e) {
-        PS.log('set', 'async failure ' + name + ': ' + errText(e));
-      });
+      r.then(
+        function () {
+          PS.setFailRun = 0;
+        },
+        function (e) {
+          PS.setFailRun++;
+          if (PS.setFailRun <= 3 || PS.setFailRun % 200 === 0) PS.log('set', 'async failure ' + name + ': ' + errText(e) + ' (' + PS.setFailRun + ' in a row)');
+        }
+      );
     }
     return { ok: true };
   } catch (e) {

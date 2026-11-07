@@ -472,9 +472,23 @@ PS.theme = (function () {
     refreshSlots();
     return { count: count, failed: failed };
   }
+  // The chosen theme may be a package file or a saved theme, and the two loads finish in either order. Only when both have finished (or failed)
+  // is a missing theme really gone: until then keep the choice, so the load that finishes first does not wipe a theme the other one brings in.
+  var settling = { files: true, saved: true };
+  function settle(which) {
+    settling[which] = false;
+    if (settling.files || settling.saved || find(state.id)) return;
+    PS.log('theme', 'the saved theme "' + state.id + '" is not available: using ' + THEMES[0].name);
+    state.id = THEMES[0].id;
+    state.custom = {};
+    state.customMap = {};
+    save();
+  }
   function loadSaved(done) {
     if (!PS.wasmFiles || typeof PS.wasmFiles.list !== 'function') {
       savedInfo = { state: 'failed', module: 'no', count: 0, failed: [], at: Date.now() };
+      settle('saved');
+      apply();
       if (done) done(savedInfo);
       return;
     }
@@ -497,12 +511,7 @@ PS.theme = (function () {
                   .join(', ')
               : '')
         );
-        if (!find(state.id)) {
-          state.id = THEMES[0].id;
-          state.custom = {};
-          state.customMap = {};
-          save();
-        }
+        settle('saved');
         apply();
         if (done) done(savedInfo);
       },
@@ -512,6 +521,7 @@ PS.theme = (function () {
           'theme',
           'saved themes: the files module did not answer (' + (PS.errText ? PS.errText(e) : e) + "); saving will use the app's own storage"
         );
+        settle('saved');
         apply();
         if (done) done(savedInfo);
       }
@@ -694,6 +704,7 @@ PS.theme = (function () {
     if (typeof XMLHttpRequest === 'undefined') {
       files.state = 'failed';
       files.failed = [{ file: 'index.json', why: 'no XMLHttpRequest here' }];
+      settle('files');
       if (done) done(files);
       return;
     }
@@ -772,17 +783,10 @@ PS.theme = (function () {
               .join(', ')
           : '')
     );
-    // the saved theme may be one of the files: look again now they are in (and fall back if it is gone)
-    if (!find(state.id)) {
-      PS.log('theme', 'the saved theme "' + state.id + '" is not available: using ' + THEMES[0].name);
-      state.id = THEMES[0].id;
-      state.custom = {};
-      state.customMap = {};
-      save();
-    }
     notify(done);
   }
   function notify(done) {
+    settle('files'); // the saved theme may be one of the files: fall back only if it is gone
     apply();
     if (done) done(files);
   }

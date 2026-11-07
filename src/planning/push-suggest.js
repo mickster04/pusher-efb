@@ -412,7 +412,7 @@ PS.suggest = (function () {
     return {
       group: key === LANE_KEY ? 'lane' : key && isLinkName(key) ? 'link' : 'taxiway',
       kind: 'straight',
-      id: 'taxi-straight-' + (key === LANE_KEY ? 'lane' : hit.name.replace(/\s+/g, '')) + '-' + Math.round(hit.lat * 1e5),
+      id: 'taxi-straight-' + (key === LANE_KEY ? 'lane' : hit.name.replace(/\s+/g, '')) + '-' + Math.round(hit.lat * 1e5) + '-' + Math.round(hit.lon * 1e5),
       title:
         key === LANE_KEY
           ? 'Straight back to the apron lane'
@@ -1243,7 +1243,7 @@ PS.suggest = (function () {
       return {
         group: kindOf(c.name),
         kind: c.title && c.title.indexOf(', pointing ') >= 0 ? 'pointing' : 'along',
-        id: 'taxi-' + key + '-' + hdg + '-' + Math.round(c.lat * 1e5),
+        id: 'taxi-' + key + '-' + hdg + '-' + Math.round(c.lat * 1e5) + '-' + Math.round(c.lon * 1e5),
         title: c.title || groupTitle(c.name) + ', facing ' + compass(hdg) + (c.clean ? '' : ' (tight)'),
         detail:
           c.detail ||

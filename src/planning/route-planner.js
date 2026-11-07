@@ -319,6 +319,10 @@ PS.planner = (function () {
       }
       var stats = { minRadiusM: radiusM };
       var points = segmentPath(pose, sign, pins.slice(i, j + 1), radiusM, stats);
+      if (points.length < 2) {
+        i = j + 1; // a pin where the tug already is: no leg to drive, and no bearing to take from a single point
+        continue;
+      }
       var a = points[points.length - 2] || points[0];
       var b = points[points.length - 1];
       var tg = initialBearing(a[0], a[1], b[0], b[1]);

@@ -517,8 +517,14 @@ PS.follow = (function () {
       }
       return out;
     }
+    // The push was not being driven for a while (paused, brake held): forget the "not moving" and "off the path" timers, which kept counting.
+    function rearm() {
+      st.progressAt = null;
+      st.offSince = null;
+    }
     return {
       update: update,
+      rearm: rearm,
       setCruise: setCruise,
       travelled: travelled,
       ahead: ahead,
