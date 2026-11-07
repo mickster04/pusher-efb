@@ -97,7 +97,8 @@ PS.setVar = function (name, unit, value) {
         },
         function (e) {
           PS.setFailRun++;
-          if (PS.setFailRun <= 3 || PS.setFailRun % 200 === 0) PS.log('set', 'async failure ' + name + ': ' + errText(e) + ' (' + PS.setFailRun + ' in a row)');
+          if (PS.setFailRun <= 3 || PS.setFailRun % 200 === 0)
+            PS.log('set', 'async failure ' + name + ': ' + errText(e) + ' (' + PS.setFailRun + ' in a row)');
         }
       );
     }
@@ -183,19 +184,6 @@ PS.fmt = {
   num: function (v, dp) {
     if (typeof v !== 'number' || !isFinite(v)) return '-';
     return v.toFixed(dp === undefined ? 2 : dp);
-  },
-  value: function (v) {
-    if (v === undefined || v === null) return '-';
-    if (typeof v === 'number') return isFinite(v) ? String(Math.round(v * 10000) / 10000) : String(v);
-    if (typeof v === 'boolean') return v ? 'true' : 'false';
-    if (typeof v === 'object') {
-      try {
-        return JSON.stringify(v);
-      } catch (e) {
-        return String(v);
-      }
-    }
-    return String(v);
   },
   dist: function (m) {
     if (typeof m !== 'number' || !isFinite(m)) return '-';
@@ -409,31 +397,3 @@ PS.toasts = {
     this.emit();
   }
 };
-
-// ---- variables shown on the telemetry page (names and units follow the original bridge) ----
-PS.DEFAULT_VARS = [
-  { group: 'Position', name: 'PLANE LATITUDE', unit: 'degrees' },
-  { group: 'Position', name: 'PLANE LONGITUDE', unit: 'degrees' },
-  { group: 'Position', name: 'PLANE HEADING DEGREES TRUE', unit: 'degrees' },
-  { group: 'Position', name: 'PLANE ALTITUDE', unit: 'feet' },
-  { group: 'Position', name: 'PLANE ALT ABOVE GROUND', unit: 'feet' },
-  { group: 'Motion', name: 'GROUND VELOCITY', unit: 'knots' },
-  { group: 'Motion', name: 'AIRSPEED INDICATED', unit: 'knots' },
-  { group: 'Motion', name: 'VERTICAL SPEED', unit: 'feet per minute' },
-  { group: 'Motion', name: 'VELOCITY BODY Z', unit: 'feet per second' },
-  { group: 'Motion', name: 'ROTATION VELOCITY BODY Y', unit: 'feet per second' },
-  { group: 'State', name: 'SIM ON GROUND', unit: 'bool' },
-  { group: 'State', name: 'GENERAL ENG COMBUSTION:1', unit: 'bool' },
-  { group: 'State', name: 'CAMERA STATE', unit: 'enum' },
-  { group: 'Brake', name: 'BRAKE PARKING POSITION', unit: 'percent over 100' },
-  { group: 'Brake', name: 'BRAKE PARKING INDICATOR', unit: 'bool' },
-  { group: 'Brake', name: 'L:A32NX_PARK_BRAKE_LEVER_POS', unit: 'number' },
-  { group: 'Brake', name: 'L:XMLVAR_PARK_BRAKE_POS', unit: 'number' },
-  { group: 'Pushback', name: 'PUSHBACK ATTACHED', unit: 'bool' },
-  { group: 'Pushback', name: 'PUSHBACK STATE', unit: 'enum' },
-  { group: 'Pushback', name: 'PUSHBACK WAIT', unit: 'bool' },
-  { group: 'Aircraft', name: 'TITLE', unit: 'string' },
-  { group: 'Aircraft', name: 'ATC MODEL', unit: 'string' },
-  { group: 'Aircraft', name: 'ATC AIRLINE', unit: 'string' },
-  { group: 'Aircraft', name: 'ATC FLIGHT NUMBER', unit: 'string' }
-];

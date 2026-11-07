@@ -106,10 +106,6 @@ PS.brake = (function () {
     },
     set: function (cb) {
       change(true, cb);
-    },
-    isSetRaw: isSetRaw,
-    lvarName: function () {
-      return lvarName;
     }
   };
 })();

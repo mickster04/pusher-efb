@@ -48,37 +48,6 @@ PS.ui = {
     // (the first button ended up selected whatever was pressed).
     return PS.h('div', { class: 'ps-field' }, PS.h('span', { class: 'ps-field-label', text: label }), input);
   },
-  input: function (value, attrs) {
-    var a = attrs || {};
-    a.class = 'ps-input' + (a.class ? ' ' + a.class : '');
-    a.type = a.type || 'text';
-    a.value = value;
-    var el = PS.h('input', a);
-    el.value = value;
-    return el;
-  },
-  // A choice control. Rendered as buttons, not a <select>: the sim's dropdown could not be changed in the EFB.
-  // Behaves like a select for callers: read and write `.value`, and `onchange` fires when the choice changes.
-  select: function (options, value, onchange) {
-    var t = PS.ui.toggle(
-      options.map(function (o) {
-        return { value: String(o.value), label: o.label };
-      }),
-      String(value),
-      function () {
-        if (onchange) onchange();
-      }
-    );
-    Object.defineProperty(t.el, 'value', {
-      get: function () {
-        return t.get();
-      },
-      set: function (v) {
-        t.set(String(v));
-      }
-    });
-    return t.el;
-  },
   // Zoom control: [-] current range [+] over a list of numeric steps (metres). Not built on ui.select, so it does not depend on
   // highlight state, and each press is logged (tag = log channel) so a session log shows whether presses arrive at all.
   // Steps go up from the left button to the right one, unless `invert` (the map zoom: the right-hand + zooms in, to a smaller range).

@@ -164,7 +164,6 @@ PS.wasmFiles = (function () {
     },
     version: function () {
       return version;
-    },
-    _deliver: onMessage
+    }
   };
 })();

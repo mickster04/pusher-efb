@@ -31,7 +31,6 @@ PS.push = (function () {
     cur: { speed: 0, yaw: 0 },
     last: { remainingM: 0, leg: 0, legCount: 0, phase: '', cte: 0, alphaDeg: 0, speedFtS: 0, yawDegS: 0, note: '' },
     startedAt: 0,
-    doneAt: 0,
     attached: false,
     brake: null,
     writes: 0,
@@ -801,7 +800,6 @@ PS.push = (function () {
           return;
         }
         if (next === 'done') {
-          S.doneAt = Date.now();
           S.last.remainingM = 0;
           var doneText = 'the route is finished';
           if (S.isReturn) {

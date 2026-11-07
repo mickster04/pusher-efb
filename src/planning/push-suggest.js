@@ -411,7 +411,13 @@ PS.suggest = (function () {
     return {
       group: key === LANE_KEY ? 'lane' : key && isLinkName(key) ? 'link' : 'taxiway',
       kind: 'straight',
-      id: 'taxi-straight-' + (key === LANE_KEY ? 'lane' : hit.name.replace(/\s+/g, '')) + '-' + Math.round(hit.lat * 1e5) + '-' + Math.round(hit.lon * 1e5),
+      id:
+        'taxi-straight-' +
+        (key === LANE_KEY ? 'lane' : hit.name.replace(/\s+/g, '')) +
+        '-' +
+        Math.round(hit.lat * 1e5) +
+        '-' +
+        Math.round(hit.lon * 1e5),
       title:
         key === LANE_KEY
           ? 'Straight back to the apron lane'
@@ -1480,10 +1486,6 @@ PS.suggest = (function () {
   return {
     suggest: suggest,
     suggestPushbacks: suggestPushbacks,
-    layoutFrom: layoutFrom,
-    currentStand: currentStand,
-    compass: compass,
-    isTaxiwayPath: isTaxiwayPath,
-    isLanePath: isLanePath
+    layoutFrom: layoutFrom
   };
 })();

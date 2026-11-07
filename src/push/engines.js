@@ -76,8 +76,6 @@ PS.engines = (function () {
       st.good = 0;
       st.running = 0;
       st.at = 0;
-    },
-    GOOD_N1_PCT: GOOD_N1_PCT,
-    HOLD_MS: HOLD_MS
+    }
   };
 })();

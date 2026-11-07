@@ -38,30 +38,5 @@ PS.traffic = (function () {
     return { x: ms * Math.sin(h), y: ms * Math.cos(h) };
   }
 
-  // Moves a sample contact forward by dtSec along its heading.
-  function advance(c, dtSec) {
-    var d = (c.gsKt || 0) * G.KT_TO_MS * dtSec;
-    var p = G.offset(c.lat, c.lon, c.hdgDeg || 0, d);
-    c.lat = p[0];
-    c.lon = p[1];
-    return c;
-  }
-
-  // Sample contacts placed around the given point. Labelled as simulated so they are never mistaken for sim data.
-  function sample(own) {
-    function at(brg, dist, hdg, gs, name) {
-      var p = G.offset(own.lat, own.lon, brg, dist);
-      return { id: name, title: name, lat: p[0], lon: p[1], hdgDeg: hdg, gsKt: gs, altFt: own.altFt, onGround: true, simulated: true };
-    }
-    var h = own.hdgDeg || 0;
-    return [
-      at(h, 120, G.normDeg(h + 180), 8, 'SIM-A320 crossing ahead'),
-      at(h + 90, 200, G.normDeg(h + 270), 6, 'SIM-B738 from the right'),
-      at(h + 180, 90, h, 12, 'SIM-E190 behind, faster'),
-      at(h - 60, 350, G.normDeg(h - 60), 0, 'SIM-A21N parked'),
-      at(h + 20, 600, G.normDeg(h + 200), 15, 'SIM-B77W taxiing in')
-    ];
-  }
-
-  return { analyse: analyse, advance: advance, sample: sample, velocity: velocity };
+  return { analyse: analyse };
 })();

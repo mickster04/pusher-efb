@@ -60,5 +60,5 @@ PS.gate = (function () {
         : 'still moving';
     return 'not at a gate: ' + why;
   }
-  return { detect: detect, nearest: nearest, describe: describe, NEAR_M: NEAR_M, HEADING_OFF_DEG: HEADING_OFF_DEG, SLOW_KT: SLOW_KT };
+  return { detect: detect, describe: describe };
 })();

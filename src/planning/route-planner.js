@@ -608,15 +608,11 @@ PS.planner = (function () {
       turnRadiusM = r;
     },
     TURNAROUND_PIN_LABEL: TURNAROUND_PIN_LABEL,
-    MIN_LEAD_IN_M: MIN_LEAD_IN_M,
-    MAX_LEAD_IN_M: MAX_LEAD_IN_M,
     filletPath: filletPath,
     plannedRouteSegments: plannedRouteSegments,
     segmentWarning: segmentWarning,
     pathLengthM: pathLengthM,
-    pathTurnDeg: pathTurnDeg,
     plannedPinHeadings: plannedPinHeadings,
-    addHelperPinIfNeeded: addHelperPinIfNeeded,
     withTurnaroundPin: withTurnaroundPin,
     ensureTerminal: ensureTerminal
   };

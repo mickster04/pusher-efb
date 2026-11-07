@@ -409,7 +409,15 @@ PS.theme = (function () {
     }
     for (var n = 1; n <= SLOT_COUNT; n++) {
       if (slots[n])
-        THEMES.push({ id: 'slot' + n, name: slots[n].name, note: 'Saved in slot ' + n, p: slots[n].colours, m: slots[n].m, fromFile: false, fromSlot: n });
+        THEMES.push({
+          id: 'slot' + n,
+          name: slots[n].name,
+          note: 'Saved in slot ' + n,
+          p: slots[n].colours,
+          m: slots[n].m,
+          fromFile: false,
+          fromSlot: n
+        });
     }
   }
 
@@ -820,12 +828,10 @@ PS.theme = (function () {
     hex: hex,
     isHex: isHex,
     normalise: normalise,
-    luminance: luminance,
     contrast: contrast,
     mapStyle: mapStyle,
     fillRoles: fillRoles,
     derive: derive,
-    palette: palette,
     css: cssText,
     // c('routeBack') -> the colour now. Used by the map drawing.
     c: function (role) {
@@ -875,8 +881,6 @@ PS.theme = (function () {
       apply();
       return true;
     },
-    workFolder: WORK_FOLDER,
-    workFolderSteam: WORK_FOLDER_STEAM,
     workFolderNote: WORK_FOLDER_NOTE,
     loadSaved: loadSaved,
     saveTheme: saveTheme,
@@ -884,15 +888,12 @@ PS.theme = (function () {
     savedStatus: function () {
       return savedInfo;
     },
-    slugify: slugify,
-    ingestSaved: ingestSaved,
     loadFiles: loadFiles,
     ingest: ingest,
     validateThemeFile: validateThemeFile,
     fileStatus: function () {
       return files;
     },
-    themeBase: themeBase,
     selectedId: function () {
       return find(state.id) ? state.id : THEMES[0].id;
     },

@@ -53,7 +53,7 @@ PS.diagPanel = function () {
   }
 
   var runAll = ui.button('Run all checks', runEvery);
-  var list = h('div', { class: 'ps-diaglist' });
+  var list = h('div');
   PS.diag.CHECKS.forEach(function (c) {
     var pill = h('span', { class: 'ps-pill', text: 'not run' });
     var text = h('div', { class: 'ps-note ps-diagtext', text: '' });
