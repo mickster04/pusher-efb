@@ -155,7 +155,10 @@ PS.colourPanel = function () {
               PS.toasts.show({
                 kind: 'info',
                 title: 'Unsaved colours',
-                message: 'Switching to ' + th.name + ' discards the colours you changed. Tap it again to switch, or save them first on My colours.',
+                message:
+                  'Switching to ' +
+                  th.name +
+                  ' discards the colours you changed. Tap it again to switch, or save them first on My colours.',
                 ttlMs: 5000
               });
               return;
@@ -416,7 +419,14 @@ PS.colourPanel = function () {
     }
     customBox.appendChild(actions);
     customBox.appendChild(saveMsg);
-    customBox.appendChild(ui.note(T.workFolderNote));
+    customBox.appendChild(
+      h(
+        'div',
+        { class: 'ps-btnrow' },
+        h('span', { class: 'ps-note', text: 'Where saved themes are kept' }),
+        ui.help('Saved themes', T.workFolderLines)
+      )
+    );
   }
 
   function show(which) {

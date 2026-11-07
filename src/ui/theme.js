@@ -429,12 +429,14 @@ PS.theme = (function () {
   // %APPDATA%\Microsoft Flight Simulator 2024 where the Store keeps it under LocalState) and matches community reports, but has not been checked on a Steam install.
   var WORK_FOLDER = '%LOCALAPPDATA%\\Packages\\Microsoft.Limitless_8wekyb3d8bbwe\\LocalState\\WASM\\MSFS2024\\push-planner\\work';
   var WORK_FOLDER_STEAM = '%APPDATA%\\Microsoft Flight Simulator 2024\\WASM\\MSFS2024\\push-planner\\work';
-  var WORK_FOLDER_NOTE =
-    'Saved themes are .json files in the push-planner work folder. Microsoft Store install: ' +
-    WORK_FOLDER +
-    '. Steam install: ' +
-    WORK_FOLDER_STEAM +
-    ' (from community reports; not checked here). Copy a file out to share it; drop one in and reload to use it.';
+  // Shown behind a "?" on the My colours tab, not on the page. The Store path is the one that was seen; the Steam ones are suggestions.
+  var WORK_FOLDER_LINES = [
+    'Saved themes are .json files in the push-planner work folder. Copy one out to share it; drop one in and reload to use it.',
+    'Microsoft Store install: ' + WORK_FOLDER,
+    'Steam install (suggested, not checked): ' + WORK_FOLDER_STEAM,
+    'Other places it may be on Steam: %APPDATA%\\Microsoft Flight Simulator 2024\\Packages\\push-planner\\work\\wasm, or the same path as above with MSFS2020 in place of MSFS2024.',
+    'If none exists, search %APPDATA%\\Microsoft Flight Simulator 2024 for a folder called push-planner.'
+  ];
   var savedInfo = { state: 'idle', module: 'unknown', count: 0, failed: [], at: 0 };
   function slugify(name) {
     var t = String(name || '')
@@ -881,7 +883,7 @@ PS.theme = (function () {
       apply();
       return true;
     },
-    workFolderNote: WORK_FOLDER_NOTE,
+    workFolderLines: WORK_FOLDER_LINES,
     loadSaved: loadSaved,
     saveTheme: saveTheme,
     deleteSaved: deleteSaved,
