@@ -445,3 +445,25 @@ test('push: a position that is NaN stops the push and nothing but numbers is wri
   assert.ok(sim.writes.slice(from).every((w) => Number.isFinite(w[1])), 'no NaN reached the sim');
   });
 });
+
+test('push: the run limit is 20 minutes for a short push and grows with a long route', () => {
+  withClock(40000000, () => {
+  reset(); sim.brake = 0; sim.attached = 1; sim.wait = 0; planBack(60);
+  assert.ok(PS.push.requestStart());
+  assert.equal(PS.push.view().runLimitMs, 20 * 60 * 1000);
+  PS.push.stop('test'); run(4);
+  reset(); sim.brake = 0; sim.attached = 1; sim.wait = 0; planBack(4500);
+  assert.ok(PS.push.requestStart());
+  assert.ok(PS.push.view().runLimitMs > 60 * 60 * 1000, 'a 4.5 km route gets over an hour: ' + PS.push.view().runLimitMs);
+  PS.push.stop('test'); run(4);
+  });
+});
+
+test('push: starting with pins left at another airport clears them and says there is no route', () => {
+  withClock(41000000, () => {
+  reset(); sim.brake = 0; sim.attached = 1; sim.wait = 0;
+  const far = G.offset(sim.ref.lat, sim.ref.lon, 90, 30000); PS.plan.add(far[0], far[1]);
+  assert.equal(PS.push.requestStart(), false);
+  assert.equal(PS.plan.count(), 0, 'the far pins were cleared');
+  });
+});

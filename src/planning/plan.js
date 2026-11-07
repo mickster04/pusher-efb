@@ -233,6 +233,26 @@ PS.plan = (function () {
     selected = -1;
     changed();
   }
+  // Pins left from another airport (the aircraft was moved, or a new flight started without the app reloading) are no use here and could send a push
+  // across the world. If even the nearest pin is more than FAR_PIN_M from the aircraft they are all deleted. (Judged by the nearest, so a long
+  // run planned across a big airport, which starts near the aircraft, is kept.) Returns { count, nearestM } if it cleared them, else null.
+  var FAR_PIN_M = 5000;
+  function dropFarPins(own) {
+    if (!own || !pins.length) return null;
+    var nearest = Infinity;
+    pins.forEach(function (p) {
+      var d = G.distanceM(own.lat, own.lon, p.lat, p.lon);
+      if (d < nearest) nearest = d;
+    });
+    if (!(nearest > FAR_PIN_M)) return null;
+    var out = { count: pins.length, nearestM: nearest };
+    clear();
+    PS.log(
+      'plan',
+      'pins cleared: ' + out.count + ' pin(s), the nearest ' + (nearest / 1000).toFixed(1) + ' km from the aircraft (another airport?)'
+    );
+    return out;
+  }
   function setHeading(i, deg) {
     if (!pins[i]) return;
     pins[i].snapped = false;
@@ -561,6 +581,8 @@ PS.plan = (function () {
     reorder: reorder,
     remove: remove,
     clear: clear,
+    dropFarPins: dropFarPins,
+    FAR_PIN_M: FAR_PIN_M,
     setHeading: setHeading,
     resetHeading: resetHeading,
     setAll: setAll,

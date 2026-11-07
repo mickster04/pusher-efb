@@ -273,3 +273,16 @@ test('evaluate: a pin on the aircraft itself adds no leg and does not turn the n
   assert.ok(Math.abs(r.totalM - 80) < 2, 'total ' + r.totalM);
   plan.clear();
 });
+
+test('pins: left at another airport (the nearest more than 5 km away) they are cleared, near ones and a long run that starts here are kept', () => {
+  plan.clear();
+  const f1 = at(90, 20000), f2 = at(90, 20100); plan.add(f1[0], f1[1]); plan.add(f2[0], f2[1]);
+  const r = plan.dropFarPins(own);
+  assert.equal(r.count, 2); assert.ok(r.nearestM > 19000);
+  assert.equal(plan.count(), 0, 'all cleared');
+  const near = at(180, 80), distant = at(180, 6000);        // a run across a big airport: the first pin is close, the last is 6 km away
+  plan.add(near[0], near[1]); plan.add(distant[0], distant[1]);
+  assert.equal(plan.dropFarPins(own), null); assert.equal(plan.count(), 2, 'kept');
+  assert.equal(plan.dropFarPins(null), null);
+  plan.clear();
+});

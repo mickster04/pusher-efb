@@ -688,6 +688,10 @@ PS.pages.push({
       var view = PS.plotView(w, hgt, { lat: centre[0], lon: centre[1] }, range);
       lastView = view;
       var ownPx = view.toPx(own.lat, own.lon);
+      if (c.live && !PS.push.isActive() && PS.plan.dropFarPins(own)) {
+        sug.selectedId = null;
+        renderedPlan = null; // the lists are rebuilt below
+      }
       refreshSuggestions(own);
       if (!PS.plan.count() && sug.selectedId) {
         sug.selectedId = null;

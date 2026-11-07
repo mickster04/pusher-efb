@@ -14,7 +14,13 @@ PS.push = (function () {
   var SPEED_RAMP = 14; // ft/s per second (the original reaches cruise in about 0.35 s)
   var YAW_RAMP = 5; // degrees per second per second (building up the turn)
   var YAW_RAMP_DOWN = 20; // easing the turn off: the real nose turns about 2.3x what is commanded, so a turn left running while stopping jiggles the aircraft
-  var MAX_RUN_MS = 20 * 60 * 1000;
+  // A push is ended after this long whatever else happens (the last resort behind the other watchdogs). A long route needs longer: the allowance is
+  // 1.5 x the time the route takes at the chosen top speed (3/4 of it, the slowest the tug goes), and never less than this.
+  var MIN_RUN_MS = 20 * 60 * 1000;
+  function runLimitMs(routeM) {
+    var cruiseMs = cruiseUnits() * 0.2 * 0.3048; // 0.2 ft/s per speed unit
+    return Math.max(MIN_RUN_MS, ((1.5 * routeM) / (cruiseMs * 0.75)) * 1000);
+  }
   var AGL_ABORT_FT = 25;
   var STALL_MS = 1200;
   var RETURN_NEAR_M = 20,
@@ -31,6 +37,7 @@ PS.push = (function () {
     cur: { speed: 0, yaw: 0 },
     last: { remainingM: 0, leg: 0, legCount: 0, phase: '', cte: 0, alphaDeg: 0, speedFtS: 0, yawDegS: 0, note: '' },
     startedAt: 0,
+    runLimitMs: MIN_RUN_MS,
     attached: false,
     brake: null,
     writes: 0,
@@ -390,6 +397,7 @@ PS.push = (function () {
       log('cannot start: ' + S.reason);
       return false;
     }
+    if (!isReturn) PS.plan.dropFarPins(pose); // pins left at another airport: no route from here
     var plan = isReturn ? S.returnPlan : PS.plan.evaluate(pose); // planned again from where the aircraft is now (a return to the gate retraces the push)
     if (plan.empty || !plan.segments.length) {
       S.reason = 'The plan has no route from here.';
@@ -404,6 +412,7 @@ PS.push = (function () {
     }
     S.plan = plan;
     S.totalM = plan.totalM;
+    S.runLimitMs = runLimitMs(plan.totalM);
     S.follower = PS.follow.create(PS.follow.legsFromPlan(plan), { cruiseUnits: cruiseUnits() });
     S.startedAt = 0;
     S.cur = { speed: 0, yaw: 0 };
@@ -610,8 +619,8 @@ PS.push = (function () {
       setStatus('idle', 'the tug is no longer attached');
       return;
     }
-    if (live && S.startedAt && now - S.startedAt > MAX_RUN_MS) {
-      emergencyStop('the push has run for 20 minutes');
+    if (live && S.startedAt && now - S.startedAt > S.runLimitMs) {
+      emergencyStop('the push has run for ' + Math.round(S.runLimitMs / 60000) + ' minutes');
       return;
     }
     // The brake, read every half second while it matters.
@@ -856,6 +865,7 @@ PS.push = (function () {
       brake: S.brake,
       plan: S.plan,
       totalM: S.totalM,
+      runLimitMs: S.runLimitMs,
       speedPercent: S.speedPercent,
       cruiseUnits: cruiseUnits(),
       remainingM: l.remainingM,
@@ -910,6 +920,9 @@ PS.push = (function () {
 
   return {
     view: view,
+    isActive: function () {
+      return !!ACTIVE[S.status];
+    },
     finishMode: finishMode,
     canStart: canStart,
     canReturn: canReturn,

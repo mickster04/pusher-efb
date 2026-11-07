@@ -230,6 +230,7 @@ PS.pages.push({
       var view = PS.plotView(w, hgt, own, range),
         cx = view.cx,
         cy = view.cy;
+      if (ownRead && !PS.push.isActive()) PS.plan.dropFarPins(ownRead);
       var running = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1, done: 1 }[v.status];
       // While pushing, the route drawn is the one the push is driving (not re-planned as the aircraft moves, so no warnings come and go).
       var plan = running && v.plan ? v.plan : ownRead ? PS.plan.evaluate(own) : { empty: true };
