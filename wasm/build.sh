@@ -4,7 +4,7 @@
 #
 # UNVERIFIED. The MSFS 2024 platform toolset's real flags are not published, so these are reconstructed from the SDK folder layout
 # and the SDK's own SimUtils.vcxproj (defines, no exceptions, no entry point). It may fail to compile, fail to link, or build a
-# module the sim will not load. If it does, the Visual Studio project in wasm/vs is the documented route.
+# module the sim will not load; wasm/README.md lists the load errors seen and the flag that fixed each.
 
 set -euo pipefail
 export MSYS2_ARG_CONV_EXCL="*"   # stop Git Bash rewriting arguments that start with a slash

@@ -40,7 +40,7 @@ Push Planner is an independent project. It is not affiliated with or endorsed by
 
 Taxi paths are not available from the EFB's JavaScript, so a small standalone WASM module (`wasm/`) reads them from SimConnect facility data and sends them to the app over the CommBus. Without it the map shows runways only and there is no parking, so gate detection and Return to gate do not work. A second module (`PusherFiles`) stores saved themes as files.
 
-- Build it **without Visual Studio**: `bash wasm/build.sh` from Git Bash on Windows. It uses the SDK's own clang, writes `PackageSources/modules/PusherTaxi.wasm` and logs to `wasm/build.log`. A Visual Studio project is also provided in `wasm/vs/` (untested).
+- Build it **without Visual Studio**: `bash wasm/build.sh` from Git Bash on Windows. It uses the SDK's own clang, writes `PackageSources/modules/PusherTaxi.wasm` and logs to `wasm/build.log`.
 - Then rebuild the package, copy it to the Community folder and **restart the sim**, because modules only load at start-up. Full steps, the link flags the sim requires and the load errors to look for are in [wasm/README.md](wasm/README.md).
 - The built `.wasm` is a build artifact and is not committed.
 

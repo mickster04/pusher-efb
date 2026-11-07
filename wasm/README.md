@@ -19,7 +19,7 @@ sim's CommBus. The EFB app cannot read these from JavaScript.
 
 ## Build (Windows, MSFS 2024 SDK)
 
-### Without Visual Studio: `build.sh` (used so far)
+### `build.sh` (no Visual Studio needed)
 
 From Git Bash: `bash wasm/build.sh` (optional argument: the SDK folder, default `/g/MSFS 2024 SDK`). It calls the SDK's own `WASM/llvm/bin/clang-cl.exe` and `wasm-ld.exe`, writes `wasm/build.log`, and copies `PusherTaxi.wasm` to `PackageSources/modules/`.
 
@@ -35,11 +35,7 @@ The MSFS 2024 toolset's flags are not published; these were found by trial again
 
 It also links `MSFS_WasmVersions.a`, `libc`, `libc++`, `libc++abi` and `libclang_rt.builtins-wasm32.a` from the SDK's `WASM` folder. Check a new build with a wasm export/import listing: it should export `memory`, `__indirect_function_table`, `module_init`, `module_deinit`, `malloc`, `free`, and import only SimConnect, CommBus and a few `fd_*`/`commit_pages` calls.
 
-### With Visual Studio (documented route, not used yet)
-
-`vs/PusherTaxi.sln` is copied from the SDK's StandaloneModule sample (`MSFS2024` toolset, `_MSFS_WASM`, no exceptions, no entry point). Build **Release | MSFS**; the post-build step copies `PusherTaxi.wasm` to `PackageSources/modules/`. Untested.
-
-### After either build
+### After the build
 
 1. Rebuild the package with the Project Editor (`PushPlannerProject.xml`). The package definition copies `PackageSources/modules/` to the package's `modules/` folder.
 2. Copy the package to the Community folder (for MSFS 2024 this was `...\LocalCache\Packages\Community2024\push-planner`) and **restart the sim**: modules load only at start-up.
