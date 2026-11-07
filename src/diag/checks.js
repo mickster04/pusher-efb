@@ -22,6 +22,18 @@ PS.diag = (function () {
 
   var CHECKS = [
     {
+      id: 'aircraft',
+      title: 'Aircraft',
+      what: 'Which aircraft the sim says this is. It goes at the top of the copied logs, so a problem can be traced to it.',
+      run: function () {
+        var line = PS.aircraftLine();
+        say(line);
+        var a = PS.aircraftInfo();
+        if (!a.title) return { status: 'warn', text: 'the sim gave no aircraft title (' + line + ')' };
+        return { status: 'ok', text: a.title + (a.engines === null ? '' : ', ' + a.engines + ' engine(s)') };
+      }
+    },
+    {
       id: 'sim',
       title: 'Sim access',
       what: 'Can the app read the aircraft from the sim?',

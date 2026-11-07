@@ -67,6 +67,7 @@ PS.buildShell = function (root) {
       hb = PS.hb;
     var lines = [
       PS.APP_NAME + ' ' + PS.VERSION + ' report, ' + new Date().toISOString(),
+      PS.aircraftLine(),
       'env: ' +
         Object.keys(env)
           .map(function (k) {

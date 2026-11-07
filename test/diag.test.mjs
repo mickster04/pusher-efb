@@ -55,3 +55,16 @@ test('a check that throws is reported as failed, not thrown', async () => {
   assert.match(r.text, /bang/);
   assert.equal(PS.detail.running, 0);
 });
+
+test('the aircraft check reads the title and friends, and the line for the log header says so even when it cannot', async () => {
+  vals.TITLE = 'Airbus A320neo Test Livery'; vals['ATC MODEL'] = 'A320'; vals['ATC AIRLINE'] = 'Test Air';
+  PS.logs.length = 0;
+  const r = await PS.diag.run('aircraft');
+  assert.equal(r.status, 'ok'); assert.match(r.text, /A320neo/);
+  assert.match(PS.aircraftLine(), /aircraft: Airbus A320neo Test Livery \| model A320 \| airline Test Air \| engines 2/);
+  assert.match(lines(), /aircraft: Airbus A320neo/);
+  delete vals.TITLE; delete vals['ATC MODEL']; delete vals['ATC AIRLINE'];
+  const r2 = await PS.diag.run('aircraft');
+  assert.equal(r2.status, 'warn');
+  assert.match(PS.aircraftLine(), /title unreadable/);
+});

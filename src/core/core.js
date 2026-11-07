@@ -82,6 +82,43 @@ PS.getVar = function (name, unit) {
   }
 };
 
+// Which aircraft this is, as far as the sim says: for a report, so a problem with an aircraft nobody has tried can be traced to it. Read-only.
+// The sim has no version variable for an aircraft: the title often carries the variant or livery, and that is all there is.
+PS.aircraftInfo = function () {
+  function str(name) {
+    var r = PS.getVar(name, 'string');
+    return r.ok && typeof r.value === 'string' ? r.value.replace(/^\s+|\s+$/g, '') : '';
+  }
+  function num(name, unit) {
+    var r = PS.getVar(name, unit);
+    return r.ok && typeof r.value === 'number' && isFinite(r.value) ? r.value : null;
+  }
+  return {
+    title: str('TITLE'),
+    model: str('ATC MODEL'),
+    type: str('ATC TYPE'),
+    airline: str('ATC AIRLINE'),
+    engines: num('NUMBER OF ENGINES', 'number'),
+    engineType: num('ENGINE TYPE', 'enum') // 0 piston, 1 jet, 2 none (glider), 3 helo turbine, 4 rocket, 5 turboprop
+  };
+};
+PS.aircraftLine = function () {
+  var a = PS.aircraftInfo(),
+    br = PS.brake && PS.brake.read ? PS.brake.read(true) : null;
+  return (
+    'aircraft: ' +
+    (a.title || 'title unreadable') +
+    (a.model ? ' | model ' + a.model : '') +
+    (a.type ? ' | type ' + a.type : '') +
+    (a.airline ? ' | airline ' + a.airline : '') +
+    ' | engines ' +
+    (a.engines === null ? '?' : a.engines) +
+    ' | engine type ' +
+    (a.engineType === null ? '?' : a.engineType) +
+    (br && br.lvar ? ' | brake lever variable ' + br.lvar.name : '')
+  );
+};
+
 // SetSimVarValue returns a promise in the sim; failures there are logged (the first few, then now and again), not thrown.
 // PS.setFailRun counts the writes that failed in a row, so a caller that writes every tick can notice the sim is refusing them.
 PS.setFailRun = 0;
