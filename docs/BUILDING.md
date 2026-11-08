@@ -6,7 +6,7 @@ What you need, in order. The steps marked **Windows** need a machine with MSFS 2
 
 1. Install Node 20 or newer. There is nothing to `npm install`: the app has no dependencies.
 2. `npm test` builds, lints and runs the unit tests. It must pass.
-3. `npm run build` writes the two generated things the package ships, both ignored by git:
+3. `npm run build:app` writes the two generated things the package ships, both ignored by git:
    - `PackageSources/PushPlanner/PushPlanner.js`, the whole app in one file, made from `src/`.
    - `PackageSources/PushPlanner/themes/`, a copy of `src/themes/`.
 

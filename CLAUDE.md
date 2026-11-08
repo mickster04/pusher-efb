@@ -23,9 +23,9 @@ This project is a **standalone** EFB app: no companion exe, no localhost bridge.
 
 ## Commands
 
-- `npm run build`: concatenates the modules in `src/` (order listed in `build.mjs`; icons from `src/icons/*.svg` and the stylesheet are inlined) into `PackageSources/PushPlanner/PushPlanner.js` (node only, no dependencies).
+- `npm run build:app`: concatenates the modules in `src/` (order listed in `build.mjs`; icons from `src/icons/*.svg` and the stylesheet are inlined) into `PackageSources/PushPlanner/PushPlanner.js` (node only, no dependencies).
 - `npm test`: build, `npm run lint` (ES5-only code for the sim's browser, line length, the bundle parses) and the node unit tests. `npm run format` applies Prettier; `npm run build:wasm` and `npm run build:all` build the WASM modules (Windows).
-- Build output is not in git (`PackageSources/PushPlanner/PushPlanner.js`, `PackageSources/PushPlanner/themes/`, `.wasm` files, `Packages/`, `logs.txt`): never edit it, run `npm run build`. See the maintainer cautions in README.md (shared scope and load order, push status strings, untested pages).
+- Build output is not in git (`PackageSources/PushPlanner/PushPlanner.js`, `PackageSources/PushPlanner/themes/`, `.wasm` files, `Packages/`, `logs.txt`): never edit it, run `npm run build:app`. See the maintainer cautions in README.md (shared scope and load order, push status strings, untested pages).
 - `npm run harness`: serve a browser mock of the EFB and sim at the printed URL to review the UI on a Mac.
 - `bash wasm/build.sh` (Git Bash on Windows only): builds the taxi WASM module with the SDK's clang, no Visual Studio. Writes `wasm/build.log`. Link flags and sim load errors are in `wasm/README.md`.
 

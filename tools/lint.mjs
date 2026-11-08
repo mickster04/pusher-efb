@@ -51,7 +51,7 @@ for (const file of walk(join(root, 'src')).filter((f) => f.endsWith('.js'))) {
 const bundle = join(root, 'PackageSources', 'PushPlanner', 'PushPlanner.js');
 if (existsSync(bundle)) {
   try { new vm.Script(readFileSync(bundle, 'utf8'), { filename: 'PushPlanner.js' }); } catch (e) { problems.push('the built PushPlanner.js does not parse: ' + e.message); }
-} else problems.push('PushPlanner.js is not built (run npm run build first)');
+} else problems.push('PushPlanner.js is not built (run npm run build:app first)');
 
 if (problems.length) {
   console.error(problems.slice(0, 60).join('\n') + (problems.length > 60 ? '\n... and ' + (problems.length - 60) + ' more' : ''));

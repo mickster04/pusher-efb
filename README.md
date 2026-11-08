@@ -48,9 +48,12 @@ Taxi paths are not available from the EFB's JavaScript, so a small standalone WA
 
 ```bash
 npm test          # build, lint, then the unit tests (this is what to run before every commit)
-npm run build     # just the bundle: PackageSources/PushPlanner/PushPlanner.js and the themes/ folder
+npm run build     # everything: the tests, then both WASM modules (the same as build:all)
+npm run build:app # just the app: the bundle PackageSources/PushPlanner/PushPlanner.js and the themes/ folder (no tests, no WASM; works on any machine)
 npm run lint      # the checks the sim's old browser needs (no let/const, arrow functions or template strings; line length; the bundle parses)
 npm run format    # Prettier (config in .prettierrc.json), run through npx so nothing is installed in the repo
+npm run clean     # remove the generated JS build output (npm run build:app makes it again)
+npm run clean:full # also the compiled WASM modules and the built package, which need the MSFS SDK on Windows to make again (add --deps to also remove node_modules)
 npm run build:wasm  # both WASM modules (Windows, Git Bash, MSFS 2024 SDK; see wasm/README.md)
 npm run build:all   # test, then the WASM modules
 npm run harness   # the mock EFB at http://127.0.0.1:8765/
@@ -62,7 +65,7 @@ The harness fakes the EFB, the SDK, `SimVar` and `Coherent`, so it shows layout 
 
 ### Build artifacts are not in git
 
-Everything generated is ignored: `PackageSources/PushPlanner/PushPlanner.js` and `PackageSources/PushPlanner/themes/` (made by `npm run build` from `src/` and `src/themes/`), `PackageSources/modules/*.wasm`, `wasm/build/`, `wasm/build.log`, `Packages/`, `PackagesMetadata/`, `_PackageInt/` and `logs.txt`. A fresh checkout has to run `npm run build` (and `npm run build:wasm` for the modules) before the package is built. Edit `src/`, never the files in `PackageSources/PushPlanner/`.
+Everything generated is ignored: `PackageSources/PushPlanner/PushPlanner.js` and `PackageSources/PushPlanner/themes/` (made by `npm run build:app` from `src/` and `src/themes/`), `PackageSources/modules/*.wasm`, `wasm/build/`, `wasm/build.log`, `Packages/`, `PackagesMetadata/`, `_PackageInt/` and `logs.txt`. A fresh checkout has to run `npm run build` (and `npm run build:wasm` for the modules) before the package is built. Edit `src/`, never the files in `PackageSources/PushPlanner/`.
 
 ### Cautions for maintainers
 
