@@ -8,6 +8,7 @@
     "build:app": "node build.mjs",
     "clean": "node tools/clean.mjs",
     "clean:full": "node tools/clean.mjs --full",
+    "setup": "node tools/setup.mjs",
     "lint": "node tools/lint.mjs",
     "format": "npx --yes prettier@3.3.3 --write \"src/**/*.js\" build.mjs tools/*.mjs",
     "test": "node build.mjs && node tools/lint.mjs && node --test \"test/*.test.mjs\"",

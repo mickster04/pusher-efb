@@ -18,7 +18,7 @@ const targets = [
   'PackageSources/PushPlanner/THIRD_PARTY_NOTICES.md'
 ];
 if (has('--full')) {
-  targets.push('wasm/build', 'wasm/build.log', 'Packages', 'PackagesMetadata', '_PackageInt');
+  targets.push('setup.log', 'wasm/build', 'wasm/build.log', 'Packages', 'PackagesMetadata', '_PackageInt');
   // compiled modules (the folder's README.txt is tracked and stays)
   const modules = join(root, 'PackageSources', 'modules');
   if (existsSync(modules)) for (const f of readdirSync(modules)) if (/\.wasm(\.bak)?$/.test(f)) targets.push('PackageSources/modules/' + f);

@@ -52,6 +52,7 @@ npm run build     # everything: the tests, then both WASM modules (the same as b
 npm run build:app # just the app: the bundle PackageSources/PushPlanner/PushPlanner.js and the themes/ folder (no tests, no WASM; works on any machine)
 npm run lint      # the checks the sim's old browser needs (no let/const, arrow functions or template strings; line length; the bundle parses)
 npm run format    # Prettier (config in .prettierrc.json), run through npx so nothing is installed in the repo
+npm run setup     # set this machine up: check the tools, offer to install what is missing, build the app and run the tests; the MSFS SDK parts are warnings (-- --check only reports; log in setup.log)
 npm run clean     # remove the generated JS build output (npm run build:app makes it again)
 npm run clean:full # also the compiled WASM modules and the built package, which need the MSFS SDK on Windows to make again (add --deps to also remove node_modules)
 npm run build:wasm  # both WASM modules (Windows, Git Bash, MSFS 2024 SDK; see wasm/README.md)

@@ -2,6 +2,12 @@
 
 What you need, in order. The steps marked **Windows** need a machine with MSFS 2024 and its SDK; the rest runs anywhere Node does.
 
+## 0. Set up this machine
+
+`npm run setup` checks the tools (Node, npm, git, bash, a C++ compiler for the WASM host tests, the MSFS SDK and its compiler, `fspackagetool`), offers to install what is missing and installable (Node and git through winget or Homebrew; it asks first, or use `-- --yes`), then does what can be done on this machine: prepares Prettier, builds the app and runs the tests. Whatever needs the MSFS SDK or Windows (the WASM modules and the package) is a **warning**, not a failure, so on a Mac the setup is complete without them. Everything is written to `setup.log`; `npm run setup -- --check` only reports and changes nothing.
+
+The SDK is found from `--sdk <folder>`, then the `MSFS2024_SDK` environment variable (the SDK installer sets it), then two common folders; if it is not set, the script prints the `setx` command. Run it again on the Windows machine with the sim to check the WASM and package steps there.
+
 ## 1. The app (any OS)
 
 1. Install Node 20 or newer. There is nothing to `npm install`: the app has no dependencies.
