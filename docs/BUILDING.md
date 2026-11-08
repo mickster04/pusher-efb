@@ -8,6 +8,8 @@ What you need, in order. The steps marked **Windows** need a machine with MSFS 2
 
 The SDK is found from `--sdk <folder>`, then the `MSFS2024_SDK` environment variable (the SDK installer sets it), then two common folders; if it is not set, the script prints the `setx` command. Run it again on the Windows machine with the sim to check the WASM and package steps there.
 
+`npm run build` then does the whole job for this machine: it builds the app, runs the lint and the tests, and, if the SDK, Git Bash and the SDK's WASM compiler are found, builds the two WASM modules and the package (with `fspackagetool`, whose flags we have not verified yet). Whatever cannot be built here is a warning, not a failure. Every run is appended to `build.log` with the machine, the commit, each command and its exit code, and the end of `wasm/build.log`. The logs are ignored by git but sit in the synced folder, so a run on the Windows machine can be read from another one. `npm run build -- --no-tests` skips the lint and tests.
+
 ## 1. The app (any OS)
 
 1. Install Node 20 or newer. There is nothing to `npm install`: the app has no dependencies.

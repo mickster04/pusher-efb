@@ -6,67 +6,21 @@
 //   node tools/setup.mjs --check                  only check and report: install nothing, build nothing
 //   node tools/setup.mjs --sdk "G:\MSFS 2024 SDK"   look for the MSFS SDK in this folder
 // Exit code 1 only if Node is missing or too old, or the app does not build or its tests fail.
-import { spawnSync } from 'node:child_process';
-import { appendFileSync, existsSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { createInterface } from 'node:readline/promises';
-import { arch, release } from 'node:os';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+import { createLog, findBash, findSdk, firstLine, mac, machineLine, packageToolPath, root, sdkHas, sdkWasmParts, win } from './lib.mjs';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const checkOnly = args.includes('--check');
 const yes = args.includes('--yes');
 const sdkArg = args.includes('--sdk') ? args[args.indexOf('--sdk') + 1] : '';
-const win = process.platform === 'win32';
-const mac = process.platform === 'darwin';
-const logFile = join(root, 'setup.log');
-writeFileSync(logFile, '');
-
-// say: shown and logged. note: logged only (the detail).
-function stamp(m) {
-  appendFileSync(logFile, new Date().toISOString().slice(11, 19) + ' ' + m + '\n');
-}
-function say(m = '') {
-  console.log(m);
-  stamp(m);
-}
-function note(m) {
-  stamp('  ' + m);
-}
-
-// Run a command and log it, its exit code and the first lines of its output. Returns { ok, out }.
-function run(cmd, cmdArgs = [], opts = {}) {
-  const r = spawnSync(cmd, cmdArgs, { encoding: 'utf8', shell: win, timeout: 300000, cwd: root, ...opts });
-  const out = ((r.stdout || '') + (r.stderr || '')).trim();
-  note('$ ' + [cmd, ...cmdArgs].join(' ') + '  -> ' + (r.error ? 'could not run: ' + r.error.message : 'exit ' + r.status));
-  if (out) note(out.split('\n').slice(0, 6).join('\n  '));
-  return { ok: !r.error && r.status === 0, out };
-}
-const firstLine = (s) => (s || '').split('\n')[0];
+const { file: logFile, stamp, say, note, run } = createLog('setup.log');
 const version = (cmd, a = ['--version']) => {
   const r = run(cmd, a);
   return r.ok ? firstLine(r.out) : null;
 };
-
-// ---- finding the MSFS SDK: --sdk, then the MSFS2024_SDK environment variable (set by the SDK installer), then two common folders ----
 let sdk = null; // set below, after the header is logged
-function findSdk() {
-  const tries = [
-    [sdkArg, '--sdk'],
-    [process.env.MSFS2024_SDK, 'MSFS2024_SDK environment variable'],
-    ['G:\\MSFS 2024 SDK', 'a common folder'],
-    ['C:\\MSFS 2024 SDK', 'a common folder']
-  ];
-  for (const [dir, how] of tries) {
-    if (!dir) continue;
-    const ok = existsSync(join(dir, 'WASM'));
-    note('SDK candidate ' + dir + ' (' + how + '): ' + (ok ? 'found' : 'not there'));
-    if (ok) return { dir, how };
-  }
-  return null;
-}
-const sdkFile = (...p) => (sdk ? existsSync(join(sdk.dir, ...p)) : false);
 
 // ---- the checks. A check with msfs: true is MSFS or Windows only: when it fails it is a warning, never a failure. ----
 // fix: how to install it per platform (a command), or only a hand note.
@@ -125,11 +79,8 @@ const checks = [
     msfs: true,
     blocks: 'building the WASM modules (npm run build:wasm)',
     check: () => {
-      const v = version('bash');
-      const gitBash = 'C:\\Program Files\\Git\\bin\\bash.exe';
-      if (v) return { ok: true, detail: v };
-      if (win && existsSync(gitBash)) return { ok: true, detail: 'found at ' + gitBash + ' (not on PATH: use Git Bash)' };
-      return { ok: false, detail: 'not found' };
+      const b = findBash();
+      return b ? { ok: true, detail: b.detail } : { ok: false, detail: 'not found' };
     },
     fix: { win: winget('Git.Git'), hand: 'Install git, which includes Git Bash' }
   },
@@ -153,13 +104,9 @@ const checks = [
     blocks: 'the WASM modules',
     check: () => {
       if (!sdk) return { ok: false, detail: 'needs the SDK' };
-      const parts = [
-        ['clang-cl.exe', sdkFile('WASM', 'llvm', 'bin', 'clang-cl.exe')],
-        ['wasm-ld.exe', sdkFile('WASM', 'llvm', 'bin', 'wasm-ld.exe')],
-        ['wasi-sysroot', sdkFile('WASM', 'wasi-sysroot')],
-        ['MSFS_WasmVersions.a', sdkFile('WASM', 'WasmVersions', 'MSFS_WasmVersions.a')]
-      ];
-      const missing = parts.filter((p) => !p[1]).map((p) => p[0]);
+      const missing = sdkWasmParts(sdk)
+        .filter((p) => !p[1])
+        .map((p) => p[0]);
       return { ok: !missing.length, detail: missing.length ? 'missing ' + missing.join(', ') : 'all four found' };
     },
     fix: { hand: 'Reinstall the SDK (WASM component)' }
@@ -171,8 +118,8 @@ const checks = [
     blocks: 'building the package from the command line (the Project Editor still works)',
     check: () => {
       if (!sdk) return { ok: false, detail: 'needs the SDK' };
-      const at = join(sdk.dir, 'Tools', 'bin', 'fspackagetool.exe');
-      if (existsSync(at)) return { ok: true, detail: at };
+      const at = packageToolPath(sdk);
+      if (sdkHas(sdk, 'Tools', 'bin', 'fspackagetool.exe')) return { ok: true, detail: at };
       const tools = existsSync(join(sdk.dir, 'Tools')) ? readdirSync(join(sdk.dir, 'Tools')).join(', ') : 'no Tools folder';
       return { ok: false, detail: 'not at ' + at + ' (the SDK Tools folder holds: ' + tools + ')' };
     },
@@ -182,9 +129,9 @@ const checks = [
 
 // ---- 1. the tools ----
 say('Push Planner setup  ' + new Date().toISOString());
-say('platform: ' + process.platform + ' ' + arch() + ' ' + release() + ', node ' + process.version + ', cwd ' + root);
+say('machine: ' + machineLine() + ', cwd ' + root);
 say('log: ' + logFile + (checkOnly ? '   (--check: nothing will be installed or built)' : ''));
-sdk = findSdk();
+sdk = findSdk(note, sdkArg);
 say();
 say('Tools');
 const results = checks.map((c) => ({ ...c, ...c.check() }));
@@ -239,7 +186,7 @@ if (!checkOnly && !failed) {
   );
   step('app built', 'node', ['build.mjs'], (o) => firstLine(o).replace(root, '.'));
   const t = run('node', ['--test', 'test/*.test.mjs'], { shell: true });
-  const count = (word) => (new RegExp('# ' + word + ' (\\d+)').exec(t.out) || [])[1] || '?';
+  const count = (word) => (new RegExp('(?:#|ℹ) ' + word + ' (\\d+)').exec(t.out) || [])[1] || '?';
   const skipped = Number(count('skipped')) || 0;
   say(
     '  ' +
