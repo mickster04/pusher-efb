@@ -290,6 +290,14 @@ PS.createViewClass = function (sdk) {
         PS.rafStart();
         this.shell = PS.buildShell(root);
         PS.log('app', PS.APP_NAME + ' ' + PS.VERSION + ' view rendered');
+        // a moment later, once the sim variables answer: read every known brake and engine variable, and start using the brake lever variable
+        setTimeout(function () {
+          try {
+            PS.probe.run('startup');
+          } catch (e) {
+            PS.log('probe', 'failed: ' + PS.errText(e));
+          }
+        }, 2500);
       } catch (e) {
         PS.log('app', 'shell failed: ' + PS.errText(e));
         root.textContent = 'Push Planner failed to start: ' + PS.errText(e);

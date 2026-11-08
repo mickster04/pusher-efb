@@ -224,7 +224,11 @@ PS.diag = (function () {
               ', N1 ' +
               (r.n1 === null ? 'unreadable' : fx(r.n1, 1) + ' %') +
               ', good ' +
-              r.good
+              r.good +
+              ' | FlyByWire variables: state ' +
+              (r.fbwState === null ? 'unreadable' : r.fbwState) +
+              ', N1 ' +
+              (r.fbwN1 === null ? 'unreadable' : fx(r.fbwN1, 1))
           );
         });
         if (!st.known)

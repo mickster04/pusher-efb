@@ -68,3 +68,19 @@ test('the aircraft check reads the title and friends, and the line for the log h
   assert.equal(r2.status, 'warn');
   assert.match(PS.aircraftLine(), /title unreadable/);
 });
+
+test('the startup probe starts using the aircraft\'s brake lever variable and logs every engine reading, including the FlyByWire ones', () => {
+  vals.TITLE = 'Airbus A330-900neo Condor Sea';
+  vals['ATC MODEL'] = 'TT:ATCCOM.AC_MODEL A330.0.text';
+  vals['L:A32NX_PARK_BRAKE_LEVER_POS'] = 1;
+  vals['L:A32NX_ENGINE_STATE:2'] = 1; // engine 2: the sim says no combustion, FlyByWire says on
+  vals['L:A32NX_ENGINE_N1:1'] = 22;
+  PS.logs.length = 0;
+  const r = PS.probe.run('test');
+  assert.equal(r.brakeLvar, 'L:A32NX_PARK_BRAKE_LEVER_POS', 'from the A330 profile');
+  assert.equal(PS.brake.read(false).lvar.name, 'L:A32NX_PARK_BRAKE_LEVER_POS', 'and the brake is now read through it');
+  assert.ok(PS.brake.read(false).set, 'so a set lever counts as the brake being set');
+  assert.ok(/FlyByWire state 1/.test(lines()), 'the engine readings are in the log: ' + lines());
+  assert.ok(PS.engines.update(true).rows[1].on, 'and the FlyByWire engine state counts as running even though the sim says combustion is off');
+  ['TITLE', 'ATC MODEL', 'L:A32NX_PARK_BRAKE_LEVER_POS', 'L:A32NX_ENGINE_STATE:2', 'L:A32NX_ENGINE_N1:1'].forEach((k) => delete vals[k]);
+});

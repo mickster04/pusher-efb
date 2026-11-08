@@ -192,3 +192,70 @@ test('follower: near the end it steers by the nose, not the position, so a metre
   assert.ok(c.yawDegS < 0 && c.yawDegS > -1.0, 'a gentle turn back toward the end heading (nose is clockwise of it): ' + c.yawDegS.toFixed(2) + ' deg/s command');
   assert.ok(Math.abs(c.speedFtS) < 4, 'and slowing: ' + c.speedFtS.toFixed(2) + ' ft/s');
 });
+
+// ---- an aircraft whose reported position is ahead of the point it turns about (the A330 in the logged push) ----
+// The reported position is the pivot + pivotM along the nose, so every turn of the nose swings it sideways. Plant fitted to the log: turn = 3.2 x command - 0.3 deg/s, about 1 s lag.
+function simulatePivot(planned, start, o) {
+  const dt = 0.05, f = PS.follow.create(PS.follow.legsFromPlan(planned), { cruiseUnits: 25, pivotM: o.seed || 0, yawGain: o.yawGain || 0 });
+  const L = o.pivot, rad = (d) => G.rad(d);
+  let psi = start.hdgDeg, yawAct = 0, v = 0, yr = 0, t = 0, maxCte = 0, endAlpha = 0, c = null;
+  let px = -L * Math.sin(rad(psi)), py = -L * Math.cos(rad(psi));   // the pivot, metres east and north of the start position
+  while (t < 400) {
+    const ll = G.fromXY(start.lat, start.lon, px + L * Math.sin(rad(psi)), py + L * Math.cos(rad(psi)));
+    c = f.update({ lat: ll[0], lon: ll[1], hdgDeg: psi, t }, dt, v);
+    if (c.stop || c.done) break;
+    if (c.phase === 'run' && Math.abs(c.cte) > maxCte) maxCte = Math.abs(c.cte);
+    if (c.phase === 'run' && c.remainingM < 10 && Math.abs(c.alphaDeg) > endAlpha) endAlpha = Math.abs(c.alphaDeg);
+    v = approach(v, c.speedFtS, 14 * dt);
+    yr = approach(yr, c.yawDegS, 5 * dt);
+    yawAct += (3.2 * yr - 0.3 - yawAct) * (1 - Math.exp(-dt / 1));
+    psi = G.normDeg(psi + yawAct * dt);
+    px += v * 0.3048 * dt * Math.sin(rad(psi)); py += v * 0.3048 * dt * Math.cos(rad(psi));
+    t += dt;
+  }
+  return { done: c.done, stop: c.stop, maxCte, endAlpha, learned: f.state.pivotM, t };
+}
+function loggedLoopPlan() {
+  const start = { lat: 51.47078, lon: -0.46594, hdgDeg: 58.7 };
+  plan.clear();
+  plan.add(51.47054, -0.46796); plan.add(51.47136, -0.46866);
+  plan.setHeading(0, 90); plan.setHeading(1, 180);
+  return { start, planned: plan.evaluate(start) };
+}
+
+test('follower: an aircraft that turns about a point 10 m behind its reported position, as the A330 did, is steered by that point and no longer hunts', () => {
+  const { start, planned } = loggedLoopPlan();
+  const seeded = simulatePivot(planned, start, { pivot: 10, seed: 10, yawGain: 3.2 });
+  const learning = simulatePivot(planned, start, { pivot: 10 });
+  plan.clear();
+  assert.ok(seeded.done, 'with the profile it finishes: ' + seeded.stop);
+  assert.ok(seeded.maxCte < 2.5, 'with the profile it stays within ' + seeded.maxCte.toFixed(2) + ' m of the path (the logged run swung out to 9 m)');
+  assert.ok(learning.done && learning.maxCte < 6, 'with no profile it still finishes, off the path by at most ' + learning.maxCte.toFixed(1) + ' m: ' + learning.stop);
+  assert.ok(seeded.endAlpha < 30, 'over the last 10 m the aim angle stays small (' + seeded.endAlpha.toFixed(0) + ' deg), the steered point is not left past the path end');
+  assert.ok(Math.abs(learning.learned - 10) < 1.5, 'and it learns the 10 m: ' + learning.learned.toFixed(1));
+});
+
+test('follower: with no pivot to learn (the reported position is the turning point) nothing changes', () => {
+  const { start, planned } = loggedLoopPlan();
+  const r = simulatePivot(planned, start, { pivot: 0 });
+  plan.clear();
+  assert.ok(r.done && r.maxCte < 1, 'still follows closely: ' + r.maxCte.toFixed(2) + ' m');
+  assert.ok(Math.abs(r.learned) < 1.5, 'and does not invent a pivot: ' + r.learned.toFixed(2));
+});
+
+test('profiles: the A330 family is found from the aircraft title or model, other aircraft have none', () => {
+  assert.equal(PS.profiles.find({ title: 'Airbus A330-900neo Condor Sea', model: 'TT:ATCCOM.AC_MODEL A330.0.text', type: '' }).id, 'a330');
+  assert.equal(PS.profiles.find({ title: 'Fenix A320 CFM', model: 'TT:ATCCOM.AC_MODEL A320.0.text', type: '' }), null);
+  assert.equal(PS.profiles.find(null), null);
+});
+
+test('learned: a pivot learned in one push is kept per airframe (not livery) and blends with the next', () => {
+  const a = { title: 'Airbus A330-900neo Condor Sea', model: 'TT:ATCCOM.AC_MODEL A330.0.text' }, b = { title: 'Airbus A330-900neo Other Livery', model: 'TT:ATCCOM.AC_MODEL A330.0.text' };
+  assert.equal(PS.learned.get(a), null, 'nothing yet');
+  PS.learned.save(a, 9);
+  assert.equal(PS.learned.get(b).pivotM, 9, 'another livery of the same model gets it');
+  PS.learned.save(b, 11);
+  assert.equal(PS.learned.get(a).pivotM, 10, 'the second push blends with the first');
+  assert.equal(PS.learned.get(a).pushes, 2);
+  assert.equal(PS.learned.save(a, NaN), null, 'a bad value is not kept');
+});

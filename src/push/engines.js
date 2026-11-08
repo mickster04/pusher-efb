@@ -44,6 +44,12 @@ PS.engines = (function () {
       var on = comb.ok && Number(comb.value) > 0;
       var n1 = readNum('TURBINE ENG N1:' + i, 'percent');
       if (n1 === null) n1 = readNum('GENERAL ENG PCT MAX RPM:' + i, 'percent');
+      // FlyByWire-based aircraft (the A32NX, and A330s built on it) keep their own engine model: a state (0 off, 1 on, 2 starting, 3 shutting down) and an N1.
+      // Names are from the FlyByWire A32NX documentation, not yet seen on an A330 in the sim: an aircraft without them reads 0 and nothing changes.
+      var fbwState = readNum('L:A32NX_ENGINE_STATE:' + i, 'number'),
+        fbwN1 = readNum('L:A32NX_ENGINE_N1:' + i, 'number');
+      if (fbwState === 1 && !on) on = true;
+      if (fbwN1 !== null && fbwN1 > (n1 === null ? 0 : n1)) n1 = fbwN1;
       var turning = n1 === null ? true : n1 >= GOOD_N1_PCT; // no N1 to read: combustion alone, held for the hold time
       if (on) st.running++;
       var good = false;
@@ -52,7 +58,7 @@ PS.engines = (function () {
         good = now - st.since[i] >= HOLD_MS;
       } else delete st.since[i];
       if (good) st.good++;
-      st.rows.push({ index: i, on: on, n1: n1, good: good });
+      st.rows.push({ index: i, on: on, n1: n1, good: good, fbwState: fbwState, fbwN1: fbwN1 });
     }
     return st;
   }

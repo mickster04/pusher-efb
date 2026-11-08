@@ -100,6 +100,14 @@ PS.brake = (function () {
   }
 
   return {
+    lvars: LVARS,
+    // Use this lever variable from now on (known from the aircraft's profile, or found by the startup probe) instead of waiting to find it set.
+    adopt: function (name) {
+      if (typeof name === 'string' && name && lvarName !== name) {
+        lvarName = name;
+        PS.log('tug', 'parking brake lever variable in use: ' + name);
+      }
+    },
     read: read,
     release: function (cb) {
       change(false, cb);

@@ -33,6 +33,8 @@ PS.push = (function () {
     speedPercent: 50,
     plan: null,
     follower: null,
+    profile: null,
+    info: null,
     totalM: 0,
     cur: { speed: 0, yaw: 0 },
     last: { remainingM: 0, leg: 0, legCount: 0, phase: '', cte: 0, alphaDeg: 0, speedFtS: 0, yawDegS: 0, note: '' },
@@ -413,7 +415,34 @@ PS.push = (function () {
     S.plan = plan;
     S.totalM = plan.totalM;
     S.runLimitMs = runLimitMs(plan.totalM);
-    S.follower = PS.follow.create(PS.follow.legsFromPlan(plan), { cruiseUnits: cruiseUnits() });
+    try {
+      PS.probe.run('push start');
+    } catch (e) {
+      log('probe failed: ' + PS.errText(e));
+    }
+    var info = PS.aircraftInfo(),
+      prof = PS.profiles.find(info),
+      mine = PS.learned.get(info),
+      pivot = mine ? mine.pivotM : prof ? prof.pivotM : 0;
+    S.profile = prof;
+    S.info = info;
+    log(
+      'pivot starts at ' +
+        PS.fmt.num(pivot, 1) +
+        ' m (' +
+        (mine
+          ? 'learned here over ' + mine.pushes + ' push(es)'
+          : prof
+            ? 'the ' + prof.name + ' profile'
+            : 'no profile: learned while driving') +
+        ')' +
+        (prof ? ', yaw gain ' + prof.yawGain : '')
+    );
+    S.follower = PS.follow.create(PS.follow.legsFromPlan(plan), {
+      cruiseUnits: cruiseUnits(),
+      pivotM: pivot,
+      yawGain: prof ? prof.yawGain : 0
+    });
     S.startedAt = 0;
     S.cur = { speed: 0, yaw: 0 };
     S.writes = 0;
@@ -488,6 +517,17 @@ PS.push = (function () {
 
   // Ease speed and turn to zero while still writing every tick (velocity is not sticky), then hold; `next` is where it goes afterwards.
   function beginStopping(reason, next) {
+    if (S.follower && S.status === 'driving') {
+      var learnedM = S.follower.state.pivotM,
+        enough = S.follower.state.pvDen >= PS.follow.K.PIVOT_MIN_EVIDENCE; // turned enough this push to have measured it
+      log(
+        'pivot at the end of this drive: ' +
+          PS.fmt.num(learnedM, 1) +
+          ' m' +
+          (enough ? ', kept for this aircraft' : ', too little turning to keep')
+      );
+      if (enough) PS.learned.save(S.info, learnedM);
+    }
     S.stopNext = next || 'ready';
     S.stopQuietSince = 0;
     setStatus('stopping', reason || '');
@@ -781,6 +821,9 @@ PS.push = (function () {
           PS.fmt.num(out.alphaDeg, 1) +
           ' deg, heading ' +
           PS.fmt.num(pose.hdgDeg, 1) +
+          ', pivot ' +
+          PS.fmt.num(out.pivotM, 1) +
+          ' m' +
           ' | writes ' +
           S.writes +
           ' failed ' +

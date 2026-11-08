@@ -51,7 +51,8 @@ PS.follow = (function () {
     END_BRAKE_MIN_FRACTION: 0.18,
     END_CREEP_M: 3.5,
     END_CREEP_FRACTION: 0.1,
-    END_DONE_M: 0.8,
+    END_DONE_M: 1.5, // done within this much of the end: the plan's end point is a target, not a tolerance of centimetres
+    END_HEADING_SLACK_DEG: 3, // and a heading error this small at the end is left alone rather than steered out
     RADIUS_SLOW_REF_M: 40, // arcs planned tighter than this slow the tug in proportion (the plan may tighten a cramped corner)
     // Speed profile along a leg: a limit at each point from the path's curvature, then braking and acceleration passes so the tug is slowed in
     // time for a curve or the stop, and speeds up no faster than is comfortable. Curve speeds are the original's (0.6 and 0.55 of its default
@@ -77,7 +78,15 @@ PS.follow = (function () {
     LOST_CTE_M: 15,
     LOST_SECONDS: 3,
     STUCK_SECONDS: 8,
-    STUCK_MIN_ADVANCE_M: 0.3
+    STUCK_MIN_ADVANCE_M: 0.3,
+    // The position the sim reports is not the point the aircraft turns about: on a big aircraft it is metres ahead of it (pivotM, signed, along the nose).
+    // The path is followed by the pivot, or the reported position swings sideways every time the nose turns and the steering hunts (A330: 10 m).
+    PIVOT_MIN_M: 0.5,
+    PIVOT_MAX_M: 25,
+    PIVOT_MIN_SPEED_FTS: 0.5,
+    PIVOT_FORGET_S: 30,
+    PIVOT_MIN_EVIDENCE: 5e-4, // sum of (turn in radians)^2 needed before the estimate is believed (a few seconds of turning)
+    PIVOT_BLEND_PER_S: 0.4
   };
 
   function wrap180(d) {
@@ -107,6 +116,23 @@ PS.follow = (function () {
       cum.push(total);
     });
     return { xy: xy, cum: cum, total: total, origin: origin };
+  }
+
+  // The same path carried straight on past its end, for steering the pivot: when reversing the pivot is ahead of the reported position, so over the
+  // last metres it is already beyond the path's end and would have no path to aim at (the aim angle pinned at 90 degrees, a hard swing at the finish).
+  function extendEnd(path, m) {
+    var n = path.xy.length;
+    if (n < 2) return path;
+    var a = path.xy[n - 2],
+      b = path.xy[n - 1],
+      d = Math.sqrt((b[0] - a[0]) * (b[0] - a[0]) + (b[1] - a[1]) * (b[1] - a[1]));
+    if (d < 1e-6) return path;
+    return {
+      xy: path.xy.concat([[b[0] + ((b[0] - a[0]) / d) * m, b[1] + ((b[1] - a[1]) / d) * m]]),
+      cum: path.cum.concat([path.total + m]),
+      total: path.total + m,
+      origin: path.origin
+    };
   }
 
   // Where on the path an (x, y) is: the closest point searched around the last one (so it cannot jump to another part of a looping path).
@@ -269,12 +295,14 @@ PS.follow = (function () {
   function create(segments, settings) {
     settings = settings || {};
     var cruiseUnits = settings.cruiseUnits || 25;
+    var yawGain = settings.yawGain || K.YAW_GAIN;
     var legs = segments.map(function (sg) {
       return { sign: sg.sign < 0 ? -1 : 1, points: sg.points, radiusM: sg.radiusM || K.RADIUS_SLOW_REF_M };
     });
     var origin = { lat: legs[0].points[0][0], lon: legs[0].points[0][1] };
     legs.forEach(function (l) {
       l.path = buildPath(l.points, origin);
+      l.pathQ = extendEnd(l.path, K.PIVOT_MAX_M + K.MAX_LOOK);
       l.prof = buildProfile(l.path, l.sign < 0, cruiseUnits * K.UNITS_TO_FTS);
     });
     var totalM = 0;
@@ -293,8 +321,30 @@ PS.follow = (function () {
       offSince: null,
       progressAt: null,
       progressS: 0,
-      done: false
+      done: false,
+      pivotM: clamp(settings.pivotM || 0, -K.PIVOT_MAX_M, K.PIVOT_MAX_M), // seeded from the aircraft's profile, then learned
+      hintQ: 0,
+      prev: null, // the last pose, for learning the pivot
+      pvNum: 0,
+      pvDen: 0
     };
+
+    // Learn how far ahead of its turning point the reported position is: while the nose turns by dpsi the reported position moves sideways by
+    // pivot x dpsi (the pivot itself only moves along the nose). A running least squares over the last PIVOT_FORGET_S seconds.
+    function learnPivot(p, hdg, dt, speedFtS) {
+      var pr = st.prev;
+      st.prev = { x: p.x, y: p.y, hdg: hdg };
+      if (!pr || dt <= 0 || Math.abs(speedFtS) < K.PIVOT_MIN_SPEED_FTS) return;
+      var dpsi = G.rad(G.angleDiff(pr.hdg, hdg)),
+        mid = G.rad(pr.hdg) + dpsi / 2;
+      var lateral = (p.x - pr.x) * Math.cos(mid) - (p.y - pr.y) * Math.sin(mid); // along the right-hand side of the nose
+      var keep = Math.exp(-dt / K.PIVOT_FORGET_S);
+      st.pvNum = st.pvNum * keep + lateral * dpsi;
+      st.pvDen = st.pvDen * keep + dpsi * dpsi;
+      if (st.pvDen < K.PIVOT_MIN_EVIDENCE) return;
+      var est = clamp(st.pvNum / st.pvDen, -K.PIVOT_MAX_M, K.PIVOT_MAX_M);
+      st.pivotM += (est - st.pivotM) * Math.min(1, K.PIVOT_BLEND_PER_S * dt);
+    }
 
     function remainingFrom(legIndex, s) {
       var r = Math.max(0, legs[legIndex].path.total - s);
@@ -318,7 +368,8 @@ PS.follow = (function () {
         alphaDeg: 0,
         done: st.done,
         stop: '',
-        note: ''
+        note: '',
+        pivotM: st.pivotM
       };
       if (st.done) {
         out.remainingM = 0;
@@ -366,6 +417,7 @@ PS.follow = (function () {
           st.stopSince = null;
           st.progressAt = null;
           st.offSince = null;
+          st.prev = null;
           out.note = 'next leg: ' + (legs[st.leg].sign < 0 ? 'push back' : 'drive forward');
           out.phase = 'run';
           out.leg = st.leg;
@@ -391,16 +443,32 @@ PS.follow = (function () {
       }
 
       // ---- steering: pure pursuit to a point a little way along the path ----
+      learnPivot(p, pose.hdgDeg, dt, speedFtS);
       var offPath = Math.abs(loc.cte);
+      // The point that is steered: the pivot, which is pivotM behind the reported position along the nose (so ahead of it when reversing).
+      var q = p,
+        sq = s,
+        pathQ = path;
+      if (Math.abs(st.pivotM) >= K.PIVOT_MIN_M) {
+        q = {
+          x: p.x - st.pivotM * Math.sin(G.rad(pose.hdgDeg)),
+          y: p.y - st.pivotM * Math.cos(G.rad(pose.hdgDeg))
+        };
+        if (st.hintQ === 0) st.hintQ = st.hint;
+        pathQ = leg.pathQ;
+        var lq = locate(pathQ, q.x, q.y, st.hintQ);
+        st.hintQ = lq.i;
+        sq = lq.s;
+      } else st.hintQ = 0;
       var sharp = bendAhead(path, s, 10) > K.CURVE_AHEAD_SHARP_DEG;
       var look = reverse ? (sharp ? K.LOOK_SHARP_REV : K.LOOK_REV) : sharp ? K.LOOK_SHARP_FWD : K.LOOK_FWD;
       if (offPath > K.OFF_PATH_LOOK_TRIGGER) look = Math.min(look, K.OFF_PATH_LOOK);
       look = clamp(look, K.MIN_LOOK, K.MAX_LOOK);
       look = Math.min(look, Math.max(K.END_LOOK_MIN, K.END_LOOK_FRACTION * remaining));
-      var aim = pointAt(path, Math.min(path.total, s + look));
-      var aimDist = Math.sqrt((aim.x - p.x) * (aim.x - p.x) + (aim.y - p.y) * (aim.y - p.y));
+      var aim = pointAt(pathQ, Math.min(pathQ.total, sq + look));
+      var aimDist = Math.sqrt((aim.x - q.x) * (aim.x - q.x) + (aim.y - q.y) * (aim.y - q.y));
       var travelHdg = reverse ? G.normDeg(pose.hdgDeg + 180) : pose.hdgDeg;
-      var toAim = aimDist > K.AIM_MIN ? brgXY(p.x, p.y, aim.x, aim.y) : aim.tangent;
+      var toAim = aimDist > K.AIM_MIN ? brgXY(q.x, q.y, aim.x, aim.y) : aim.tangent;
       var alpha = clamp(wrap180(toAim - travelHdg), -K.MAX_ALPHA_DEG, K.MAX_ALPHA_DEG);
       var kappa = (2 * Math.sin(G.rad(alpha))) / Math.max(aimDist, K.MIN_LOOK); // 1/m, clockwise
       // The last stretch of the last leg steers by the nose, not the position: ease from following the path to turning toward the path's end heading
@@ -409,6 +477,7 @@ PS.follow = (function () {
         var wHold = clamp((K.END_HOLD_M - remaining) / (K.END_HOLD_M - K.END_HOLD_FULL_M), 0, 1);
         var endTan = pointAt(path, path.total).tangent;
         var alphaH = clamp(wrap180(endTan - travelHdg), -60, 60);
+        alphaH = alphaH > 0 ? Math.max(0, alphaH - K.END_HEADING_SLACK_DEG) : Math.min(0, alphaH + K.END_HEADING_SLACK_DEG);
         var kappaH = (2 * Math.sin(G.rad(alphaH))) / K.END_HOLD_LOOK_M;
         kappa = kappa * (1 - wHold) + kappaH * wHold;
         out.alphaDeg = alphaH * wHold + alpha * (1 - wHold);
@@ -449,8 +518,8 @@ PS.follow = (function () {
       var yaw = clamp(wantYaw, -maxYaw, maxYaw);
       // Feed forward: the nose turns at gain x commanded - deadband, so ask for more; the aim-point feedback trims what is left.
       var fade = Math.abs(yaw) < 1e-3 ? 0 : Math.tanh(Math.abs(yaw) / 0.6);
-      var raw = (yaw + (yaw >= 0 ? 1 : -1) * K.YAW_DEADBAND_DEG_S * fade) / K.YAW_GAIN;
-      raw = clamp(raw, -maxYaw / K.YAW_GAIN - 1, maxYaw / K.YAW_GAIN + 1);
+      var raw = (yaw + (yaw >= 0 ? 1 : -1) * K.YAW_DEADBAND_DEG_S * fade) / yawGain;
+      raw = clamp(raw, -maxYaw / yawGain - 1, maxYaw / yawGain + 1);
       var keep = Math.pow(K.SMOOTH_KEEP_AT_50MS, dt / 0.05);
       st.smoothYaw = st.smoothYaw * keep + raw * (1 - keep);
       out.yawDegS = st.smoothYaw;
@@ -521,6 +590,7 @@ PS.follow = (function () {
     function rearm() {
       st.progressAt = null;
       st.offSince = null;
+      st.prev = null;
     }
     return {
       update: update,
