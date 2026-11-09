@@ -2,9 +2,22 @@
 // with it. The Push tab shows it, the push records the gate it left, and Return to gate checks against that gate (a retrace alone can end anywhere).
 
 PS.gate = (function () {
-  var NEAR_M = 15; // the aircraft's position this close to a stand's marker counts as on it
+  var nearCache = { at: 0, title: null, m: 15 }; // the radius for this aircraft (profiles: wide-bodies 25 m, others 15 m), looked up at most every 5 s
   var HEADING_OFF_DEG = 40; // and pointing within this of the stand's heading (when the stand has one)
   var SLOW_KT = 2; // stopped, or nearly
+
+  function nearM() {
+    var now = Date.now();
+    if (now - nearCache.at > 5000) {
+      nearCache.at = now;
+      try {
+        nearCache.m = PS.profiles.gateNearM(PS.aircraftInfo());
+      } catch (e) {
+        nearCache.m = 15;
+      }
+    }
+    return nearCache.m;
+  }
 
   // The nearest stand to (lat, lon): { name, distM, headingOffDeg (or null), spot } or null when there is no parking data.
   function nearest(lat, lon, hdgDeg) {
@@ -33,7 +46,7 @@ PS.gate = (function () {
     var gs = typeof gsKt === 'number' ? gsKt : own.gsKt || 0;
     var n = nearest(own.lat, own.lon, own.hdgDeg);
     if (!n) return { known: false, at: false, stopped: gs <= SLOW_KT };
-    var near = n.distM <= NEAR_M,
+    var near = n.distM <= nearM(),
       lined = n.headingOffDeg === null || n.headingOffDeg <= HEADING_OFF_DEG,
       stopped = gs <= SLOW_KT;
     return {

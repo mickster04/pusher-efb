@@ -286,10 +286,10 @@ PS.pages.push({
                   },
                   'ps-small ps-ghost'
                 );
-                up.title = PS.t('Earlier');
-                down.title = PS.t('Later');
-                up.disabled = i === 0;
-                down.disabled = i === pins.length - 1;
+                PS.ui.setEnabled(up, i !== 0, PS.t('Already the first pin.'));
+                PS.ui.setEnabled(down, i !== pins.length - 1, PS.t('Already the last pin.'));
+                if (i !== 0) up.title = PS.t('Earlier');
+                if (i !== pins.length - 1) down.title = PS.t('Later');
                 return h('span', { class: 'ps-pairbtns' }, up, down);
               })(),
               // On for a new pin (and for one snapped to a taxiway: the snap is automatic too). Off once its nose has been set by hand: turning it

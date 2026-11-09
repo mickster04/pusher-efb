@@ -269,7 +269,7 @@ PS.colourPanel = function () {
           },
           'ps-small ps-ghost'
         );
-        reset.disabled = !changed;
+        PS.ui.setEnabled(reset, changed, PS.t('This colour is the theme\'s own: nothing to reset.'));
         customBox.appendChild(
           h(
             'div',

@@ -170,26 +170,35 @@ PS.pages.push({
       finishMode = PS.push.finishMode(v.status, PS.plan.count());
       startBtn.setLabel(finishMode ? PS.t('Finish push') : PS.t('Start push'));
       startBtn.setIcon(finishMode ? 'flag' : 'play');
-      startBtn.disabled = finishMode ? !v.canFinish : !c.ok;
-      returnBtn.disabled = !v.canReturn.ok;
-      returnBtn.title = v.canReturn.ok ? '' : PS.t(v.canReturn.why);
+      ui.setEnabled(startBtn, finishMode ? v.canFinish : c.ok, finishMode ? PS.t(v.finishWhy) : PS.t(c.why));
+      ui.setEnabled(returnBtn, v.canReturn.ok, PS.t(v.canReturn.why));
       pauseBtn.setLabel(paused ? PS.t('Resume') : PS.t('Pause'));
       pauseBtn.setIcon(paused ? 'play' : 'pause');
-      pauseBtn.disabled = !(v.status === 'driving' || paused);
-      stopBtn.disabled = !(running || waiting);
+      ui.setEnabled(pauseBtn, v.status === 'driving' || paused, PS.t('Pause is available while the tug is driving.'));
+      ui.setEnabled(stopBtn, running || waiting, PS.t('Nothing is running to stop.'));
       tugBtn.setLabel(v.attached ? PS.t('Dismiss the tug') : PS.t('Call the tug'));
       var holdTug = v.attached && !v.engineGate.ok;
-      tugBtn.disabled = running || v.status === 'attaching' || v.status === 'waitBrake' || v.status === 'waitBeacon' || holdTug;
-      tugBtn.title = holdTug ? PS.t(v.engineGate.why) : '';
+      ui.setEnabled(
+        tugBtn,
+        !(running || waiting || holdTug),
+        running ? PS.t('A push is under way: stop it first.') : waiting ? PS.t('A push is waiting to start: press Stop first.') : PS.t(v.engineGate.why)
+      );
       var svc = PS.services.can();
       PS.services.LIST.forEach(function (sv) {
         var b = serviceBtns[sv.id];
-        b.disabled = !svc.ok;
-        b.title = svc.ok ? '' : PS.t(svc.why);
+        ui.setEnabled(b, svc.ok, PS.t(svc.why));
         b.className = 'ps-btn ps-iconbtn ps-small ps-ghost' + (PS.services.recently(sv.id) ? ' ps-requested' : '');
       });
       brakeBtn.setLabel(brakeKnown && b.set ? PS.t('Release the brake') : PS.t('Set the brake'));
-      brakeBtn.disabled = !brakeKnown || (running && v.status !== 'brakeHold') || v.status === 'attaching';
+      ui.setEnabled(
+        brakeBtn,
+        brakeKnown && !(running && v.status !== 'brakeHold') && v.status !== 'attaching',
+        !brakeKnown
+          ? PS.t('The parking brake cannot be read.')
+          : v.status === 'attaching'
+            ? PS.t('The tug is being called: wait for it.')
+            : PS.t('The push releases and sets the parking brake itself while it runs.')
+      );
       whyLine.textContent =
         v.attached && !v.engineGate.ok && !running
           ? PS.t(v.engineGate.why)

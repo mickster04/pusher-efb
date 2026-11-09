@@ -27,5 +27,14 @@ PS.profiles = (function () {
     return null;
   }
 
-  return { find: find, list: LIST };
+  // How near a stand's marker the sim's reported position counts as "at the gate". A wide-body's reported position is further from the marker than a
+  // narrow-body's (an A330 read 20 m at Gate 30, an A320 12 m at Gate 31), so wide-bodies get more. Matched on the title/model/type text.
+  var WIDEBODY = /A3[3-5][0-9]|A38[0-9]|A300|A310|(^|[^0-9])7[4678]7([^0-9]|$)|MD-?11|DC-?10|L-?1011|IL-?96/i;
+  function gateNearM(info) {
+    if (!info) return 15;
+    var text = [info.title, info.model, info.type].join(' ');
+    return WIDEBODY.test(text) ? 25 : 15;
+  }
+
+  return { find: find, list: LIST, gateNearM: gateNearM };
 })();

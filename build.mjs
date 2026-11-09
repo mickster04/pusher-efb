@@ -174,5 +174,13 @@ const defFile = join(root, 'PackageDefinitions', 'push-planner.xml');
 const def = readFileSync(defFile, 'utf8');
 const defNew = def.replace(/(<AssetPackage Version=")[^"]*(")/, '$1' + version + '$2');
 if (defNew !== def) writeFileSync(defFile, defNew);
+// A sync tool (Insync) makes "PushPlanner (2).js" when two machines write the bundle at once. The package copies the whole folder and the sim runs every
+// .js in it, so the app showed up twice in the EFB: remove such copies.
+for (const f of readdirSync(dirname(out))) {
+  if (/^PushPlanner \(\d+\)\.js$/.test(f)) {
+    rmSync(join(dirname(out), f));
+    console.log('removed the sync duplicate', f);
+  }
+}
 writeFileSync(out, parts.join('\n').replace(/PS\.VERSION = '[^']*';/, "PS.VERSION = '" + version + "';") + '\n');
 console.log('built', out, 'v' + version, '(' + ORDER.length + ' modules, ' + Object.keys(icons).length + ' icons, ' + themes.length + ' themes)');

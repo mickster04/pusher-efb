@@ -10,9 +10,9 @@ PS.diagPanel = function () {
 
   function setBusy(on) {
     busy = on;
-    runAll.disabled = on;
+    ui.setEnabled(runAll, !on, PS.t('A check is running.'));
     PS.diag.CHECKS.forEach(function (c) {
-      rows[c.id].btn.disabled = on;
+      ui.setEnabled(rows[c.id].btn, !on, PS.t('A check is running.'));
     });
   }
   function show(id, r) {

@@ -1,6 +1,11 @@
 // Small UI building blocks shared by the pages (browser only; call from page create functions).
 
 PS.ui = {
+  // Enable or disable a button, with the reason as its hover text while it is disabled (the title says nothing when it can be used).
+  setEnabled: function (btn, ok, why) {
+    btn.disabled = !ok;
+    btn.title = ok ? '' : why || '';
+  },
   button: function (label, onclick, cls) {
     return PS.h('button', { class: 'ps-btn' + (cls ? ' ' + cls : ''), type: 'button', onclick: onclick, text: label });
   },

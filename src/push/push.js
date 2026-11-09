@@ -754,6 +754,15 @@ PS.push = (function () {
     if (PS.tug.isAttached()) return engineGate().ok; // the tug comes off (after the brake goes on), but only after a good engine start
     return b.ok && !b.set;
   }
+  // Why Finish is not available now ('' when it is).
+  function finishWhy() {
+    if (canFinish()) return '';
+    if (!{ idle: 1, ready: 1, done: 1 }[S.status]) return PS.tt('A push is under way: Finish is available once it has ended.');
+    if (PS.tug.isAttached()) return engineGate().why;
+    return PS.brake.read(false).ok
+      ? PS.tt('Nothing to finish: the tug is off and the parking brake is already set.')
+      : PS.tt('The parking brake cannot be read.');
+  }
   function finishPush() {
     if (!canFinish()) return false;
     PS.toasts.dismiss('push-done');
@@ -1146,6 +1155,7 @@ PS.push = (function () {
       why: l.why || '',
       isReturn: !!S.isReturn,
       canFinish: canFinish(),
+      finishWhy: finishWhy(),
       engines: PS.engines.status(),
       engineGate: engineGate(),
       gate: PS.gate.detect(),

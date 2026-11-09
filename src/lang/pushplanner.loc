@@ -7496,6 +7496,318 @@
             "LocalizationStatus": "TranslationOk"
           }
         }
+      },
+      "PUSHPLANNER.A_CHECK_IS_RUNNING_b9af": {
+        "UUID": "f8cac3ad-1f9b-4a9c-a666-a631dbea0d9c",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T23:11:19.338Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "A check is running.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Une vérification est en cours.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Eine Prüfung läuft.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Hay una comprobación en curso.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.A_PUSH_IS_UNDER_WAY_FINISH_IS_AVAILABLE_fe6b": {
+        "UUID": "59f6f170-2e3e-4e01-a9ff-22cd1eb28f35",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T23:11:19.339Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "A push is under way: Finish is available once it has ended.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Un repoussage est en cours : « Terminer » sera disponible une fois qu'il sera fini.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Ein Push läuft: „Beenden“ ist verfügbar, sobald er zu Ende ist.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Hay un push en curso: «Terminar» estará disponible cuando acabe.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.A_PUSH_IS_UNDER_WAY_STOP_IT_FIRST_c1cb": {
+        "UUID": "0b310633-2e4c-4aef-895e-b466f3a46bce",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T23:11:19.339Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "A push is under way: stop it first.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Un repoussage est en cours : arrêtez-le d'abord.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Ein Push läuft: bitte zuerst stoppen.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Hay un push en curso: páralo primero.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.A_PUSH_IS_WAITING_TO_START_PRESS_STOP_FI_e99c": {
+        "UUID": "b077dcb3-6a22-4b35-af42-37b8ed5cb92c",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T23:11:19.339Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "A push is waiting to start: press Stop first.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Un repoussage attend de démarrer : appuyez d'abord sur Stop.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Ein Push wartet auf den Start: bitte zuerst „Stopp“ drücken.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Un push espera para empezar: pulsa primero Stop.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.ALREADY_THE_FIRST_PIN_cb20": {
+        "UUID": "a1128338-a9d4-47fd-83a5-ac329dab3559",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T23:11:19.339Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Already the first pin.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "C'est déjà le premier repère.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Das ist bereits der erste Pin.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Ya es el primer marcador.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.ALREADY_THE_LAST_PIN_232a": {
+        "UUID": "4891a4a7-d8a0-42db-aa1c-e9aabaf310cd",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T23:11:19.339Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Already the last pin.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "C'est déjà le dernier repère.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Das ist bereits der letzte Pin.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Ya es el último marcador.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.NOTHING_IS_RUNNING_TO_STOP_c243": {
+        "UUID": "cafa9802-7214-436b-bd9c-c2712a55e0bf",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T23:11:19.339Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Nothing is running to stop.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Rien n'est en cours à arrêter.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Es läuft nichts, was gestoppt werden könnte.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "No hay nada en marcha que parar.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.NOTHING_TO_FINISH_THE_TUG_IS_OFF_AND_THE_a929": {
+        "UUID": "4ef32d14-8151-4d33-a834-fa4f80669ea5",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T23:11:19.339Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Nothing to finish: the tug is off and the parking brake is already set.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Rien à terminer : le tracteur est parti et le frein de stationnement est déjà serré.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Nichts zu beenden: Der Schlepper ist weg und die Feststellbremse ist schon gesetzt.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Nada que terminar: el tractor ya no está y el freno de estacionamiento ya está puesto.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.PAUSE_IS_AVAILABLE_WHILE_THE_TUG_IS_DRIV_2d41": {
+        "UUID": "a3aec633-84fa-49a6-99bc-7854e5c233ed",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T23:11:19.339Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Pause is available while the tug is driving.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "« Pause » est disponible pendant que le tracteur roule.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "„Pause“ ist verfügbar, solange der Schlepper fährt.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "«Pausa» está disponible mientras el tractor avanza.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.THE_PARKING_BRAKE_CANNOT_BE_READ_cbd5": {
+        "UUID": "07accd01-ac5c-4c2d-8799-9b77dae4368f",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T23:11:19.339Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "The parking brake cannot be read.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Le frein de stationnement ne peut pas être lu.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Die Feststellbremse lässt sich nicht lesen.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "No se puede leer el freno de estacionamiento.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.THE_PUSH_RELEASES_AND_SETS_THE_PARKING_B_8b2a": {
+        "UUID": "ba753bae-fbfd-4563-8040-1385ffb58cdc",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T23:11:19.339Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "The push releases and sets the parking brake itself while it runs.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Le repoussage desserre et serre lui-même le frein de stationnement pendant qu'il se déroule.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Der Push löst und setzt die Feststellbremse selbst, solange er läuft.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "El push suelta y pone el freno de estacionamiento él solo mientras dura.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.THE_TUG_IS_BEING_CALLED_WAIT_FOR_IT_f0cc": {
+        "UUID": "9af41ef2-e57c-4dca-a4e5-9cb041a97399",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T23:11:19.339Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "The tug is being called: wait for it.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Le tracteur est en cours d'appel : patientez.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Der Schlepper wird gerufen: bitte warten.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Se está llamando al tractor: espera.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.THIS_COLOUR_IS_THE_THEME_S_OWN_NOTHING_T_394b": {
+        "UUID": "4fced62a-202d-4603-b19d-f5d16377c0ae",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T23:11:19.339Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "This colour is the theme's own: nothing to reset.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Cette couleur est celle du thème : rien à réinitialiser.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Diese Farbe ist die des Themas: nichts zurückzusetzen.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Este color es el del tema: no hay nada que restablecer.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
       }
     }
   }

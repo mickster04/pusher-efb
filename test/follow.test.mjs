@@ -315,3 +315,14 @@ test('follower: the end pin is where the push ends even when the route is headin
   assert.ok(!r.phases.cuspStop, 'did not drive on to the turnaround pin and back: ' + JSON.stringify(r.phases));
   assert.ok(r.endErrM < 4, 'stopped at the end pin, ' + r.endErrM.toFixed(1) + ' m off');
 });
+
+test('profiles: a wide-body gets a wider gate radius than a narrow-body', () => {
+  const m = (title, model) => PS.profiles.gateNearM({ title, model: model || '', type: '' });
+  assert.equal(m('Airbus A330-900neo Headwind Simulations', 'TT:ATCCOM.AC_MODEL A330.0.text'), 25);
+  assert.equal(m('Boeing 777-300ER Pmdg'), 25);
+  assert.equal(m('Airbus A350-900 XWB'), 25);
+  assert.equal(m('Fenix A320 IAE', 'TT:ATCCOM.AC_MODEL A320.0.text'), 15);
+  assert.equal(m('Boeing 737-800', 'TT:ATCCOM.AC_MODEL 737.0.text'), 15);
+  assert.equal(m('Boeing 757-200'), 15);
+  assert.equal(PS.profiles.gateNearM(null), 15);
+});
