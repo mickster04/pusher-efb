@@ -162,4 +162,19 @@ if (skipped.length)
       (win ? '' : ' (build those on Windows with the SDK: npm run setup there to check)')
   );
 say('  log: ' + log.file);
+// The last line: which version was built and how it went, read back from the built files rather than assumed.
+{
+  const read = (f) => (existsSync(join(root, f)) ? readFileSync(join(root, f), 'utf8') : '');
+  const want = JSON.parse(read('package.json') || '{}').version || '?';
+  const inBundle = (read('PackageSources/PushPlanner/PushPlanner.js').match(/PS\.VERSION = '([^']*)'/) || [])[1] || '?';
+  const inPackage = (read('PackageDefinitions/push-planner.xml').match(/<AssetPackage Version="([^"]*)"/) || [])[1] || '?';
+  const same = inBundle === want && inPackage === want;
+  say(
+    'RESULT: ' +
+      (failed.length ? 'BUILD FAILED (' + failed.map((f) => f.step).join(', ') + ')' : 'BUILD OK' + (skipped.length ? ' with ' + skipped.length + ' skipped step(s)' : '')) +
+      ' - Push Planner ' +
+      want +
+      (same ? ' (app and package both say ' + want + ')' : ' - VERSION MISMATCH: app ' + inBundle + ', package ' + inPackage)
+  );
+}
 process.exit(failed.length ? 1 : 0);
