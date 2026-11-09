@@ -143,10 +143,9 @@ PS.push = (function () {
     var l = S.last,
       leg = S.follower ? S.follower.legs[Math.min(l.leg, S.follower.legs.length - 1)] : null;
     return (
-      PS.fmt.dist(l.remainingM) +
-      ' left' +
-      (S.follower && l.legCount > 1 ? ', leg ' + (l.leg + 1) + ' of ' + l.legCount : '') +
-      (leg ? (leg.sign < 0 ? ', pushing back' : ', driving forward') : '')
+      PS.t('{d} left', { d: PS.fmt.dist(l.remainingM) }) +
+      (S.follower && l.legCount > 1 ? PS.t(', leg {i} of {n}', { i: l.leg + 1, n: l.legCount }) : '') +
+      (leg ? (leg.sign < 0 ? PS.t(', pushing back') : PS.t(', driving forward')) : '')
     );
   }
   function updateToasts(force) {
@@ -158,23 +157,23 @@ PS.push = (function () {
         id: 'push',
         kind: S.status === 'brakeHold' ? 'brake' : 'info',
         persistent: true,
-        title: 'Pushback' + (paused ? ' (paused)' : S.status === 'brakeHold' ? ' (brake set)' : ''),
+        title: paused ? PS.t('Pushback (paused)') : S.status === 'brakeHold' ? PS.t('Pushback (brake set)') : PS.t('Pushback'),
         message:
           S.status === 'brakeHold'
-            ? 'The parking brake was set. Release it and the push carries on. ' + remainingText()
+            ? PS.t('The parking brake was set. Release it and the push carries on.') + ' ' + remainingText()
             : S.status === 'settling'
-              ? 'Starting...'
+              ? PS.t('Starting...')
               : remainingText(),
         actions: [
           {
-            label: paused ? 'Resume' : 'Pause',
+            label: paused ? PS.t('Resume') : PS.t('Pause'),
             onClick: function () {
               if (paused) resume();
               else pause();
             }
           },
           {
-            label: 'Stop',
+            label: PS.t('Stop'),
             onClick: function () {
               stop('stopped by you');
             }
@@ -190,17 +189,17 @@ PS.push = (function () {
         id: 'push-brake',
         kind: 'brake',
         persistent: true,
-        title: 'Release the parking brake',
-        message: 'The push starts as soon as the brake is off.',
+        title: PS.t('Release the parking brake'),
+        message: PS.t('The push starts as soon as the brake is off.'),
         actions: [
           {
-            label: 'Release it for me',
+            label: PS.t('Release it for me'),
             onClick: function () {
               releaseBrake();
             }
           },
           {
-            label: 'Cancel',
+            label: PS.t('Cancel'),
             onClick: function () {
               stop('cancelled by you');
             }
@@ -218,11 +217,11 @@ PS.push = (function () {
           id: 'push-done',
           kind: 'info',
           persistent: true,
-          title: 'Push finished',
-          message: 'Finish sets the parking brake and dismisses the tug (after a good engine start).',
+          title: PS.t('Push finished'),
+          message: PS.t('Finish sets the parking brake and dismisses the tug (after a good engine start).'),
           actions: [
             {
-              label: 'Set the brake',
+              label: PS.t('Set the brake'),
               onClick: function () {
                 setBrake();
               }
@@ -232,7 +231,7 @@ PS.push = (function () {
               S.returnPlan
                 ? [
                     {
-                      label: 'Return to gate',
+                      label: PS.t('Return to gate'),
                       onClick: function () {
                         PS.toasts.dismiss('push-done');
                         requestStart({ returnToGate: true });
@@ -243,7 +242,7 @@ PS.push = (function () {
             )
             .concat([
               {
-                label: 'Dismiss tug',
+                label: PS.t('Dismiss the tug'),
                 onClick: function () {
                   dismissTug();
                   PS.toasts.dismiss('push-done');
@@ -287,12 +286,12 @@ PS.push = (function () {
     return (status === 'done' || status === 'ready') && pins === 0;
   }
   function canStart(isReturn) {
-    if (!isReturn && PS.plan.count() === 0) return { ok: false, why: 'There is no plan yet: make one on the Plan tab.' };
+    if (!isReturn && PS.plan.count() === 0) return { ok: false, why: PS.tt('There is no plan yet: make one on the Plan tab.') };
     if ({ settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1, waitBrake: 1, attaching: 1 }[S.status])
-      return { ok: false, why: 'A push is already under way.' };
+      return { ok: false, why: PS.tt('A push is already under way.') };
     var g = onGround();
     if (g.ok && (!g.ground || (typeof g.agl === 'number' && g.agl > AGL_ABORT_FT)))
-      return { ok: false, why: 'The aircraft is not on the ground.' };
+      return { ok: false, why: PS.tt('The aircraft is not on the ground.') };
     return { ok: true, why: '' };
   }
 
@@ -363,13 +362,13 @@ PS.push = (function () {
   }
   // Returning needs the aircraft to be where the push left it (near the start of the way back), and the usual conditions of any push.
   function canReturn() {
-    if (!S.returnPlan) return { ok: false, why: 'There is no push to return from.' };
-    if (ACTIVE[S.status]) return { ok: false, why: 'A push is already under way.' };
+    if (!S.returnPlan) return { ok: false, why: PS.tt('There is no push to return from.') };
+    if (ACTIVE[S.status]) return { ok: false, why: PS.tt('A push is already under way.') };
     var g = onGround();
     if (g.ok && (!g.ground || (typeof g.agl === 'number' && g.agl > AGL_ABORT_FT)))
-      return { ok: false, why: 'The aircraft is not on the ground.' };
+      return { ok: false, why: PS.tt('The aircraft is not on the ground.') };
     var pose = readPose();
-    if (!pose) return { ok: false, why: 'The aircraft position cannot be read.' };
+    if (!pose) return { ok: false, why: PS.tt('The aircraft position cannot be read.') };
     var p0 = S.returnPlan.segments[0].points[0],
       d = PS.geo.distanceM(pose.lat, pose.lon, p0[0], p0[1]);
     if (d > RETURN_NEAR_M) return { ok: false, why: 'The aircraft has moved ' + Math.round(d) + ' m from where the push ended.' };
@@ -395,14 +394,14 @@ PS.push = (function () {
     S.brakeAsked = false;
     var pose = readPose();
     if (!pose) {
-      S.reason = 'The aircraft position cannot be read.';
+      S.reason = PS.tt('The aircraft position cannot be read.');
       log('cannot start: ' + S.reason);
       return false;
     }
     if (!isReturn) PS.plan.dropFarPins(pose); // pins left at another airport: no route from here
     var plan = isReturn ? S.returnPlan : PS.plan.evaluate(pose); // planned again from where the aircraft is now (a return to the gate retraces the push)
     if (plan.empty || !plan.segments.length) {
-      S.reason = 'The plan has no route from here.';
+      S.reason = PS.tt('The plan has no route from here.');
       log('cannot start: ' + S.reason);
       return false; // nothing has been changed: a stored Return to gate plan is still there
     }

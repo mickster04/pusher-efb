@@ -3,7 +3,7 @@
 // is attached, set or sent (the ground services check only says whether the key events could be sent). No DOM here: the panel is ui/diag-panel.js.
 
 PS.diag = (function () {
-  var STATUS_WORD = { ok: 'OK', warn: 'WARNING', fail: 'FAILED' };
+  var STATUS_WORD = { ok: PS.tt('OK'), warn: PS.tt('WARNING'), fail: PS.tt('FAILED') };
 
   function wait(ms) {
     return new Promise(function (resolve) {
@@ -23,8 +23,8 @@ PS.diag = (function () {
   var CHECKS = [
     {
       id: 'aircraft',
-      title: 'Aircraft',
-      what: 'Which aircraft the sim says this is. It goes at the top of the copied logs, so a problem can be traced to it.',
+      title: PS.tt('Aircraft'),
+      what: PS.tt('Which aircraft the sim says this is. It goes at the top of the copied logs, so a problem can be traced to it.'),
       run: function () {
         var line = PS.aircraftLine();
         say(line);
@@ -35,8 +35,8 @@ PS.diag = (function () {
     },
     {
       id: 'sim',
-      title: 'Sim access',
-      what: 'Can the app read the aircraft from the sim?',
+      title: PS.tt('Sim access'),
+      what: PS.tt('Can the app read the aircraft from the sim?'),
       run: function () {
         var env = PS.env();
         say('environment: ' + JSON.stringify(env));
@@ -68,8 +68,8 @@ PS.diag = (function () {
     },
     {
       id: 'taxi',
-      title: 'Taxi module',
-      what: 'Does PusherTaxi.wasm answer? It supplies the taxiways and parking.',
+      title: PS.tt('Taxi module'),
+      what: PS.tt('Does PusherTaxi.wasm answer? It supplies the taxiways and parking.'),
       run: function () {
         return PS.wasmTaxi.ping(4000).then(function (m) {
           say('reply: ' + JSON.stringify(m));
@@ -79,8 +79,8 @@ PS.diag = (function () {
     },
     {
       id: 'files',
-      title: 'Files module',
-      what: 'Does PusherFiles.wasm answer, and can it list its saved files?',
+      title: PS.tt('Files module'),
+      what: PS.tt('Does PusherFiles.wasm answer, and can it list its saved files?'),
       run: function () {
         return PS.wasmFiles
           .ping(4000)
@@ -111,8 +111,8 @@ PS.diag = (function () {
     },
     {
       id: 'airport',
-      title: 'Nearest airport',
-      what: 'Finds the nearest airport and loads its runways, taxiways and parking.',
+      title: PS.tt('Nearest airport'),
+      what: PS.tt('Finds the nearest airport and loads its runways, taxiways and parking.'),
       run: function () {
         var own = PS.readOwn();
         if (!own) return { status: 'fail', text: 'the aircraft position cannot be read' };
@@ -137,8 +137,8 @@ PS.diag = (function () {
     },
     {
       id: 'gate',
-      title: 'Gate detection',
-      what: 'Is the aircraft at a gate, and which one is the nearest?',
+      title: PS.tt('Gate detection'),
+      what: PS.tt('Is the aircraft at a gate, and which one is the nearest?'),
       run: function () {
         var g = PS.gate.detect();
         say(PS.gate.describe(g));
@@ -151,8 +151,8 @@ PS.diag = (function () {
     },
     {
       id: 'traffic',
-      title: 'AI traffic',
-      what: 'Does the sim list other aircraft, and is our own filtered out?',
+      title: PS.tt('AI traffic'),
+      what: PS.tt('Does the sim list other aircraft, and is our own filtered out?'),
       run: function () {
         var T = PS.airTraffic;
         T.poll();
@@ -185,8 +185,8 @@ PS.diag = (function () {
     },
     {
       id: 'tug',
-      title: 'Pushback and brake variables',
-      what: 'Reads the variables the tug uses. Nothing is written.',
+      title: PS.tt('Pushback and brake variables'),
+      what: PS.tt('Reads the variables the tug uses. Nothing is written.'),
       run: function () {
         var list = [
           ['PUSHBACK ATTACHED', 'bool'],
@@ -211,8 +211,8 @@ PS.diag = (function () {
     },
     {
       id: 'engines',
-      title: 'Engines',
-      what: 'Reads the engines, which the tug waits on before it is let go.',
+      title: PS.tt('Engines'),
+      what: PS.tt('Reads the engines, which the tug waits on before it is let go.'),
       run: function () {
         var st = PS.engines.update(true);
         st.rows.forEach(function (r) {
@@ -241,8 +241,8 @@ PS.diag = (function () {
     },
     {
       id: 'services',
-      title: 'Ground services',
-      what: 'Checks the key events could be sent. Nothing is sent: the sim does not say whether they work.',
+      title: PS.tt('Ground services'),
+      what: PS.tt('Checks the key events could be sent. Nothing is sent: the sim does not say whether they work.'),
       run: function () {
         var c = PS.services.can();
         say('could be requested now: ' + c.ok + (c.why ? ' (' + c.why + ')' : ''));
@@ -264,8 +264,8 @@ PS.diag = (function () {
     },
     {
       id: 'themes',
-      title: 'Theme files',
-      what: 'Were the theme files in the package read?',
+      title: PS.tt('Theme files'),
+      what: PS.tt('Were the theme files in the package read?'),
       run: function () {
         var f = PS.theme.fileStatus();
         say(

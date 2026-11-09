@@ -11,7 +11,8 @@ PS.settings = (function () {
     insetTop: 40,
     insetBottom: 56,
     requireEngines: true,
-    rings: false
+    rings: false,
+    lang: 'auto'
   };
   var values = {},
     k;

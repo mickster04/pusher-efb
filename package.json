@@ -1,6 +1,6 @@
 {
   "name": "push-planner",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Push Planner: plans and drives a pushback from the MSFS 2024 EFB. Plain JS, no dependencies.",
   "scripts": {
@@ -10,11 +10,14 @@
     "clean:full": "node tools/clean.mjs --full",
     "setup": "node tools/setup.mjs",
     "lint": "node tools/lint.mjs",
+    "bump": "npm version patch --no-git-tag-version",
     "format": "npx --yes prettier@3.3.3 --write \"src/**/*.js\" build.mjs tools/*.mjs",
     "test": "node build.mjs && node tools/lint.mjs && node --test \"test/*.test.mjs\"",
     "build:wasm": "bash wasm/build.sh",
     "build:all": "node tools/build.mjs",
-    "harness": "node build.mjs && node harness/serve.mjs"
+    "harness": "node build.mjs && node harness/serve.mjs",
+    "lang": "node tools/lang.mjs",
+    "lang:check": "node tools/lang.mjs --check --strict"
   },
   "license": "MIT",
   "author": "Mike Cleaver"

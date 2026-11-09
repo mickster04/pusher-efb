@@ -15,7 +15,8 @@ const targets = [
   'PackageSources/PushPlanner/PushPlanner.js', // the bundle (npm run build)
   'PackageSources/PushPlanner/themes', // theme files copied for the package
   'PackageSources/PushPlanner/LICENSE', // copied notices
-  'PackageSources/PushPlanner/THIRD_PARTY_NOTICES.md'
+  'PackageSources/PushPlanner/THIRD_PARTY_NOTICES.md',
+  'PackageSources/localization' // the translations copied for the package
 ];
 if (has('--full')) {
   targets.push('setup.log', 'build.log', 'wasm/build', 'wasm/build.log', 'Packages', 'PackagesMetadata', '_PackageInt');

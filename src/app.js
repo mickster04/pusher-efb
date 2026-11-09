@@ -101,6 +101,7 @@ PS.buildShell = function (root) {
           hb.lastPause.raf +
           ' animation frames'
         : 'no hidden period recorded',
+      PS.i18n.describe(PS.settings.get('lang')),
       '',
       '=== LOG (' + PS.logs.length + ' lines) ==='
     ];
@@ -145,7 +146,7 @@ PS.buildShell = function (root) {
     navButtons[p.id] = h('button', {
       type: 'button',
       class: 'ps-navbtn',
-      text: p.title,
+      text: PS.t(p.title),
       onclick: function () {
         showPage(p.id);
       }
@@ -237,7 +238,7 @@ PS.buildShell = function (root) {
       'div',
       { class: 'ps-header' },
       h('span', { class: 'ps-title', text: PS.APP_NAME }),
-      h('span', { class: 'ps-sub', text: 'pushback planner' })
+      h('span', { class: 'ps-sub', text: PS.t('pushback planner') })
     ),
     nav,
     toastHost,
@@ -256,6 +257,7 @@ PS.buildShell = function (root) {
   return {
     showPage: showPage,
     dispose: function () {
+      if (current && instances[current] && instances[current].onHide) instances[current].onHide();
       clearInterval(footTimer);
       var oi = PS.frameHooks.indexOf(orientHook);
       if (oi >= 0) PS.frameHooks.splice(oi, 1);
@@ -266,6 +268,17 @@ PS.buildShell = function (root) {
       }
     }
   };
+};
+
+// Use the language in Settings. When the shell is already built it is built again (the texts are put on the screen once), and Settings is shown.
+PS.applyLanguage = function () {
+  PS.i18n.use(PS.settings.get('lang'));
+  PS.log('app', PS.i18n.describe(PS.settings.get('lang')));
+  if (!PS.liveShell || !PS.rootEl) return;
+  PS.liveShell.dispose();
+  PS.clear(PS.rootEl);
+  PS.liveShell = PS.buildShell(PS.rootEl);
+  PS.liveShell.showPage('settings');
 };
 
 PS.createViewClass = function (sdk) {
@@ -288,8 +301,17 @@ PS.createViewClass = function (sdk) {
         PS.theme.loadSaved();
         PS.hbStart();
         PS.rafStart();
-        this.shell = PS.buildShell(root);
+        PS.applyLanguage();
+        this.shell = PS.liveShell = PS.buildShell(root);
         PS.log('app', PS.APP_NAME + ' ' + PS.VERSION + ' view rendered');
+        // ask the sim for its own translations (an experiment: the result is in the log and under Settings, Language)
+        setTimeout(function () {
+          try {
+            PS.simT.run();
+          } catch (e) {
+            PS.log('i18n', 'sim translation probe failed: ' + PS.errText(e));
+          }
+        }, 1500);
         // a moment later, once the sim variables answer: read every known brake and engine variable, and start using the brake lever variable
         setTimeout(function () {
           try {

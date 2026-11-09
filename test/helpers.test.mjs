@@ -206,3 +206,70 @@ test('map line widths can be set in the app, reset, and are kept by a theme chan
   T.setMapValue('gap', 4); T.select('default');
   assert.equal(T.mapStyle().gap, 9, 'choosing a theme clears the overrides');
 });
+
+test('i18n: English is the key, a missing entry falls back to it, {name} and one|many are filled, and the language follows the setting', () => {
+  assert.equal(PS.i18n.use('en-US'), 'en-US');
+  assert.equal(PS.t('Start push'), 'Start push');
+  assert.equal(PS.t('{d} left', { d: '40 m' }), '40 m left');
+  assert.equal(PS.i18n.use('de-DE'), 'de-DE');
+  assert.equal(PS.t('Start push'), 'Push starten');
+  assert.equal(PS.t('{d} left', { d: '40 m' }), 'noch 40 m');
+  assert.equal(PS.t('A text nobody translated'), 'A text nobody translated', 'no entry: the English shows');
+  assert.equal(PS.t('{n} good engine start|{n} good engine starts', { n: 1 }), '1 guter Triebwerkstart');
+  assert.equal(PS.t('{n} good engine start|{n} good engine starts', { n: 2 }), '2 gute Triebwerksstarts');
+  assert.equal(PS.i18n.use('fr-FR'), 'fr-FR');
+  assert.equal(PS.t('Return to gate'), 'Retour à la porte');
+  assert.equal(PS.i18n.match('de-AT'), 'de-DE', 'a regional variant maps to the supported language');
+  assert.equal(PS.i18n.match('fr-CA'), 'fr-FR');
+  assert.equal(PS.i18n.match('ja-JP'), 'en-US', 'an unsupported language is English');
+  PS.i18n.use('en-US');
+});
+
+test('i18n: the log line names a language that has no translation, so a report says which one to add', () => {
+  assert.equal(PS.i18n.has('it-IT'), false);
+  assert.equal(PS.i18n.has('de'), true);
+  assert.equal(PS.i18n.has('es-MX'), true, 'a regional variant counts as the language');
+  PS.i18n.use('en-US');
+  assert.match(PS.i18n.describe('it-IT'), /NO TRANSLATION for it-IT/);
+  assert.doesNotMatch(PS.i18n.describe('de-DE'), /NO TRANSLATION/);
+  assert.doesNotMatch(PS.i18n.describe('auto'), /NO TRANSLATION/, 'nothing reported (no page language, no browser): not a missing language');
+});
+test('i18n: every text in the code is in the .loc file, none is stale, and every translation that is there keeps its {placeholders}', async () => {
+  const { spawnSync } = await import('node:child_process');
+  const r = spawnSync('node', ['tools/lang.mjs', '--check'], { encoding: 'utf8' });
+  assert.equal(r.status, 0, 'tools/lang.mjs --check exited ' + r.status + ': ' + r.stdout + r.stderr + (r.error ? ' (' + r.error.message + ')' : ''));
+  const fs = await import('node:fs');
+  const strings = JSON.parse(fs.readFileSync('src/lang/pushplanner.loc', 'utf8')).LocalisationFile.Strings;
+  const ph = (s) => (s.match(/\{\w+\}/g) || []).sort().join();
+  for (const v of Object.values(strings)) {
+    const en = v.Languages['en-US'].Text;
+    for (const code of ['de-DE', 'fr-FR', 'es-ES']) if (v.Languages[code].Text) assert.equal(ph(v.Languages[code].Text), ph(en), code + ': ' + en);
+    for (const code of ['de-DE', 'fr-FR', 'es-ES']) if (v.Languages[code].Text) assert.equal((v.Languages[code].Text.match(/\[/g) || []).length, (en.match(/\[/g) || []).length, code + ' optional parts: ' + en);
+  }
+});
+
+test('sim translation: when the sim translates a token, Automatic uses its texts (patterns too) and a language picked by hand still uses the bundled ones', () => {
+  const keyOf = PS.LANG_KEYS;
+  assert.ok(keyOf['Settings'] && keyOf['Taxiway {name}'], 'the keys are embedded');
+  // a stand-in for the sim: it knows the app's keys and answers in "Simese"
+  const simText = {};
+  for (const [en, key] of Object.entries(keyOf)) simText[key] = 'S~' + en;
+  globalThis.Coherent = { translate: (tok) => { const m = /^@push-planner,TT:(.+)$/.exec(tok); return m && simText[m[1]] ? simText[m[1]] : tok; } };
+  PS.simT.run();
+  assert.equal(PS.simT.mode(), 'Coherent.translate');
+  assert.ok(/in use: Coherent.translate/.test(PS.simT.status()));
+  PS.i18n.use('auto');
+  assert.equal(PS.t('Settings'), 'S~Settings', 'Automatic: the sim\'s text');
+  assert.equal(PS.t('{d} left', { d: '40 m' }), 'S~{d} left'.replace('{d}', '40 m'), 'its placeholders are filled by the app');
+  assert.equal(PS.t('Taxiway F'), 'S~Taxiway {name}'.replace('{name}', 'F'), 'a planner sentence is matched against the sim\'s pattern texts');
+  PS.i18n.use('de-DE');
+  assert.equal(PS.t('Settings'), 'Einstellungen', 'a language picked by hand uses the bundled table');
+  // a sim that answers with the token (it does not translate): nothing changes
+  globalThis.Coherent = { translate: (tok) => tok };
+  PS.simT.run();
+  assert.equal(PS.simT.mode(), '', 'no mode when the answer is the token');
+  PS.i18n.use('auto');
+  assert.notEqual(PS.t('Settings'), 'S~Settings');
+  delete globalThis.Coherent;
+  PS.i18n.use('en-US');
+});

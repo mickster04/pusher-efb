@@ -244,3 +244,41 @@ test('suggest: a busy layout does not push a valid option out of the list (no sm
   const list = PS.suggest.suggestPushbacks(layout, { lat: ref.lat, lon: ref.lon, hdgDeg: 30 });
   assert.ok(list.length > 10, 'candidates carried forward: ' + list.length);
 });
+
+// ---- translation: every sentence the suggester builds has a pattern ----
+test('i18n: every suggestion title and detail the suggester builds is translated by a pattern, in German and French', () => {
+  const sc = scenarios(G);
+  const seen = new Set();
+  for (const mk of Object.values(sc.layouts)) {
+    for (const hdg of sc.headings) {
+      for (const s of PS.suggest.suggestPushbacks(mk(), { lat: sc.ref[0], lon: sc.ref[1], hdgDeg: hdg })) {
+        seen.add(s.title); seen.add(s.detail); seen.add(s.detail + '. Tightest arc 25 m (tug turns at 40 m)');
+      }
+    }
+  }
+  assert.ok(seen.size > 20, 'scenarios produced ' + seen.size + ' texts');
+  const bad = [];
+  for (const lang of ['de-DE', 'fr-FR', 'es-ES']) {
+    PS.i18n.use(lang);
+    for (const en of seen) {
+      // the plan page translates the closing ". Tightest arc ..." apart from the rest
+      const at = en.indexOf('. Tightest arc ');
+      const out = at < 0 ? PS.t(en) : PS.t(en.slice(0, at)) + PS.t(en.slice(at));
+      if (out === en || /[{}\[\]]/.test(out) || /, facing | m of push|straight back|Taxiway |ends facing|Tightest arc/.test(out)) bad.push(lang + ': ' + en + '  ->  ' + out);
+    }
+  }
+  PS.i18n.use('en-US');
+  assert.deepEqual(bad.slice(0, 8), [], bad.length + ' texts not fully translated');
+});
+
+test('i18n: a translated suggestion keeps its parts: group, direction, optional parts and numbers', () => {
+  PS.i18n.use('de-DE');
+  assert.equal(PS.t('Taxiway F, facing south-east, clear of LINK 36'), 'Rollweg F, Richtung Südosten, frei von LINK 36');
+  assert.equal(PS.t('Taxiway A, facing west (tight)'), 'Rollweg A, Richtung Westen (eng)');
+  assert.equal(PS.t('Apron lane, facing north'), 'Vorfeldspur, Richtung Norden');
+  PS.i18n.use('fr-FR');
+  assert.equal(PS.t('Taxiway F, facing south-east, clear of LINK 36'), "Voie F, cap sud-est, à l'écart de LINK 36");
+  assert.equal(PS.t('38 m straight back; the nose stays 090 deg'), '38 m tout droit en arrière ; le nez reste à 090 deg');
+  PS.i18n.use('en-US');
+  assert.equal(PS.t('Taxiway F, facing north'), 'Taxiway F, facing north', 'English stays as it is');
+});

@@ -4,7 +4,7 @@
 
 PS.pages.push({
   id: 'push',
-  title: 'Push',
+  title: PS.tt('Push'),
   create: function (ctx) {
     var ui = PS.ui,
       h = PS.h,
@@ -31,9 +31,9 @@ PS.pages.push({
 
     var statusBig = h('div', { class: 'ps-big', text: '' });
     var statusSub = h('div', { class: 'ps-kv', text: '' });
-    var tugPill = h('span', { class: 'ps-pill bad', text: 'TUG OFF' });
-    var brakePill = h('span', { class: 'ps-pill', text: 'BRAKE ?' });
-    var gatePill = h('span', { class: 'ps-pill', text: 'GATE ?' });
+    var tugPill = h('span', { class: 'ps-pill bad', text: PS.t('TUG OFF') });
+    var brakePill = h('span', { class: 'ps-pill', text: PS.t('BRAKE ?') });
+    var gatePill = h('span', { class: 'ps-pill', text: PS.t('GATE ?') });
     var engineLine = h('div', { class: 'ps-kv', text: '' });
     var whyLine = h('div', { class: 'ps-kv', text: '' });
     var remainBig = h('div', { class: 'ps-big', text: '-' });
@@ -49,7 +49,7 @@ PS.pages.push({
     var finishMode = false;
     var startBtn = ui.iconButton(
       'play',
-      'Start push',
+      PS.t('Start push'),
       function () {
         if (finishMode) PS.push.finish();
         else PS.push.requestStart();
@@ -59,14 +59,14 @@ PS.pages.push({
     );
     var returnBtn = ui.iconButton(
       'home',
-      'Return to gate',
+      PS.t('Return to gate'),
       function () {
         PS.push.requestStart({ returnToGate: true });
         paint();
       },
       'ps-warn'
     );
-    var pauseBtn = ui.iconButton('pause', 'Pause', function () {
+    var pauseBtn = ui.iconButton('pause', PS.t('Pause'), function () {
       var s = PS.push.view().status;
       if (s === 'paused' || (s === 'stopping' && PS.push.view().reason === 'paused')) PS.push.resume();
       else PS.push.pause();
@@ -74,7 +74,7 @@ PS.pages.push({
     });
     var stopBtn = ui.iconButton(
       'stop',
-      'STOP',
+      PS.t('Stop').toUpperCase(),
       function () {
         PS.push.stop('stopped by you');
         paint();
@@ -84,7 +84,7 @@ PS.pages.push({
     // The lesser options, on their own row: the tug and the parking brake by hand.
     var tugBtn = ui.iconButton(
       'tug',
-      'Call the tug',
+      PS.t('Call the tug'),
       function () {
         PS.push.toggleTug();
         paint();
@@ -93,7 +93,7 @@ PS.pages.push({
     );
     var brakeBtn = ui.iconButton(
       'brake',
-      'Set the brake',
+      PS.t('Set the brake'),
       function () {
         PS.push.toggleBrake();
         paint();
@@ -105,7 +105,7 @@ PS.pages.push({
     PS.services.LIST.forEach(function (sv) {
       serviceBtns[sv.id] = ui.iconButton(
         sv.icon,
-        sv.label,
+        PS.t(sv.label),
         function () {
           PS.services.request(sv.id);
           paint();
@@ -115,106 +115,106 @@ PS.pages.push({
     });
 
     var STATUS_TEXT = {
-      idle: 'Tug not on',
-      ready: 'Tug on, ready to push',
-      attaching: 'Calling the tug...',
-      waitBrake: 'Releasing the parking brake',
-      settling: 'Starting...',
-      driving: 'Pushing',
-      stopping: 'Stopping...',
-      paused: 'Paused',
-      brakeHold: 'Held: parking brake set',
-      done: 'Push finished'
+      idle: PS.t('Tug not on'),
+      ready: PS.t('Tug on, ready to push'),
+      attaching: PS.t('Calling the tug...'),
+      waitBrake: PS.t('Releasing the parking brake'),
+      settling: PS.t('Starting...'),
+      driving: PS.t('Pushing'),
+      stopping: PS.t('Stopping...'),
+      paused: PS.t('Paused'),
+      brakeHold: PS.t('Held: parking brake set'),
+      done: PS.t('Push finished')
     };
     var RUNNING = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1 };
 
     function paintState(v) {
       statusBig.textContent = STATUS_TEXT[v.status] || v.status;
-      statusSub.textContent = v.reason || '';
+      statusSub.textContent = v.reason ? PS.t(v.reason) : '';
       tugPill.className = 'ps-pill ' + (v.attached ? 'ok' : 'bad');
-      tugPill.textContent = v.attached ? 'TUG ON' : 'TUG OFF';
+      tugPill.textContent = v.attached ? PS.t('TUG ON') : PS.t('TUG OFF');
       var b = v.brake,
         brakeKnown = !!(b && b.ok);
       if (!brakeKnown) {
         brakePill.className = 'ps-pill';
-        brakePill.textContent = 'BRAKE ?';
+        brakePill.textContent = PS.t('BRAKE ?');
       } else {
         brakePill.className = 'ps-pill ' + (b.set ? 'bad' : 'ok');
-        brakePill.textContent = b.set ? 'PARKING BRAKE SET' : 'PARKING BRAKE OFF';
+        brakePill.textContent = b.set ? PS.t('PARKING BRAKE SET') : PS.t('PARKING BRAKE OFF');
       }
       if (!v.gate || !v.gate.known) {
         gatePill.className = 'ps-pill';
-        gatePill.textContent = 'GATE ?';
-        gatePill.title = 'No stand data for this airport yet';
+        gatePill.textContent = PS.t('GATE ?');
+        gatePill.title = PS.t('No stand data for this airport yet');
       } else if (v.gate.at) {
         gatePill.className = 'ps-pill ok';
-        gatePill.textContent = 'AT GATE ' + v.gate.name;
+        gatePill.textContent = PS.t('AT GATE {name}', { name: v.gate.name });
         gatePill.title = PS.gate.describe(v.gate);
       } else {
         gatePill.className = 'ps-pill';
-        gatePill.textContent = 'NOT AT A GATE';
+        gatePill.textContent = PS.t('NOT AT A GATE');
         gatePill.title = PS.gate.describe(v.gate);
       }
       var eng = v.engines;
-      engineLine.textContent = eng && eng.known ? eng.text + (eng.n > 1 ? ' (' + eng.running + ' of ' + eng.n + ' running)' : '') : '';
+      engineLine.textContent =
+        eng && eng.known
+          ? PS.t(eng.textKey, eng.textParams) + (eng.n > 1 ? PS.t(' ({r} of {n} running)', { r: eng.running, n: eng.n }) : '')
+          : '';
       engineLine.style.color = eng && eng.known && eng.ok ? PS.theme.c('good') : '';
       var running = !!RUNNING[v.status],
         waiting = v.status === 'waitBrake' || v.status === 'attaching';
       var paused = v.status === 'paused' || (v.status === 'stopping' && v.reason === 'paused');
       var c = PS.push.canStart();
       finishMode = PS.push.finishMode(v.status, PS.plan.count());
-      startBtn.setLabel(finishMode ? 'Finish push' : 'Start push');
+      startBtn.setLabel(finishMode ? PS.t('Finish push') : PS.t('Start push'));
       startBtn.setIcon(finishMode ? 'flag' : 'play');
       startBtn.disabled = finishMode ? !v.canFinish : !c.ok;
       returnBtn.disabled = !v.canReturn.ok;
-      returnBtn.title = v.canReturn.ok ? '' : v.canReturn.why;
-      pauseBtn.setLabel(paused ? 'Resume' : 'Pause');
+      returnBtn.title = v.canReturn.ok ? '' : PS.t(v.canReturn.why);
+      pauseBtn.setLabel(paused ? PS.t('Resume') : PS.t('Pause'));
       pauseBtn.setIcon(paused ? 'play' : 'pause');
       pauseBtn.disabled = !(v.status === 'driving' || paused);
       stopBtn.disabled = !(running || waiting);
-      tugBtn.setLabel(v.attached ? 'Dismiss the tug' : 'Call the tug');
+      tugBtn.setLabel(v.attached ? PS.t('Dismiss the tug') : PS.t('Call the tug'));
       var holdTug = v.attached && !v.engineGate.ok;
       tugBtn.disabled = running || v.status === 'attaching' || v.status === 'waitBrake' || holdTug;
-      tugBtn.title = holdTug ? v.engineGate.why : '';
+      tugBtn.title = holdTug ? PS.t(v.engineGate.why) : '';
       var svc = PS.services.can();
       PS.services.LIST.forEach(function (sv) {
         var b = serviceBtns[sv.id];
         b.disabled = !svc.ok;
-        b.title = svc.ok ? '' : svc.why;
+        b.title = svc.ok ? '' : PS.t(svc.why);
         b.className = 'ps-btn ps-iconbtn ps-small ps-ghost' + (PS.services.recently(sv.id) ? ' ps-requested' : '');
       });
-      brakeBtn.setLabel(brakeKnown && b.set ? 'Release the brake' : 'Set the brake');
+      brakeBtn.setLabel(brakeKnown && b.set ? PS.t('Release the brake') : PS.t('Set the brake'));
       brakeBtn.disabled = !brakeKnown || (running && v.status !== 'brakeHold') || v.status === 'attaching';
       whyLine.textContent =
         v.attached && !v.engineGate.ok && !running
-          ? v.engineGate.why
+          ? PS.t(v.engineGate.why)
           : v.canReturn.ok && !running
-            ? 'Return to gate retraces the push back to where it started (' + PS.fmt.dist(v.returnM) + ').'
+            ? PS.t('Return to gate retraces the push back to where it started ({d}).', { d: PS.fmt.dist(v.returnM) })
             : !finishMode && !c.ok && !running && !waiting
-              ? c.why
+              ? PS.t(c.why)
               : '';
     }
 
     function paintProgress(v) {
       var active = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1, done: 1 }[v.status];
-      remainBig.textContent = active ? (v.status === 'done' ? 'Arrived' : PS.fmt.dist(v.remainingM) + ' left') : '-';
+      remainBig.textContent = active ? (v.status === 'done' ? PS.t('Arrived') : PS.t('{d} left', { d: PS.fmt.dist(v.remainingM) })) : '-';
       barFill.style.width = Math.round((v.status === 'done' ? 1 : v.progress) * 100) + '%';
       legLine.textContent =
         active && v.legCount
-          ? 'Leg ' +
-            Math.min(v.leg + 1, v.legCount) +
-            ' of ' +
-            v.legCount +
-            (v.direction ? ': ' + v.direction : '') +
+          ? PS.t('Leg {i} of {n}', { i: Math.min(v.leg + 1, v.legCount), n: v.legCount }) +
+            (v.direction ? ': ' + PS.t(v.direction) : '') +
             (v.phase && v.phase !== 'run' ? ' (' + v.phase + ')' : '')
           : '';
       var kt = Math.abs(v.speedFtS) * 0.5925;
       motionLine.textContent = active
         ? PS.fmt.num(kt, 1) +
           ' kt' +
-          (v.why ? ': ' + v.why : '') +
+          (v.why ? ': ' + PS.t(v.why) : '') +
           (v.failures ? '. ' + v.failures + ' failed write(s): ' + v.lastError : '') +
-          (v.note ? '. ' + v.note : '')
+          (v.note ? '. ' + PS.t(v.note) : '')
         : '';
     }
 
@@ -258,11 +258,17 @@ PS.pages.push({
       }
     }
 
-    var help = ui.help('Pushing', [
-      'Start push does it all: it calls the tug if it is not on, releases the parking brake if it is set (do either yourself first and it carries on from there), then drives the plan made on the Plan tab.',
-      'When the push is done the Start button becomes Finish push: it sets the parking brake if it is not set and dismisses the tug if it is on. Return to gate retraces the push (or as far as it got) back to where it started.',
-      'It moves the aircraft, so only use it on the ground with the way clear. The push stops at once if you press STOP, the sim takes the tug away, the brake is set, or this app is closed. The tug picks its own speed along the route, up to the maximum in Settings: slower for curves and near the end.',
-      'On the map: white = push back, blue = drive forward, grey = done.'
+    var help = ui.help(PS.t('Pushing'), [
+      PS.t(
+        'Start push does it all: it calls the tug if it is not on, releases the parking brake if it is set (do either yourself first and it carries on from there), then drives the plan made on the Plan tab.'
+      ),
+      PS.t(
+        'When the push is done the Start button becomes Finish push: it sets the parking brake if it is not set and dismisses the tug if it is on. Return to gate retraces the push (or as far as it got) back to where it started.'
+      ),
+      PS.t(
+        'It moves the aircraft, so only use it on the ground with the way clear. The push stops at once if you press STOP, the sim takes the tug away, the brake is set, or this app is closed. The tug picks its own speed along the route, up to the maximum in Settings: slower for curves and near the end.'
+      ),
+      PS.t('On the map: white = push back, blue = drive forward, grey = done.')
     ]);
 
     var el = h(
@@ -275,7 +281,7 @@ PS.pages.push({
           'div',
           { class: 'ps-col-side' },
           ui.panel(
-            'Push',
+            PS.t('Push'),
             h('div', { class: 'ps-toprow' }, statusBig, h('div', { class: 'ps-spacer' }), h('div', { class: 'ps-right' }, help)),
             statusSub,
             h('div', { class: 'ps-row' }, tugPill, brakePill, gatePill),
@@ -291,13 +297,13 @@ PS.pages.push({
               })
             )
           ),
-          ui.panel('Progress', remainBig, bar, legLine, motionLine)
+          ui.panel(PS.t('Progress'), remainBig, bar, legLine, motionLine)
         ),
         h(
           'div',
           { class: 'ps-col-main ps-col-first' },
           ui.panel(
-            'Map',
+            PS.t('Map'),
             h('div', { class: 'ps-toprow' }, h('div', { class: 'ps-spacer' }), h('div', { class: 'ps-right' }, mapRange.el)),
             canvas
           )

@@ -5,7 +5,7 @@
 
 PS.pages.push({
   id: 'plan',
-  title: 'Plan',
+  title: PS.tt('Plan'),
   create: function (ctx) {
     var ui = PS.ui,
       h = PS.h,
@@ -205,34 +205,28 @@ PS.pages.push({
     function renderRoute(plan) {
       PS.clear(routeSummary);
       if (plan.empty) {
-        routeSummary.appendChild(ui.note('No route yet. Tap the map to drop pins, or pick a suggested push.'));
+        routeSummary.appendChild(ui.note(PS.t('No route yet. Tap the map to drop pins, or pick a suggested push.')));
         return;
       }
       routeSummary.appendChild(
         h('div', {
           class: 'ps-result ' + (plan.warnings.length ? 'bad' : 'ok'),
           text:
-            'Route: ' +
-            PS.fmt.dist(plan.totalM) +
-            ' in ' +
-            plan.legs.length +
-            ' leg(s)' +
-            (plan.turnaroundAdded ? ', with a turnaround pin' : '') +
-            ', turn radius ' +
-            Math.round(plan.radiusM) +
-            ' m' +
-            (plan.warnings.length ? '. The tug may not manage it:' : '. No warnings.')
+            PS.t('Route: {d} in {n} leg|Route: {d} in {n} legs', { d: PS.fmt.dist(plan.totalM), n: plan.legs.length }) +
+            (plan.turnaroundAdded ? PS.t(', with a turnaround pin') : '') +
+            PS.t(', turn radius {r} m', { r: Math.round(plan.radiusM) }) +
+            (plan.warnings.length ? PS.t('. The tug may not manage it:') : PS.t('. No warnings.'))
         })
       );
       plan.warnings.forEach(function (w) {
-        routeSummary.appendChild(h('div', { class: 'ps-result bad', text: w }));
+        routeSummary.appendChild(h('div', { class: 'ps-result bad', text: PS.t(w) }));
       });
     }
     function renderPins(plan, own) {
       PS.clear(pinList);
       var pins = PS.plan.list();
       if (!pins.length) {
-        pinList.appendChild(ui.note('No pins.'));
+        pinList.appendChild(ui.note(PS.t('No pins.')));
         return;
       }
       var legs = PS.routeLegs(own, pins),
@@ -247,19 +241,19 @@ PS.pages.push({
             h('div', {
               class: 'ps-pindesc',
               text:
-                (i === pins.length - 1 ? 'End' : 'Pin ' + (i + 1)) +
+                (i === pins.length - 1 ? PS.t('End') : PS.t('Pin {i}', { i: i + 1 })) +
                 ': ' +
-                PS.fmt.dist(legs.legs[i].distM) +
-                ' on a bearing of ' +
-                Math.round(legs.legs[i].bearingDeg) +
-                ' deg, nose ' +
-                (hd === null ? '?' : Math.round(hd) + ' deg') +
-                (auto ? ' (auto)' : ' (set by you)')
+                PS.t('{d} on a bearing of {b} deg, nose {h}', {
+                  d: PS.fmt.dist(legs.legs[i].distM),
+                  b: Math.round(legs.legs[i].bearingDeg),
+                  h: hd === null ? '?' : Math.round(hd) + ' deg'
+                }) +
+                (auto ? PS.t(' (auto)') : PS.t(' (set by you)'))
             }),
             h(
               'div',
               { class: 'ps-btnrow ps-pinbtns' },
-              ui.radioDot(i === sel, 'Select pin ' + (i + 1), function () {
+              ui.radioDot(i === sel, PS.t('Select pin {i}', { i: i + 1 }), function () {
                 PS.plan.select(i);
                 planChanged();
               }),
@@ -292,8 +286,8 @@ PS.pages.push({
                   },
                   'ps-small ps-ghost'
                 );
-                up.title = 'Earlier';
-                down.title = 'Later';
+                up.title = PS.t('Earlier');
+                down.title = PS.t('Later');
                 up.disabled = i === 0;
                 down.disabled = i === pins.length - 1;
                 return h('span', { class: 'ps-pairbtns' }, up, down);
@@ -301,7 +295,7 @@ PS.pages.push({
               // On for a new pin (and for one snapped to a taxiway: the snap is automatic too). Off once its nose has been set by hand: turning it
               // off keeps the nose where it is, and turning it on again hands the heading back to the planner.
               ui.button(
-                'Auto heading',
+                PS.t('Auto heading'),
                 function () {
                   if (auto) {
                     var cur = pinHeading(i);
@@ -319,7 +313,7 @@ PS.pages.push({
               ),
               ui.iconButton(
                 'trash',
-                'Delete',
+                PS.t('Delete'),
                 function () {
                   deletePin(i);
                 },
@@ -527,19 +521,25 @@ PS.pages.push({
     });
 
     // ---------------- suggested pushes ----------------
+    // The detail's closing ". Tightest arc ..." is added to every suggestion: translated apart, so the patterns need not repeat it.
+    function suggestionDetail(d) {
+      var at = d.indexOf('. Tightest arc ');
+      return at < 0 ? PS.t(d) : PS.t(d.slice(0, at)) + PS.t(d.slice(at));
+    }
     function renderSuggestions() {
       PS.clear(sugBox);
       var t = PS.state.taxi;
       if (!t) {
-        sugBox.appendChild(ui.note('No airport data loaded yet.'));
+        sugBox.appendChild(ui.note(PS.t('No airport data loaded yet.')));
         return;
       }
       if (!sug.list.length) {
         sugBox.appendChild(
           ui.note(
-            'No suggestions: no named taxiway, link or lane is within reach where the tail points, or the taxi module supplied no paths (' +
-              t.items.length +
-              ' items loaded). You can still drop pins by hand.'
+            PS.t(
+              'No suggestions: no named taxiway, link or lane is within reach where the tail points, or the taxi module supplied no paths ({n} items loaded). You can still drop pins by hand.',
+              { n: t.items.length }
+            )
           )
         );
         return;
@@ -581,8 +581,8 @@ PS.pages.push({
                 planChanged();
               }
             },
-            h('div', { class: 'ps-sug-title', text: i + 1 + '. ' + s.title + '  (' + PS.fmt.dist(s.lengthM) + ')' }),
-            h('div', { class: 'ps-sug-detail', text: s.detail })
+            h('div', { class: 'ps-sug-title', text: i + 1 + '. ' + PS.t(s.title) + '  (' + PS.fmt.dist(s.lengthM) + ')' }),
+            h('div', { class: 'ps-sug-detail', text: suggestionDetail(s.detail) })
           )
         );
       });
@@ -654,7 +654,7 @@ PS.pages.push({
     }
     function loadAirport(why) {
       airportLoading = true;
-      airportLine.textContent = 'Loading airport data' + (why ? ' (' + why + ')' : '') + '...';
+      airportLine.textContent = why ? PS.t('Loading airport data ({why})...', { why: why }) : PS.t('Loading airport data...');
       return PS.facility.loadNearestIntoState().then(
         function (icao) {
           airportLoading = false;
@@ -665,7 +665,7 @@ PS.pages.push({
         },
         function (e) {
           airportLoading = false;
-          airportLine.textContent = 'Could not load airport data: ' + PS.errText(e);
+          airportLine.textContent = PS.t('Could not load airport data: {e}', { e: PS.errText(e) });
           log('could not load airport data: ' + PS.errText(e));
         }
       );
@@ -675,7 +675,7 @@ PS.pages.push({
     function drawPlot() {
       var g = canvas.getContext && canvas.getContext('2d');
       if (!g) {
-        infoLine.textContent = 'Canvas 2D not available.';
+        infoLine.textContent = PS.t('Canvas 2D not available.');
         return;
       }
       D.fitCanvas(canvas);
@@ -819,7 +819,7 @@ PS.pages.push({
     // ---------------- page ----------------
 
     var sugPanel = ui.panel(
-      'Suggested pushes',
+      PS.t('Suggested pushes'),
       airportLine,
       sugBox,
       h(
@@ -827,7 +827,7 @@ PS.pages.push({
         { class: 'ps-row' },
         ui.iconButton(
           'swap',
-          'Reload airport data',
+          PS.t('Reload airport data'),
           function () {
             loadAirport('asked');
           },
@@ -836,13 +836,13 @@ PS.pages.push({
       ),
       null
     );
-    var pinPanel = ui.panel('Pins', pinList);
+    var pinPanel = ui.panel(PS.t('Pins'), pinList);
     // Pins and suggestions are two views of the one plan, so only one is shown: placing or editing a pin shows the pins, choosing a suggestion shows the suggestions.
     var listTabs = h('div', { class: 'ps-row' });
     var tabToggle = ui.toggle(
       [
-        { value: 'suggested', label: 'Suggested pushes' },
-        { value: 'pins', label: 'Custom pins' }
+        { value: 'suggested', label: PS.t('Suggested pushes') },
+        { value: 'pins', label: PS.t('Custom pins') }
       ],
       PS.settings.get('planTab'),
       function (v) {
@@ -858,12 +858,20 @@ PS.pages.push({
     }
     showList(PS.settings.get('planTab'), '');
 
-    var help = ui.help('Planning a push', [
-      'North is up, centred on the aircraft. Tap the map to drop a pin; the last pin is where the aircraft ends up. Drag empty map to move it.',
-      'Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it.',
-      'Near a taxiway a pin is pulled onto its centreline and takes its heading (Settings: snap). Drag it further than 1.5 times the snap reach to pull it free.',
-      'White route = push back, blue = drive forward, red = the tug may not manage that leg.',
-      "Suggested pushes come from the original app's suggester. Pick one and it becomes your plan; adding a pin of your own takes over from it."
+    var help = ui.help(PS.t('Planning a push'), [
+      PS.t(
+        'North is up, centred on the aircraft. Tap the map to drop a pin; the last pin is where the aircraft ends up. Drag empty map to move it.'
+      ),
+      PS.t(
+        'Each pin is drawn as an aircraft pointing the way the nose will be there. Tap a pin to select it: drag it to move it, drag the yellow handle behind it to rotate it.'
+      ),
+      PS.t(
+        'Near a taxiway a pin is pulled onto its centreline and takes its heading (Settings: snap). Drag it further than 1.5 times the snap reach to pull it free.'
+      ),
+      PS.t('White route = push back, blue = drive forward, red = the tug may not manage that leg.'),
+      PS.t(
+        "Suggested pushes come from the original app's suggester. Pick one and it becomes your plan; adding a pin of your own takes over from it."
+      )
     ]);
     var el = h(
       'div',
@@ -875,13 +883,13 @@ PS.pages.push({
           'div',
           { class: 'ps-col-main' },
           ui.panel(
-            'Plan the push',
+            PS.t('Plan the push'),
             h(
               'div',
               { class: 'ps-toprow' },
               ui.iconButton(
                 'undo',
-                'Undo pin',
+                PS.t('Undo pin'),
                 function () {
                   if (PS.plan.count()) deletePin(PS.plan.count() - 1);
                 },
@@ -889,7 +897,7 @@ PS.pages.push({
               ),
               ui.iconButton(
                 'trash',
-                'Clear pins',
+                PS.t('Clear pins'),
                 function () {
                   PS.plan.clear();
                   log('pins cleared');
@@ -904,7 +912,7 @@ PS.pages.push({
                 plotRange.el,
                 ui.iconButton(
                   'target',
-                  'Recentre',
+                  PS.t('Recentre'),
                   function () {
                     pan.x = 0;
                     pan.y = 0;

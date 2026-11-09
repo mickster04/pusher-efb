@@ -259,3 +259,41 @@ test('learned: a pivot learned in one push is kept per airframe (not livery) and
   assert.equal(PS.learned.get(a).pushes, 2);
   assert.equal(PS.learned.save(a, NaN), null, 'a bad value is not kept');
 });
+
+// ---- translation: the route warnings and what the follower says it is doing ----
+test('i18n: the planner\'s route warnings and the follower\'s progress texts are translated by patterns, in German and French', () => {
+  const texts = new Set();
+  // plans that give each wording: a tight turn, a loop, a start well off the nose, a forward leg, and several reasons at once
+  const start = { lat: 51.47078, lon: -0.46594, hdgDeg: 58.7 };
+  const nearby = (brg, d) => G.offset(start.lat, start.lon, brg, d);
+  const cases = [
+    [[[51.47054, -0.46796], [51.47108, -0.46866]], [90, 180]],
+    [[[51.47054, -0.46796], [51.47136, -0.46866]], [90, 180]],
+    [[nearby(120, 25)], []],
+    [[nearby(300, 40), nearby(210, 60)], []],
+    [[nearby(150, 30), nearby(120, 60)], [270, 10]]
+  ];
+  for (const [pins, headings] of cases) {
+    plan.clear();
+    pins.forEach((p) => plan.add(p[0], p[1]));
+    headings.forEach((h, i) => plan.setHeading(i, h));
+    plan.evaluate(start).warnings.forEach((w) => texts.add(w));
+  }
+  plan.clear();
+  assert.ok(texts.size >= 5, 'warnings built: ' + texts.size);
+  // the follower's "why" for a straight, a curve and the stop
+  const straightProf = F.buildProfile(pathOf(straightPts(120)), false, 5);
+  [5, 30, 60, 100, 118].forEach((s) => texts.add(F.profileAt(straightProf, s).why));
+  const arcProf = F.buildProfile(pathOf(arcPts(30, 90, 40)), true, 5);
+  for (let s = 0; s < arcProf.total; s += 15) texts.add(F.profileAt(arcProf, s).why);
+  const bad = [];
+  for (const lang of ['de-DE', 'fr-FR', 'es-ES']) {
+    PS.i18n.use(lang);
+    for (const en of texts) {
+      const out = PS.t(en);
+      if (out === en || /[{}\[\]]/.test(out) || /tug may not|its path turns|top speed|in a curve|for the curve|to go\)/.test(out)) bad.push(lang + ': ' + en + '  ->  ' + out);
+    }
+  }
+  PS.i18n.use('en-US');
+  assert.deepEqual(bad.slice(0, 8), [], bad.length + ' texts not fully translated');
+});

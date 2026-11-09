@@ -53,7 +53,7 @@ PS.ui = {
   // Steps go up from the left button to the right one, unless `invert` (the map zoom: the right-hand + zooms in, to a smaller range).
   stepper: function (steps, value, onchange, tag, labels, fmt, invert) {
     var zoomIcons = !labels && invert;
-    labels = labels || (invert ? ['Zoom out  -', 'Zoom in  +'] : ['Zoom in  -', 'Zoom out  +']);
+    labels = labels || (invert ? [PS.t('Zoom out') + '  -', PS.t('Zoom in') + '  +'] : [PS.t('Zoom in') + '  -', PS.t('Zoom out') + '  +']);
     fmt = fmt || PS.fmt.dist;
     var idx = Math.max(0, steps.indexOf(value));
     var label = PS.h('span', { class: 'ps-step-label', text: fmt(steps[idx]) });
@@ -237,7 +237,7 @@ PS.ui = {
     render();
     var copyBtn = PS.ui.iconButton(
       'list',
-      opts.label || 'Copy log',
+      opts.label || PS.t('Copy log'),
       function () {
         if (opts.copy) {
           opts.copy();
@@ -255,7 +255,7 @@ PS.ui = {
       buttons.push(
         PS.ui.iconButton(
           'trash',
-          'Clear logs',
+          PS.t('Clear logs'),
           function () {
             var n = PS.logs.length;
             PS.logs.length = 0;
@@ -357,7 +357,7 @@ PS.ui.showText = function (text, title) {
       { class: 'ps-overlay-bar' },
       PS.h('span', { class: 'ps-panel-title', text: title || 'Text' }),
       PS.ui.button(
-        'Select all',
+        PS.t('Select all'),
         function () {
           ta.focus();
           ta.select();
@@ -365,7 +365,7 @@ PS.ui.showText = function (text, title) {
         'ps-small'
       ),
       PS.ui.button(
-        'Close',
+        PS.t('Close'),
         function () {
           if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
         },

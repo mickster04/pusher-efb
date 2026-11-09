@@ -1,4 +1,4 @@
-// The Colours section of the Settings page: a "Themes" tab (pick a preset from cards that show the colours) and a "My colours" tab (set any colour
+// The Colours section of the Settings page: a PS.t("Themes") tab (pick a preset from cards that show the colours) and a PS.t("My colours") tab (set any colour
 // the app uses: tap a swatch for a palette, or type a hex value). Both change the whole app live through PS.theme.
 
 PS.themePreview = function (tokens, w, hgt) {
@@ -115,8 +115,8 @@ PS.colourPanel = function () {
     T = PS.theme;
   var tabs = ui.toggle(
     [
-      { value: 'themes', label: 'Themes' },
-      { value: 'custom', label: 'My colours' }
+      { value: 'themes', label: PS.t('Themes') },
+      { value: 'custom', label: PS.t('My colours') }
     ],
     'themes',
     function (v) {
@@ -135,7 +135,9 @@ PS.colourPanel = function () {
     PS.clear(themesBox);
     themesBox.appendChild(
       ui.note(
-        "Airline themes are inspired by those liveries: the colours are approximate, and Push Planner is not affiliated with or endorsed by any airline. Pick one, then change any colour on the My colours tab and save it: saved themes show here too, as do the package's theme files."
+        PS.t(
+          "Airline themes are inspired by those liveries: the colours are approximate, and Push Planner is not affiliated with or endorsed by any airline. Pick one, then change any colour on the My colours tab and save it: saved themes show here too, as do the package's theme files."
+        )
       )
     );
     var grid = h('div', { class: 'ps-themegrid' });
@@ -154,11 +156,13 @@ PS.colourPanel = function () {
               switchWarned = th.id;
               PS.toasts.show({
                 kind: 'info',
-                title: 'Unsaved colours',
-                message:
-                  'Switching to ' +
-                  th.name +
-                  ' discards the colours you changed. Tap it again to switch, or save them first on My colours.',
+                title: PS.t('Unsaved colours'),
+                message: PS.t(
+                  'Switching to {name} discards the colours you changed. Tap it again to switch, or save them first on My colours.',
+                  {
+                    name: th.name
+                  }
+                ),
                 ttlMs: 5000
               });
               return;
@@ -170,7 +174,7 @@ PS.colourPanel = function () {
         },
         PS.themePreview(tokens),
         h('div', { class: 'ps-themename', text: th.name }),
-        h('div', { class: 'ps-themenote', text: (th.fromFile ? 'file: ' : '') + (th.fromSaved ? 'saved: ' : '') + th.note })
+        h('div', { class: 'ps-themenote', text: (th.fromFile ? PS.t('file: ') : '') + (th.fromSaved ? PS.t('saved: ') : '') + th.note })
       );
       grid.appendChild(card);
     });
@@ -181,21 +185,20 @@ PS.colourPanel = function () {
         class: 'ps-kv',
         text:
           sv.state === 'done'
-            ? 'Saved themes: ' +
-              sv.count +
-              " file(s) in the files module's work folder" +
+            ? PS.t("Saved themes: {n} file(s) in the files module's work folder", { n: sv.count }) +
               (sv.failed.length
-                ? '. Not read: ' +
-                  sv.failed
-                    .map(function (f) {
-                      return f.file + ' (' + f.why + ')';
-                    })
-                    .join(', ')
+                ? PS.t('. Not read: {list}', {
+                    list: sv.failed
+                      .map(function (f) {
+                        return f.file + ' (' + f.why + ')';
+                      })
+                      .join(', ')
+                  })
                 : '')
             : sv.state === 'failed'
-              ? "Files module not found: saved themes use the app's own storage"
+              ? PS.t("Files module not found: saved themes use the app's own storage")
               : sv.state === 'loading'
-                ? 'Reading saved themes...'
+                ? PS.t('Reading saved themes...')
                 : ''
       })
     );
@@ -212,18 +215,17 @@ PS.colourPanel = function () {
       customBox.appendChild(
         h('div', {
           class: 'ps-result bad',
-          text:
-            'Hard to read: ' +
-            warns
+          text: PS.t('Hard to read: {list}.', {
+            list: warns
               .map(function (w) {
-                return w.name + ' (contrast ' + w.ratio.toFixed(1) + ':1)';
+                return PS.t('{name} (contrast {r}:1)', { name: PS.t(w.name), r: w.ratio.toFixed(1) });
               })
-              .join('; ') +
-            '.'
+              .join('; ')
+          })
         })
       );
     T.ROLE_GROUPS.forEach(function (g) {
-      customBox.appendChild(h('div', { class: 'ps-colgroup', text: g.title }));
+      customBox.appendChild(h('div', { class: 'ps-colgroup', text: PS.t(g.title) }));
       g.roles.forEach(function (r) {
         var role = r[0],
           cur = T.c(role),
@@ -232,7 +234,7 @@ PS.colourPanel = function () {
           type: 'button',
           class: 'ps-colswatch',
           style: 'background:' + cur,
-          title: 'Pick a colour',
+          title: PS.t('Pick a colour'),
           onclick: function () {
             openRole = openRole === role ? null : role;
             renderCustom();
@@ -260,7 +262,7 @@ PS.colourPanel = function () {
           renderCustom();
         });
         var reset = ui.button(
-          'Reset',
+          PS.t('Reset'),
           function () {
             T.resetColour(role);
             PS.logv('settings', 'colour ' + role + ' reset');
@@ -272,7 +274,7 @@ PS.colourPanel = function () {
           h(
             'div',
             { class: 'ps-colrow' + (changed ? ' changed' : '') },
-            h('div', { class: 'ps-collabel', text: r[1] }),
+            h('div', { class: 'ps-collabel', text: PS.t(r[1]) }),
             swatch,
             input,
             reset
@@ -289,18 +291,18 @@ PS.colourPanel = function () {
       });
     });
     // The map's line widths and label size, in pixels: part of the theme, set here and saved with it.
-    customBox.appendChild(h('div', { class: 'ps-colgroup', text: 'Map lines (pixels)' }));
+    customBox.appendChild(h('div', { class: 'ps-colgroup', text: PS.t('Map lines (pixels)') }));
     var range = function (a, b, s) {
       var o = [];
       for (var i = a; i <= b; i += s) o.push(i);
       return o;
     };
     [
-      ['unnamed', 'Unnamed paths', range(1, 10, 1)],
-      ['named', 'Named taxiways', range(2, 20, 1)],
-      ['runway', 'Runways', range(4, 60, 2)],
-      ['label', 'Label size', range(10, 26, 1)],
-      ['gap', 'Gap round labels', range(0, 20, 1)]
+      ['unnamed', PS.tt('Unnamed paths'), range(1, 10, 1)],
+      ['named', PS.tt('Named taxiways'), range(2, 20, 1)],
+      ['runway', PS.tt('Runways'), range(4, 60, 2)],
+      ['label', PS.tt('Label size'), range(10, 26, 1)],
+      ['gap', PS.tt('Gap round labels'), range(0, 20, 1)]
     ].forEach(function (m) {
       var st = ui.stepper(
         m[2],
@@ -314,11 +316,11 @@ PS.colourPanel = function () {
           return v + ' px';
         }
       );
-      customBox.appendChild(h('div', { class: 'ps-colrow' }, h('div', { class: 'ps-collabel', text: m[1] }), st.el));
+      customBox.appendChild(h('div', { class: 'ps-colrow' }, h('div', { class: 'ps-collabel', text: PS.t(m[1]) }), st.el));
     });
     customBox.appendChild(
       ui.button(
-        'Reset map lines',
+        PS.t('Reset map lines'),
         function () {
           T.resetMap();
         },
@@ -328,32 +330,32 @@ PS.colourPanel = function () {
     // Save the colours in use as a theme: a .json file named after it in the files module's work folder (or the app's own storage if that module is not there).
     var cur = T.byId(T.selectedId());
     if ((cur.fromSlot || cur.fromSaved) && !nameTouched) saveName = cur.name;
-    customBox.appendChild(h('div', { class: 'ps-colgroup', text: 'Save these colours as a theme' }));
-    var nameInput = h('input', { type: 'text', class: 'ps-input ps-themename-input', value: saveName, placeholder: 'Theme name' });
+    customBox.appendChild(h('div', { class: 'ps-colgroup', text: PS.t('Save these colours as a theme') }));
+    var nameInput = h('input', { type: 'text', class: 'ps-input ps-themename-input', value: saveName, placeholder: PS.t('Theme name') });
     nameInput.addEventListener('input', function () {
       saveName = nameInput.value;
       nameTouched = true;
     });
     var saveBtn = ui.iconButton(
       'check',
-      'Save theme',
+      PS.t('Save theme'),
       function () {
-        saveMsg.textContent = 'Saving...';
+        saveMsg.textContent = PS.t('Saving...');
         T.saveTheme(nameInput.value, function (r) {
           nameTouched = false;
           if (!r.ok) {
-            saveMsg.textContent = r.why || 'Could not save.';
+            saveMsg.textContent = r.why || PS.t('Could not save.');
             return;
           }
           saveMsg.textContent = '';
           PS.toasts.show({
             kind: 'info',
-            title: 'Theme saved',
+            title: PS.t('Theme saved'),
             ttlMs: 3000,
             message:
               r.where === 'file'
-                ? r.file + ' is in the push-planner work folder.'
-                : "Kept in the app's own storage (slot " + r.slot + '); install PusherFiles.wasm to save real files.'
+                ? PS.t('{file} is in the push-planner work folder.', { file: r.file })
+                : PS.t("Kept in the app's own storage (slot {n}); install PusherFiles.wasm to save real files.", { n: r.slot })
           });
         });
       },
@@ -364,7 +366,7 @@ PS.colourPanel = function () {
       'div',
       { class: 'ps-btnrow' },
       ui.button(
-        'Reset all my colours',
+        PS.t('Reset all my colours'),
         function () {
           T.resetAll();
           PS.logv('settings', 'all custom colours reset');
@@ -376,12 +378,12 @@ PS.colourPanel = function () {
       actions.appendChild(
         ui.iconButton(
           'trash',
-          'Delete ' + cur.fromSaved,
+          PS.t('Delete {name}', { name: cur.fromSaved }),
           function () {
             if (deleteArmed !== cur.fromSaved) {
               // a file cannot be got back: the first tap asks, a second tap on the same file deletes it
               deleteArmed = cur.fromSaved;
-              saveMsg.textContent = 'Tap Delete again to remove ' + cur.fromSaved + ' for good.';
+              saveMsg.textContent = PS.t('Tap Delete again to remove {name} for good.', { name: cur.fromSaved });
               setTimeout(function () {
                 if (deleteArmed === cur.fromSaved) {
                   deleteArmed = null;
@@ -391,12 +393,17 @@ PS.colourPanel = function () {
               return;
             }
             deleteArmed = null;
-            saveMsg.textContent = 'Deleting...';
+            saveMsg.textContent = PS.t('Deleting...');
             T.deleteSaved(cur.fromSaved, function (r) {
               if (r.ok) {
                 saveMsg.textContent = '';
-                PS.toasts.show({ kind: 'info', title: 'Theme deleted', message: cur.fromSaved + ' was removed.', ttlMs: 3000 });
-              } else saveMsg.textContent = 'Could not delete: ' + (r.why || 'unknown');
+                PS.toasts.show({
+                  kind: 'info',
+                  title: PS.t('Theme deleted'),
+                  message: PS.t('{name} was removed.', { name: cur.fromSaved }),
+                  ttlMs: 3000
+                });
+              } else saveMsg.textContent = PS.t('Could not delete: {why}', { why: r.why || PS.t('unknown') });
             });
           },
           'ps-small ps-ghost'
@@ -406,11 +413,11 @@ PS.colourPanel = function () {
     if (cur.fromSlot) {
       actions.appendChild(
         ui.button(
-          'Clear slot ' + cur.fromSlot,
+          PS.t('Clear slot {n}', { n: cur.fromSlot }),
           function () {
             var nn = cur.fromSlot;
             T.clearSlot(nn);
-            saveMsg.textContent = 'Slot ' + nn + ' cleared.';
+            saveMsg.textContent = PS.t('Slot {n} cleared.', { n: nn });
             PS.logv('settings', 'theme slot ' + nn + ' cleared');
           },
           'ps-small ps-ghost'
@@ -423,8 +430,8 @@ PS.colourPanel = function () {
       h(
         'div',
         { class: 'ps-btnrow' },
-        h('span', { class: 'ps-note', text: 'Where saved themes are kept' }),
-        ui.help('Saved themes', T.workFolderLines)
+        h('span', { class: 'ps-note', text: PS.t('Where saved themes are kept') }),
+        ui.help(PS.t('Saved themes'), T.workFolderLines)
       )
     );
   }
@@ -442,5 +449,5 @@ PS.colourPanel = function () {
   renderThemes();
   renderCustom();
   show('themes');
-  return ui.panel('Colours', tabs.el, themesBox, customBox);
+  return ui.panel(PS.t('Colours'), tabs.el, themesBox, customBox);
 };

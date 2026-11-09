@@ -24,6 +24,10 @@ This app moves a real aircraft in the simulator by writing velocity and brake va
 
 Push Planner is an independent project. It is not affiliated with or endorsed by Microsoft, Asobo, or any airline. The airline-inspired themes use approximate colours only (no logos); airline names belong to their owners.
 
+## Languages
+
+English, German, French and Spanish (Settings, Language). Automatic uses the sim's own translations: the build compiles `src/lang/pushplanner.loc` (the sim's `.loc` format) to `<lang>.locPak` files through a `Localization` asset group in `PackageDefinitions/push-planner.xml`, and the app asks the sim for each text with `Coherent.translate("@push-planner,TT:KEY")` (see `src/core/i18n-sim.js`). If the sim cannot translate, Automatic uses the browser's language and then English, from a table embedded in the bundle. In the code the English text is the key: `PS.t('Start push')`, or `PS.tt('...')` for a text defined at load time. `node tools/lang.mjs` adds new texts to the `.loc` (and `--prune` removes unused ones); the tests fail if the code and the file disagree. A language with no translation shows English, and the log and the copied report name the missing language (`NO TRANSLATION for ...`). The German, French and Spanish are unreviewed drafts. To add a language, add its code to `PS.LANGS` in `src/core/i18n.js` and to `LANGS` in `tools/lang.mjs`, run the tool, then fill in the new language's text. The app's font is `'Roboto-Regular'` first: the sim's browser draws accented letters only from its own font names. Logs and diagnostic results stay in English.
+
 ## Layout of the code
 
 `build.mjs` concatenates the modules in `src/` (in an explicit order listed in the script; it fails if a file is missing from the list) into the one file the sim loads:

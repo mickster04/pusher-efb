@@ -10,44 +10,44 @@ PS.theme = (function () {
   // Everything a user can set, in the order the Custom tab shows it.
   var ROLE_GROUPS = [
     {
-      title: 'Page',
+      title: PS.tt('Page'),
       roles: [
-        ['bg', 'Page background'],
-        ['bgDeep', 'Header, tabs and footer'],
-        ['panel', 'Panels'],
-        ['border', 'Borders'],
-        ['text', 'Main text'],
-        ['textDim', 'Secondary text'],
-        ['accent', 'Accent (titles, selected tab)'],
-        ['accentText', 'Text on the accent'],
-        ['button', 'Button face'],
-        ['buttonText', 'Button text'],
-        ['input', 'Fields and map background'],
-        ['good', 'Good / on'],
-        ['warn', 'Caution'],
-        ['bad', 'Warning / stop'],
-        ['accent2', 'Highlight (progress bar, chosen suggestion)']
+        ['bg', PS.tt('Page background')],
+        ['bgDeep', PS.tt('Header, tabs and footer')],
+        ['panel', PS.tt('Panels')],
+        ['border', PS.tt('Borders')],
+        ['text', PS.tt('Main text')],
+        ['textDim', PS.tt('Secondary text')],
+        ['accent', PS.tt('Accent (titles, selected tab)')],
+        ['accentText', PS.tt('Text on the accent')],
+        ['button', PS.tt('Button face')],
+        ['buttonText', PS.tt('Button text')],
+        ['input', PS.tt('Fields and map background')],
+        ['good', PS.tt('Good / on')],
+        ['warn', PS.tt('Caution')],
+        ['bad', PS.tt('Warning / stop')],
+        ['accent2', PS.tt('Highlight (progress bar, chosen suggestion)')]
       ]
     },
     {
-      title: 'Map',
+      title: PS.tt('Map'),
       roles: [
-        ['mapBg', 'Map background'],
-        ['mapGrid', 'Range rings'],
-        ['mapText', 'Map labels'],
-        ['taxiway', 'Taxiways'],
-        ['runway', 'Runways'],
-        ['pathOther', 'Other paths'],
-        ['routeBack', 'Push-back route'],
-        ['routeFwd', 'Forward route'],
-        ['routeBad', 'Route the tug may not manage'],
-        ['routeDone', 'Route already driven'],
-        ['aircraft', 'Your aircraft'],
-        ['pin', 'Pins'],
-        ['pinEnd', 'End pin'],
-        ['traffic', 'AI aircraft'],
-        ['handle', 'Heading handle'],
-        ['outline', 'Outlines']
+        ['mapBg', PS.tt('Map background')],
+        ['mapGrid', PS.tt('Range rings')],
+        ['mapText', PS.tt('Map labels')],
+        ['taxiway', PS.tt('Taxiways')],
+        ['runway', PS.tt('Runways')],
+        ['pathOther', PS.tt('Other paths')],
+        ['routeBack', PS.tt('Push-back route')],
+        ['routeFwd', PS.tt('Forward route')],
+        ['routeBad', PS.tt('Route the tug may not manage')],
+        ['routeDone', PS.tt('Route already driven')],
+        ['aircraft', PS.tt('Your aircraft')],
+        ['pin', PS.tt('Pins')],
+        ['pinEnd', PS.tt('End pin')],
+        ['traffic', PS.tt('AI aircraft')],
+        ['handle', PS.tt('Heading handle')],
+        ['outline', PS.tt('Outlines')]
       ]
     }
   ];

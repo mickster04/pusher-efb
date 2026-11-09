@@ -48,7 +48,7 @@ if (!stopOnFail() && !noTests) {
   const l = run('node', ['tools/lint.mjs']);
   record('lint', l.ok ? 'ok' : 'FAILED', l.ok ? '' : l.out.split('\n')[0]);
   if (l.ok) {
-    const t = run('node', ['--test', 'test/*.test.mjs'], { shell: true, lines: 12 });
+    const t = run('node', ['--test', 'test/*.test.mjs'], { shell: true, lines: 60 });
     const n = (w) => (new RegExp('(?:#|ℹ) ' + w + ' (\\d+)').exec(t.out) || [])[1] || '?';
     record(
       'tests',

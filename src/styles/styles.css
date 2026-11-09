@@ -1,17 +1,17 @@
 /* No CSS variables, calc() or grid: the sim's browser is old. All classes are prefixed ps- */
-.ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: @bg@; color: @text@; font: 15px/1.35 Arial, sans-serif; }
+.ps-root { position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; background: @bg@; color: @text@; font: 15px/1.35 'Roboto-Regular', Arial, sans-serif; }
 .ps-app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; }
 .ps-header { padding: 10px 16px 6px; background: @bgDeep@; }
-.ps-title { font-size: 20px; font-weight: bold; color: @accent@; margin-right: 12px; }
+.ps-title { font-size: 20px; font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; font-weight: normal; color: @accent@; margin-right: 12px; }
 .ps-sub { color: @textDim@; font-size: 13px; }
 .ps-nav { display: flex; flex-wrap: wrap; background: @bgDeep@; padding: 0 10px 8px; }
 .ps-navbtn { margin: 4px 6px 0 0; padding: 10px 16px; border: 1px solid @border@; border-radius: 8px; background: @panel@; color: @text2@; font-size: 15px; }
-.ps-navbtn.on { background: @accent@; color: @accentText@; border-color: @accent@; font-weight: bold; }
+.ps-navbtn.on { background: @accent@; color: @accentText@; border-color: @accent@; font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; font-weight: normal; }
 .ps-body { position: relative; flex: 1; min-height: 0; overflow-y: scroll; overflow-x: hidden; padding: 12px 14px 24px; }
 .ps-footer { padding: 5px 14px; background: @bgDeeper@; color: @dim4@; font-size: 12px; white-space: nowrap; overflow: hidden; }
 
 .ps-panel { background: @panel@; border: 1px solid @border@; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
-.ps-panel-title { font-weight: bold; margin-bottom: 8px; color: @accent@; }
+.ps-panel-title { font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; font-weight: normal; margin-bottom: 8px; color: @accent@; }
 .ps-note { color: @dim2@; font-size: 13px; margin-top: 8px; }
 .ps-note.warn { color: @warn@; }
 .ps-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: 6px; }
@@ -24,9 +24,9 @@
 .ps-btn { padding: 11px 16px; border: 1px solid @border2@; border-radius: 8px; background: @button@; color: @buttonText@; font-size: 15px; }
 .ps-btn.ps-small { padding: 6px 10px; font-size: 13px; }
 .ps-btn.ps-warn { background: @accentDeep@; border-color: @accent@; }
-.ps-btn.ps-danger { background: @badDeep@; border-color: @bad@; font-weight: bold; }
+.ps-btn.ps-danger { background: @badDeep@; border-color: @bad@; font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; font-weight: normal; }
 .ps-btn.ps-ghost { background: transparent; }
-.ps-btn.ps-chk.on { background: @accent@; color: @accentText@; font-weight: bold; }
+.ps-btn.ps-chk.on { background: @accent@; color: @accentText@; font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; font-weight: normal; }
 .ps-radio { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 2px solid @border2@; border-radius: 50%; background: transparent; }
 .ps-radio-dot { width: 14px; height: 14px; border-radius: 50%; background: transparent; }
 .ps-radio.on { border-color: @accent@; }
@@ -34,7 +34,7 @@
 
 .ps-toggle { display: flex; flex-wrap: wrap; }
 .ps-toggle-btn { margin: 0 6px 6px 0; padding: 11px 16px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text2@; font-size: 15px; }
-.ps-toggle-btn.on { background: @accent@; color: @accentText@; font-weight: bold; }
+.ps-toggle-btn.on { background: @accent@; color: @accentText@; font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; font-weight: normal; }
 
 .ps-pill { display: inline-block; padding: 3px 10px; margin: 0 6px 6px 0; border-radius: 12px; font-size: 13px; }
 .ps-pill.ok { background: @goodDeep@; color: @goodSoft@; }
@@ -61,7 +61,7 @@
 .ps-toast { margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; background: @panelHi@; border: 2px solid @accent@; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
 .ps-toast-brake { border-color: @bad@; }
 .ps-toast-info { border-color: @routeFwd@; }
-.ps-toast-title { font-weight: bold; font-size: 16px; }
+.ps-toast-title { font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; font-weight: normal; font-size: 16px; }
 .ps-toast-msg { margin: 4px 0 8px; color: @text@; }
 .ps-toast-actions .ps-btn { margin-right: 8px; }
 
@@ -72,10 +72,10 @@
 
 .ps-stepper { display: flex; align-items: center; }
 .ps-stepper .ps-btn { margin: 0 8px 0 0; }
-.ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-weight: bold; color: @accent@; }
+.ps-step-label { display: inline-block; min-width: 70px; text-align: center; margin: 0 14px 0 6px; font-size: 18px; font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; font-weight: normal; color: @accent@; }
 .ps-sug { display: block; width: 100%; text-align: left; margin: 0 0 6px 0; padding: 9px 12px; border: 1px solid @border2@; border-radius: 8px; background: @panel@; color: @text@; font-size: 14px; }
 .ps-sug.on { border-color: @accent2@; background: @accent2Deep@; }
-.ps-sug-title { font-weight: bold; }
+.ps-sug-title { font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; font-weight: normal; }
 .ps-sug-detail { color: @dim2@; font-size: 12px; }
 .ps-pinrow { padding: 4px 0; border-bottom: 1px solid @borderSoft@; font-size: 13px; }
 .ps-pinrow .ps-btn { margin-left: 10px; }
@@ -90,16 +90,16 @@
 .ps-log::-webkit-scrollbar-track { background: @bgDeeper@; }
 .ps-log::-webkit-scrollbar-thumb { background: @dim5@; border-radius: 6px; }
 
-.ps-big { font-size: 34px; font-weight: bold; color: @accent@; margin: 2px 0 6px; }
+.ps-big { font-size: 34px; font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; font-weight: normal; color: @accent@; margin: 2px 0 6px; }
 .ps-bar { height: 14px; background: @bgDeeper@; border-radius: 7px; overflow: hidden; margin: 6px 0 10px; border: 1px solid @border@; }
 .ps-bar > div { height: 100%; background: @accent2@; }
 .ps-btn:disabled { opacity: 0.4; }
 
 
 /* help icon and its card */
-.ps-help { position: relative; display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border: 1px solid @dim5@; border-radius: 12px; color: @dim3@; font-size: 14px; font-weight: bold; cursor: default; }
+.ps-help { position: relative; display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border: 1px solid @dim5@; border-radius: 12px; color: @dim3@; font-size: 14px; font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; font-weight: normal; cursor: default; }
 .ps-help-pop { position: fixed; left: 8%; right: 8%; top: 130px; z-index: 60; background: @bgDeep@; border: 1px solid @accent@; border-radius: 10px; padding: 12px 16px; text-align: left; font-weight: normal; box-shadow: 0 4px 24px rgba(0,0,0,0.6); pointer-events: none; }
-.ps-help-title { color: @accent@; font-weight: bold; margin-bottom: 6px; }
+.ps-help-title { color: @accent@; font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; font-weight: normal; margin-bottom: 6px; }
 .ps-help-line { color: @text2@; font-size: 13px; margin-bottom: 5px; }
 
 /* top row of the Plan tab: left group, then the right group pushed to the right edge */
@@ -130,7 +130,9 @@
 .ps-pinrow .ps-btn { margin-left: 0; }
 .ps-pinbtns .ps-pindel { margin-left: auto; margin-right: 0; }
 /* buttons did not take the page font, and their own font has no degree sign */
-.ps-btn, .ps-toggle-btn, .ps-navbtn { font-family: Arial, sans-serif; }
+button, input, select, textarea { font-family: inherit; }
+.ps-btn, .ps-toggle-btn, .ps-navbtn { font-family: 'Roboto-Regular', Arial, sans-serif; }
+b, strong { font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; font-weight: normal; }
 
 .ps-pairbtns { display: inline-block; }
 .ps-pairbtns .ps-btn { margin: 0 8px 0 0; }
@@ -145,9 +147,9 @@
 .ps-themecard { width: 150px; margin: 0 10px 10px 0; padding: 8px; border: 2px solid @border@; border-radius: 12px; background: @panel@; color: @text@; text-align: center; }
 .ps-themecard.on { border-color: @accent@; background: @panelHi@; }
 .ps-themecard svg { display: block; margin: 0 auto 6px; }
-.ps-themename { font-size: 14px; font-weight: bold; }
+.ps-themename { font-size: 14px; font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; font-weight: normal; }
 .ps-themenote { font-size: 11px; color: @textDim@; margin-top: 2px; }
-.ps-colgroup { margin: 12px 0 6px; font-weight: bold; color: @accent@; }
+.ps-colgroup { margin: 12px 0 6px; font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; font-weight: normal; color: @accent@; }
 .ps-colrow { display: flex; align-items: center; padding: 4px 0; border-bottom: 1px solid @borderSoft@; }
 .ps-colrow.changed { background: @accentFaint@; }
 .ps-collabel { flex: 1; font-size: 14px; }

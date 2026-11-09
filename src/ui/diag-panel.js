@@ -18,14 +18,14 @@ PS.diagPanel = function () {
   function show(id, r) {
     var row = rows[id];
     row.pill.className = 'ps-pill ' + (r.status === 'ok' ? 'ok' : r.status === 'warn' ? 'warn' : 'bad');
-    row.pill.textContent = PS.diag.STATUS_WORD[r.status];
+    row.pill.textContent = PS.t(PS.diag.STATUS_WORD[r.status]);
     row.text.textContent = r.text;
   }
   function runOne(id) {
     if (busy) return;
     setBusy(true);
     rows[id].pill.className = 'ps-pill';
-    rows[id].pill.textContent = 'running';
+    rows[id].pill.textContent = PS.t('running');
     PS.diag.run(id).then(function (r) {
       show(id, r);
       setBusy(false);
@@ -36,29 +36,29 @@ PS.diagPanel = function () {
     setBusy(true);
     PS.diag.CHECKS.forEach(function (c) {
       rows[c.id].pill.className = 'ps-pill';
-      rows[c.id].pill.textContent = 'waiting';
+      rows[c.id].pill.textContent = PS.t('waiting');
       rows[c.id].text.textContent = '';
     });
     PS.diag
       .runAll(function (r) {
         show(r.id, r);
         var next = PS.diag.CHECKS.filter(function (c) {
-          return rows[c.id].pill.textContent === 'waiting';
+          return rows[c.id].pill.textContent === PS.t('waiting');
         })[0];
-        if (next) rows[next.id].pill.textContent = 'running';
+        if (next) rows[next.id].pill.textContent = PS.t('running');
       })
       .then(function () {
         setBusy(false);
       });
   }
 
-  var runAll = ui.button('Run all checks', runEvery);
+  var runAll = ui.button(PS.t('Run all checks'), runEvery);
   var list = h('div');
   PS.diag.CHECKS.forEach(function (c) {
-    var pill = h('span', { class: 'ps-pill', text: 'not run' });
+    var pill = h('span', { class: 'ps-pill', text: PS.t('not run') });
     var text = h('div', { class: 'ps-note ps-diagtext', text: '' });
     var btn = ui.button(
-      'Run',
+      PS.t('Run'),
       function () {
         runOne(c.id);
       },
@@ -69,8 +69,8 @@ PS.diagPanel = function () {
       h(
         'div',
         { class: 'ps-diagrow' },
-        h('div', { class: 'ps-diaghead' }, h('b', { text: c.title }), pill, btn),
-        h('div', { class: 'ps-note', text: c.what }),
+        h('div', { class: 'ps-diaghead' }, h('b', { text: PS.t(c.title) }), pill, btn),
+        h('div', { class: 'ps-note', text: PS.t(c.what) }),
         text
       )
     );
@@ -78,8 +78,8 @@ PS.diagPanel = function () {
 
   var detail = ui.toggle(
     [
-      { value: 'off', label: 'Normal logging' },
-      { value: 'on', label: 'Detailed logging' }
+      { value: 'off', label: PS.t('Normal logging') },
+      { value: 'on', label: PS.t('Detailed logging') }
     ],
     PS.detail.on ? 'on' : 'off',
     function (v) {
@@ -91,7 +91,7 @@ PS.diagPanel = function () {
     copy: function () {
       PS.copyAllLogs();
     },
-    label: 'Copy all logs',
+    label: PS.t('Copy all logs'),
     clearable: true,
     buttonsAbove: true,
     active: function () {
@@ -102,15 +102,19 @@ PS.diagPanel = function () {
   var el = h(
     'div',
     { class: 'ps-panel' },
-    h('div', { class: 'ps-panel-title', text: 'Diagnostics' }),
+    h('div', { class: 'ps-panel-title', text: PS.t('Diagnostics') }),
     ui.note(
+      PS.t(
       'Each check looks at one part of what the app depends on and logs what it finds. They only read from the sim: nothing is attached, set or sent. Run them, then copy the logs to report a problem.'
+      )
     ),
     h('div', { class: 'ps-btnrow' }, runAll),
     list,
-    ui.field('While nothing is being checked', detail.el),
+    ui.field(PS.t('While nothing is being checked'), detail.el),
     ui.note(
+      PS.t(
       'Normal logging keeps what happened and what went wrong. Detailed logging also keeps the fine print (every setting change, the route and pin workings, the airport search, the traffic feed). A check turns it on by itself while it runs.'
+      )
     ),
     log
   );

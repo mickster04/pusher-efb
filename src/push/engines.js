@@ -64,18 +64,33 @@ PS.engines = (function () {
   }
 
   // The words for the Push tab: what a tug operator would say.
+  // English, which is what the log and the "why" texts use; the Push tab translates it from textKey and textParams.
+  function textKey() {
+    if (!st.known) return PS.tt('Engines: not readable on this aircraft');
+    if (st.good > 0) return PS.tt('{n} good engine start|{n} good engine starts');
+    if (st.running > 0) return PS.tt('Engine starting: waiting for a good start');
+    return PS.tt('Waiting for a good engine start');
+  }
   function text() {
-    if (!st.known) return 'Engines: not readable on this aircraft';
-    if (st.good > 0) return st.good + ' good engine start' + (st.good === 1 ? '' : 's');
-    if (st.running > 0) return 'Engine starting: waiting for a good start';
-    return 'Waiting for a good engine start';
+    var k = textKey();
+    return k.indexOf('|') >= 0 ? st.good + ' good engine start' + (st.good === 1 ? '' : 's') : k;
   }
 
   return {
     update: update,
     status: function () {
       update(false);
-      return { known: st.known, n: st.n, running: st.running, good: st.good, ok: st.good >= 1, text: text(), rows: st.rows.slice() };
+      return {
+        known: st.known,
+        n: st.n,
+        running: st.running,
+        good: st.good,
+        ok: st.good >= 1,
+        text: text(),
+        textKey: textKey(),
+        textParams: { n: st.good },
+        rows: st.rows.slice()
+      };
     },
     reset: function () {
       st.since = {};
