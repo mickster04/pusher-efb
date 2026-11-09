@@ -81,30 +81,6 @@
           }
         }
       },
-      "PUSHPLANNER.AUTOMATIC_616a": {
-        "UUID": "8bdd8e91-85b8-4caa-9521-88e3dc08d685",
-        "LastModifiedBy": "draft translation, unreviewed",
-        "LastModifiedDate": "2026-11-09T03:48:17.565Z",
-        "LocalizationStatus": "TranslationNeeded",
-        "Languages": {
-          "en-US": {
-            "Text": "Automatic",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "fr-FR": {
-            "Text": "Automatique",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "de-DE": {
-            "Text": "Automatisch",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "es-ES": {
-            "Text": "Automático",
-            "LocalizationStatus": "TranslationOk"
-          }
-        }
-      },
       "PUSHPLANNER.BRAKE_3f1b": {
         "UUID": "e00cbb8f-7366-43a0-b8f4-f13338f265fa",
         "LastModifiedBy": "draft translation, unreviewed",
@@ -605,30 +581,6 @@
           },
           "es-ES": {
             "Text": "Pasarela de embarque",
-            "LocalizationStatus": "TranslationOk"
-          }
-        }
-      },
-      "PUSHPLANNER.LANGUAGE_9a73": {
-        "UUID": "fcfcb916-1c49-4267-a4f5-cec862308732",
-        "LastModifiedBy": "draft translation, unreviewed",
-        "LastModifiedDate": "2026-11-09T03:48:17.565Z",
-        "LocalizationStatus": "TranslationNeeded",
-        "Languages": {
-          "en-US": {
-            "Text": "Language",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "fr-FR": {
-            "Text": "Langue",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "de-DE": {
-            "Text": "Sprache",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "es-ES": {
-            "Text": "Idioma",
             "LocalizationStatus": "TranslationOk"
           }
         }
@@ -6461,30 +6413,6 @@
           },
           "es-ES": {
             "Text": "{m} m recto hacia atrás; {tail}",
-            "LocalizationStatus": "TranslationOk"
-          }
-        }
-      },
-      "PUSHPLANNER.AUTOMATIC_USES_THE_SIM_S_OWN_TRANSLATION_9e64": {
-        "UUID": "e76d8fc8-6fe4-4fd4-a7fd-bf29312ff59b",
-        "LastModifiedBy": "draft translation, unreviewed",
-        "LastModifiedDate": "2026-11-09T04:35:52.573Z",
-        "LocalizationStatus": "TranslationNeeded",
-        "Languages": {
-          "en-US": {
-            "Text": "Automatic uses the sim's own translations when it provides them, otherwise the language the browser reports, and English if it is not one of these. A text with no translation shows in English.",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "fr-FR": {
-            "Text": "Automatique utilise les traductions du simulateur lorsqu'il en fournit, sinon la langue indiquée par le navigateur, et l'anglais si ce n'en est pas une. Un texte sans traduction s'affiche en anglais.",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "de-DE": {
-            "Text": "Automatisch verwendet die eigenen Übersetzungen des Simulators, wenn er welche liefert, sonst die vom Browser gemeldete Sprache und Englisch, wenn es keine dieser Sprachen ist. Ein Text ohne Übersetzung erscheint auf Englisch.",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "es-ES": {
-            "Text": "Automático usa las traducciones propias del simulador cuando las ofrece; si no, el idioma que indica el navegador, e inglés si no es uno de estos. Un texto sin traducción se muestra en inglés.",
             "LocalizationStatus": "TranslationOk"
           }
         }

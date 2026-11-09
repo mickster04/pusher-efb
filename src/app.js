@@ -101,7 +101,7 @@ PS.buildShell = function (root) {
           hb.lastPause.raf +
           ' animation frames'
         : 'no hidden period recorded',
-      PS.i18n.describe(PS.settings.get('lang')),
+      PS.i18n.describe(),
       '',
       '=== LOG (' + PS.logs.length + ' lines) ==='
     ];
@@ -270,10 +270,10 @@ PS.buildShell = function (root) {
   };
 };
 
-// Use the language in Settings. When the shell is already built it is built again (the texts are put on the screen once), and Settings is shown.
+// Use the sim's language (there is no language setting). When the shell is already built it is built again (the texts are put on the screen once), and Settings is shown.
 PS.applyLanguage = function () {
-  PS.i18n.use(PS.settings.get('lang'));
-  PS.log('app', PS.i18n.describe(PS.settings.get('lang')));
+  PS.i18n.use();
+  PS.log('app', PS.i18n.describe());
   if (!PS.liveShell || !PS.rootEl) return;
   PS.liveShell.dispose();
   PS.clear(PS.rootEl);
@@ -304,7 +304,7 @@ PS.createViewClass = function (sdk) {
         PS.applyLanguage();
         this.shell = PS.liveShell = PS.buildShell(root);
         PS.log('app', PS.APP_NAME + ' ' + PS.VERSION + ' view rendered');
-        // ask the sim for its own translations (an experiment: the result is in the log and under Settings, Language)
+        // ask the sim for its own translations (the result is in the log under [i18n])
         setTimeout(function () {
           try {
             PS.simT.run();

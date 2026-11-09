@@ -91,17 +91,6 @@ PS.pages.push({
         PS.settings.set('planTab', v);
       }
     );
-    var langOptions = [{ value: 'auto', label: PS.t('Automatic') }].concat(
-      PS.LANGS.map(function (l) {
-        return { value: l.code, label: l.label }; // each language by its own name, whatever the current one is
-      })
-    );
-    var simLine = h('div', { class: 'ps-kv', text: '' }); // what the sim's own translation gave (English: it is for finding out, not for pilots)
-    var language = ui.toggle(langOptions, PS.settings.get('lang'), function (v) {
-      PS.settings.set('lang', v);
-      PS.log('settings', 'language set to ' + v + ' (the browser reports ' + (PS.i18n.browserTag() || 'nothing') + ')');
-      PS.applyLanguage();
-    });
     // Diagnostics (the checks and the log) stay out of sight until the button is pressed, and fold away again when the tab is left.
     var diag = null,
       diagOpen = false,
@@ -129,16 +118,6 @@ PS.pages.push({
       el: h(
         'div',
         { class: 'ps-page' },
-        ui.panel(
-          PS.t('Language'),
-          ui.field(PS.t('Language'), language.el),
-          simLine,
-          ui.note(
-            PS.t(
-              "Automatic uses the sim's own translations when it provides them, otherwise the language the browser reports, and English if it is not one of these. A text with no translation shows in English."
-            )
-          )
-        ),
         ui.panel(
           PS.t('Pushing'),
           ui.field(PS.t('Maximum cruise speed'), maxSpeed.el),
@@ -189,9 +168,6 @@ PS.pages.push({
         diagHolder,
         h('div', { class: 'ps-btnrow' }, diagBtn)
       ),
-      onShow: function () {
-        simLine.textContent = 'Sim translation: ' + PS.simT.status();
-      },
       onHide: foldDiag
     };
   }

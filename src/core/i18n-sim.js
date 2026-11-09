@@ -76,7 +76,7 @@ PS.simT = (function () {
     state.note = note;
     say(note);
     PS.i18n.setSim(mode ? texts : null);
-    if (mode && PS.settings.get('lang') === 'auto' && PS.applyLanguage) PS.applyLanguage();
+    if (mode && PS.applyLanguage) PS.applyLanguage();
   }
 
   // For the log: the texts the sim left out, and what the sim returns for texts with accents (their character codes show a wrong decoding).
