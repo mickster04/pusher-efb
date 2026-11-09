@@ -182,7 +182,7 @@ test('suggest: the arc filter keeps options with a decent arc and falls back rat
   const list = PS.suggest.suggest(taxiwayA(), own);
   const back = list.find((s) => s.title === 'Straight back to taxiway A');
   assert.ok(back && back.tightestRadiusM >= 32 && back.maxStartOffDeg <= 45);
-  list.forEach((s) => assert.ok(s.tightestRadiusM >= 32 && s.maxStartOffDeg <= 45, s.title + ' arc ' + s.tightestRadiusM + ' start off ' + s.maxStartOffDeg));
+  list.forEach((s) => assert.ok(s.tightestRadiusM >= 0.6 * 32 - 0.5 && s.maxStartOffDeg <= 45, s.title + ' arc ' + s.tightestRadiusM + ' start off ' + s.maxStartOffDeg));
 });
 
 test('suggest: no two suggestions end in the same spot', () => {

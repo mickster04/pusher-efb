@@ -328,8 +328,13 @@ PS.planner = (function () {
       var tg = initialBearing(a[0], a[1], b[0], b[1]);
       var endHdgDeg = sign > 0 ? tg : wrap360(tg + 180);
       // How far the first stretch of the path points from the way the aircraft can actually start moving.
+      // (a repeated first point has no bearing: take the first stretch that has a length, or a pin 16 m straight back reads as starting 129 deg off the axis)
       var sa = points[0],
         sb = points[1] || points[0];
+      for (var si = 1; si < points.length; si++) {
+        sb = points[si];
+        if (haversineM(sa[0], sa[1], sb[0], sb[1]) >= 0.05) break;
+      }
       var startBr = initialBearing(sa[0], sa[1], sb[0], sb[1]);
       var startAxis = pose.hdgDeg === null ? null : sign > 0 ? pose.hdgDeg : wrap360(pose.hdgDeg + 180);
       var startOffDeg = startAxis === null || !isFinite(startBr) ? 0 : Math.abs(wrap180(startBr - startAxis));

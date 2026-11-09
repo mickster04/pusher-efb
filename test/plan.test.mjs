@@ -127,8 +127,8 @@ test('minimum radius curve: an arc has the requested radius unless the legs are 
 test('minimum radius curve: a cramped corner warns at the usual radius and plans cleanly when the plan may tighten', () => {
   const P = PS.planner;
   assert.equal(P.getRadius(), P.PATH_TURN_RADIUS_M, 'default radius');
-  // an end pin 30 m behind the aircraft and 40 m to one side
-  const bp = G.offset(own0.lat, own0.lon, 180, 30), p = G.offset(bp[0], bp[1], 90, 40);
+  // an end pin 20 m behind the aircraft and 40 m to one side (its arc cannot be wider than about 20 m)
+  const bp = G.offset(own0.lat, own0.lon, 180, 20), p = G.offset(bp[0], bp[1], 90, 40);
   plan.clear(); plan.add(p[0], p[1]);
   plan.setMinRadius(40);                         // never tighter than the usual radius
   const strict = plan.evaluate(own0);
@@ -285,4 +285,17 @@ test('pins: left at another airport (the nearest more than 5 km away) they are c
   assert.equal(plan.dropFarPins(own), null); assert.equal(plan.count(), 2, 'kept');
   assert.equal(plan.dropFarPins(null), null);
   plan.clear();
+});
+
+test('plan: an end pin with a set heading, straight back along the tail axis, is one straight push and gets no turnaround pin', () => {
+  // the real case: the tug let go 16 m short of the end pin, nose 309, pin 16 m straight back with its heading set to 310
+  const here = { lat: -43.48642, lon: 172.54293, hdgDeg: 309 };
+  plan.clear();
+  plan.add(-43.48651, 172.54308);
+  plan.setHeading(0, 310);
+  const r = plan.evaluate(here);
+  assert.equal(r.legs.length, 1, 'one leg: ' + r.legs.map((l) => l.lengthM).join(','));
+  assert.ok(r.legs[0].sign < 0, 'pushed back');
+  assert.ok(!r.turnaroundAdded, 'no turnaround pin');
+  assert.ok(r.totalM < 20, 'about 16 m: ' + r.totalM.toFixed(1));
 });

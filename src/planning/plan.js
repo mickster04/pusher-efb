@@ -407,6 +407,9 @@ PS.plan = (function () {
         ' m' +
         (res.adapted ? ' (tightened)' : '') +
         (res.turnaroundAdded ? ', turnaround pin added' : '') +
+        (origin && isFinite(origin.lat)
+          ? ' | from ' + origin.lat.toFixed(5) + ', ' + origin.lon.toFixed(5) + ' heading ' + (isFinite(origin.hdgDeg) ? Math.round(origin.hdgDeg) : '?')
+          : '') +
         ' | ' +
         legs.join('; ')
     );
