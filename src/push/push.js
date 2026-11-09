@@ -1,7 +1,7 @@
 // The push: attach the tug, make sure the parking brake is off, then drive the planned route with the path follower, showing the distance left.
 // Built on PS.tug and PS.brake (09-tug.js), PS.follow (10-follow.js) and the plan (PS.plan). The Push tab is the interface to this.
 //
-// Status: idle -> attaching -> ready (tug on) ; Start: waitBrake (until the parking brake is off) -> settling -> driving -> stopping -> done
+// Status: idle -> attaching -> ready (tug on) ; Start: waitBeacon (until the beacon is on) -> attaching -> waitBrake (until the parking brake is off) -> settling -> driving -> stopping -> done
 //         driving <-> paused (you) ; driving -> brakeHold (the brake was set mid-push; resumes by itself when released) ; any -> ready (stopped)
 //
 // Safety: nothing is written to the aircraft unless the tug is attached; the push stops at once if the sim detaches the tug, the app is paused or
@@ -22,6 +22,11 @@ PS.push = (function () {
     return Math.max(MIN_RUN_MS, ((1.5 * routeM) / (cruiseMs * 0.75)) * 1000);
   }
   var AGL_ABORT_FT = 25;
+  var PITCH_ABORT_DEG = 3; // the nose pitch moving this far from where driving began stops the push (a braked or chocked aircraft lifts its nose)
+  var MAX_RECOVERIES = 3; // times the sim may let go of the tug in one push and the app still calls it again and carries on
+  var REATTACH_TRIES = 3; // attempts (15 s each) to get the tug back after it was let go
+  var PROGRESS_WINDOW_S = 15; // the aircraft must have made PROGRESS_MIN_M along the route in this long before the tug was let go, to carry on
+  var PROGRESS_MIN_M = 2;
   var STALL_MS = 1200;
   var RETURN_NEAR_M = 20,
     RETURN_MIN_M = 2;
@@ -50,6 +55,14 @@ PS.push = (function () {
     lastTick: 0,
     lastSlow: 0,
     lastLog: 0,
+    lastBeaconCheck: 0,
+    prog: [],
+    recoveries: 0,
+    reattachTries: 0,
+    keepBaseline: false,
+    detachLogged: false,
+    pitch0: null,
+    pitchLogged: 0,
     lastBrakeCheck: 0,
     poseFails: 0,
     driveAt: 0, // when driveTick last ran
@@ -100,12 +113,13 @@ PS.push = (function () {
     return { ok: g.ok, ground: g.ok && Number(g.value) > 0, agl: a.ok ? a.value : null };
   }
 
-  var ACTIVE = { attaching: 1, waitBrake: 1, settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1 };
+  var ACTIVE = { reattach: 1, waitBeacon: 1, attaching: 1, waitBrake: 1, settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1 };
   var wasActive = false;
   function setStatus(st, why) {
     if (S.status !== st || S.reason !== (why || '')) log('status: ' + st + (why ? ' (' + why + ')' : ''));
     S.status = st;
     S.reason = why || '';
+    if (st === 'idle') PS.fbwPush.restore(); // the tug is gone: the aircraft's own pushback system goes back as it was
     ensureLoop();
     updateToasts(true);
   }
@@ -120,7 +134,7 @@ PS.push = (function () {
   }
   function ensureLoop() {
     var active = !!ACTIVE[S.status],
-      wanted = active || S.status === 'ready' || S.moved; // (after a push the loop keeps watching the engines until the tug goes)
+      wanted = active || S.status === 'ready' || S.status === 'done' || S.moved; // (after a push the loop keeps watching the engines until the tug goes)
     if (!wanted) {
       if (timer !== null) {
         clearInterval(timer);
@@ -149,7 +163,7 @@ PS.push = (function () {
     );
   }
   function updateToasts(force) {
-    var running = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1 };
+    var running = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1, reattach: 1 };
     if (running[S.status]) {
       var paused = S.status === 'paused' || (S.status === 'stopping' && S.stopNext === 'paused');
       PS.toasts.show({
@@ -161,9 +175,11 @@ PS.push = (function () {
         message:
           S.status === 'brakeHold'
             ? PS.t('The parking brake was set. Release it and the push carries on.') + ' ' + remainingText()
-            : S.status === 'settling'
-              ? PS.t('Starting...')
-              : remainingText(),
+            : S.status === 'reattach'
+              ? PS.t('The sim let go of the tug: calling it again...')
+              : S.status === 'settling'
+                ? PS.t('Starting...')
+                : remainingText(),
         actions: [
           {
             label: paused ? PS.t('Resume') : PS.t('Pause'),
@@ -182,6 +198,26 @@ PS.push = (function () {
       });
     } else {
       PS.toasts.dismiss('push');
+    }
+    if (S.status === 'waitBeacon') {
+      PS.toasts.show({
+        efbOnly: true,
+        id: 'push-beacon',
+        kind: 'brake',
+        persistent: true,
+        title: PS.t('Turn on the beacon'),
+        message: PS.t('The tug is called as soon as the beacon is on.'),
+        actions: [
+          {
+            label: PS.t('Cancel'),
+            onClick: function () {
+              stop('cancelled by you');
+            }
+          }
+        ]
+      });
+    } else {
+      PS.toasts.dismiss('push-beacon');
     }
     if (S.status === 'waitBrake') {
       PS.toasts.show({
@@ -287,7 +323,7 @@ PS.push = (function () {
   }
   function canStart(isReturn) {
     if (!isReturn && PS.plan.count() === 0) return { ok: false, why: PS.tt('There is no plan yet: make one on the Plan tab.') };
-    if ({ settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1, waitBrake: 1, attaching: 1 }[S.status])
+    if ({ settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1, waitBrake: 1, attaching: 1, waitBeacon: 1, reattach: 1 }[S.status])
       return { ok: false, why: PS.tt('A push is already under way.') };
     var g = onGround();
     if (g.ok && (!g.ground || (typeof g.agl === 'number' && g.agl > AGL_ABORT_FT)))
@@ -391,6 +427,7 @@ PS.push = (function () {
       return false;
     }
     S.wantRun = true;
+    S.detachLogged = false;
     S.brakeAsked = false;
     var pose = readPose();
     if (!pose) {
@@ -475,6 +512,21 @@ PS.push = (function () {
         '%)' +
         (plan.warnings.length ? ', WITH WARNINGS: ' + plan.warnings.join(' | ') : '')
     );
+    PS.fbwPush.hold();
+    if (beaconOff()) {
+      log('waiting for the beacon: it is off (FlyByWire keeps the wheel chocks, which brake the aircraft, until it is on)');
+      setStatus('waitBeacon', 'the beacon is off');
+    } else beginAttach();
+    return true;
+  }
+  // The beacon goes on before a real pushback, and the FlyByWire chocks (which brake the aircraft) only stay while it is off. A beacon that cannot be read
+  // does not hold the push up.
+  function beaconOff() {
+    if (!PS.settings.get('requireBeacon')) return false;
+    var r = PS.getVar('LIGHT BEACON', 'bool');
+    return r.ok && typeof r.value === 'number' && r.value < 0.5;
+  }
+  function beginAttach() {
     if (!PS.tug.isAttached()) {
       setStatus('attaching', 'calling the tug');
       PS.tug.attach(function (r) {
@@ -487,7 +539,81 @@ PS.push = (function () {
         beginBrakeCheck();
       });
     } else beginBrakeCheck();
-    return true;
+  }
+  // What the sim says about the pushback when it has let go of the tug, to find out why it did.
+  function logDetach() {
+    if (S.detachLogged) return;
+    S.detachLogged = true;
+    var at = readPose();
+    log('the sim let go of the tug' + (at ? ' at ' + at.lat.toFixed(5) + ', ' + at.lon.toFixed(5) + ' heading ' + PS.fmt.num(at.hdgDeg, 0) : ''));
+    var ps = ['PUSHBACK ATTACHED', 'PUSHBACK STATE', 'PUSHBACK WAIT', 'PUSHBACK ANGLE', 'PUSHBACK CONTACTX', 'PUSHBACK CONTACTZ'].map(function (n) {
+      var r = PS.getVar(n, n === 'PUSHBACK ANGLE' ? 'degrees' : n === 'PUSHBACK STATE' ? 'enum' : n.indexOf('CONTACT') > 0 ? 'feet' : 'bool');
+      return n.replace('PUSHBACK ', '') + '=' + (r.ok ? r.value : '?');
+    });
+    log('pushback at the detach: ' + ps.join(' ') + ' | ' + PS.probe.fbwLine());
+  }
+  // The nose pitch has moved too far from where driving began: '' when it has not (or cannot be told).
+  function pitchBlock() {
+    var r = PS.getVar('PLANE PITCH DEGREES', 'degrees');
+    if (!r.ok || typeof r.value !== 'number' || typeof S.pitch0 !== 'number') return '';
+    var d = r.value - S.pitch0;
+    return Math.abs(d) > PITCH_ABORT_DEG
+      ? 'the nose pitch changed by ' + PS.fmt.num(Math.abs(d), 1) + ' deg (' + (d < 0 ? 'nose up' : 'nose down') + ') from where driving began'
+      : '';
+  }
+  // How far along the route the aircraft got in the last `sec` seconds, or null when there is not enough record to say.
+  function progressIn(sec) {
+    var n = S.prog.length;
+    if (n < 4) return null;
+    var last = S.prog[n - 1],
+      first = null;
+    for (var i = n - 1; i >= 0; i--) {
+      if (last.t - S.prog[i].t <= sec * 1000) first = S.prog[i];
+      else break;
+    }
+    if (!first || last.t - first.t < sec * 600) return null;
+    return first.rem - last.rem;
+  }
+  // Is it safe to call the tug again and carry on after the sim let go? '' = yes, else the reason not to.
+  function recoverBlock() {
+    if (S.recoveries >= MAX_RECOVERIES) return 'it has happened ' + S.recoveries + ' times already in this push';
+    var g = onGround();
+    if (g.ok && (!g.ground || (typeof g.agl === 'number' && g.agl > AGL_ABORT_FT))) return 'the aircraft is not on the ground';
+    var pb = pitchBlock();
+    if (pb) return pb;
+    var moved = progressIn(PROGRESS_WINDOW_S);
+    if (moved !== null && moved < PROGRESS_MIN_M) {
+      return 'the aircraft had made only ' + PS.fmt.num(Math.max(0, moved), 1) + ' m along the route in the last ' + PROGRESS_WINDOW_S + ' s';
+    }
+    return '';
+  }
+  function startRecovery() {
+    S.recoveries++;
+    log('carrying on: calling the tug again (' + S.recoveries + ' of ' + MAX_RECOVERIES + ' allowed in this push)');
+    S.cur = { speed: 0, yaw: 0 };
+    S.reattachTries = 0;
+    S.keepBaseline = true; // the pitch and the clock of the push carry on from where they were
+    setStatus('reattach', 'the sim let go of the tug');
+    reattach();
+  }
+  function reattach() {
+    PS.fbwPush.hold();
+    PS.tug.attach(function (r) {
+      if (S.status !== 'reattach' || !S.wantRun) return;
+      if (r.ok) {
+        log('the tug is back: carrying on');
+        S.detachLogged = false;
+        beginSettling();
+        return;
+      }
+      S.reattachTries++;
+      if (S.reattachTries >= REATTACH_TRIES) {
+        emergencyStop('the sim let go of the tug and it would not attach again');
+        return;
+      }
+      log('the tug did not attach (try ' + S.reattachTries + ' of ' + REATTACH_TRIES + '): trying again');
+      reattach();
+    });
   }
   function beginBrakeCheck() {
     S.brake = PS.brake.read(true);
@@ -507,7 +633,14 @@ PS.push = (function () {
   }
   function beginDriving() {
     S.moved = true;
-    S.startedAt = Date.now();
+    if (!S.keepBaseline) {
+      S.startedAt = Date.now();
+      S.pitch0 = null; // the nose pitch when driving began, to log when it changes (sim: + is nose down)
+      S.pitchLogged = 0;
+      S.prog = [];
+      S.recoveries = 0;
+    }
+    S.keepBaseline = false;
     S.cur = { speed: 0, yaw: 0 };
     S.poseFails = 0;
     S.lastLog = 0;
@@ -552,17 +685,18 @@ PS.push = (function () {
       beginStopping(why, 'ready');
     } else if (S.status === 'stopping') {
       S.stopNext = 'ready';
-    } else if (S.status === 'waitBrake' || S.status === 'settling' || S.status === 'attaching') {
+    } else if (S.status === 'waitBrake' || S.status === 'settling' || S.status === 'attaching' || S.status === 'waitBeacon' || S.status === 'reattach') {
       PS.tug.cancelAttach();
       setStatus(PS.tug.isAttached() ? 'ready' : 'idle', why);
     }
   }
   // At once: used when the sim detaches the tug, the app is paused or closed, or something is wrong. Zero everything, no easing.
   function emergencyStop(why) {
-    var active = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1, waitBrake: 1, attaching: 1 }[S.status];
+    var active = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1, waitBrake: 1, attaching: 1, waitBeacon: 1, reattach: 1 }[S.status];
     S.wantRun = false;
     if (!active) return;
     log('EMERGENCY STOP: ' + why);
+    if (/detached/.test(why)) logDetach();
     if (PS.tug.isAttached()) PS.tug.zeroAndHold();
     S.cur = { speed: 0, yaw: 0 };
     PS.tug.cancelAttach();
@@ -591,6 +725,7 @@ PS.push = (function () {
       emergencyStop('dismissing the tug');
       dismissTug();
     } else if (S.status === 'idle' || S.status === 'ready' || S.status === 'done') {
+      PS.fbwPush.hold();
       setStatus('attaching', 'calling the tug');
       PS.tug.attach(function (r) {
         setStatus(r.ok ? 'ready' : 'idle', r.ok ? 'tug attached' : r.error);
@@ -650,7 +785,18 @@ PS.push = (function () {
     if (!S.attached && S.moved && S.status !== 'attaching') S.moved = false; // the tug is gone: stop watching the engines for it
     if (S.attached || S.moved) PS.engines.update(false);
     var live = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1 }[S.status];
+    if (S.attached || live) PS.fbwPush.hold(); // the pilot may switch the aircraft's own pushback back on while our tug is on
     if (live && !S.attached) {
+      if (S.status === 'driving') {
+        logDetach();
+        var block = recoverBlock();
+        if (!block) {
+          startRecovery();
+          return;
+        }
+        emergencyStop('the sim detached the tug (not carrying on: ' + block + ')');
+        return;
+      }
       emergencyStop('the sim detached the tug');
       return;
     }
@@ -663,7 +809,7 @@ PS.push = (function () {
       return;
     }
     // The brake, read every half second while it matters.
-    if (now - S.lastBrakeCheck >= 500 && (live || S.status === 'ready' || S.status === 'waitBrake')) {
+    if (now - S.lastBrakeCheck >= 500 && (live || S.status === 'ready' || S.status === 'waitBrake' || S.status === 'done')) {
       S.lastBrakeCheck = now;
       S.brake = PS.brake.read(false);
       if (S.status === 'driving' && S.brake.set) {
@@ -694,6 +840,20 @@ PS.push = (function () {
       slowChecks(now);
     }
     switch (S.status) {
+      case 'waitBeacon':
+        if (now - S.lastBeaconCheck < 400) break;
+        S.lastBeaconCheck = now;
+        if (!beaconOff()) {
+          log('the beacon is on: calling the tug');
+          beginAttach();
+        }
+        break;
+      case 'reattach':
+        if (now - S.lastBrakeCheck < 500) break;
+        S.lastBrakeCheck = now;
+        var rb = pitchBlock();
+        if (rb) emergencyStop('while the tug was being called again: ' + rb);
+        break;
       case 'waitBrake':
         if (now - S.lastBrakeCheck < 400) break;
         S.lastBrakeCheck = now;
@@ -788,6 +948,47 @@ PS.push = (function () {
       S.lastLog = now;
       var gs = PS.getVar('GROUND VELOCITY', 'knots'),
         vz = PS.getVar('VELOCITY BODY Z', 'feet per second');
+      // what the aircraft is doing besides moving: pitch (the sim reports + as nose DOWN), pitch rate, vertical speed, how far the nose gear is
+      // compressed, and what the brakes read, so a nose lift during a push can be matched to a cause
+      var pitch = PS.getVar('PLANE PITCH DEGREES', 'degrees'),
+        pitchRate = PS.getVar('ROTATION VELOCITY BODY X', 'degrees per second'),
+        vs = PS.getVar('VERTICAL SPEED', 'feet per minute'),
+        nose = PS.getVar('CONTACT POINT COMPRESSION:0', 'percent over 100'),
+        bl = PS.getVar('BRAKE LEFT POSITION', 'percent over 100'),
+        br = PS.getVar('BRAKE RIGHT POSITION', 'percent over 100'),
+        bk = PS.brake.read(false);
+      // The nose lifting is logged in the normal log too: each time the pitch has moved another 0.3 deg from where driving began
+      if (pitch.ok && typeof pitch.value === 'number') {
+        if (S.pitch0 === null || S.pitch0 === undefined) {
+          S.pitch0 = pitch.value;
+          S.pitchLogged = 0;
+        } else if (Math.abs(pitch.value - S.pitch0 - S.pitchLogged) >= 0.3) {
+          S.pitchLogged = pitch.value - S.pitch0;
+          log(
+            'nose pitch ' +
+              PS.fmt.num(pitch.value, 2) +
+              ' deg, ' +
+              (S.pitchLogged < 0 ? 'nose UP ' : 'nose down ') +
+              PS.fmt.num(Math.abs(S.pitchLogged), 2) +
+              ' deg from where driving began (t ' +
+              PS.fmt.num(pose.t, 0) +
+              's, speed read ' +
+              PS.fmt.num(vz.value, 2) +
+              ' ft/s, nose gear ' +
+              PS.fmt.num(nose.value, 2) +
+              ')'
+          );
+        }
+      }
+      S.prog.push({ t: now, rem: out.remainingM });
+      if (S.prog.length > 60) S.prog.shift();
+      var pb = pitchBlock();
+      if (pb) {
+        log('stopping: ' + pb + ' (the aircraft may be braked or chocked)');
+        beginStopping(pb, 'ready');
+        return;
+      }
+      PS.logv('push', 'aircraft variables: ' + PS.probe.fbwLine());
       PS.logv(
         'push',
         'drive t=' +
@@ -823,6 +1024,20 @@ PS.push = (function () {
           ', pivot ' +
           PS.fmt.num(out.pivotM, 1) +
           ' m' +
+          ' | pitch ' +
+          PS.fmt.num(pitch.value, 2) +
+          ' (+ nose down) rate ' +
+          PS.fmt.num(pitchRate.value, 2) +
+          ' deg/s, vs ' +
+          PS.fmt.num(vs.value, 0) +
+          ' fpm, nose gear ' +
+          PS.fmt.num(nose.value, 2) +
+          ', brakes L ' +
+          PS.fmt.num(bl.value, 2) +
+          ' R ' +
+          PS.fmt.num(br.value, 2) +
+          ', parking ' +
+          (bk.lvar ? bk.lvar.name.replace(/^L:/, '') + '=' + bk.lvar.value : bk.pct) +
           ' | writes ' +
           S.writes +
           ' failed ' +

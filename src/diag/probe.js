@@ -61,8 +61,86 @@ PS.probe = (function () {
         ' | engines ' +
         (engines.length ? engines.join('; ') : 'not readable')
     );
+    logFbw();
     return { brakeLvar: use, lvars: nonZero, engines: engines };
   }
 
-  return { run: run };
+  // Variables of the FlyByWire A32NX family (the Headwind A330 uses them too) that could explain a nose lift or a tug that is held back. Names from the
+  // A32NX simvar documentation, except the chocks ones, which no page names: those are guesses, and only a non-zero reading proves a name exists.
+  var FBW = [
+    'L:A32NX_PUSHBACK_SYSTEM_ENABLED',
+    'L:A32NX_PUSHBACK_SPD_FACTOR',
+    'L:A32NX_PUSHBACK_HDG_FACTOR',
+    'L:A32NX_IS_STATIONARY',
+    'L:A32NX_GND_EQP_IS_VISIBLE',
+    'L:A32NX_HYD_BRAKE_NORM_LEFT_PRESS',
+    'L:A32NX_HYD_BRAKE_NORM_RIGHT_PRESS',
+    'L:A32NX_HYD_BRAKE_ALTN_LEFT_PRESS',
+    'L:A32NX_HYD_BRAKE_ALTN_RIGHT_PRESS',
+    'L:A32NX_LEFT_BRAKE_PEDAL_INPUT',
+    'L:A32NX_RIGHT_BRAKE_PEDAL_INPUT',
+    'L:A32NX_AUTOBRAKES_ACTIVE',
+    'L:A32NX_NOSE_WHEEL_POSITION',
+    'L:A32NX_HYD_NW_STRG_DISC_ECAM_MEMO',
+    'L:A32NX_LGCIU_1_NOSE_GEAR_COMPRESSED',
+    'L:A32NX_LGCIU_1_LEFT_GEAR_COMPRESSED',
+    'L:A32NX_LGCIU_1_RIGHT_GEAR_COMPRESSED'
+  ];
+  var CHOCK_GUESSES = [
+    'L:A32NX_CHOCKS_ENABLED',
+    'L:A32NX_CHOCKS_VISIBLE',
+    'L:A32NX_CHOCKS_ON',
+    'L:A32NX_CHOCKS_PLACED',
+    'L:A32NX_CHOCKS',
+    'L:A32NX_WHEEL_CHOCKS',
+    'L:A32NX_WHEEL_CHOCKS_ENABLED',
+    'L:A32NX_WHEEL_CHOCKS_VISIBLE',
+    'L:A32NX_GND_EQP_CHOCKS',
+    'L:A32NX_GND_EQP_CHOCKS_ENABLED',
+    'L:A32NX_GND_EQP_CHOCKS_VISIBLE',
+    'L:A32NX_GND_EQP_CHOCKS_ON',
+    'L:A32NX_GND_EQP_CONES_ENABLED',
+    'L:A32NX_GND_EQP_CONES_VISIBLE',
+    'L:A32NX_CONES_ENABLED',
+    'L:A32NX_SAFETY_CONES',
+    'L:A32NX_OPTIONS_CHOCKS',
+    'L:A32NX_CHOCKS_AND_CONES_ENABLED',
+    'L:A32NX_GROUND_EQUIPMENT_CHOCKS'
+  ];
+  function short(n) {
+    return n.replace(/^L:A32NX_/, '');
+  }
+  // One line of the variables above, for the drive log ('?' = the sim would not read it)
+  // The beacon is the one that matters for the chocks: they only stay while the beacon is off.
+  function beacon() {
+    var r = PS.getVar('LIGHT BEACON', 'bool');
+    return 'beacon=' + (r.ok ? r.value : '?');
+  }
+  function fbwLine() {
+    return beacon() + ' ' + FBW.map(function (n) {
+      var v = num(n);
+      return short(n) + '=' + (v === null ? '?' : PS.fmt.num(v, 2));
+    }).join(' ');
+  }
+  // At a push start: which of those answer with a non-zero value, and which chock guesses do
+  function logFbw() {
+    var live = [],
+      zero = 0;
+    FBW.forEach(function (n) {
+      var v = num(n);
+      if (v !== null && v !== 0) live.push(short(n) + '=' + PS.fmt.num(v, 2));
+      else zero++;
+    });
+    var chocks = [];
+    CHOCK_GUESSES.forEach(function (n) {
+      var v = num(n);
+      if (v !== null && v !== 0) chocks.push(short(n) + '=' + PS.fmt.num(v, 2));
+    });
+    PS.log(
+      'probe',
+      beacon() + ' | A32NX variables reading non-zero: ' + (live.length ? live.join(' ') : 'none') + ' (' + zero + ' read 0 or not at all) | chocks guesses reading non-zero: ' + (chocks.length ? chocks.join(' ') : 'none (a zero proves nothing: no page names the chocks variable)')
+    );
+  }
+
+  return { run: run, fbwLine: fbwLine, logFbw: logFbw };
 })();

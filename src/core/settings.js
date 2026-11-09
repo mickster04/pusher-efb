@@ -11,6 +11,7 @@ PS.settings = (function () {
     insetTop: 40,
     insetBottom: 56,
     requireEngines: true,
+    requireBeacon: true,
     rings: false
   };
   var values = {},

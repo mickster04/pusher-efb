@@ -7280,6 +7280,222 @@
             "LocalizationStatus": "TranslationOk"
           }
         }
+      },
+      "PUSHPLANNER.BEFORE_THE_TUG_IS_CALLED_ec78": {
+        "UUID": "b9130cdc-ae50-42b7-aef2-0357752748b5",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T22:11:57.841Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Before the tug is called",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Avant d'appeler le tracteur",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Bevor der Schlepper gerufen wird",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Antes de llamar al tractor",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.START_WITHOUT_THE_BEACON_8c8f": {
+        "UUID": "655e177a-7eaf-4f18-9dc8-97dadaae37b2",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T22:11:57.842Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Start without the beacon",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Démarrer sans le feu anticollision",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Ohne Beacon starten",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Empezar sin la baliza",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.THE_TUG_IS_CALLED_AS_SOON_AS_THE_BEACON_4db5": {
+        "UUID": "cf5ef084-1fa9-401e-acd6-c735dd7f35bb",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T22:11:57.842Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "The tug is called as soon as the beacon is on.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Le tracteur est appelé dès que le feu anticollision est allumé.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Der Schlepper wird gerufen, sobald das Beacon an ist.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "El tractor se llama en cuanto la baliza esté encendida.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.TURN_ON_THE_BEACON_bf70": {
+        "UUID": "6befd63c-d831-4d2a-8bd9-fb8384ada9e3",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T22:11:57.842Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Turn on the beacon",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Allumer le feu anticollision",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Beacon einschalten",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Enciende la baliza",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.WAIT_FOR_THE_BEACON_8fd3": {
+        "UUID": "6fa87db9-689d-490e-a1e8-56d521e67e45",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T22:11:57.842Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Wait for the beacon",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Attendre le feu anticollision",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Auf das Beacon warten",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Esperar a la baliza",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.WAITING_FOR_THE_BEACON_TURN_IT_ON_308e": {
+        "UUID": "08b5db0c-7ddf-44d0-9d61-bd222285896e",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T22:11:57.842Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Waiting for the beacon: turn it on",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "En attente du feu anticollision : allumez-le",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Warte auf das Beacon: bitte einschalten",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Esperando la baliza: enciéndela",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.WITH_WAIT_FOR_THE_BEACON_THE_PUSH_WAITS_9505": {
+        "UUID": "15270d95-f9e9-4eba-ab60-0c0176341cee",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T22:11:57.842Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "With \"Wait for the beacon\" the push waits, before it calls the tug, until the beacon is on, as in a real pushback. The FlyByWire wheel chocks brake the aircraft until then. It does not wait if the aircraft's beacon cannot be read.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Avec « Attendre le feu anticollision », le repoussage attend, avant d'appeler le tracteur, que le feu anticollision soit allumé, comme lors d'un vrai repoussage. Les cales FlyByWire freinent l'aéronef jusque-là. Il n'attend pas si le feu anticollision de l'aéronef n'est pas lisible.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Mit „Auf das Beacon warten“ wartet der Push, bevor er den Schlepper ruft, bis das Beacon an ist, wie bei einem echten Pushback. Bis dahin bremsen die FlyByWire-Bremsklötze das Flugzeug. Es wird nicht gewartet, wenn sich das Beacon des Flugzeugs nicht lesen lässt.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Con «Esperar a la baliza», el push espera, antes de llamar al tractor, a que la baliza esté encendida, como en un pushback real. Hasta entonces, los calzos de FlyByWire frenan la aeronave. No espera si no se puede leer la baliza de la aeronave.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.CALLING_THE_TUG_AGAIN_e23e": {
+        "UUID": "d5bdbcaa-1e11-4bc9-b4e0-ccf87cd4a356",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T22:51:29.763Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Calling the tug again...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Nouvel appel du tracteur...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Schlepper wird erneut gerufen ...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Llamando de nuevo al tractor...",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.THE_SIM_LET_GO_OF_THE_TUG_CALLING_IT_AGA_2682": {
+        "UUID": "035ddc55-79ba-449f-af4a-35207fb9fd1a",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-09T22:51:29.764Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "The sim let go of the tug: calling it again...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Le simulateur a lâché le tracteur : nouvel appel en cours...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Der Simulator hat den Schlepper losgelassen: Er wird erneut gerufen ...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "El simulador soltó el tractor: se vuelve a llamar...",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
       }
     }
   }

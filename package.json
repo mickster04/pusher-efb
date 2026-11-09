@@ -1,6 +1,6 @@
 {
   "name": "push-planner",
-  "version": "0.2.0",
+  "version": "0.2.8",
   "private": true,
   "description": "Push Planner: plans and drives a pushback from the MSFS 2024 EFB. Plain JS, no dependencies.",
   "scripts": {

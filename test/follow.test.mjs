@@ -297,3 +297,21 @@ test('i18n: the planner\'s route warnings and the follower\'s progress texts are
   PS.i18n.use('en-US');
   assert.deepEqual(bad.slice(0, 8), [], bad.length + ' texts not fully translated');
 });
+
+test('follower: the end pin is where the push ends even when the route is heading for another pin beyond it (a turnaround pin)', () => {
+  // back 60 m, then forward to a pin 35 m back: the first leg passes through the end pin on the way
+  const turn = at(180, 60), end = at(180, 35);
+  const planned = {
+    segments: [
+      { sign: -1, points: [[own.lat, own.lon], turn] },
+      { sign: 1, points: [turn, end] }
+    ],
+    radiusM: 40,
+    waypoints: [{ lat: own.lat, lon: own.lon }, { lat: end[0], lon: end[1] }],
+    legs: [{ endHdgDeg: 0 }, { endHdgDeg: 0 }]
+  };
+  const r = simulate(planned);
+  assert.ok(r.done, 'finished: ' + JSON.stringify(r.stops));
+  assert.ok(!r.phases.cuspStop, 'did not drive on to the turnaround pin and back: ' + JSON.stringify(r.phases));
+  assert.ok(r.endErrM < 4, 'stopped at the end pin, ' + r.endErrM.toFixed(1) + ' m off');
+});

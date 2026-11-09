@@ -71,6 +71,16 @@ PS.pages.push({
         PS.settings.set('requireEngines', v === 'on');
       }
     );
+    var beacon = ui.toggle(
+      [
+        { value: 'on', label: PS.t('Wait for the beacon') },
+        { value: 'off', label: PS.t('Start without the beacon') }
+      ],
+      PS.settings.get('requireBeacon') ? 'on' : 'off',
+      function (v) {
+        PS.settings.set('requireBeacon', v === 'on');
+      }
+    );
     var rings = ui.toggle(
       [
         { value: 'off', label: PS.t('Rings off') },
@@ -121,6 +131,12 @@ PS.pages.push({
         ui.panel(
           PS.t('Pushing'),
           ui.field(PS.t('Maximum cruise speed'), maxSpeed.el),
+          ui.field(PS.t('Before the tug is called'), beacon.el),
+          ui.note(
+            PS.t(
+              'With "Wait for the beacon" the push waits, before it calls the tug, until the beacon is on, as in a real pushback. The FlyByWire wheel chocks brake the aircraft until then. It does not wait if the aircraft\'s beacon cannot be read.'
+            )
+          ),
           ui.field(PS.t('Dismissing the tug'), engines.el),
           ui.note(
             PS.t(

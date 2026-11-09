@@ -117,6 +117,8 @@ PS.pages.push({
     var STATUS_TEXT = {
       idle: PS.t('Tug not on'),
       ready: PS.t('Tug on, ready to push'),
+      waitBeacon: PS.t('Waiting for the beacon: turn it on'),
+      reattach: PS.t('Calling the tug again...'),
       attaching: PS.t('Calling the tug...'),
       waitBrake: PS.t('Releasing the parking brake'),
       settling: PS.t('Starting...'),
@@ -126,7 +128,7 @@ PS.pages.push({
       brakeHold: PS.t('Held: parking brake set'),
       done: PS.t('Push finished')
     };
-    var RUNNING = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1 };
+    var RUNNING = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1, reattach: 1 };
 
     function paintState(v) {
       statusBig.textContent = STATUS_TEXT[v.status] || v.status;
@@ -162,7 +164,7 @@ PS.pages.push({
           : '';
       engineLine.style.color = eng && eng.known && eng.ok ? PS.theme.c('good') : '';
       var running = !!RUNNING[v.status],
-        waiting = v.status === 'waitBrake' || v.status === 'attaching';
+        waiting = v.status === 'waitBrake' || v.status === 'attaching' || v.status === 'waitBeacon' || v.status === 'reattach';
       var paused = v.status === 'paused' || (v.status === 'stopping' && v.reason === 'paused');
       var c = PS.push.canStart();
       finishMode = PS.push.finishMode(v.status, PS.plan.count());
@@ -177,7 +179,7 @@ PS.pages.push({
       stopBtn.disabled = !(running || waiting);
       tugBtn.setLabel(v.attached ? PS.t('Dismiss the tug') : PS.t('Call the tug'));
       var holdTug = v.attached && !v.engineGate.ok;
-      tugBtn.disabled = running || v.status === 'attaching' || v.status === 'waitBrake' || holdTug;
+      tugBtn.disabled = running || v.status === 'attaching' || v.status === 'waitBrake' || v.status === 'waitBeacon' || holdTug;
       tugBtn.title = holdTug ? PS.t(v.engineGate.why) : '';
       var svc = PS.services.can();
       PS.services.LIST.forEach(function (sv) {

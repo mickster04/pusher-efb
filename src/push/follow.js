@@ -52,6 +52,9 @@ PS.follow = (function () {
     END_CREEP_M: 3.5,
     END_CREEP_FRACTION: 0.1,
     END_DONE_M: 1.5, // done within this much of the end: the plan's end point is a target, not a tolerance of centimetres
+    PASS_END_M: 3, // a route that is still heading for another pin stops anyway when the aircraft is this near the END pin, facing the way it should
+    PASS_END_HEADING_DEG: 8, // (within this of the planned end heading)
+    PASS_END_MIN_DRIVEN_M: 5, // and has already driven this far, so a start beside the end pin is not an instant finish
     END_HEADING_SLACK_DEG: 3, // and a heading error this small at the end is left alone rather than steered out
     RADIUS_SLOW_REF_M: 40, // arcs planned tighter than this slow the tug in proportion (the plan may tighten a cramped corner)
     // Speed profile along a leg: a limit at each point from the path's curvature, then braking and acceleration passes so the tug is slowed in
@@ -424,6 +427,25 @@ PS.follow = (function () {
           out.remainingM = remainingFrom(st.leg, 0);
         }
         return out;
+      }
+
+      // ---- the end pin reached on the way to another pin (a turnaround pin beyond it, say): stop here, that is where the push was meant to end ----
+      if (st.phase === 'run' && st.leg < legs.length - 1) {
+        var lastLeg = legs[legs.length - 1],
+          endPt = pointAt(lastLeg.path, lastLeg.path.total),
+          endHdg = lastLeg.sign < 0 ? G.normDeg(endPt.tangent + 180) : endPt.tangent;
+        if (
+          Math.sqrt((p.x - endPt.x) * (p.x - endPt.x) + (p.y - endPt.y) * (p.y - endPt.y)) <= K.PASS_END_M &&
+          Math.abs(G.angleDiff(pose.hdgDeg, endHdg)) <= K.PASS_END_HEADING_DEG &&
+          totalM - out.remainingM >= K.PASS_END_MIN_DRIVEN_M
+        ) {
+          st.done = true;
+          out.done = true;
+          out.phase = 'finished';
+          out.remainingM = 0;
+          out.note = 'the end pin was reached on the way to another pin: stopping here';
+          return out;
+        }
       }
 
       // ---- end of this leg ----

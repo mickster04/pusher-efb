@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 
 // ---- a fake sim, installed before the app loads ----
-const sim = { eng: [0, 0], x: 0, y: 0, hdg: 0, velZ: 0, rotY: 0, wait: 1, attached: 0, attachAt: 0, brake: 1, ground: 1, agl: 0, lastWrite: 0, writes: [], t0: 0, ref: { lat: -43.49, lon: 172.53 } };
+const sim = { eng: [0, 0], x: 0, y: 0, hdg: 0, velZ: 0, rotY: 0, wait: 1, attached: 0, attachAt: 0, brake: 1, beacon: 1, fbw: 0, pitch: 0, ground: 1, agl: 0, lastWrite: 0, writes: [], t0: 0, ref: { lat: -43.49, lon: 172.53 } };
 let G, PS;
 function now() { return Date.now(); }
 globalThis.SimVar = {
@@ -18,6 +18,9 @@ globalThis.SimVar = {
       case 'PLANE ALT ABOVE GROUND': return sim.agl;
       case 'PUSHBACK ATTACHED': return sim.attached;
       case 'BRAKE PARKING POSITION': return sim.brake ? 1 : 0;
+      case 'LIGHT BEACON': return sim.beacon;
+      case 'PLANE PITCH DEGREES': return sim.pitch;
+      case 'L:A32NX_PUSHBACK_SYSTEM_ENABLED': return sim.fbw;
       case 'GROUND VELOCITY': return Math.abs(sim.velZ) * 0.5925;
       case 'VELOCITY BODY Z': return sim.velZ;
       case 'NUMBER OF ENGINES': return sim.engines === undefined ? 0 : sim.engines;
@@ -36,6 +39,7 @@ globalThis.SimVar = {
       case 'PUSHBACK WAIT': sim.wait = value ? 1 : 0; break;
       case 'K:TOGGLE_PUSHBACK': sim.attachAt = now() + 250; break;           // the tug comes (or goes) a moment after the event
       case 'K:PARKING_BRAKES': sim.brake = sim.brake ? 0 : 1; break;
+      case 'L:A32NX_PUSHBACK_SYSTEM_ENABLED': sim.fbw = value; break;
       case 'BRAKE PARKING POSITION': if (unit === 'percent over 100') { /* some aircraft ignore a write to it */ } break;
       default: break;
     }
@@ -63,7 +67,7 @@ function run(seconds, each) {
 }
 function reset() {
   PS.push.emergencyStop('test reset'); PS.plan.clear();
-  Object.assign(sim, { eng: [0, 0], engines: undefined, x: 0, y: 0, hdg: 0, velZ: 0, rotY: 0, wait: 1, attached: 0, attachAt: 0, brake: 1, ground: 1, agl: 0, lastWrite: 0, writes: [] });
+  Object.assign(sim, { eng: [0, 0], engines: undefined, x: 0, y: 0, hdg: 0, velZ: 0, rotY: 0, wait: 1, attached: 0, attachAt: 0, brake: 1, beacon: 1, fbw: 0, pitch: 0, ground: 1, agl: 0, lastWrite: 0, writes: [] });
   PS.state.taxi = null; PS.engines.reset(); PS.settings.set('requireEngines', true);
   PS.toasts.clear(); PS.toasts.setAppOpen(false);   // push toasts only show while the app is not on screen
 }
@@ -117,6 +121,7 @@ test('push: the sim detaching the tug stops everything at once', () => {
   run(8, () => { if (PS.push.view().status === 'driving') return false; });
   run(10);
   assert.ok(sim.velZ < -0.5, 'moving back: ' + sim.velZ);
+  sim.pitch = 6;                                   // the nose has lifted badly: no carrying on
   sim.attached = 0;                                // the user (or the sim) takes the tug away
   run(1);
   const v = PS.push.view();
@@ -465,5 +470,78 @@ test('push: starting with pins left at another airport clears them and says ther
   const far = G.offset(sim.ref.lat, sim.ref.lon, 90, 30000); PS.plan.add(far[0], far[1]);
   assert.equal(PS.push.requestStart(), false);
   assert.equal(PS.plan.count(), 0, 'the far pins were cleared');
+  });
+});
+
+test('push: waits for the beacon before calling the tug, carries on once it is on, and the setting can turn the wait off', () => {
+  withClock(50000000, () => {
+  reset(); planBack(60); sim.beacon = 0;
+  assert.ok(PS.push.requestStart(), 'start accepted');
+  assert.equal(PS.push.view().status, 'waitBeacon', 'waiting for the beacon: ' + PS.push.view().status);
+  run(2);
+  assert.equal(sim.attached, 0, 'the tug is not called while the beacon is off');
+  assert.ok(PS.toasts.items.some((t) => t.id === 'push-beacon'), 'the beacon prompt is up');
+  sim.beacon = 1;
+  run(1);
+  assert.equal(sim.attached, 1, 'the beacon is on: the tug was called: ' + PS.push.view().status);
+  assert.ok(!PS.toasts.items.some((t) => t.id === 'push-beacon'), 'the beacon prompt went away');
+  PS.push.stop('test');
+  reset(); planBack(60); sim.beacon = 0;
+  PS.settings.set('requireBeacon', false);
+  assert.ok(PS.push.requestStart(), 'start accepted');
+  assert.equal(PS.push.view().status, 'attaching', 'with the wait off the tug is called at once');
+  PS.settings.set('requireBeacon', true);
+  PS.push.emergencyStop('test end'); run(1);
+  });
+});
+
+test('push: the aircraft\'s own (FlyByWire) pushback system is switched off while our tug is on, kept off if the pilot turns it on, and put back afterwards', () => {
+  withClock(51000000, () => {
+  reset(); planBack(60); sim.fbw = 1; sim.brake = 0;
+  assert.ok(PS.push.requestStart(), 'start accepted');
+  assert.equal(sim.fbw, 0, 'switched off as the push starts');
+  run(3);
+  sim.fbw = 1;                                   // the pilot enables the flyPad pushback while our tug is on
+  run(1);
+  assert.equal(sim.fbw, 0, 'switched off again');
+  PS.push.emergencyStop('test'); PS.push.dismissTug();
+  run(3);
+  assert.equal(sim.fbw, 1, 'put back as it was once the tug is gone');
+  });
+});
+
+test('push: when the sim lets go of the tug mid-push the app calls it again and carries on; too many times, a lifted nose or no progress stops it', () => {
+  withClock(52000000, () => {
+  reset(); sim.brake = 0; sim.attached = 1; sim.wait = 0; planBack(120);
+  assert.ok(PS.push.requestStart());
+  run(30, () => { if (PS.push.view().status === 'driving') return false; });
+  run(15);                                       // driving for a while, with record of progress
+  assert.equal(PS.push.view().status, 'driving');
+  const y0 = sim.y;
+  sim.attached = 0;                              // the sim lets go
+  run(1);
+  assert.ok(['reattach', 'settling'].includes(PS.push.view().status), 'calling the tug again: ' + PS.push.view().status);
+  assert.ok(PS.logs.some((e) => /calling the tug again \(1 of 3/.test(e.msg || e.text || e.message || '')), 'logged the recovery');
+  run(10);
+  assert.equal(PS.push.view().status, 'driving', 'carrying on: ' + PS.push.view().status);
+  run(10);
+  assert.ok(sim.y < y0 - 1 || Math.abs(sim.y - y0) > 1, 'moving again');
+  PS.push.emergencyStop('test end'); run(1);
+  });
+});
+
+test('push: a nose that lifts during the push stops it', () => {
+  withClock(53000000, () => {
+  reset(); sim.brake = 0; sim.attached = 1; sim.wait = 0; planBack(120);
+  assert.ok(PS.push.requestStart());
+  run(30, () => { if (PS.push.view().status === 'driving') return false; });
+  run(4);
+  assert.equal(PS.push.view().status, 'driving');
+  sim.pitch = -4;                                // nose up 4 deg from where it began (the sim reports + as nose down)
+  run(3);
+  const v = PS.push.view();
+  assert.ok(v.status === 'stopping' || v.status === 'ready', 'stopped: ' + v.status);
+  assert.match(v.reason, /nose pitch/, 'says why: ' + v.reason);
+  PS.push.emergencyStop('test end'); run(1);
   });
 });
