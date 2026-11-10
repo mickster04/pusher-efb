@@ -330,7 +330,9 @@ PS.follow = (function () {
       hintQ: 0,
       prev: null, // the last pose, for learning the pivot
       pvNum: 0,
-      pvDen: 0
+      pvDen: 0,
+      bestDen: 0, // the strongest evidence seen this push and the pivot it gave
+      bestM: 0
     };
 
     // Learn how far ahead of its turning point the reported position is: while the nose turns by dpsi the reported position moves sideways by
@@ -347,6 +349,12 @@ PS.follow = (function () {
       st.pvDen = st.pvDen * keep + dpsi * dpsi;
       if (st.pvDen < K.PIVOT_MIN_EVIDENCE) return;
       var est = clamp(st.pvNum / st.pvDen, -K.PIVOT_MAX_M, K.PIVOT_MAX_M);
+      // The evidence fades on a long straight, so by the end of a push it can read as "too little turning to keep" even after a good estimate was made:
+      // remember the estimate made when the evidence was strongest, and save that.
+      if (st.pvDen > st.bestDen) {
+        st.bestDen = st.pvDen;
+        st.bestM = est;
+      }
       st.pivotM += (est - st.pivotM) * Math.min(1, K.PIVOT_BLEND_PER_S * dt);
     }
 

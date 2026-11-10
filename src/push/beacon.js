@@ -13,6 +13,19 @@ PS.beacon = (function () {
     return { ok: ok, on: ok && r.value > 0.5 };
   }
 
+  // The other ways the sim reports the beacon, for the log only (an aircraft whose switch does not drive LIGHT BEACON would show it here):
+  // LIGHT BEACON ON, and bit 1 of LIGHT STATES (bit 0 nav, 1 beacon, 2 strobe, 3 landing, 4 taxi, 5 recognition, 6 wing, 7 logo, 8 cabin).
+  function readings() {
+    var a = PS.getVar('LIGHT BEACON', 'bool'),
+      b = PS.getVar('LIGHT BEACON ON', 'bool'),
+      c = PS.getVar('LIGHT STATES', 'mask');
+    function v(r) {
+      return r.ok && typeof r.value === 'number' ? r.value : '?';
+    }
+    var bit = c.ok && typeof c.value === 'number' ? ((c.value >> 1) & 1) : '?';
+    return 'LIGHT BEACON=' + v(a) + ' LIGHT BEACON ON=' + v(b) + ' LIGHT STATES=' + v(c) + ' (beacon bit ' + bit + ')';
+  }
+
   // Turn the beacon on (or off). cb({ ok, how }) is called once it is known.
   function set(on, cb0) {
     if (changingSince && Date.now() - changingSince < 3000) {
@@ -49,5 +62,5 @@ PS.beacon = (function () {
     }, 450);
   }
 
-  return { read: read, set: set };
+  return { read: read, readings: readings, set: set };
 })();

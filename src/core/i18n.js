@@ -5,7 +5,7 @@
 // (its logs stay English). In a pattern {x} is a piece, translated as a text of its own, and [ ... ] is an optional part; every language's pattern must
 // have the same placeholders and optional parts in the same order (the tests check).
 // PS.tt('...') marks a text defined at load time (a table, a page title) and returns it unchanged: show it with PS.t(...).
-// The tables come from src/lang/pushplanner.loc (the sim's own .loc format) embedded by build.mjs as PS.LANG_TABLE, with the keys of the patterns as
+// The tables come from src/lang/pushplanner.loc (the sim's own .loc format) embedded by tools/build-app.mjs as PS.LANG_TABLE, with the keys of the patterns as
 // PS.LANG_PATTERNS. Logs and diagnostics are not translated.
 
 PS.LANGS = [

@@ -38,7 +38,7 @@ function simulate(planned, opts) {
   }
   const endXY = G.toXY(own.lat, own.lon, endWp.lat, endWp.lon);
   const endLeg = planned.legs[planned.legs.length - 1];
-  return { t, done: !!(c && c.done), stops, maxCte, phases, endErrM: Math.hypot(x - endXY.x, y - endXY.y), headErr: Math.abs(G.angleDiff(psi, endLeg.endHdgDeg)), maxYawSeen, v };
+  return { state: f.state, t, done: !!(c && c.done), stops, maxCte, phases, endErrM: Math.hypot(x - endXY.x, y - endXY.y), headErr: Math.abs(G.angleDiff(psi, endLeg.endHdgDeg)), maxYawSeen, v };
 }
 function planFor(pinsList, setup) {
   plan.clear();
@@ -341,4 +341,17 @@ test('follower: locate never returns nothing, whatever search hint it is given',
   const path = PS.follow.buildPath([[own.lat, own.lon], at(0, 10), at(0, 20)], { lat: own.lat, lon: own.lon });
   const l = PS.follow.locate(path, 0, 5, 40);
   assert.ok(l && isFinite(l.s), 'a hint past the end of a short path still finds the nearest stretch');
+});
+
+test('follower: the pivot estimate made when the evidence was strongest is remembered, so a long straight after the turn does not lose it', () => {
+  const a = at(180, 60), b = at(90, 80, from(a));
+  const r = simulate(planFor([a, b]));
+  assert.ok(r.done, 'finished');
+  assert.ok(r.state.bestDen >= PS.follow.K.PIVOT_MIN_EVIDENCE, 'evidence was gathered in the turn: ' + r.state.bestDen);
+  assert.ok(r.state.bestDen >= r.state.pvDen, 'the best is at least the evidence left at the end (' + r.state.pvDen + ')');
+});
+
+test('profiles: the 787 family is found from the title or model', () => {
+  assert.equal(PS.profiles.find({ title: '787-10', model: 'TT:ATCCOM.AC_MODEL_B78X.0.text', type: '' }).id, 'b787');
+  assert.equal(PS.profiles.find({ title: 'Airbus A320', model: 'A320', type: '' }), null);
 });

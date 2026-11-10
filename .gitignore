@@ -18,3 +18,4 @@ PackageSources/localization/
 setup.log
 build.log
 test.log
+sdk-lookup.log

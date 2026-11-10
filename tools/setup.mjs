@@ -184,7 +184,7 @@ if (!checkOnly && !failed) {
     ['--yes', 'prettier@3.3.3', '--version'],
     (o) => 'prettier ' + firstLine(o)
   );
-  step('app built', 'node', ['build.mjs'], (o) => firstLine(o).replace(root, '.'));
+  step('app built', 'node', ['tools/build-app.mjs'], (o) => firstLine(o).replace(root, '.'));
   const t = run('node', ['--test', 'test/*.test.mjs'], { shell: true });
   const count = (word) => (new RegExp('(?:#|ℹ) ' + word + ' (\\d+)').exec(t.out) || [])[1] || '?';
   const skipped = Number(count('skipped')) || 0;

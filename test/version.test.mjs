@@ -9,5 +9,5 @@ test('version: package.json, the package definition and the built app all say th
   const xml = /<AssetPackage Version="([^"]*)"/.exec(readFileSync('PackageDefinitions/push-planner.xml', 'utf8'))[1];
   const PS = require('../PackageSources/PushPlanner/PushPlanner.js');
   assert.equal(xml, pkg, 'package definition');
-  assert.equal(PS.VERSION, pkg, 'built app (run npm run build:app: build.mjs copies the version in)');
+  assert.equal(PS.VERSION, pkg, 'built app (run npm run build:app: tools/build-app.mjs copies the version in)');
 });

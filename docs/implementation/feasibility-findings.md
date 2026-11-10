@@ -6,7 +6,7 @@ A single EFB app, internal name `PushPlanner`, whose pages were the feasibility 
 
 ## Structure
 
-- The modules in `src/` are concatenated by `build.mjs` (in the order listed there) into `PackageSources/PushPlanner/PushPlanner.js`, wrapped in one IIFE. Modules share one object, `PS`.
+- The modules in `src/` are concatenated by `tools/build-app.mjs` (in the order listed there) into `PackageSources/PushPlanner/PushPlanner.js`, wrapped in one IIFE. Modules share one object, `PS`.
 - `src/styles/styles.css` is inlined into the bundle and injected as a `<style>` element. All class names start with `ps-`.
 - Pure helpers (formatting, geometry, taxiway extraction) must not touch the DOM at load time, so `test/` can load the built file in node.
 - Pages are objects `{ id, title, create(ctx) }` pushed onto `PS.pages`; `create` returns `{ el, onShow(), onHide() }`. Each page owns its timers: it starts them in `onShow` and stops them in `onHide`. The shell shows one page at a time and keeps built pages alive.

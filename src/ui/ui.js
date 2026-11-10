@@ -281,7 +281,7 @@ PS.ui = {
 // Copies text to the clipboard. Returns true only if the browser says it worked.
 
 // Our own icons: inline SVG drawn with the current text colour, so they do not depend on any font in the sim. The shapes live as real SVG files in
-// src/icons/ (kebab-case file name, e.g. arrow-up.svg -> 'arrowUp'); build.mjs puts them into PS.ICONS as lists of path strings on a 24 x 24 grid,
+// src/icons/ (kebab-case file name, e.g. arrow-up.svg -> 'arrowUp'); tools/build-app.mjs puts them into PS.ICONS as lists of path strings on a 24 x 24 grid,
 // where a path starting with '#' is filled and the others are stroked lines.
 // Size: the sim's own stylesheet can stretch an <svg> to fill its container (it did: the icons filled the buttons), so the size is also set in the
 // element's style with !important. Colour: not 'currentColor' (it came out black or white in the sim whatever the button's colour was) but the

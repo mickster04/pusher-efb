@@ -41,7 +41,7 @@ const stopOnFail = () => results.some((r) => r.status === 'FAILED');
 say('');
 say('App');
 {
-  const r = run('node', ['build.mjs']);
+  const r = run('node', ['tools/build-app.mjs']);
   record('app bundle', r.ok ? 'ok' : 'FAILED', r.ok ? r.out.split('\n').pop().replace(root, '.') : r.out.split('\n')[0]);
 }
 if (!stopOnFail() && !noTests) {

@@ -1,7 +1,7 @@
 // Core: constants, sim access wrappers, logging, DOM helper, heartbeat, toasts.
 // Nothing here touches the DOM or starts timers at load time (so node tests can load the bundle).
 
-PS.VERSION = '0.0.0'; // the real one comes from package.json at build time (build.mjs)
+PS.VERSION = '0.0.0'; // the real one comes from package.json at build time (tools/build-app.mjs)
 PS.APP_NAME = 'Push Planner';
 PS.INTERNAL_NAME = 'PushPlanner';
 PS.pages = [];

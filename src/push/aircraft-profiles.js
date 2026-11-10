@@ -16,6 +16,14 @@ PS.profiles = (function () {
       brakeLvar: 'L:A32NX_PARK_BRAKE_LEVER_POS', // read live from this aircraft: 1 with the lever set
       source:
         'fitted from one logged reverse push, 2026-11-08 (A330-900neo): the pivot predicted the logged cross-track error to 0.6 m rms (7 m without it); gain from measured turn rate against command'
+    },
+    {
+      id: 'b787',
+      name: 'Boeing 787 family',
+      match: /787|B78X/i,
+      pivotM: 7,
+      source:
+        'learned while driving one logged push, 2026-11-10 (787-10): the estimate settled at 6.9 m within 15 s of starting and stayed there for the rest of the 173 m; without it the first two starts (pivot 0) stalled'
     }
   ];
 

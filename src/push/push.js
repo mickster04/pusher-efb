@@ -63,6 +63,7 @@ PS.push = (function () {
     detachLogged: false,
     stageLogged: '',
     prevReady: null,
+    beaconSeen: null,
     pitch0: null,
     pitchLogged: 0,
     lastBrakeCheck: 0,
@@ -658,6 +659,12 @@ PS.push = (function () {
   // Called often (the Push tab, the slow loop): when the last step has just been done, by the pilot or by this app, start the push. Looking at an
   // already-complete set of steps (the app has just opened) never starts one: only the moment the last step is completed does.
   function watchSteps() {
+    // The beacon's changes go in the log with every way the sim reports it, so a switch the sim does not follow shows up (a Boeing read 1 throughout)
+    var bnow = PS.beacon.read();
+    if (bnow.ok && bnow.on !== S.beaconSeen) {
+      log('beacon: now ' + (bnow.on ? 'on' : 'off') + ' (' + PS.beacon.readings() + ')');
+      S.beaconSeen = bnow.on;
+    }
     if (S.status !== 'idle' && S.status !== 'ready') {
       S.prevReady = null;
       return;
@@ -706,8 +713,8 @@ PS.push = (function () {
   // Ease speed and turn to zero while still writing every tick (velocity is not sticky), then hold; `next` is where it goes afterwards.
   function beginStopping(reason, next) {
     if (S.follower && S.status === 'driving') {
-      var learnedM = S.follower.state.pivotM,
-        enough = S.follower.state.pvDen >= PS.follow.K.PIVOT_MIN_EVIDENCE; // turned enough this push to have measured it
+      var enough = S.follower.state.bestDen >= PS.follow.K.PIVOT_MIN_EVIDENCE, // turned enough this push, at some point, to have measured it
+        learnedM = enough ? S.follower.state.bestM : S.follower.state.pivotM; // (the estimate made when the evidence was strongest)
       log(
         'pivot at the end of this drive: ' +
           PS.fmt.num(learnedM, 1) +

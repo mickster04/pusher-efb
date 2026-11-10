@@ -30,7 +30,7 @@ English, German, French, Spanish (Spain) and Spanish (Mexico), in the sim's lang
 
 ## Layout of the code
 
-`build.mjs` concatenates the modules in `src/` (in an explicit order listed in the script; it fails if a file is missing from the list) into the one file the sim loads:
+`tools/build-app.mjs` concatenates the modules in `src/` (in an explicit order listed in the script; it fails if a file is missing from the list) into the one file the sim loads:
 
 - `src/core/`: sim access and logging, geometry, saved settings.
 - `src/data/`: taxi and traffic data, the taxi WASM client, facility loading, AI traffic.
@@ -60,7 +60,7 @@ npm run setup     # set this machine up: check the tools, offer to install what 
 npm run clean     # remove the generated JS build output (npm run build:app makes it again)
 npm run clean:full # also the compiled WASM modules and the built package, which need the MSFS SDK on Windows to make again (add --deps to also remove node_modules)
 npm run build:wasm  # both WASM modules (Windows, Git Bash, MSFS 2024 SDK; see wasm/README.md)
-npm run build:all   # the same as build
+npm run build   # the same as build
 npm run harness   # the mock EFB at http://127.0.0.1:8765/
 ```
 
@@ -74,7 +74,7 @@ Everything generated is ignored: `PackageSources/PushPlanner/PushPlanner.js` and
 
 ### Cautions for maintainers
 
-- **One shared scope, one load order.** Every module hangs off a single `PS` object and uses the ones loaded before it, in the order listed in `build.mjs` (`ORDER`). The build refuses a file that is not listed, but it cannot tell that a module uses another that is loaded later: that fails at start-up in the sim, not at build time. Put a new module after everything it uses while loading.
+- **One shared scope, one load order.** Every module hangs off a single `PS` object and uses the ones loaded before it, in the order listed in `tools/build-app.mjs` (`ORDER`). The build refuses a file that is not listed, but it cannot tell that a module uses another that is loaded later: that fails at start-up in the sim, not at build time. Put a new module after everything it uses while loading.
 - **The push state is one big object driven by status strings.** `S` in `src/push/push.js` (`idle`, `ready`, `attaching`, `waitBrake`, `driving`, `paused`, `stopping`, `done`, ...) is read by the Push tab, the toasts and the tug code, and each reads it its own way. A status the UI does not expect can leave no button usable (the Push tab was once stuck after a finished push when new pins were added). When adding or changing a status, check every place that tests `status` (`grep -n "status ===" src`), and add a test in `test/push.test.mjs` for the state the pilot ends up in.
 - **The pages are not unit-tested.** `src/pages/` and `src/ui/colours.js` are only checked by hand in the harness and the sim; the logic they call is tested. Put decisions in a testable function (as `PS.push.finishMode` is) rather than inline in a page.
 - **Old browser.** The sim's browser is old: `npm run lint` enforces ES5-style code (`var`, `function`), and there are no CSS variables, `calc()` or grid.

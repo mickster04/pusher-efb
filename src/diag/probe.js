@@ -116,6 +116,9 @@ PS.probe = (function () {
     var r = PS.getVar('LIGHT BEACON', 'bool');
     return 'beacon=' + (r.ok ? r.value : '?');
   }
+  function beaconAll() {
+    return PS.beacon && PS.beacon.readings ? PS.beacon.readings() : beacon();
+  }
   function fbwLine() {
     return beacon() + ' ' + FBW.map(function (n) {
       var v = num(n);
@@ -138,7 +141,7 @@ PS.probe = (function () {
     });
     PS.log(
       'probe',
-      beacon() + ' | A32NX variables reading non-zero: ' + (live.length ? live.join(' ') : 'none') + ' (' + zero + ' read 0 or not at all) | chocks guesses reading non-zero: ' + (chocks.length ? chocks.join(' ') : 'none (a zero proves nothing: no page names the chocks variable)')
+      beaconAll() + ' | A32NX variables reading non-zero: ' + (live.length ? live.join(' ') : 'none') + ' (' + zero + ' read 0 or not at all) | chocks guesses reading non-zero: ' + (chocks.length ? chocks.join(' ') : 'none (a zero proves nothing: no page names the chocks variable)')
     );
   }
 
