@@ -219,3 +219,8 @@ b, strong { font-family: 'Roboto-Bold', 'Roboto-Regular', Arial, sans-serif; fon
 .ps-compact .ps-themecard { width: 120px; padding: 6px; }
 .ps-compact .ps-collabel { font-size: 12px; }
 .ps-compact .ps-pindetail { display: none; }
+
+/* footer: parts that are fine and parts that are not */
+.ps-foot-ok { color: @goodSoft@; }
+.ps-foot-bad { color: @badSoft@; }
+.ps-foot-sep { color: @dim4@; }

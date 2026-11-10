@@ -159,7 +159,7 @@ PS.facility.loadNearestIntoState = function () {
   return PS.facility.nearestAirport(own.lat, own.lon).then(function (r) {
     return PS.facility.loadAirport(r.ident).then(function (res) {
       var ex = PS.taxi.extract(res.raw);
-      PS.state.taxi = { items: ex.items, parking: ex.parking, icao: r.ident, atLat: own.lat, atLon: own.lon }; // (where the aircraft was when it loaded: a long way from there means another airport)
+      PS.state.taxi = { items: ex.items, parking: ex.parking, icao: r.ident, wasm: !!res.hasWasm, atLat: own.lat, atLon: own.lon }; // (where the aircraft was when it loaded: a long way from there means another airport)
       PS.log(
         'map',
         'loaded ' +

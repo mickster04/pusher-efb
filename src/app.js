@@ -187,22 +187,53 @@ PS.buildShell = function (root) {
   }
   PS.toasts.subscribe(paintToasts);
 
+  // The footer: version | sim access | WASM modules || theme | aircraft | nearest airport | gate. A part that is wrong shows in red.
   function paintFooter() {
-    var env = PS.env();
-    var hb = PS.hb;
-    footer.textContent =
-      PS.APP_NAME +
-      ' ' +
-      PS.VERSION +
-      '  |  SimVar ' +
-      (env.simVar ? 'ok' : 'MISSING') +
-      '  |  Coherent ' +
-      (env.coherent ? 'ok' : 'MISSING') +
-      '  |  timer ticks ' +
-      hb.ticks +
-      '  |  onUpdate frames ' +
-      hb.frames +
-      (hb.paused ? '  |  PAUSED' : '');
+    var env = PS.env(),
+      hb = PS.hb,
+      parts = [];
+    function part(text, cls) {
+      parts.push(PS.h('span', { class: cls || '', text: text }));
+    }
+    function bar(text) {
+      parts.push(PS.h('span', { class: 'ps-foot-sep', text: text }));
+    }
+    var missing = [];
+    if (!env.simVar) missing.push('SimVar');
+    if (!env.coherent) missing.push('Coherent');
+    if (!env.efb) missing.push('EFB API');
+    if (!env.sdk) missing.push('SDK');
+    var tx = PS.state.taxi,
+      taxi = tx ? (tx.wasm ? 'ok' : 'bad') : PS.wasmTaxi && PS.wasmTaxi.isAlive() ? 'ok' : 'unknown', // (airport data that came through it counts as an answer)
+      files = PS.theme && PS.theme.savedStatus ? PS.theme.savedStatus().module : 'unknown'; // yes | no | unknown
+    if (PS.wasmFiles && PS.wasmFiles.isAlive()) files = 'yes';
+    part('v' + PS.VERSION);
+    bar('  |  ');
+    if (missing.length) part(PS.t('Sim: {what} missing', { what: missing.join(', ') }), 'ps-foot-bad');
+    else part(PS.t('Sim OK'), 'ps-foot-ok');
+    bar('  |  ');
+    if (taxi === 'ok' && files === 'yes') part(PS.t('WASM OK'), 'ps-foot-ok');
+    else if (taxi === 'bad' || files === 'no') {
+      part(PS.t('WASM: {what} missing', { what: (taxi === 'bad' ? 'taxi ' : '') + (files === 'no' ? 'files' : '') }), 'ps-foot-bad');
+    } else part(PS.t('WASM ?'));
+    bar('  ||  ');
+    part(PS.t('Theme: {name}', { name: PS.theme && PS.theme.name ? PS.theme.name() : '?' }));
+    bar('  |  ');
+    var ac = PS.aircraftInfo();
+    part(ac.title || '-');
+    bar('  |  ');
+    part(PS.state.taxi && PS.state.taxi.icao ? PS.state.taxi.icao : PS.t('No airport'));
+    bar('  |  ');
+    var g = PS.gate && PS.gate.detect ? PS.gate.detect() : null;
+    part(g && g.at ? g.name : PS.t('No gate'));
+    if (hb.paused) {
+      bar('  |  ');
+      part(PS.t('PAUSED'), 'ps-foot-bad');
+    }
+    PS.clear(footer);
+    parts.forEach(function (n) {
+      footer.appendChild(n);
+    });
   }
   paintFooter();
   // Landscape or portrait: the pages put their map and controls side by side when the tablet is wider than it is tall.

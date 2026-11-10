@@ -9501,6 +9501,258 @@
             "LocalizationStatus": "TranslationOk"
           }
         }
+      },
+      "PUSHPLANNER.NO_AIRPORT_9420": {
+        "UUID": "a2d38426-e72f-4403-883d-983bf851b104",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T04:42:36.686Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "No airport",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Pas d'aéroport",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Kein Flughafen",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Sin aeropuerto",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Sin aeropuerto",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.NO_GATE_eb12": {
+        "UUID": "1a1f8c03-e8a6-4fd4-82a4-0745ecf4efad",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T04:42:36.687Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "No gate",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Pas de porte",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Kein Gate",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Sin puerta",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Sin puerta",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.PAUSED_8964": {
+        "UUID": "82028703-8d13-4621-9a94-95098a9ecd2e",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T04:42:36.687Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "PAUSED",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "EN PAUSE",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "PAUSIERT",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "EN PAUSA",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "EN PAUSA",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.SIM_OK_46c1": {
+        "UUID": "86d7ce42-7d1d-4f70-8357-d6e65a79057e",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T04:42:36.687Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Sim OK",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Sim OK",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Sim OK",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Sim OK",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Sim OK",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.SIM_WHAT_MISSING_4be5": {
+        "UUID": "4c4511ae-92ce-411d-bf58-443db5e5b40f",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T04:42:36.687Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Sim: {what} missing",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Sim : {what} manquant",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Sim: {what} fehlt",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Sim: falta {what}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Sim: falta {what}",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.THEME_NAME_ed84": {
+        "UUID": "4bdceab4-fd77-4489-9907-f0822fb91f1d",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T04:42:36.687Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Theme: {name}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Thème : {name}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Thema: {name}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Tema: {name}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Tema: {name}",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.WASM_ec57": {
+        "UUID": "95c85515-8f0f-4ed9-86f1-b005ae332d08",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T04:42:36.687Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "WASM ?",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "WASM ?",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "WASM ?",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "WASM ?",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "WASM ?",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.WASM_OK_a08e": {
+        "UUID": "4deee989-825f-40e8-b4cb-e737f35cab45",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T04:42:36.687Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "WASM OK",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "WASM OK",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "WASM OK",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "WASM OK",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "WASM OK",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.WASM_WHAT_MISSING_63be": {
+        "UUID": "b491a289-5be2-4903-a59d-95e9d16b2ae9",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T04:42:36.687Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "WASM: {what} missing",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "WASM : {what} manquant",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "WASM: {what} fehlt",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "WASM: falta {what}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "WASM: falta {what}",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
       }
     }
   }

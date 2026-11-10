@@ -906,6 +906,9 @@ PS.theme = (function () {
     workFolderLines: WORK_FOLDER_LINES,
     loadSaved: loadSaved,
     getState: getState,
+    name: function () {
+      return byId(state.id).name;
+    },
     restoreState: restoreState,
     saveTheme: saveTheme,
     deleteSaved: deleteSaved,
