@@ -126,7 +126,8 @@
 .ps-pinrow { padding: 6px 0; }
 .ps-pindesc { margin-bottom: 4px; }
 .ps-pinbtns { margin-bottom: 0; }
-.ps-pinbtns > * { margin: 0 8px 0 0; }
+.ps-pinbtns > * { margin: 0 6px 0 0; }
+.ps-pinbtns .ps-btn.ps-small { padding: 6px 8px; }
 .ps-pinrow .ps-btn { margin-left: 0; }
 .ps-pinbtns .ps-pindel { margin-left: auto; margin-right: 0; }
 /* buttons did not take the page font, and their own font has no degree sign */

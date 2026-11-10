@@ -234,6 +234,29 @@ test('suggest: end points are kept out of junctions where the push can go a litt
   });
 });
 
+test('suggest: a named taxiway or link joining a taxiway is a junction to keep clear of, an unnamed apron lane is not', () => {
+  const ref = { lat: -43.49, lon: 172.53 };
+  const xy = (x, y) => G.fromXY(ref.lat, ref.lon, x, y);
+  const nearJunction = (feeder) => {
+    const items = [
+      { name: 'A', rawName: 'A', category: 'Taxiway', rawType: 1, points: [xy(-200, -60), xy(250, -60)] },
+      Object.assign({ category: 'Taxiway', rawType: 1, points: [xy(20, -60), xy(20, -200)] }, feeder)
+    ];
+    let n = 0;
+    [20, 340].forEach((hdg) => {
+      PS.suggest.suggest(items, { lat: ref.lat, lon: ref.lon, hdgDeg: hdg }, []).filter((x) => /^Taxiway A, /.test(x.title)).forEach((x) => {
+        const e = x.waypoints[x.waypoints.length - 1], q = G.toXY(ref.lat, ref.lon, e.lat, e.lon);
+        if (Math.hypot(q.x - 20, q.y - -60) < 35) n++;
+      });
+    });
+    return n;
+  };
+  const taxiway = nearJunction({ name: 'B', rawName: 'B' }), lane = nearJunction({ name: '(unnamed)', rawName: '' }), link = nearJunction({ name: 'LINK 3', rawName: 'LINK 3' });
+  assert.equal(taxiway, 0, 'another taxiway: ends are kept clear of the junction');
+  assert.ok(lane > 0, 'an apron lane joining it does not push the end away');
+  assert.ok(link < lane, 'a link still counts (as at EGLL, where a named link behind the aircraft was kept clear of): it pushes ends away more than a lane does: ' + link + ' vs ' + lane);
+});
+
 test('suggest: a busy layout does not push a valid option out of the list (no small cap on candidates)', () => {
   const ref = { lat: -43.49, lon: 172.53 };
   const xy = (x, y) => G.fromXY(ref.lat, ref.lon, x, y);

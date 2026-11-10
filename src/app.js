@@ -256,6 +256,9 @@ PS.buildShell = function (root) {
   showPage(PS.pages[0].id);
   return {
     showPage: showPage,
+    currentPage: function () {
+      return current;
+    },
     dispose: function () {
       if (current && instances[current] && instances[current].onHide) instances[current].onHide();
       clearInterval(footTimer);
@@ -270,15 +273,16 @@ PS.buildShell = function (root) {
   };
 };
 
-// Use the sim's language (there is no language setting). When the shell is already built it is built again (the texts are put on the screen once), and Settings is shown.
+// Use the sim's language (there is no language setting). When the shell is already built it is built again (the texts are put on the screen once) and the page that was open is shown again.
 PS.applyLanguage = function () {
   PS.i18n.use();
   PS.log('app', PS.i18n.describe());
   if (!PS.liveShell || !PS.rootEl) return;
+  var page = PS.liveShell.currentPage ? PS.liveShell.currentPage() : null; // stay where the pilot is (at start that is the first tab, Plan)
   PS.liveShell.dispose();
   PS.clear(PS.rootEl);
   PS.liveShell = PS.buildShell(PS.rootEl);
-  PS.liveShell.showPage('settings');
+  if (page) PS.liveShell.showPage(page);
 };
 
 PS.createViewClass = function (sdk) {

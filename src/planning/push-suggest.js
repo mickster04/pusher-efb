@@ -297,7 +297,7 @@ PS.suggest = (function () {
   }
 
   // ---- junctions ----
-  // Where other taxiways, links or lanes meet the one being pushed to. An aircraft stopped inside a junction (its triangle) blocks it, so end points
+  // Where other named taxiways or links meet the one being pushed to (not unnamed apron lanes: see junctionsFor). An aircraft stopped inside a junction (its triangle) blocks it, so end points
   // within JUNCTION_CLEAR_M of one are penalised in the ranking, which moves the end beyond the junction when that costs a little more push.
   var JUNCTION_JOIN_M = 6,
     JUNCTION_CLEAR_M = 35,
@@ -306,12 +306,18 @@ PS.suggest = (function () {
   function junctionsFor(layout, name) {
     layout.junctionCache = layout.junctionCache || {};
     if (layout.junctionCache[name]) return layout.junctionCache[name];
+    // Named paths (taxiways, and links, which are named taxiways at some airports) meeting each other are junctions to keep clear of. An unnamed apron
+    // lane joining a taxiway is a feeder, and when pushing to a lane there is no telling which paths are the main ones: no junctions then.
+    if (name === LANE_KEY) {
+      layout.junctionCache[name] = [];
+      return layout.junctionCache[name];
+    }
     var own = layout.paths.filter(function (p) {
         return inGroup(p, name);
       }),
       pts = [];
     layout.paths.forEach(function (o) {
-      if (inGroup(o, name) || !(isTaxiwayPath(o) || isNamedPath(o) || isLanePath(o))) return;
+      if (inGroup(o, name) || !isNamedPath(o)) return;
       [o.points[0], o.points[1]].forEach(function (q) {
         for (var i = 0; i < own.length; i++) {
           var n = nearestOnPath(own[i].points[0], own[i].points[1], q[0], q[1]);
@@ -324,7 +330,7 @@ PS.suggest = (function () {
     });
     // ...and where this taxiway's own ends meet or touch one of the others (a taxiway that starts on another is a junction too)
     var others = layout.paths.filter(function (o) {
-      return !inGroup(o, name) && (isTaxiwayPath(o) || isNamedPath(o) || isLanePath(o));
+      return !inGroup(o, name) && isNamedPath(o);
     });
     own.forEach(function (o) {
       [o.points[0], o.points[1]].forEach(function (q) {
@@ -1410,7 +1416,7 @@ PS.suggest = (function () {
           if (!near && Math.abs(wrap180(o.facingDeg - s.facingDeg)) < POINT_MIN_APART_DEG) near = o;
         });
         if (near) {
-          dropped.push({ s: s, why: 'it faces within ' + POINT_MIN_APART_DEG + ' degrees of "' + near.title + '"' });
+          dropped.push({ s: s, near: near, why: 'it faces within ' + POINT_MIN_APART_DEG + ' degrees of "' + near.title + '"' });
           return;
         }
         if (added >= POINT_MAX) {
@@ -1463,6 +1469,28 @@ PS.suggest = (function () {
       });
       kept = outside;
     }
+    // A pointing option held back only because of an option that was dropped later (one inside a junction, say) gets another look.
+    f.dropped
+      .filter(function (d) {
+        return d.near && kept.indexOf(d.near) < 0;
+      })
+      .forEach(function (d) {
+        var c = d.s,
+          ce = c.waypoints[c.waypoints.length - 1],
+          fine = !(typeof c.junctionM === 'number' && c.junctionM < JUNCTION_HARD_M);
+        kept.forEach(function (o) {
+          var oe = o.waypoints[o.waypoints.length - 1];
+          if (Math.abs(wrap180(o.facingDeg - c.facingDeg)) < POINT_MIN_APART_DEG) fine = false;
+          if (G.distanceM(ce.lat, ce.lon, oe.lat, oe.lon) < MIN_END_SEP_M) fine = false; // the same spot as one already offered
+        });
+        var pointingKept = kept.filter(function (o) {
+          return o.kind === 'pointing';
+        }).length;
+        if (fine && pointingKept < POINT_MAX) {
+          kept.push(c);
+          f.dropped.splice(f.dropped.indexOf(d), 1);
+        }
+      });
     kept.forEach(function (s) {
       s.detail += '. Tightest arc ' + Math.round(s.tightestRadiusM) + ' m (tug turns at ' + P.PATH_TURN_RADIUS_M + ' m)';
     });

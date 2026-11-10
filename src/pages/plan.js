@@ -32,7 +32,11 @@ PS.pages.push({
     var sugBox = h('div');
     var airportLine = h('div', { class: 'ps-kv', text: '' });
     var timer = null;
-    var airportLoading = false;
+    var RELOAD_AIRPORT_M = 5000; // further than this from where the airport data was loaded: load the nearest airport again
+    var airportLoading = false,
+      autoLoadFrom = '', // set while an automatic reload is under way: the airport that was loaded when it started
+      autoLoadHoldUntil = 0,
+      lastAutoLoad = 0;
     var drag = null; // { kind: 'handle' | 'pin' | 'none', idx, sx, sy, moved, touch }
     var lastView = null,
       lastPlan = null,
@@ -311,14 +315,20 @@ PS.pages.push({
                 },
                 'ps-small ps-ghost ps-chk' + (auto ? ' on' : '')
               ),
-              ui.iconButton(
-                'trash',
-                PS.t('Delete'),
-                function () {
-                  deletePin(i);
-                },
-                'ps-small ps-ghost ps-pindel'
-              )
+              // Icon only (the name is its hover text): with the label it did not fit on the row in the small view and wrapped to a line of its own.
+              (function () {
+                var del = ui.iconButton(
+                  'trash',
+                  '',
+                  function () {
+                    deletePin(i);
+                  },
+                  'ps-small ps-ghost ps-pindel'
+                );
+                del.title = PS.t('Delete');
+                del.setAttribute('aria-label', PS.t('Delete'));
+                return del;
+              })()
             )
           )
         );
@@ -658,6 +668,8 @@ PS.pages.push({
       return PS.facility.loadNearestIntoState().then(
         function (icao) {
           airportLoading = false;
+          if (autoLoadFrom && icao === autoLoadFrom) autoLoadHoldUntil = Date.now() + 120000; // the same airport again: do not keep asking
+          autoLoadFrom = '';
           sug.key = '';
           airportLine.textContent = '';
           renderSuggestions();
@@ -688,6 +700,18 @@ PS.pages.push({
       var view = PS.plotView(w, hgt, { lat: centre[0], lon: centre[1] }, range);
       lastView = view;
       var ownPx = view.toPx(own.lat, own.lon);
+      // The aircraft is a long way from where the airport data was loaded (another airport: a teleport, a new flight): load the nearest one
+      var tx = PS.state.taxi;
+      if (c.live && tx && typeof tx.atLat === 'number' && !airportLoading && !PS.push.isActive()) {
+        var awayM = PS.geo.distanceM(own.lat, own.lon, tx.atLat, tx.atLon),
+          nowMs = Date.now();
+        if (awayM > RELOAD_AIRPORT_M && nowMs > autoLoadHoldUntil && nowMs - lastAutoLoad > 10000) {
+          lastAutoLoad = nowMs;
+          log('the aircraft is ' + PS.fmt.num(awayM / 1000, 1) + ' km from where ' + tx.icao + ' was loaded: loading the nearest airport');
+          autoLoadFrom = tx.icao;
+          loadAirport('moved');
+        }
+      }
       if (c.live && !PS.push.isActive() && PS.plan.dropFarPins(own)) {
         sug.selectedId = null;
         renderedPlan = null; // the lists are rebuilt below
