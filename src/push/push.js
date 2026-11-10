@@ -64,6 +64,10 @@ PS.push = (function () {
     stageLogged: '',
     prevReady: null,
     beaconSeen: null,
+    beaconAll: null,
+    beaconOnReads: 0,
+    brakeSeen: null,
+    brakeWatchAt: 0,
     pitch0: null,
     pitchLogged: 0,
     lastBrakeCheck: 0,
@@ -331,6 +335,12 @@ PS.push = (function () {
     var g = onGround();
     if (g.ok && (!g.ground || (typeof g.agl === 'number' && g.agl > AGL_ABORT_FT)))
       return { ok: false, why: PS.tt('The aircraft is not on the ground.') };
+    if (!isReturn) {
+      // A route that is a loop, or starts far off the way the aircraft points, cannot be driven (the tug cannot turn it on the spot): not started
+      var here = readPose(),
+        ev = here ? PS.plan.evaluate(here) : null;
+      if (ev && ev.severe) return { ok: false, why: PS.tt('The route is a loop or starts far off the way the aircraft points: change the pins.') };
+    }
     return { ok: true, why: '' };
   }
 
@@ -628,7 +638,7 @@ PS.push = (function () {
       log('beacon: ' + (r.ok ? 'on, ' : 'FAILED, ') + r.how);
     });
   }
-  // 'running' (a push is under way), 'finish', 'tugWait' (calling the tug), 'tug', 'brake', 'beacon', 'noPlan', or 'go' (all done: the push starts by itself)
+  // 'running' (a push is under way), 'finish', 'tugWait' (calling the tug), 'tug', 'brake', 'brakeBusy' (a release is under way), 'beacon', 'noPlan', or 'go' (all done: the push starts by itself)
   function nextStep() {
     var st = S.status;
     if ({ settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1, reattach: 1 }[st]) return 'running';
@@ -638,10 +648,10 @@ PS.push = (function () {
     if (st === 'waitBrake') return 'brake';
     if (!PS.tug.isAttached()) return 'tug';
     var b = PS.brake.read(false);
-    if (b.ok && b.set) return 'brake';
+    if (b.ok && b.set) return PS.brake.busy() ? 'brakeBusy' : 'brake';
     if (PS.settings.get('requireBeacon')) {
       var bc = PS.beacon.read();
-      if (bc.ok && !bc.on) return 'beacon';
+      if (bc.ok && !bc.on) return PS.beacon.busy() ? 'beaconBusy' : 'beacon';
     }
     return PS.plan.count() === 0 ? 'noPlan' : 'go';
   }
@@ -659,11 +669,24 @@ PS.push = (function () {
   // Called often (the Push tab, the slow loop): when the last step has just been done, by the pilot or by this app, start the push. Looking at an
   // already-complete set of steps (the app has just opened) never starts one: only the moment the last step is completed does.
   function watchSteps() {
+    // The same for the parking brake: when the lever moves and none of these follows it, the app cannot tell the brake's state (the ATR)
+    var bt = Date.now();
+    if (bt - (S.brakeWatchAt || 0) >= 700) {
+      S.brakeWatchAt = bt;
+      var brd = PS.brake.readings();
+      if (brd !== S.brakeSeen) {
+        if (S.brakeSeen !== undefined && S.brakeSeen !== null) log('brake readings changed: ' + brd);
+        S.brakeSeen = brd;
+      }
+    }
     // The beacon's changes go in the log with every way the sim reports it, so a switch the sim does not follow shows up (a Boeing read 1 throughout)
-    var bnow = PS.beacon.read();
-    if (bnow.ok && bnow.on !== S.beaconSeen) {
-      log('beacon: now ' + (bnow.on ? 'on' : 'off') + ' (' + PS.beacon.readings() + ')');
+    var bnow = PS.beacon.read(),
+      ball = PS.beacon.readings();
+    if (bnow.ok && (bnow.on !== S.beaconSeen || ball !== S.beaconAll)) {
+      // (a change in any of the readings is logged, so a variable that follows the cockpit switch shows even when the app's own verdict did not change)
+      if (S.beaconAll !== null && S.beaconAll !== undefined) log('beacon: ' + (bnow.on ? 'on' : 'off') + ' (' + ball + ')');
       S.beaconSeen = bnow.on;
+      S.beaconAll = ball;
     }
     if (S.status !== 'idle' && S.status !== 'ready') {
       S.prevReady = null;
@@ -885,7 +908,10 @@ PS.push = (function () {
     if (now - S.lastBrakeCheck >= 500 && (live || S.status === 'ready' || S.status === 'waitBrake' || S.status === 'done')) {
       S.lastBrakeCheck = now;
       S.brake = PS.brake.read(false);
-      if (S.status === 'driving' && S.brake.set) {
+      // Set on two readings in a row (a second): a lever still moving, or a toggle landing late, must not stop a push that has only just begun
+      S.brakeSetReads = S.status === 'driving' && S.brake.set ? (S.brakeSetReads || 0) + 1 : 0;
+      if (S.brakeSetReads >= 2) {
+        S.brakeSetReads = 0;
         log('the parking brake was set during the push');
         beginStopping('the parking brake was set', 'brakeHold');
       }
@@ -916,7 +942,10 @@ PS.push = (function () {
       case 'waitBeacon':
         if (now - S.lastBeaconCheck < 400) break;
         S.lastBeaconCheck = now;
-        if (!beaconOff()) {
+        // on for two checks in a row (0.8 s): a flicker must not let the push go on without the beacon
+        S.beaconOnReads = beaconOff() ? 0 : (S.beaconOnReads || 0) + 1;
+        if (S.beaconOnReads >= 2) {
+          S.beaconOnReads = 0;
           log('the beacon is on: calling the tug');
           beginAttach();
         }

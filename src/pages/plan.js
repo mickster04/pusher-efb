@@ -591,6 +591,35 @@ PS.pages.push({
                     before +
                     ' earlier pin(s)'
                 );
+                // A suggestion was planned clean from the pose it was worked out at. If the plan now warns, say what differs, so a mismatch can be found.
+                var nowPose = PS.readOwn(),
+                  chk = nowPose ? PS.plan.evaluate(nowPose) : null;
+                if (chk && chk.warnings && chk.warnings.length) {
+                  log(
+                    'WARNING: suggestion ' +
+                      (i + 1) +
+                      ' (' +
+                      s.title +
+                      ') was offered as clean (tightest arc ' +
+                      Math.round(s.tightestRadiusM) +
+                      ' m, start ' +
+                      Math.round(s.maxStartOffDeg || 0) +
+                      ' deg off) but the plan now warns: ' +
+                      chk.warnings.join(' | ') +
+                      '. Worked out at ' +
+                      (sug.pose ? sug.pose.lat.toFixed(5) + ', ' + sug.pose.lon.toFixed(5) + ' heading ' + Math.round(sug.pose.hdgDeg) : 'an unknown pose') +
+                      ', now at ' +
+                      nowPose.lat.toFixed(5) +
+                      ', ' +
+                      nowPose.lon.toFixed(5) +
+                      ' heading ' +
+                      Math.round(nowPose.hdgDeg) +
+                      '; radius ' +
+                      Math.round(chk.radiusM) +
+                      ' m' +
+                      (chk.adapted ? ' (tightened)' : '')
+                  );
+                }
                 renderSuggestions();
                 showList('suggested', 'a suggestion was chosen');
                 planChanged();
@@ -623,6 +652,7 @@ PS.pages.push({
       try {
         var t0 = Date.now();
         sug.list = PS.suggest.suggest(t.items, own, t.parking);
+        sug.pose = { lat: own.lat, lon: own.lon, hdgDeg: own.hdgDeg }; // where the aircraft was when these were worked out
         sug.tookMs = Date.now() - t0;
         if (!sug.logged || sug.list.length !== before) {
           sug.logged = true;
@@ -706,6 +736,11 @@ PS.pages.push({
       lastView = view;
       var ownPx = view.toPx(own.lat, own.lon);
       // The aircraft is a long way from where the airport data was loaded (another airport: a teleport, a new flight): load the nearest one
+      // The aircraft may have changed (another one loaded): the turn radii follow its size, checked every few seconds
+      if (Date.now() - (PS.state.turnCheckAt || 0) > 4000) {
+        PS.state.turnCheckAt = Date.now();
+        if (PS.plan.useAircraft(PS.aircraftInfo())) sug.key = '';
+      }
       var tx = PS.state.taxi;
       if (c.live && tx && typeof tx.atLat === 'number' && !airportLoading && !PS.push.isActive()) {
         var awayM = PS.geo.distanceM(own.lat, own.lon, tx.atLat, tx.atLon),

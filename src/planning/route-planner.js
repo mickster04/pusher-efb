@@ -14,6 +14,7 @@ PS.planner = (function () {
 
   // Keep these in sync with PathTurnRadiusM / Fillet* in bridge/Constants.cs (and mapGeo.ts).
   var PATH_TURN_RADIUS_M = 40; // the usual planned radius (the tug's radius at its steering limit is about 15-17 m: 30.5 / rotation setting)
+  var baseRadiusM = PATH_TURN_RADIUS_M; // the usual radius for the aircraft in use (PS.plan.useAircraft sets it)
   var turnRadiusM = PATH_TURN_RADIUS_M; // the radius in use; the plan tries smaller ones when a corner is too cramped for this one (setRadius)
   var FILLET_MAX_LEG_FRACTION = 0.5;
   var FILLET_MIN_DEFLECTION_DEG = 2;
@@ -612,11 +613,20 @@ PS.planner = (function () {
     setRadius: function (r) {
       turnRadiusM = r;
     },
+    // The usual radius for the aircraft in use (smaller aircraft turn tighter than the 40 m default); the ladder the plan tries starts here
+    baseRadius: function () {
+      return baseRadiusM;
+    },
+    setBaseRadius: function (r) {
+      baseRadiusM = r;
+      turnRadiusM = r;
+    },
     TURNAROUND_PIN_LABEL: TURNAROUND_PIN_LABEL,
     filletPath: filletPath,
     plannedRouteSegments: plannedRouteSegments,
     segmentWarning: segmentWarning,
     pathLengthM: pathLengthM,
+    pathTurnDeg: pathTurnDeg,
     plannedPinHeadings: plannedPinHeadings,
     withTurnaroundPin: withTurnaroundPin,
     ensureTerminal: ensureTerminal

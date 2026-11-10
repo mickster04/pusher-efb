@@ -14,6 +14,7 @@ PS.probe = (function () {
   function run(reason) {
     var info = PS.aircraftInfo(),
       prof = PS.profiles.find(info);
+    if (PS.plan && PS.plan.useAircraft) PS.plan.useAircraft(info); // the turn radii follow the aircraft's size
     var simBrake = PS.brake.read(false);
     var nonZero = [];
     PS.brake.lvars.forEach(function (n) {
@@ -61,6 +62,7 @@ PS.probe = (function () {
         ' | engines ' +
         (engines.length ? engines.join('; ') : 'not readable')
     );
+    PS.log('probe', 'brake readings: ' + PS.brake.readings());
     logFbw();
     return { brakeLvar: use, lvars: nonZero, engines: engines };
   }

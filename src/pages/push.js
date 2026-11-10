@@ -180,7 +180,9 @@ PS.pages.push({
         tug: ['tug', PS.t('Call the tug'), true, ''],
         tugWait: ['tug', PS.t('Calling the tug...'), false, PS.t('The tug is being called: wait for it.')],
         brake: ['brake', PS.t('Release the brake'), true, ''],
+        brakeBusy: ['brake', PS.t('Releasing the parking brake'), false, PS.t('The brake is being released: wait for it.')],
         beacon: ['beacon', PS.t('Beacon light on'), true, ''],
+        beaconBusy: ['beacon', PS.t('Turning the beacon on...'), false, PS.t('The beacon is being turned on: wait for it.')],
         go: ['play', PS.t('Starting...'), false, PS.t(c.why)],
         noPlan: ['pin', PS.t('Plan the push first'), false, PS.t('There is no plan yet: make one on the Plan tab.')],
         running: ['play', STATUS_TEXT[v.status] || v.status, false, PS.t('A push is under way: stop it first.')],
@@ -199,7 +201,7 @@ PS.pages.push({
       pauseBtn.setLabel(paused ? PS.t('Resume') : PS.t('Pause'));
       pauseBtn.setIcon(paused ? 'play' : 'pause');
       ui.setEnabled(pauseBtn, v.status === 'driving' || paused, PS.t('Pause is available while the tug is driving.'));
-      ui.setEnabled(stopBtn, running || waiting, PS.t('Nothing is running to stop.'));
+      ui.setEnabled(stopBtn, running || waiting || v.attached, PS.t('Nothing is running to stop.')); // (with the tug on there is always something to stop)
       var holdTug = v.attached && !v.engineGate.ok;
       tugBtn.style.display = v.attached && !running && !waiting ? '' : 'none';
       ui.setEnabled(tugBtn, !holdTug, PS.t(v.engineGate.why));

@@ -5,7 +5,8 @@
 //   node tools/build.mjs --no-tests      skip the lint and the tests (faster)
 //   node tools/build.mjs --sdk "G:\MSFS 2024 SDK"   look for the SDK in this folder
 // Exit code 1 if a step that ran failed.
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createLog, findBash, findSdk, machineLine, packageToolPath, root, sdkHas, sdkWasmParts, win } from './lib.mjs';
 
@@ -29,6 +30,27 @@ say('machine: ' + machineLine());
   );
 }
 say('options: ' + (args.join(' ') || 'none'));
+// A fingerprint of the sources, so a copy of the project that has not finished syncing (an older file left behind) can be told apart from a real
+// failure: compare this line, and the per-file lines further down this log, with the same run on the other machine.
+{
+  const files = [];
+  const walk = (d) =>
+    readdirSync(join(root, d)).forEach((n) => {
+      const rel = d + '/' + n;
+      if (statSync(join(root, rel)).isDirectory()) walk(rel);
+      else if (/\.(js|css|loc|svg|json)$/.test(n)) files.push(rel);
+    });
+  walk('src');
+  files.sort();
+  const all = createHash('sha1');
+  const each = files.map((f) => {
+    const b = readFileSync(join(root, f));
+    all.update(f).update(b.toString('utf8').replace(/\r\n/g, '\n')); // (line endings do not count)
+    return f + ' ' + createHash('sha1').update(b.toString('utf8').replace(/\r\n/g, '\n')).digest('hex').slice(0, 8);
+  });
+  say('sources: ' + files.length + ' files, fingerprint ' + all.digest('hex').slice(0, 10));
+  note('source files: ' + each.join('; '));
+}
 
 // ---- the steps ----
 const results = []; // { step, status: 'ok' | 'skipped' | 'FAILED', detail }

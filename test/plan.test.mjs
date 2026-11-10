@@ -299,3 +299,39 @@ test('plan: an end pin with a set heading, straight back along the tail axis, is
   assert.ok(!r.turnaroundAdded, 'no turnaround pin');
   assert.ok(r.totalM < 20, 'about 16 m: ' + r.totalM.toFixed(1));
 });
+
+test('turn radius follows the size of the aircraft: a turboprop plans at 20 m and its warnings name that radius, a jet keeps 40 m', () => {
+  const atr = { title: 'ATR 72-600 Passenger', model: '72-600', type: 'ATR', engines: 2, engineType: 5 };
+  const jet = { title: '787-10', model: 'B78X', type: 'BOEING', engines: 2, engineType: 1 };
+  assert.deepEqual(
+    [PS.profiles.turnFor(atr).radiusM, PS.profiles.turnFor(atr).minM, PS.profiles.turnFor(jet).radiusM, PS.profiles.turnFor(jet).minM],
+    [20, 14, 40, null]
+  );
+  try {
+    PS.plan.useAircraft(atr);
+    assert.equal(PS.planner.baseRadius(), 20, 'the planner uses the aircraft radius');
+    assert.ok(PS.plan.minRadius() <= 14.01, 'and may tighten to the aircraft minimum: ' + PS.plan.minRadius());
+    // a corner a jet could not make: pin 12 m behind and 30 m to one side
+    const bp = G.offset(own0.lat, own0.lon, 180, 12), p = G.offset(bp[0], bp[1], 90, 30);
+    plan.clear(); plan.add(p[0], p[1]);
+    const r = plan.evaluate(own0);
+    assert.ok(r.radiusM <= 20.01, 'planned at the aircraft radius or tighter: ' + r.radiusM);
+    PS.plan.useAircraft(jet);
+    assert.equal(PS.planner.baseRadius(), 40, 'a jet is back to 40 m');
+  } finally {
+    PS.plan.useAircraft({ title: '', engineType: 1 });
+    plan.clear();
+  }
+});
+
+test('plan: a route that starts 180 degrees off the aircraft is severe, and an ordinary push back is not', () => {
+  const here = { lat: -43.49, lon: 172.53, hdgDeg: 0 };
+  plan.clear();
+  const back = G.offset(here.lat, here.lon, 180, 60); plan.add(back[0], back[1]);
+  assert.equal(plan.evaluate(here).severe, false, 'a straight push back is fine');
+  plan.clear();
+  const p = G.offset(here.lat, here.lon, 180, 30); plan.add(p[0], p[1]); plan.setHeading(0, 180);   // a pin behind with its nose set to face back at the aircraft
+  const r = plan.evaluate(here);
+  assert.ok(r.severe || r.turnaroundAdded, 'a forward leg 180 deg off is severe, unless a turnaround pin makes it drivable');
+  plan.clear();
+});

@@ -184,8 +184,8 @@ PS.suggest = (function () {
   // The turn radii a candidate may be planned with: the usual one, then tighter ones down to the Settings "tightest turn" (the same ladder the Plan
   // tab uses for pins you place, so a suggestion plans the way choosing it will).
   function radiusLadder() {
-    var R = P.PATH_TURN_RADIUS_M,
-      setting = PS.settings && PS.settings.get('tightest'),
+    var R = P.baseRadius(),
+      setting = PS.plan && PS.plan.minRadius ? PS.plan.minRadius() : PS.settings && PS.settings.get('tightest'), // (this aircraft's tightest turn)
       m = Math.min(R, typeof setting === 'number' ? setting : 26),
       out = [R];
     for (var r = R * 0.88; r > m + 0.5; r *= 0.88) out.push(r);
@@ -1324,7 +1324,7 @@ PS.suggest = (function () {
       if (g.tightestRadiusM < minR) minR = g.tightestRadiusM;
       if (g.startOffDeg > maxOff) maxOff = g.startOffDeg;
     });
-    s.tightestRadiusM = minR === Infinity ? P.PATH_TURN_RADIUS_M : minR;
+    s.tightestRadiusM = minR === Infinity ? P.baseRadius() : minR;
     s.maxStartOffDeg = maxOff;
     s.segments = segs;
     s.route = route;
@@ -1353,7 +1353,7 @@ PS.suggest = (function () {
   // The planner warns about an arc under 60% of the turn radius it planned at, and plans down to the Settings "tightest turn", so that is the arc below
   // which an option is not offered (it used to be the full setting, stricter than what the planner itself accepts for a pin you place).
   function arcFloor() {
-    var t = PS.settings && PS.settings.get('tightest');
+    var t = PS.plan && PS.plan.minRadius ? PS.plan.minRadius() : PS.settings && PS.settings.get('tightest');
     return (typeof t === 'number' ? Math.min(MIN_ARC_RADIUS_M, t) : MIN_ARC_RADIUS_M) * 0.6;
   }
   // Returns { kept, dropped: [{ s, why }] }: why an option is not offered, so the log can say.
@@ -1492,7 +1492,7 @@ PS.suggest = (function () {
         }
       });
     kept.forEach(function (s) {
-      s.detail += '. Tightest arc ' + Math.round(s.tightestRadiusM) + ' m (tug turns at ' + P.PATH_TURN_RADIUS_M + ' m)';
+      s.detail += '. Tightest arc ' + Math.round(s.tightestRadiusM) + ' m (tug turns at ' + P.baseRadius() + ' m)';
     });
     // Everything the suggester found and what became of it, for the log.
     var report = {

@@ -18,9 +18,32 @@ PS.plan = (function () {
   // lower than they are now. So the plan uses 40 m, and where a corner is too cramped for that it tries smaller radii, down to
   // minRadiusM (a setting), taking the first that plans without a warning.
   var turn = { radiusM: P.PATH_TURN_RADIUS_M, minRadiusM: 26 };
-  function setMinRadius(m) {
+  var settingMin = 26, // Settings > Tightest turn
+    aircraftMin = null, // what the aircraft in use can do (null: no profile of its size)
+    aircraftTitle = null;
+  function applyMin() {
+    var m = aircraftMin !== null ? Math.min(settingMin, aircraftMin) : settingMin;
     turn.minRadiusM = Math.max(10, Math.min(turn.radiusM, m));
+  }
+  function setMinRadius(m) {
+    settingMin = m;
+    applyMin();
     changed();
+  }
+  // The turn radii follow the size of the aircraft: a turboprop or a light aircraft turns tighter than the 40 m the planner uses for a jet, and the
+  // warnings ("the tug needs N m") then name that aircraft's radius. Called with PS.aircraftInfo() whenever the aircraft may have changed.
+  function useAircraft(info) {
+    var t = PS.profiles ? PS.profiles.turnFor(info) : { radiusM: P.PATH_TURN_RADIUS_M, minM: null, why: '' };
+    var title = (info && info.title) || '';
+    if (title === aircraftTitle && turn.radiusM === t.radiusM) return false;
+    aircraftTitle = title;
+    turn.radiusM = t.radiusM;
+    P.setBaseRadius(t.radiusM);
+    aircraftMin = t.minM;
+    applyMin();
+    PS.log('plan', 'turn radius for ' + (title || 'the aircraft') + ': usual ' + t.radiusM + ' m, tightest ' + Math.round(turn.minRadiusM) + ' m' + (t.why ? ' (' + t.why + ')' : ''));
+    changed();
+    return true;
   }
 
   function newId() {
@@ -308,6 +331,7 @@ PS.plan = (function () {
         segments: segs,
         legs: [],
         warnings: [],
+        severe: false,
         totalM: 0,
         route: [[origin.lat, origin.lon]]
       };
@@ -334,6 +358,8 @@ PS.plan = (function () {
               Math.round(endWp.headingDeg) +
               ' deg: the turn does not fit at this radius. Move the pin further away, or change its heading.';
         }
+        // A loop (over 270 deg of turning in the path) or a start more than 90 deg off the aircraft's axis cannot be driven at all
+        if (P.pathTurnDeg(g.points) > 270 || g.startOffDeg > 90) out.severe = true;
         out.legs.push({
           sign: g.sign,
           lengthM: len,
@@ -502,6 +528,7 @@ PS.plan = (function () {
       legs: [],
       totalM: 0,
       warnings: [],
+      severe: false,
       turnaroundAdded: false,
       info: '',
       radiusM: turn.radiusM,
@@ -541,6 +568,7 @@ PS.plan = (function () {
       res.segments = best.segments;
       res.legs = best.legs;
       res.warnings = best.warnings;
+      res.severe = !!best.severe;
       res.totalM = best.totalM;
       res.route = best.route;
       res.radiusM = best.radiusM;
@@ -605,6 +633,10 @@ PS.plan = (function () {
     turn: function () {
       return turn;
     },
-    setMinRadius: setMinRadius
+    setMinRadius: setMinRadius,
+    useAircraft: useAircraft,
+    minRadius: function () {
+      return turn.minRadiusM;
+    }
   };
 })();

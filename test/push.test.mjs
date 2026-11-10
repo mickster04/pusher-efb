@@ -18,7 +18,8 @@ globalThis.SimVar = {
       case 'PLANE ALT ABOVE GROUND': return sim.agl;
       case 'PUSHBACK ATTACHED': return sim.attached;
       case 'BRAKE PARKING POSITION': return sim.brake ? 1 : 0;
-      case 'LIGHT BEACON': return sim.beacon;
+      case 'LIGHT BEACON': return sim.beaconSwitch !== undefined ? sim.beaconSwitch : sim.beacon;   // the switch variable can say 1 while the light is off (the ATR)
+      case 'LIGHT BEACON ON': return sim.beacon;
       case 'PLANE PITCH DEGREES': return sim.pitch;
       case 'L:A32NX_PUSHBACK_SYSTEM_ENABLED': return sim.fbw;
       case 'GROUND VELOCITY': return Math.abs(sim.velZ) * 0.5925;
@@ -38,9 +39,11 @@ globalThis.SimVar = {
       case 'ROTATION VELOCITY BODY Y': sim.rotY = value; sim.lastWrite = now(); break;
       case 'PUSHBACK WAIT': sim.wait = value ? 1 : 0; break;
       case 'K:TOGGLE_PUSHBACK': sim.attachAt = now() + 250; break;           // the tug comes (or goes) a moment after the event
-      case 'K:PARKING_BRAKES': sim.brake = sim.brake ? 0 : 1; break;
+      case 'K:PARKING_BRAKES': if (sim.brakeLagMs) setTimeout(() => { sim.brake = sim.brake ? 0 : 1; }, sim.brakeLagMs); else sim.brake = sim.brake ? 0 : 1; sim.brakeToggles = (sim.brakeToggles || 0) + 1; break;
       case 'L:A32NX_PUSHBACK_SYSTEM_ENABLED': sim.fbw = value; break;
-      case 'LIGHT BEACON': if (!sim.beaconLocked) sim.beacon = value; break;   // some aircraft ignore a write to it
+      case 'LIGHT BEACON': break;   // the switch variable is not written by the app any more
+      case 'K:BEACON_LIGHTS_SET': if (!sim.beaconLocked) sim.beacon = value ? 1 : 0; break;   // some aircraft ignore the key events
+      case 'K:TOGGLE_BEACON_LIGHTS': if (!sim.beaconLocked) sim.beacon = sim.beacon ? 0 : 1; break;
       case 'BRAKE PARKING POSITION': if (unit === 'percent over 100') { /* some aircraft ignore a write to it */ } break;
       default: break;
     }
@@ -68,7 +71,7 @@ function run(seconds, each) {
 }
 function reset() {
   PS.push.emergencyStop('test reset'); PS.plan.clear();
-  Object.assign(sim, { eng: [0, 0], engines: undefined, x: 0, y: 0, hdg: 0, velZ: 0, rotY: 0, wait: 1, attached: 0, attachAt: 0, brake: 1, beacon: 1, beaconLocked: false, fbw: 0, pitch: 0, ground: 1, agl: 0, lastWrite: 0, writes: [] });
+  Object.assign(sim, { eng: [0, 0], engines: undefined, x: 0, y: 0, hdg: 0, velZ: 0, rotY: 0, wait: 1, attached: 0, attachAt: 0, brake: 1, brakeLagMs: 0, brakeToggles: 0, beacon: 1, beaconSwitch: undefined, beaconLocked: false, fbw: 0, pitch: 0, ground: 1, agl: 0, lastWrite: 0, writes: [] });
   PS.state.taxi = null; PS.engines.reset(); PS.settings.set('requireEngines', true);
   PS.toasts.clear(); PS.toasts.setAppOpen(false);   // push toasts only show while the app is not on screen
 }
@@ -581,5 +584,44 @@ test('push: opening the app with every step already done does not start a push, 
   PS.plan.clear();
   assert.notEqual(PS.push.nextStep(), 'go', 'steps done but nothing planned: not ready to go (no plan, or Finish after an earlier push)');
   PS.push.emergencyStop('test end'); run(1);
+  });
+});
+
+test('push: a brake that is slow to move (the ATR) gets one toggle, not one per press, and ends released', () => {
+  withClock(56000000, () => {
+  reset(); planBack(60); sim.attached = 1; sim.wait = 0; sim.beacon = 1; sim.brake = 1; sim.brakeLagMs = 1800;
+  PS.push.watchSteps();
+  assert.equal(PS.push.nextStep(), 'brake');
+  PS.push.doNextStep(); run(1); PS.push.doNextStep(); run(1); PS.push.doNextStep();   // the pilot presses it three times while it is moving
+  assert.equal(sim.brakeToggles, 1, 'one PARKING_BRAKES toggle, not one per press: ' + sim.brakeToggles);
+  run(5);
+  assert.equal(sim.brake, 0, 'released once the sim got there');
+  assert.ok(!PS.logs.some((e) => /release: FAILED, it would not/.test(e.msg || e.text || e.message || '')), 'not reported as failed while it was still moving');
+  PS.push.emergencyStop('test end'); run(1);
+  sim.brakeLagMs = 0;
+  });
+});
+
+test('push: the beacon counts as on when the light or the switch says so, and a loop route is not started', () => {
+  withClock(57000000, () => {
+  reset(); planBack(60); sim.attached = 1; sim.wait = 0; sim.brake = 0;
+  sim.beacon = 0; sim.beaconSwitch = 1;               // the switch says on, the light is dark (no power yet)
+  assert.equal(PS.beacon.read().on, true, 'the switch being on counts');
+  sim.beaconSwitch = 0;                                // both off
+  assert.equal(PS.beacon.read().on, false, 'both off is off');
+  assert.equal(PS.push.nextStep(), 'beacon', 'so the beacon is the next step');
+  sim.beaconSwitch = undefined;
+  // a route the planner calls severe (a loop, or a start more than 90 deg off the aircraft's axis) cannot be driven: not started
+  const real = PS.plan.evaluate;
+  PS.plan.evaluate = (o) => Object.assign(real(o), { severe: true });
+  try {
+    sim.beacon = 1;
+    assert.equal(PS.push.canStart(false).ok, false, 'not startable');
+    assert.match(PS.push.canStart(false).why, /loop or starts far off/, 'says why');
+    assert.equal(PS.push.requestStart(), false, 'and a start is refused');
+  } finally {
+    PS.plan.evaluate = real;
+  }
+  PS.plan.clear();
   });
 });

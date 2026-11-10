@@ -44,5 +44,24 @@ PS.profiles = (function () {
     return WIDEBODY.test(text) ? 25 : 15;
   }
 
-  return { find: find, list: LIST, gateNearM: gateNearM };
+  // The turn radius the plan uses for an aircraft: a turboprop, piston or light aircraft (engine type 0 or 5, or a known small type) turns much tighter than
+  // a jet. The tug in the sim turns at 30.5 / rotation setting metres whatever the aircraft (about 15 m at its limit), so the jet's 40 m is a safe margin
+  // and the small aircraft's 20 m leaves the same margin over a smaller turning circle. radiusM is the usual radius, minM the tightest the plan may try.
+  var SMALL = new RegExp(
+    [
+      'ATR', 'DHC', 'Dash ?8', 'Q400', 'Saab', 'Fokker', 'Beech', 'King ?Air', 'Cessna', 'Piper', 'Cirrus', 'Diamond', 'TBM', 'PC-?12',
+      'Pilatus', 'Bonanza', 'Baron', 'Caravan', 'Citation ?(CJ|M2)', 'Learjet 7', 'Phenom', 'Dornier', 'Jetstream', 'Twin Otter', 'Kodiak'
+    ].join('|'),
+    'i'
+  );
+  function turnFor(info) {
+    var text = info ? [info.title, info.model, info.type].join(' ') : '';
+    var prop = info && (info.engineType === 0 || info.engineType === 5);
+    if (prop || SMALL.test(text) || (info && info.engines === 1)) {
+      return { radiusM: 20, minM: 14, why: prop ? 'a propeller aircraft' : 'a small aircraft' };
+    }
+    return { radiusM: 40, minM: null, why: '' };
+  }
+
+  return { find: find, list: LIST, gateNearM: gateNearM, turnFor: turnFor };
 })();

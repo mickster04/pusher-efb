@@ -9389,6 +9389,118 @@
             "LocalizationStatus": "TranslationOk"
           }
         }
+      },
+      "PUSHPLANNER.THE_BRAKE_IS_BEING_RELEASED_WAIT_FOR_IT_2492": {
+        "UUID": "326194ac-c930-420f-9a70-993374859f6f",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T01:57:10.943Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "The brake is being released: wait for it.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Le frein est en cours de desserrage : patientez.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Die Bremse wird gelöst: bitte warten.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Se está soltando el freno: espera.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Se está soltando el freno: espera.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.THE_BEACON_IS_BEING_TURNED_ON_WAIT_FOR_I_3844": {
+        "UUID": "25b5ec22-c6a2-4429-b0a3-749678e8ba84",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T02:52:32.431Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "The beacon is being turned on: wait for it.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Le feu anticollision est en cours d'allumage : patientez.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Das Beacon wird eingeschaltet: bitte warten.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Se está encendiendo la baliza: espera.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Se está encendiendo la baliza: espera.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.THE_ROUTE_IS_A_LOOP_OR_STARTS_FAR_OFF_TH_cb4e": {
+        "UUID": "7ef5a26d-bb3c-4119-9614-9bc9df564d6d",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T02:52:32.432Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "The route is a loop or starts far off the way the aircraft points: change the pins.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "L'itinéraire est une boucle ou part très loin de la direction de l'aéronef : modifiez les repères.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Die Route ist eine Schleife oder beginnt weit abseits der Flugzeugrichtung: bitte die Pins ändern.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "La ruta es un bucle o empieza muy desviada de la dirección de la aeronave: cambia los marcadores.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "La ruta es un bucle o empieza muy desviada de la dirección de la aeronave: cambia los marcadores.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.TURNING_THE_BEACON_ON_8b49": {
+        "UUID": "d1601212-51a1-46ae-9dbf-4b1cdad1fe12",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T02:52:32.432Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Turning the beacon on...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Allumage du feu anticollision...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Beacon wird eingeschaltet ...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Encendiendo la baliza...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Encendiendo la baliza...",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
       }
     }
   }

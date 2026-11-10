@@ -1,6 +1,6 @@
 # Release checklist
 
-Where the first release stands (pre-release tag `v0.2.15-pre`; working version in `package.json`). Tick items off here.
+Where the first release stands (latest pre-release tag `v0.2.23-pre`; working version in `package.json`). Tick items off here.
 
 ## Done and verified in the sim
 
@@ -14,17 +14,18 @@ Where the first release stands (pre-release tag `v0.2.15-pre`; working version i
 - [x] Automatic tug reconnect after the sim lets go of the tug: seen in a real push, which carried on without trouble.
 - [x] Reload airport data button (map toolbar, on both Plan sub-tabs): loads the nearest airport after moving (the log shows EGLL loaded after NZCH).
 - [x] Suggestions at other airports (junction rule: named taxiways and links count, unnamed apron lanes do not): checked in the logs at NZCH and EGLL.
+- [x] Automatic airport reload after a long move, the 3 degree nose-pitch stop, and the straight-back planner fix (owner confirmed in the sim, 2026-11-10).
+- [x] Push tab next-step main button with automatic start, the beacon readings, and the compact layout on the flight-deck tablet (831 x 558); the three-leg 787 push (258 m) ran through both changes of direction.
+- [x] Boeing 787-10 push (the 787 profile, pivot 7 m): steering within 0.7 m, pitch steady.
 
-## Tested in the mock or by unit tests only
+## Still to confirm: translation only
 
-- [ ] Automatic airport reload after a long move (0.2.15 and later; the 0.2.14 run used the button). Test: on the Plan tab, teleport 5 km or more; the log shows `the aircraft is N km from where <ICAO> was loaded: loading the nearest airport`, then `loaded <ICAO> for the map`.
-- [ ] The 3 degree nose-pitch stop during a push (it has not fired; pitch stayed within 0.12 degrees in the A330 and A380 pushes).
-- [ ] The planner fix for a pin with a set heading straight back (no needless turnaround pin). Test: after a push finishes 10 to 20 m short of its end pin, set the end pin's heading with its handle so it points the way the aircraft already faces and press Start: it should be one straight push back, with no turnaround pin.
 - [ ] Spanish in the sim (`es-ES` and `es-MX`): check long texts on buttons. Set the sim to Spanish or Spanish (Mexico), restart, and look at the Push and Settings tabs.
+- [ ] German and French text fit on buttons (the compact layout helps; look at the Push tab pills and the next-step button).
 
 ## Needs an owner or a tester
 
-- [ ] **Boeing and smaller jets** (owner): tug, tiller, brake, ground services, and the beacon wait (it does not wait when the beacon cannot be read). So far only the A330, A320 and A380.
+- [ ] **A 737 or 777 and a smaller jet** (owner), before a full release: tug, tiller, brake, ground services. So far the A330, A320, A380 and 787 have been pushed.
 - [ ] **Steam work-folder path** (needs a Steam user).
 - [ ] **Native review** of German, French, Spanish (Spain) and Spanish (Mexico): all machine drafts. Release notes and the README ask the community for corrections.
 - [ ] **Package metadata** (owner): Creator "Mike Cleaver" and Manufacturer "Tuatara Airlines" are set; decide on the title and `VisibleInStore` (false means Community-folder only); check the `ContentInfo` thumbnail matches the current icon.

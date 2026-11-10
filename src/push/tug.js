@@ -61,13 +61,27 @@ PS.brake = (function () {
     for (var i = 0; i < names.length; i++) PS.setVar(names[i], 'number', v);
   }
 
-  // Bring the brake to `wantSet` (false = released): write the variables, and if it is still not there, toggle it with the PARKING_BRAKES key event.
+  // Bring the brake to `wantSet` (false = released): write the variables, and if it is still not there, toggle it ONCE with the PARKING_BRAKES key event.
   // cb({ ok, how }) is called once it is known.
-  // PARKING_BRAKES is a toggle: a second change while one is under way could flip it back. A change takes about a second; the flag lapses after 3 s
-  // so one whose timer never ran cannot block the next.
+  // PARKING_BRAKES is a toggle and some aircraft (the ATR) take seconds to move the lever: a toggle sent while an earlier one has not shown yet flips
+  // the brake straight back. So the key event is sent once, the brake is then watched (every 200 ms, up to 4 s) rather than checked once, and a second
+  // change is refused while one is under way. If it still has not moved the pilot is told, and does it by hand.
   var changingSince = 0;
+  var CHANGE_MS = 6000; // the longest a change can take (450 ms + 4 s), after which the flag lapses so one whose timer never ran cannot block the next
+  function busy() {
+    return !!changingSince && Date.now() - changingSince < CHANGE_MS;
+  }
+  // Call yes() as soon as the brake reads `wantSet`, or no() after `ms`.
+  function watch(wantSet, ms, yes, no) {
+    var t0 = Date.now();
+    (function look() {
+      if (read(true).set === wantSet) yes();
+      else if (Date.now() - t0 >= ms) no();
+      else setTimeout(look, 200);
+    })();
+  }
   function change(wantSet, cb0) {
-    if (changingSince && Date.now() - changingSince < 3000) {
+    if (busy()) {
       cb0({ ok: false, how: 'another brake change is still under way' });
       return;
     }
@@ -82,24 +96,65 @@ PS.brake = (function () {
       return;
     }
     writeAll(wantSet);
-    setTimeout(function () {
-      var s1 = read(true);
-      if (s1.set === wantSet) {
+    watch(
+      wantSet,
+      450,
+      function () {
         cb({ ok: true, how: 'by writing the brake variables' });
-        return;
+      },
+      function () {
+        PS.keyEvent('PARKING_BRAKES', 1, 'simvar');
+        watch(
+          wantSet,
+          4000,
+          function () {
+            cb({ ok: true, how: 'with the PARKING_BRAKES key event' });
+          },
+          function () {
+            cb({ ok: false, how: 'it did not ' + (wantSet ? 'set' : 'release') + ' within 4 s (try the cockpit lever)' });
+          }
+        );
       }
-      PS.keyEvent('PARKING_BRAKES', 1, 'simvar');
-      setTimeout(function () {
-        var s2 = read(true);
-        cb({
-          ok: s2.set === wantSet,
-          how: s2.set === wantSet ? 'with the PARKING_BRAKES key event' : 'it would not ' + (wantSet ? 'set' : 'release')
-        });
-      }, 600);
-    }, 450);
+    );
+  }
+
+  // Every variable that could say whether the parking brake is on, as one line, for the log: when the lever moves (by hand, or by a key event) and the
+  // line changes, the variable that follows it is the one to read for that aircraft. The ATR 72 names are guesses (no page names them); a 0 proves nothing.
+  var WATCH = [
+    ['BRAKE PARKING POSITION', 'percent over 100'],
+    ['BRAKE PARKING POSITION', 'bool'],
+    ['BRAKE PARKING INDICATOR', 'bool'],
+    ['BRAKE LEFT POSITION', 'percent over 100'],
+    ['BRAKE RIGHT POSITION', 'percent over 100']
+  ];
+  var WATCH_LVARS = LVARS.concat([
+    'L:ATR_PARKING_BRAKE',
+    'L:ATR_PARK_BRAKE',
+    'L:ATR72_PARK_BRAKE',
+    'L:ATR72_PARKING_BRAKE',
+    'L:ATR_PARKING_BRAKE_LEVER',
+    'L:XMLVAR_PARKING_BRAKE',
+    'L:XMLVAR_Parking_Brake',
+    'L:PARKING_BRAKE',
+    'L:PARK_BRAKE',
+    'L:BRAKE_PARKING',
+    'L:B21_PARKING_BRAKE_LEVER'
+  ]);
+  function readings() {
+    var out = [];
+    WATCH.forEach(function (w) {
+      var r = PS.getVar(w[0], w[1]);
+      out.push(w[0].replace('BRAKE ', '') + (w[1] === 'bool' ? '(b)' : '') + '=' + (r.ok && typeof r.value === 'number' ? r.value : '?'));
+    });
+    WATCH_LVARS.forEach(function (n) {
+      var r = PS.getVar(n, 'number');
+      if (r.ok && typeof r.value === 'number' && r.value !== 0) out.push(n.replace(/^L:/, '') + '=' + r.value);
+    });
+    return out.join(' ');
   }
 
   return {
+    readings: readings,
     lvars: LVARS,
     // Use this lever variable from now on (known from the aircraft's profile, or found by the startup probe) instead of waiting to find it set.
     adopt: function (name) {
@@ -109,6 +164,7 @@ PS.brake = (function () {
       }
     },
     read: read,
+    busy: busy,
     release: function (cb) {
       change(false, cb);
     },
