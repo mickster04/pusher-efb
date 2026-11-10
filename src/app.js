@@ -102,6 +102,7 @@ PS.buildShell = function (root) {
           ' animation frames'
         : 'no hidden period recorded',
       PS.i18n.describe(),
+      'layout: ' + (PS.state.layoutLine || 'unknown'),
       '',
       '=== LOG (' + PS.logs.length + ' lines) ==='
     ];
@@ -210,12 +211,21 @@ PS.buildShell = function (root) {
       hgt = root.clientHeight || window.innerHeight;
     if (!(w > 0 && hgt > 0)) return;
     var land = w > hgt * 1.1;
-    if (land === !!PS.state.landscape && PS.state.layoutLogged) return;
+    // A small tablet (the flight-deck one) gets smaller text and tighter spacing. Settings > Interface size can force either.
+    var size = PS.settings.get('uiSize'),
+      compact = size === 'compact' || (size !== 'normal' && (w < 1000 || hgt < 640));
+    if (land === !!PS.state.landscape && compact === !!PS.state.compact && PS.state.layoutLogged) return;
     PS.state.landscape = land;
+    PS.state.compact = compact;
     PS.state.layoutLogged = true;
-    root.className = 'ps-root' + (land ? ' ps-landscape' : '');
-    PS.logv('app', 'layout: ' + (land ? 'landscape' : 'portrait') + ' (' + w + ' x ' + hgt + ')');
+    root.className = 'ps-root' + (land ? ' ps-landscape' : '') + (compact ? ' ps-compact' : '');
+    PS.state.layoutLine = (land ? 'landscape' : 'portrait') + ', ' + (compact ? 'compact' : 'normal') + ' (' + w + ' x ' + hgt + ')';
+    PS.log('app', 'layout: ' + PS.state.layoutLine);
   }
+  PS.relayout = function () {
+    PS.state.layoutLogged = false;
+    updateOrientation();
+  };
   updateOrientation();
   var orientHook = function () {
     updateOrientation();

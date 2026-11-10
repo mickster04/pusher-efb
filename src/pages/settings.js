@@ -81,6 +81,17 @@ PS.pages.push({
         PS.settings.set('requireBeacon', v === 'on');
       }
     );
+    var uiSize = ui.toggle(
+      [
+        { value: 'auto', label: PS.t('Automatic') },
+        { value: 'normal', label: PS.t('Normal') },
+        { value: 'compact', label: PS.t('Compact') }
+      ],
+      PS.settings.get('uiSize'),
+      function (v) {
+        PS.settings.set('uiSize', v);
+      }
+    );
     var rings = ui.toggle(
       [
         { value: 'off', label: PS.t('Rings off') },
@@ -168,6 +179,15 @@ PS.pages.push({
           ui.note(
             PS.t(
               'Which list the Plan tab shows first. It also switches by itself: placing a pin shows the pins, picking a suggestion shows the suggestions.'
+            )
+          )
+        ),
+        ui.panel(
+          PS.t('Interface size'),
+          ui.field(PS.t('Text and spacing'), uiSize.el),
+          ui.note(
+            PS.t(
+              'Compact makes the text and buttons smaller, for a small tablet such as the one on the flight deck. Automatic chooses it when the screen is small.'
             )
           )
         ),

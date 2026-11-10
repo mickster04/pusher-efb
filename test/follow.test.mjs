@@ -16,7 +16,7 @@ function simulate(planned, opts) {
   opts = opts || {};
   const gain = opts.gain === undefined ? 2.3 : opts.gain, dead = opts.dead === undefined ? 0.30 : opts.dead, dt = 0.05;
   const legs = PS.follow.legsFromPlan(planned);
-  const f = PS.follow.create(legs, { cruiseUnits: opts.cruise || 25 });
+  const f = PS.follow.create(legs, { cruiseUnits: opts.cruise || 25, pivotM: opts.pivotM || 0 });
   let x = opts.startX || 0, y = 0, psi = own.hdgDeg + (opts.startPsi || 0), v = 0, yawRamped = 0, t = 0, maxCte = 0, c = null, stops = [], phases = {}, maxYawSeen = 0;
   const endWp = planned.waypoints[planned.waypoints.length - 1];
   while (t < (opts.maxT || 300)) {
@@ -287,7 +287,7 @@ test('i18n: the planner\'s route warnings and the follower\'s progress texts are
   const arcProf = F.buildProfile(pathOf(arcPts(30, 90, 40)), true, 5);
   for (let s = 0; s < arcProf.total; s += 15) texts.add(F.profileAt(arcProf, s).why);
   const bad = [];
-  for (const lang of ['de-DE', 'fr-FR', 'es-ES']) {
+  for (const lang of ['de-DE', 'fr-FR', 'es-ES', 'es-MX']) {
     PS.i18n.use(lang);
     for (const en of texts) {
       const out = PS.t(en);
@@ -325,4 +325,20 @@ test('profiles: a wide-body gets a wider gate radius than a narrow-body', () => 
   assert.equal(m('Boeing 737-800', 'TT:ATCCOM.AC_MODEL 737.0.text'), 15);
   assert.equal(m('Boeing 757-200'), 15);
   assert.equal(PS.profiles.gateNearM(null), 15);
+});
+
+test('follower: a long first leg then a short second leg is driven to the end with a pivot (the pivot hint must restart on the new leg)', () => {
+  // the real A330 push that got lost at the first cusp: leg 1 had many points, leg 2 few, and the pivot's search index was still on leg 1
+  const a = at(180, 70), b = at(90, 60, from(a)), c = at(0, 25, from(b));   // back with a long arc, then forward
+  const planned = planFor([a, b, c]);
+  assert.ok(planned.legs.length >= 2, 'planned legs: ' + planned.legs.length);
+  const r = simulate(planned, { pivotM: 10 });
+  assert.ok(r.done, 'finished: ' + JSON.stringify(r.stops) + ' phases ' + JSON.stringify(r.phases));
+  assert.ok(r.phases.cuspHold > 0 && r.phases.run > 100, 'drove both legs: ' + JSON.stringify(r.phases));
+});
+
+test('follower: locate never returns nothing, whatever search hint it is given', () => {
+  const path = PS.follow.buildPath([[own.lat, own.lon], at(0, 10), at(0, 20)], { lat: own.lat, lon: own.lon });
+  const l = PS.follow.locate(path, 0, 5, 40);
+  assert.ok(l && isFinite(l.s), 'a hint past the end of a short path still finds the nearest stretch');
 });

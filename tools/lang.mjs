@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const locFile = join(root, 'src', 'lang', 'pushplanner.loc');
-const LANGS = ['en-US', 'fr-FR', 'de-DE', 'es-ES'];
+const LANGS = ['en-US', 'fr-FR', 'de-DE', 'es-ES', 'es-MX'];
 const args = process.argv.slice(2);
 const check = args.includes('--check'),
   strict = args.includes('--strict'),

@@ -143,6 +143,7 @@ PS.follow = (function () {
     var n = path.xy.length,
       best = null;
     if (n < 2) return { i: 0, s: 0, d: 0, cte: 0, tangent: 0 };
+    hint = clamp(hint, 0, n - 2); // a hint left over from a longer leg must not push the search past the end of this one (it found nothing and threw)
     var lo = Math.max(0, hint - 4),
       hi = Math.min(n - 2, hint + 24);
     for (var i = lo; i <= hi; i++) {
@@ -416,6 +417,7 @@ PS.follow = (function () {
           st.leg++;
           st.phase = 'run';
           st.hint = 0;
+          st.hintQ = 0;
           st.s = 0;
           st.stopSince = null;
           st.progressAt = null;

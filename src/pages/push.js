@@ -45,17 +45,25 @@ PS.pages.push({
     function say(msg) {
       PS.log('push', msg);
     }
-    // One main button: Start push, which becomes Finish push once the push is done (they never apply together).
-    var finishMode = false;
-    var startBtn = ui.iconButton(
-      'play',
-      PS.t('Start push'),
+    // The main button is the next step: call the tug, release the brake, beacon light on (each read from the sim, so one done by hand or in the cockpit
+    // moves it on); with all done the push starts by itself. After a push it is Finish push. The smaller Start push below does every step in one go.
+    var stepBtn = ui.iconButton(
+      'tug',
+      PS.t('Call the tug'),
       function () {
-        if (finishMode) PS.push.finish();
-        else PS.push.requestStart();
+        PS.push.doNextStep();
         paint();
       },
       'ps-warn'
+    );
+    var autoBtn = ui.iconButton(
+      'play',
+      PS.t('Start push'),
+      function () {
+        PS.push.requestStart();
+        paint();
+      },
+      'ps-small ps-ghost'
     );
     var returnBtn = ui.iconButton(
       'home',
@@ -81,21 +89,12 @@ PS.pages.push({
       },
       'ps-danger'
     );
-    // The lesser options, on their own row: the tug and the parking brake by hand.
+    // Only to take the tug away again without a push (Finish push does it after one)
     var tugBtn = ui.iconButton(
       'tug',
-      PS.t('Call the tug'),
+      PS.t('Dismiss the tug'),
       function () {
         PS.push.toggleTug();
-        paint();
-      },
-      'ps-small ps-ghost'
-    );
-    var brakeBtn = ui.iconButton(
-      'brake',
-      PS.t('Set the brake'),
-      function () {
-        PS.push.toggleBrake();
         paint();
       },
       'ps-small ps-ghost'
@@ -167,44 +166,47 @@ PS.pages.push({
         waiting = v.status === 'waitBrake' || v.status === 'attaching' || v.status === 'waitBeacon' || v.status === 'reattach';
       var paused = v.status === 'paused' || (v.status === 'stopping' && v.reason === 'paused');
       var c = PS.push.canStart();
-      finishMode = PS.push.finishMode(v.status, PS.plan.count());
-      startBtn.setLabel(finishMode ? PS.t('Finish push') : PS.t('Start push'));
-      startBtn.setIcon(finishMode ? 'flag' : 'play');
-      ui.setEnabled(startBtn, finishMode ? v.canFinish : c.ok, finishMode ? PS.t(v.finishWhy) : PS.t(c.why));
+      var step = v.step;
+      var finishMode = step === 'finish';
+      var STEP = {
+        tug: ['tug', PS.t('Call the tug'), true, ''],
+        tugWait: ['tug', PS.t('Calling the tug...'), false, PS.t('The tug is being called: wait for it.')],
+        brake: ['brake', PS.t('Release the brake'), true, ''],
+        beacon: ['beacon', PS.t('Beacon light on'), true, ''],
+        go: ['play', PS.t('Starting...'), false, PS.t(c.why)],
+        noPlan: ['pin', PS.t('Plan the push first'), false, PS.t('There is no plan yet: make one on the Plan tab.')],
+        running: ['play', STATUS_TEXT[v.status] || v.status, false, PS.t('A push is under way: stop it first.')],
+        finish: ['flag', PS.t('Finish push'), v.canFinish, PS.t(v.finishWhy)]
+      }[step] || ['play', PS.t('Start push'), false, ''];
+      stepBtn.setIcon(STEP[0]);
+      stepBtn.setLabel(STEP[1]);
+      ui.setEnabled(stepBtn, STEP[2], STEP[3]);
+      ui.setEnabled(
+        autoBtn,
+        c.ok && !running && !waiting && step !== 'finish',
+        running || waiting ? PS.t('A push is already under way.') : PS.t(c.why)
+      );
+      autoBtn.style.display = finishMode ? 'none' : '';
       ui.setEnabled(returnBtn, v.canReturn.ok, PS.t(v.canReturn.why));
       pauseBtn.setLabel(paused ? PS.t('Resume') : PS.t('Pause'));
       pauseBtn.setIcon(paused ? 'play' : 'pause');
       ui.setEnabled(pauseBtn, v.status === 'driving' || paused, PS.t('Pause is available while the tug is driving.'));
       ui.setEnabled(stopBtn, running || waiting, PS.t('Nothing is running to stop.'));
-      tugBtn.setLabel(v.attached ? PS.t('Dismiss the tug') : PS.t('Call the tug'));
       var holdTug = v.attached && !v.engineGate.ok;
-      ui.setEnabled(
-        tugBtn,
-        !(running || waiting || holdTug),
-        running ? PS.t('A push is under way: stop it first.') : waiting ? PS.t('A push is waiting to start: press Stop first.') : PS.t(v.engineGate.why)
-      );
+      tugBtn.style.display = v.attached && !running && !waiting ? '' : 'none';
+      ui.setEnabled(tugBtn, !holdTug, PS.t(v.engineGate.why));
       var svc = PS.services.can();
       PS.services.LIST.forEach(function (sv) {
         var b = serviceBtns[sv.id];
         ui.setEnabled(b, svc.ok, PS.t(svc.why));
         b.className = 'ps-btn ps-iconbtn ps-small ps-ghost' + (PS.services.recently(sv.id) ? ' ps-requested' : '');
       });
-      brakeBtn.setLabel(brakeKnown && b.set ? PS.t('Release the brake') : PS.t('Set the brake'));
-      ui.setEnabled(
-        brakeBtn,
-        brakeKnown && !(running && v.status !== 'brakeHold') && v.status !== 'attaching',
-        !brakeKnown
-          ? PS.t('The parking brake cannot be read.')
-          : v.status === 'attaching'
-            ? PS.t('The tug is being called: wait for it.')
-            : PS.t('The push releases and sets the parking brake itself while it runs.')
-      );
       whyLine.textContent =
         v.attached && !v.engineGate.ok && !running
           ? PS.t(v.engineGate.why)
           : v.canReturn.ok && !running
             ? PS.t('Return to gate retraces the push back to where it started ({d}).', { d: PS.fmt.dist(v.returnM) })
-            : !finishMode && !c.ok && !running && !waiting
+            : step !== 'finish' && !c.ok && !running && !waiting
               ? PS.t(c.why)
               : '';
     }
@@ -255,6 +257,7 @@ PS.pages.push({
     function paint() {
       lastPaintAt = Date.now();
       try {
+        PS.push.watchSteps();
         var v = PS.push.view();
         paintState(v);
         paintProgress(v);
@@ -271,10 +274,13 @@ PS.pages.push({
 
     var help = ui.help(PS.t('Pushing'), [
       PS.t(
-        'Start push does it all: it calls the tug if it is not on, releases the parking brake if it is set (do either yourself first and it carries on from there), then drives the plan made on the Plan tab.'
+        'The big button is the next step: Call the tug, then Release the brake, then Beacon light on. Do any of them yourself (in the cockpit, or in the sim) and it moves on to the next. When the last one is done and there is a plan, the push starts by itself.'
       ),
       PS.t(
-        'When the push is done the Start button becomes Finish push: it sets the parking brake if it is not set and dismisses the tug if it is on. Return to gate retraces the push (or as far as it got) back to where it started.'
+        'Start push, the smaller button, does every step for you in one press, then drives the plan made on the Plan tab.'
+      ),
+      PS.t(
+        'When the push is done the big button becomes Finish push: it sets the parking brake if it is not set and dismisses the tug if it is on. Return to gate retraces the push (or as far as it got) back to where it started.'
       ),
       PS.t(
         'It moves the aircraft, so only use it on the ground with the way clear. The push stops at once if you press STOP, the sim takes the tug away, the brake is set, or this app is closed. The tug picks its own speed along the route, up to the maximum in Settings: slower for curves and near the end.'
@@ -298,8 +304,8 @@ PS.pages.push({
             h('div', { class: 'ps-row' }, tugPill, brakePill, gatePill),
             engineLine,
             whyLine,
-            h('div', { class: 'ps-btnrow' }, startBtn, returnBtn, pauseBtn, stopBtn),
-            h('div', { class: 'ps-btnrow' }, tugBtn, brakeBtn),
+            h('div', { class: 'ps-btnrow' }, stepBtn, returnBtn, pauseBtn, stopBtn),
+            h('div', { class: 'ps-btnrow' }, autoBtn, tugBtn),
             h(
               'div',
               { class: 'ps-btnrow' },

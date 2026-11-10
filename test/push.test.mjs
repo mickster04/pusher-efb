@@ -40,6 +40,7 @@ globalThis.SimVar = {
       case 'K:TOGGLE_PUSHBACK': sim.attachAt = now() + 250; break;           // the tug comes (or goes) a moment after the event
       case 'K:PARKING_BRAKES': sim.brake = sim.brake ? 0 : 1; break;
       case 'L:A32NX_PUSHBACK_SYSTEM_ENABLED': sim.fbw = value; break;
+      case 'LIGHT BEACON': if (!sim.beaconLocked) sim.beacon = value; break;   // some aircraft ignore a write to it
       case 'BRAKE PARKING POSITION': if (unit === 'percent over 100') { /* some aircraft ignore a write to it */ } break;
       default: break;
     }
@@ -67,7 +68,7 @@ function run(seconds, each) {
 }
 function reset() {
   PS.push.emergencyStop('test reset'); PS.plan.clear();
-  Object.assign(sim, { eng: [0, 0], engines: undefined, x: 0, y: 0, hdg: 0, velZ: 0, rotY: 0, wait: 1, attached: 0, attachAt: 0, brake: 1, beacon: 1, fbw: 0, pitch: 0, ground: 1, agl: 0, lastWrite: 0, writes: [] });
+  Object.assign(sim, { eng: [0, 0], engines: undefined, x: 0, y: 0, hdg: 0, velZ: 0, rotY: 0, wait: 1, attached: 0, attachAt: 0, brake: 1, beacon: 1, beaconLocked: false, fbw: 0, pitch: 0, ground: 1, agl: 0, lastWrite: 0, writes: [] });
   PS.state.taxi = null; PS.engines.reset(); PS.settings.set('requireEngines', true);
   PS.toasts.clear(); PS.toasts.setAppOpen(false);   // push toasts only show while the app is not on screen
 }
@@ -475,7 +476,7 @@ test('push: starting with pins left at another airport clears them and says ther
 
 test('push: waits for the beacon before calling the tug, carries on once it is on, and the setting can turn the wait off', () => {
   withClock(50000000, () => {
-  reset(); planBack(60); sim.beacon = 0;
+  reset(); planBack(60); sim.beacon = 0; sim.beaconLocked = true;
   assert.ok(PS.push.requestStart(), 'start accepted');
   assert.equal(PS.push.view().status, 'waitBeacon', 'waiting for the beacon: ' + PS.push.view().status);
   run(2);
@@ -542,6 +543,43 @@ test('push: a nose that lifts during the push stops it', () => {
   const v = PS.push.view();
   assert.ok(v.status === 'stopping' || v.status === 'ready', 'stopped: ' + v.status);
   assert.match(v.reason, /nose pitch/, 'says why: ' + v.reason);
+  PS.push.emergencyStop('test end'); run(1);
+  });
+});
+
+test('push: the main button is the next step (tug, brake, beacon), follows what is done outside the app, and the push starts by itself once the last step is done', () => {
+  withClock(54000000, () => {
+  reset(); planBack(80); sim.beacon = 0; sim.brake = 1;
+  assert.equal(PS.push.nextStep(), 'tug', 'first: call the tug');
+  PS.push.watchSteps();                           // the first look never starts anything
+  PS.push.doNextStep();                           // the pilot presses the button
+  run(2);
+  assert.equal(sim.attached, 1, 'the tug was called');
+  assert.equal(PS.push.nextStep(), 'brake', 'then: release the brake');
+  sim.brake = 0;                                   // done by hand in the cockpit
+  assert.equal(PS.push.nextStep(), 'beacon', 'the button moved on by itself: beacon light');
+  run(1);
+  assert.notEqual(PS.push.view().status, 'driving', 'nothing starts while a step is missing');
+  PS.push.doNextStep();                            // beacon light on, through the button
+  run(2);
+  assert.equal(sim.beacon, 1, 'the beacon was turned on');
+  PS.push.watchSteps();
+  run(6);
+  const st = PS.push.view().status;
+  assert.ok(st === 'settling' || st === 'driving', 'all steps done: the push started by itself, status ' + st);
+  PS.push.emergencyStop('test end'); run(1);
+  });
+});
+
+test('push: opening the app with every step already done does not start a push, and no plan is not ready to go', () => {
+  withClock(55000000, () => {
+  reset(); planBack(80); sim.beacon = 1; sim.brake = 0; sim.attached = 1; sim.wait = 0;
+  PS.push.watchSteps();
+  run(2);
+  assert.equal(PS.push.nextStep(), 'go');
+  assert.ok(!PS.push.isActive(), 'no push started on the first look: ' + PS.push.view().status);
+  PS.plan.clear();
+  assert.notEqual(PS.push.nextStep(), 'go', 'steps done but nothing planned: not ready to go (no plan, or Finish after an earlier push)');
   PS.push.emergencyStop('test end'); run(1);
   });
 });

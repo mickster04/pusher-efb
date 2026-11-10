@@ -222,6 +222,10 @@ test('i18n: English is the key, a missing entry falls back to it, {name} and one
   assert.equal(PS.i18n.match('de-AT'), 'de-DE', 'a regional variant maps to the supported language');
   assert.equal(PS.i18n.match('fr-CA'), 'fr-FR');
   assert.equal(PS.i18n.match('ja-JP'), 'en-US', 'an unsupported language is English');
+  assert.equal(PS.i18n.match('es-MX'), 'es-MX', 'the exact regional variant is used when there is one');
+  assert.equal(PS.i18n.match('es-AR'), 'es-ES', 'another Spanish falls back to the first Spanish');
+  PS.i18n.use('es-MX');
+  assert.equal(PS.t('Settings'), 'Configuración', 'Mexican wording (es-ES says Ajustes)');
   PS.i18n.use('en-US');
 });
 
@@ -243,8 +247,8 @@ test('i18n: every text in the code is in the .loc file, none is stale, and every
   const ph = (s) => (s.match(/\{\w+\}/g) || []).sort().join();
   for (const v of Object.values(strings)) {
     const en = v.Languages['en-US'].Text;
-    for (const code of ['de-DE', 'fr-FR', 'es-ES']) if (v.Languages[code].Text) assert.equal(ph(v.Languages[code].Text), ph(en), code + ': ' + en);
-    for (const code of ['de-DE', 'fr-FR', 'es-ES']) if (v.Languages[code].Text) assert.equal((v.Languages[code].Text.match(/\[/g) || []).length, (en.match(/\[/g) || []).length, code + ' optional parts: ' + en);
+    for (const code of ['de-DE', 'fr-FR', 'es-ES', 'es-MX']) if (v.Languages[code].Text) assert.equal(ph(v.Languages[code].Text), ph(en), code + ': ' + en);
+    for (const code of ['de-DE', 'fr-FR', 'es-ES', 'es-MX']) if (v.Languages[code].Text) assert.equal((v.Languages[code].Text.match(/\[/g) || []).length, (en.match(/\[/g) || []).length, code + ' optional parts: ' + en);
   }
 });
 

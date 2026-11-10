@@ -281,7 +281,7 @@ test('i18n: every suggestion title and detail the suggester builds is translated
   }
   assert.ok(seen.size > 20, 'scenarios produced ' + seen.size + ' texts');
   const bad = [];
-  for (const lang of ['de-DE', 'fr-FR', 'es-ES']) {
+  for (const lang of ['de-DE', 'fr-FR', 'es-ES', 'es-MX']) {
     PS.i18n.use(lang);
     for (const en of seen) {
       // the plan page translates the closing ". Tightest arc ..." apart from the rest

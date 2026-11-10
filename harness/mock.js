@@ -9,7 +9,7 @@
     'SIM ON GROUND': 1, 'GENERAL ENG COMBUSTION:1': 0, 'CAMERA STATE': 2, 'BRAKE PARKING POSITION': 1, 'BRAKE PARKING INDICATOR': 1,
     'L:A32NX_PARK_BRAKE_LEVER_POS': 0, 'L:XMLVAR_PARK_BRAKE_POS': 0,
     'NUMBER OF ENGINES': 2, 'GENERAL ENG COMBUSTION:1': 0, 'GENERAL ENG COMBUSTION:2': 0, 'TURBINE ENG N1:1': 0, 'TURBINE ENG N1:2': 0,
-    'PUSHBACK ATTACHED': 0, 'PUSHBACK STATE': 3, 'PUSHBACK WAIT': 1,
+    'PUSHBACK ATTACHED': 0, 'PUSHBACK STATE': 3, 'PUSHBACK WAIT': 1, 'LIGHT BEACON': 0,
     'TITLE': 'Mock Airbus A320neo', 'ATC MODEL': 'A20N', 'ATC AIRLINE': 'MOCK', 'ATC FLIGHT NUMBER': '123'
   };
   var READ_ONLY = { 'PLANE ALTITUDE': 1, 'TITLE': 1, 'GROUND VELOCITY': 1 };
@@ -41,6 +41,7 @@
         console.log('[mock] key event', name, value); window.__lastKey = [name, value];
         if (name === 'K:TOGGLE_PUSHBACK') setTimeout(function () { sim['PUSHBACK ATTACHED'] = sim['PUSHBACK ATTACHED'] ? 0 : 1; }, 300);
         if (name === 'K:PARKING_BRAKES') sim['BRAKE PARKING POSITION'] = sim['BRAKE PARKING POSITION'] ? 0 : 1;
+        if (name === 'K:BEACON_LIGHTS_SET') sim['LIGHT BEACON'] = value ? 1 : 0;
         return Promise.resolve();
       }
       if (READ_ONLY[name]) return Promise.resolve();

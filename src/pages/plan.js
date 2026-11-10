@@ -28,7 +28,7 @@ PS.pages.push({
     var infoLine = h('div', { class: 'ps-kv', text: '' });
     var contactLine = h('div', { class: 'ps-kv', text: '' });
     var routeSummary = h('div');
-    var pinList = h('div');
+    var pinList = h('div', { class: 'ps-pinscroll' }); // scrolls on its own when the pins do not fit
     var sugBox = h('div');
     var airportLine = h('div', { class: 'ps-kv', text: '' });
     var timer = null;
@@ -242,18 +242,23 @@ PS.pages.push({
           h(
             'div',
             { class: 'ps-pinrow' + (i === sel ? ' on' : '') },
-            h('div', {
-              class: 'ps-pindesc',
-              text:
-                (i === pins.length - 1 ? PS.t('End') : PS.t('Pin {i}', { i: i + 1 })) +
-                ': ' +
-                PS.t('{d} on a bearing of {b} deg, nose {h}', {
-                  d: PS.fmt.dist(legs.legs[i].distM),
-                  b: Math.round(legs.legs[i].bearingDeg),
-                  h: hd === null ? '?' : Math.round(hd) + ' deg'
-                }) +
-                (auto ? PS.t(' (auto)') : PS.t(' (set by you)'))
-            }),
+            h(
+              'div',
+              { class: 'ps-pindesc' },
+              h('span', { text: i === pins.length - 1 ? PS.t('End') : PS.t('Pin {i}', { i: i + 1 }) }),
+              // the details (hidden in the compact layout, where the row is just the pin's name and its buttons)
+              h('span', {
+                class: 'ps-pindetail',
+                text:
+                  ': ' +
+                  PS.t('{d} on a bearing of {b} deg, nose {h}', {
+                    d: PS.fmt.dist(legs.legs[i].distM),
+                    b: Math.round(legs.legs[i].bearingDeg),
+                    h: hd === null ? '?' : Math.round(hd) + ' deg'
+                  }) +
+                  (auto ? PS.t(' (auto)') : PS.t(' (set by you)'))
+              })
+            ),
             h(
               'div',
               { class: 'ps-btnrow ps-pinbtns' },
@@ -842,24 +847,7 @@ PS.pages.push({
 
     // ---------------- page ----------------
 
-    var sugPanel = ui.panel(
-      PS.t('Suggested pushes'),
-      airportLine,
-      sugBox,
-      h(
-        'div',
-        { class: 'ps-row' },
-        ui.iconButton(
-          'swap',
-          PS.t('Reload airport data'),
-          function () {
-            loadAirport('asked');
-          },
-          'ps-small ps-ghost'
-        )
-      ),
-      null
-    );
+    var sugPanel = ui.panel(PS.t('Suggested pushes'), sugBox, null);
     var pinPanel = ui.panel(PS.t('Pins'), pinList);
     // Pins and suggestions are two views of the one plan, so only one is shown: placing or editing a pin shows the pins, choosing a suggestion shows the suggestions.
     var listTabs = h('div', { class: 'ps-row' });
@@ -929,6 +917,14 @@ PS.pages.push({
                 },
                 'ps-ghost'
               ),
+              ui.iconButton(
+                'swap',
+                PS.t('Reload airport data'),
+                function () {
+                  loadAirport('asked');
+                },
+                'ps-ghost'
+              ),
               h('div', { class: 'ps-spacer' }),
               h(
                 'div',
@@ -948,6 +944,7 @@ PS.pages.push({
                 help
               )
             ),
+            airportLine,
             canvas,
             contactLine
           )

@@ -61,6 +61,8 @@ PS.push = (function () {
     reattachTries: 0,
     keepBaseline: false,
     detachLogged: false,
+    stageLogged: '',
+    prevReady: null,
     pitch0: null,
     pitchLogged: 0,
     lastBrakeCheck: 0,
@@ -427,6 +429,7 @@ PS.push = (function () {
       return false;
     }
     S.wantRun = true;
+    S.stageLogged = '';
     S.detachLogged = false;
     S.brakeAsked = false;
     var pose = readPose();
@@ -514,8 +517,9 @@ PS.push = (function () {
     );
     PS.fbwPush.hold();
     if (beaconOff()) {
-      log('waiting for the beacon: it is off (FlyByWire keeps the wheel chocks, which brake the aircraft, until it is on)');
+      log('waiting for the beacon: it is off (FlyByWire keeps the wheel chocks, which brake the aircraft, until it is on); turning it on');
       setStatus('waitBeacon', 'the beacon is off');
+      turnBeaconOn(); // the automatic start does it itself; if the aircraft ignores that the push waits for the pilot, as before
     } else beginAttach();
     return true;
   }
@@ -615,6 +619,58 @@ PS.push = (function () {
       reattach();
     });
   }
+  // ---------------- the steps before a push ----------------
+  // The main button on the Push tab is the next thing to do: call the tug, release the brake, beacon light on. Each is read from the sim, so one done outside
+  // this app (or by hand in the cockpit) moves the button on. When the last one is done and there is a plan, the push starts by itself (watchSteps).
+  function turnBeaconOn() {
+    PS.beacon.set(true, function (r) {
+      log('beacon: ' + (r.ok ? 'on, ' : 'FAILED, ') + r.how);
+    });
+  }
+  // 'running' (a push is under way), 'finish', 'tugWait' (calling the tug), 'tug', 'brake', 'beacon', 'noPlan', or 'go' (all done: the push starts by itself)
+  function nextStep() {
+    var st = S.status;
+    if ({ settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1, reattach: 1 }[st]) return 'running';
+    if ((st === 'done' || (st === 'ready' && S.moved)) && PS.plan.count() === 0) return 'finish'; // a push has run and nothing new is planned
+    if (st === 'attaching') return 'tugWait';
+    if (st === 'waitBeacon') return 'beacon';
+    if (st === 'waitBrake') return 'brake';
+    if (!PS.tug.isAttached()) return 'tug';
+    var b = PS.brake.read(false);
+    if (b.ok && b.set) return 'brake';
+    if (PS.settings.get('requireBeacon')) {
+      var bc = PS.beacon.read();
+      if (bc.ok && !bc.on) return 'beacon';
+    }
+    return PS.plan.count() === 0 ? 'noPlan' : 'go';
+  }
+  // Do the next step (what the main button does).
+  function doNextStep() {
+    var step = nextStep();
+    log('next step: ' + step);
+    if (step === 'tug') toggleTug();
+    else if (step === 'brake') releaseBrake();
+    else if (step === 'beacon') turnBeaconOn();
+    else if (step === 'finish') finishPush();
+    else if (step === 'go') requestStart();
+    return step;
+  }
+  // Called often (the Push tab, the slow loop): when the last step has just been done, by the pilot or by this app, start the push. Looking at an
+  // already-complete set of steps (the app has just opened) never starts one: only the moment the last step is completed does.
+  function watchSteps() {
+    if (S.status !== 'idle' && S.status !== 'ready') {
+      S.prevReady = null;
+      return;
+    }
+    var ready = nextStep() === 'go' && canStart(false).ok;
+    if (S.prevReady === null || S.prevReady === undefined) S.prevReady = ready;
+    else if (ready && !S.prevReady) {
+      S.prevReady = true;
+      log('all the steps are done: starting the push');
+      requestStart();
+    } else S.prevReady = ready;
+  }
+
   function beginBrakeCheck() {
     S.brake = PS.brake.read(true);
     if (S.brake.set) {
@@ -791,6 +847,7 @@ PS.push = (function () {
   // ---------------- the loop ----------------
   function slowChecks(now) {
     S.attached = PS.tug.isAttached();
+    watchSteps();
     if (!S.attached && S.moved && S.status !== 'attaching') S.moved = false; // the tug is gone: stop watching the engines for it
     if (S.attached || S.moved) PS.engines.update(false);
     var live = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1 }[S.status];
@@ -876,7 +933,12 @@ PS.push = (function () {
         if (PS.tug.attachedMs() >= SETTLE_MS && now - S.settleStart >= 1000) beginDriving();
         break;
       case 'driving':
-        driveTick(now, dt);
+        try {
+          driveTick(now, dt);
+        } catch (e) {
+          // An error here used to leave the push 'driving' with nothing written and nothing logged: stop and say why
+          emergencyStop('an error in the path follower: ' + PS.errText(e));
+        }
         break;
       case 'stopping':
         stopTick(now, dt);
@@ -909,6 +971,12 @@ PS.push = (function () {
     S.driveAt = now;
     pose.t = (now - S.startedAt) / 1000;
     var out = S.follower.update(pose, dt, S.cur.speed);
+    // A change of leg or of phase between legs goes in the normal log, so a multi-leg push can be followed without detailed logging
+    var stage = out.phase === 'cuspStop' || out.phase === 'cuspHold' ? out.phase : 'leg ' + (out.leg + 1) + ' of ' + out.legCount;
+    if (stage !== S.stageLogged && (out.legCount > 1 || stage !== 'leg 1 of 1')) {
+      S.stageLogged = stage;
+      log('route: ' + stage + (out.phase === 'run' ? ', ' + PS.fmt.dist(out.remainingM) + ' left in all' : ''));
+    }
     S.last = {
       remainingM: out.remainingM,
       leg: out.leg,
@@ -1156,6 +1224,7 @@ PS.push = (function () {
       isReturn: !!S.isReturn,
       canFinish: canFinish(),
       finishWhy: finishWhy(),
+      step: nextStep(),
       engines: PS.engines.status(),
       engineGate: engineGate(),
       gate: PS.gate.detect(),
@@ -1199,6 +1268,9 @@ PS.push = (function () {
     stop: stop,
     emergencyStop: emergencyStop,
     toggleTug: toggleTug,
+    nextStep: nextStep,
+    doNextStep: doNextStep,
+    watchSteps: watchSteps,
     dismissTug: dismissTug,
     toggleBrake: toggleBrake,
     finish: finishPush,

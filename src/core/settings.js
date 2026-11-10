@@ -12,7 +12,8 @@ PS.settings = (function () {
     insetBottom: 56,
     requireEngines: true,
     requireBeacon: true,
-    rings: false
+    rings: false,
+    uiSize: 'auto' // auto | normal | compact
   };
   var values = {},
     k;
@@ -38,6 +39,7 @@ PS.settings = (function () {
     values[name] = v;
     if (name === 'tightest') PS.plan.setMinRadius(v);
     if ((name === 'insetTop' || name === 'insetBottom') && PS.applyInsets) PS.applyInsets();
+    if (name === 'uiSize' && PS.relayout) PS.relayout();
     try {
       window.localStorage.setItem(KEY, JSON.stringify(values));
     } catch (e) {

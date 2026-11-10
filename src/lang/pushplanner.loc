@@ -6,7 +6,8 @@
       "en-US",
       "fr-FR",
       "de-DE",
-      "es-ES"
+      "es-ES",
+      "es-MX"
     ],
     "Strings": {
       "PUSHPLANNER.R_OF_N_RUNNING_93fe": {
@@ -28,6 +29,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": " ({r} de {n} en marcha)",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": " ({r} de {n} en marcha)",
             "LocalizationStatus": "TranslationOk"
           }
@@ -54,6 +59,10 @@
           "es-ES": {
             "Text": "EN PUERTA {name}",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "EN PUERTA {name}",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -76,6 +85,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Llegado",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Llegado",
             "LocalizationStatus": "TranslationOk"
           }
@@ -102,6 +115,10 @@
           "es-ES": {
             "Text": "¿FRENO?",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "¿FRENO?",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -124,6 +141,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Equipaje",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Equipaje",
             "LocalizationStatus": "TranslationOk"
           }
@@ -150,6 +171,10 @@
           "es-ES": {
             "Text": "Llamar al tractor",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Llamar al tractor",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -172,6 +197,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Llamando al tractor...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Llamando al tractor...",
             "LocalizationStatus": "TranslationOk"
           }
@@ -198,6 +227,10 @@
           "es-ES": {
             "Text": "Catering",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Catering",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -220,6 +253,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Círculos a un cuarto, la mitad, tres cuartos y el alcance total del mapa. Desactivado por defecto: una barra de escala abajo a la izquierda muestra siempre la distancia.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Círculos a un cuarto, la mitad, tres cuartos y el alcance total del mapa. Desactivado por defecto: una barra de escala abajo a la izquierda muestra siempre la distancia.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -246,6 +283,10 @@
           "es-ES": {
             "Text": "Marcadores propios",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Marcadores propios",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -268,6 +309,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Diagnóstico",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Diagnóstico",
             "LocalizationStatus": "TranslationOk"
           }
@@ -294,6 +339,10 @@
           "es-ES": {
             "Text": "Despedir en cualquier momento",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Despedir en cualquier momento",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -316,6 +365,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Despedir al tractor",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Despedir al tractor",
             "LocalizationStatus": "TranslationOk"
           }
@@ -342,6 +395,10 @@
           "es-ES": {
             "Text": "Despidiendo al tractor",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Despidiendo al tractor",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -364,6 +421,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Motor arrancando: esperando un buen arranque",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Motor arrancando: esperando un buen arranque",
             "LocalizationStatus": "TranslationOk"
           }
@@ -390,6 +451,10 @@
           "es-ES": {
             "Text": "Motores: no se pueden leer en esta aeronave",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Motores: no se pueden leer en esta aeronave",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -412,6 +477,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Terminar push",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Terminar push",
             "LocalizationStatus": "TranslationOk"
           }
@@ -438,6 +507,10 @@
           "es-ES": {
             "Text": "Combustible",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Combustible",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -460,6 +533,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "¿PUERTA?",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "¿PUERTA?",
             "LocalizationStatus": "TranslationOk"
           }
@@ -486,6 +563,10 @@
           "es-ES": {
             "Text": "Energía en tierra",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Energía en tierra",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -508,6 +589,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Detenido: freno de estacionamiento puesto",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Detenido: freno de estacionamiento puesto",
             "LocalizationStatus": "TranslationOk"
           }
@@ -534,6 +619,10 @@
           "es-ES": {
             "Text": "Ocultar diagnóstico",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Ocultar diagnóstico",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -558,6 +647,10 @@
           "es-ES": {
             "Text": "Mueve la aeronave, así que úsalo solo en tierra y con el camino despejado. El push se detiene al instante si pulsas STOP, si el simulador retira el tractor, si se pone el freno o si se cierra esta app. El tractor elige su propia velocidad a lo largo de la ruta, hasta el máximo de Ajustes: más lento en las curvas y cerca del final.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Mueve la aeronave, así que úsalo solo en tierra y con el camino despejado. El push se detiene al instante si presionas STOP, si el simulador retira el tractor, si se pone el freno o si se cierra esta app. El tractor elige su propia velocidad a lo largo de la ruta, hasta el máximo de Configuración: más lento en las curvas y cerca del final.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -580,6 +673,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Pasarela de embarque",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Pasarela de embarque",
             "LocalizationStatus": "TranslationOk"
           }
@@ -606,6 +703,10 @@
           "es-ES": {
             "Text": "Tramo {i} de {n}",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Tramo {i} de {n}",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -628,6 +729,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Mapa",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Mapa",
             "LocalizationStatus": "TranslationOk"
           }
@@ -654,6 +759,10 @@
           "es-ES": {
             "Text": "Velocidad máxima",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Velocidad máxima",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -676,6 +785,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "SIN PUERTA",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "SIN PUERTA",
             "LocalizationStatus": "TranslationOk"
           }
@@ -702,6 +815,10 @@
           "es-ES": {
             "Text": "Aún no hay datos de posiciones de este aeropuerto",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Aún no hay datos de posiciones de este aeropuerto",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -724,6 +841,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "En el mapa: blanco = retroceder, azul = avanzar, gris = hecho.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "En el mapa: blanco = retroceder, azul = avanzar, gris = hecho.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -750,6 +871,10 @@
           "es-ES": {
             "Text": "FRENO ESTAC. QUITADO",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "FRENO ESTAC. QUITADO",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -772,6 +897,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "FRENO ESTAC. PUESTO",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "FRENO ESTAC. PUESTO",
             "LocalizationStatus": "TranslationOk"
           }
@@ -798,6 +927,10 @@
           "es-ES": {
             "Text": "Pausa",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Pausa",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -820,6 +953,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "En pausa",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "En pausa",
             "LocalizationStatus": "TranslationOk"
           }
@@ -846,6 +983,10 @@
           "es-ES": {
             "Text": "Plan",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Plan",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -868,6 +1009,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "La pestaña Plan se abre en",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "La pestaña Plan se abre en",
             "LocalizationStatus": "TranslationOk"
           }
@@ -894,6 +1039,10 @@
           "es-ES": {
             "Text": "Planificación",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Planificación",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -916,6 +1065,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Progreso",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Progreso",
             "LocalizationStatus": "TranslationOk"
           }
@@ -942,6 +1095,10 @@
           "es-ES": {
             "Text": "Push",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Push",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -964,6 +1121,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Push terminado",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Push terminado",
             "LocalizationStatus": "TranslationOk"
           }
@@ -990,6 +1151,10 @@
           "es-ES": {
             "Text": "Pushback",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Pushback",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1012,6 +1177,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Anillos de alcance",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Anillos de alcance",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1038,6 +1207,10 @@
           "es-ES": {
             "Text": "Quitar el freno",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Quitar el freno",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1060,6 +1233,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Quitando el freno de estacionamiento",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Quitando el freno de estacionamiento",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1086,6 +1263,10 @@
           "es-ES": {
             "Text": "Reanudar",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Reanudar",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1108,6 +1289,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Volver a la puerta",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Volver a la puerta",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1134,6 +1319,10 @@
           "es-ES": {
             "Text": "Volver a la puerta repite el push a la inversa hasta el punto de partida ({d}).",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Volver a la puerta repite el push a la inversa hasta el punto de partida ({d}).",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1156,6 +1345,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Anillos no",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Anillos no",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1182,6 +1375,10 @@
           "es-ES": {
             "Text": "Anillos sí",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Anillos sí",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1204,6 +1401,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Poner el freno",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Poner el freno",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1230,6 +1431,10 @@
           "es-ES": {
             "Text": "Ajustes",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Configuración",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1252,6 +1457,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Imán no",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Imán no",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1278,6 +1487,10 @@
           "es-ES": {
             "Text": "Imán sí",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Imán sí",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1300,6 +1513,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Pegar marcadores a la calle de rodaje",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Pegar marcadores a la calle de rodaje",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1326,6 +1543,10 @@
           "es-ES": {
             "Text": "Alcance del imán (qué cerca de una calle de rodaje debe estar un marcador)",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Alcance del imán (qué cerca de una calle de rodaje debe estar un marcador)",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1350,29 +1571,9 @@
           "es-ES": {
             "Text": "Iniciar push",
             "LocalizationStatus": "TranslationOk"
-          }
-        }
-      },
-      "PUSHPLANNER.START_PUSH_DOES_IT_ALL_IT_CALLS_THE_TUG_36e3": {
-        "UUID": "d7e278bc-ceb2-4f73-b9be-3687c757a336",
-        "LastModifiedBy": "draft translation, unreviewed",
-        "LastModifiedDate": "2026-11-09T03:48:17.565Z",
-        "LocalizationStatus": "TranslationNeeded",
-        "Languages": {
-          "en-US": {
-            "Text": "Start push does it all: it calls the tug if it is not on, releases the parking brake if it is set (do either yourself first and it carries on from there), then drives the plan made on the Plan tab.",
-            "LocalizationStatus": "TranslationOk"
           },
-          "fr-FR": {
-            "Text": "Démarrer le repoussage fait tout : il appelle le tracteur s'il n'est pas là, desserre le frein de stationnement s'il est serré (si vous le faites vous-même avant, il continue à partir de là), puis exécute le plan établi dans l'onglet Plan.",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "de-DE": {
-            "Text": "Push starten erledigt alles: Es ruft den Schlepper, falls er nicht da ist, löst die Feststellbremse, falls sie gesetzt ist (wird eines davon vorher selbst erledigt, geht es von dort aus weiter), und fährt dann den im Plan-Tab erstellten Plan.",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "es-ES": {
-            "Text": "Iniciar push lo hace todo: llama al tractor si no está acoplado, quita el freno de estacionamiento si está puesto (si haces cualquiera de las dos cosas antes, continúa desde ahí) y después ejecuta el plan creado en la pestaña Plan.",
+          "es-MX": {
+            "Text": "Iniciar push",
             "LocalizationStatus": "TranslationOk"
           }
         }
@@ -1396,6 +1597,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Iniciando...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Iniciando...",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1422,6 +1627,10 @@
           "es-ES": {
             "Text": "Deteniendo...",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Deteniendo...",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1444,6 +1653,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Pushes sugeridos",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Pushes sugeridos",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1470,6 +1683,10 @@
           "es-ES": {
             "Text": "TRACTOR NO",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "TRACTOR NO",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1492,6 +1709,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "TRACTOR SÍ",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "TRACTOR SÍ",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1518,6 +1739,10 @@
           "es-ES": {
             "Text": "Lo máximo que hará el tractor en una recta. Elige su propia velocidad a lo largo de la ruta, hasta este valor: más lento en las curvas (más cuanto más cerradas sean), frenando con tiempo antes de cada curva y reduciendo hasta casi parar al acercarse al final. Los cambios se aplican también a un push en curso.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Lo máximo que hará el tractor en una recta. Elige su propia velocidad a lo largo de la ruta, hasta este valor: más lento en las curvas (más cuanto más cerradas sean), frenando con tiempo antes de cada curva y reduciendo hasta casi parar al acercarse al final. Los cambios se aplican también a un push en curso.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1540,6 +1765,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "El plan usa un radio de giro de 40 m. Donde una esquina es demasiado estrecha para eso, prueba con radios menores, hasta este valor. Menor significa que el tractor tiene que girar más: la pestaña Plan muestra cualquier aviso.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "El plan usa un radio de giro de 40 m. Donde una esquina es demasiado estrecha para eso, prueba con radios menores, hasta este valor. Menor significa que el tractor tiene que girar más: la pestaña Plan muestra cualquier aviso.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1566,6 +1795,10 @@
           "es-ES": {
             "Text": "Giro más cerrado que puede usar el plan",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Giro más cerrado que puede usar el plan",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1588,6 +1821,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Tractor no acoplado",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Tractor no acoplado",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1614,6 +1851,10 @@
           "es-ES": {
             "Text": "Tractor acoplado, listo para el push",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Tractor acoplado, listo para el push",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1636,6 +1877,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Esperar a un motor",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Esperar a un motor",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1662,29 +1907,9 @@
           "es-ES": {
             "Text": "Esperando un buen arranque de motor",
             "LocalizationStatus": "TranslationOk"
-          }
-        }
-      },
-      "PUSHPLANNER.WHEN_THE_PUSH_IS_DONE_THE_START_BUTTON_B_c5ff": {
-        "UUID": "888abb4e-262b-4a38-a208-96dd02742036",
-        "LastModifiedBy": "draft translation, unreviewed",
-        "LastModifiedDate": "2026-11-09T03:48:17.565Z",
-        "LocalizationStatus": "TranslationNeeded",
-        "Languages": {
-          "en-US": {
-            "Text": "When the push is done the Start button becomes Finish push: it sets the parking brake if it is not set and dismisses the tug if it is on. Return to gate retraces the push (or as far as it got) back to where it started.",
-            "LocalizationStatus": "TranslationOk"
           },
-          "fr-FR": {
-            "Text": "Lorsque le repoussage est terminé, le bouton Démarrer devient Terminer le repoussage : il serre le frein de stationnement s'il ne l'est pas et renvoie le tracteur s'il est présent. Retour à la porte refait le repoussage (ou ce qui en a été fait) jusqu'au point de départ.",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "de-DE": {
-            "Text": "Ist der Push beendet, wird die Start-Taste zu „Push beenden“: Sie setzt die Feststellbremse, falls sie nicht gesetzt ist, und entlässt den Schlepper, falls er da ist. „Zurück zum Gate“ fährt den Push (oder so weit er kam) zurück zum Startpunkt.",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "es-ES": {
-            "Text": "Cuando termina el push, el botón Iniciar pasa a ser Terminar push: pone el freno de estacionamiento si no está puesto y despide al tractor si está acoplado. Volver a la puerta repite el push a la inversa (o hasta donde llegó) hasta el punto de partida.",
+          "es-MX": {
+            "Text": "Esperando un buen arranque de motor",
             "LocalizationStatus": "TranslationOk"
           }
         }
@@ -1708,6 +1933,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Qué lista muestra primero la pestaña Plan. También cambia sola: al colocar un marcador se muestran los marcadores, al elegir una sugerencia se muestran las sugerencias.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Qué lista muestra primero la pestaña Plan. También cambia sola: al colocar un marcador se muestran los marcadores, al elegir una sugerencia se muestran las sugerencias.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1734,6 +1963,10 @@
           "es-ES": {
             "Text": "Con «Esperar a un motor» el tractor solo se suelta (botón Despedir y Terminar push) tras un buen arranque de motor, como espera un operador de tractor real. Basta con un motor. Se aplica una vez que el tractor ha movido la aeronave, y no si los motores de la aeronave no se pueden leer.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Con «Esperar a un motor» el tractor solo se suelta (botón Despedir y Terminar push) tras un buen arranque de motor, como espera un operador de tractor real. Basta con un motor. Se aplica una vez que el tractor ha movido la aeronave, y no si los motores de la aeronave no se pueden leer.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1756,6 +1989,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Con el imán activado, un marcador que sueltes o muevas dentro del alcance del imán de una calle de rodaje toma el rumbo de esa calle (la dirección que requiere el giro menor). Girar un marcador a mano lo anula.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Con el imán activado, un marcador que sueltes o muevas dentro del alcance del imán de una calle de rodaje toma el rumbo de esa calle (la dirección que requiere el giro menor). Girar un marcador a mano lo anula.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1782,6 +2019,10 @@
           "es-ES": {
             "Text": "planificador de pushback",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "planificador de pushback",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1804,6 +2045,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "faltan {d}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "faltan {d}",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1830,6 +2075,10 @@
           "es-ES": {
             "Text": "{n} arranque de motor correcto|{n} arranques de motor correctos",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "{n} arranque de motor correcto|{n} arranques de motor correctos",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1852,6 +2101,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "{p}% ({f} kt adelante, {r} kt marcha atrás)",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "{p}% ({f} kt adelante, {r} kt marcha atrás)",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1878,6 +2131,10 @@
           "es-ES": {
             "Text": " (automático)",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": " (automático)",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1900,6 +2157,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": " (fijado por ti)",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": " (fijado por ti)",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1926,6 +2187,10 @@
           "es-ES": {
             "Text": ", avanzando",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": ", avanzando",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1948,6 +2213,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": ", tramo {i} de {n}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": ", tramo {i} de {n}",
             "LocalizationStatus": "TranslationOk"
           }
@@ -1974,6 +2243,10 @@
           "es-ES": {
             "Text": ", retrocediendo",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": ", retrocediendo",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -1996,6 +2269,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": ", radio de giro {r} m",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": ", radio de giro {r} m",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2022,6 +2299,10 @@
           "es-ES": {
             "Text": ", con marcador de giro",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": ", con marcador de giro",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2044,6 +2325,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": ". Sin avisos.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": ". Sin avisos.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2070,6 +2355,10 @@
           "es-ES": {
             "Text": ". No leído: {list}",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": ". No leído: {list}",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2092,6 +2381,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": ". Puede que el tractor no lo consiga:",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": ". Puede que el tractor no lo consiga:",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2118,6 +2411,10 @@
           "es-ES": {
             "Text": "Ya hay un push en curso.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Ya hay un push en curso.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2140,6 +2437,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Aeronaves IA",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Aeronaves IA",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2166,6 +2467,10 @@
           "es-ES": {
             "Text": "Acento (títulos, pestaña seleccionada)",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Acento (títulos, pestaña seleccionada)",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2188,6 +2493,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Los temas de aerolíneas se inspiran en esas libreas: los colores son aproximados y Push Planner no está afiliado a ninguna aerolínea ni cuenta con su respaldo. Elige uno, cambia después cualquier color en la pestaña Mis colores y guárdalo: los temas guardados también aparecen aquí, igual que los archivos de temas del paquete.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Los temas de aerolíneas se inspiran en esas libreas: los colores son aproximados y Push Planner no está afiliado a ninguna aerolínea ni cuenta con su respaldo. Elige uno, cambia después cualquier color en la pestaña Mis colores y guárdalo: los temas guardados también aparecen aquí, igual que los archivos de temas del paquete.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2214,6 +2523,10 @@
           "es-ES": {
             "Text": "Rumbo automático",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Rumbo automático",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2236,6 +2549,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Bordes",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Bordes",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2262,6 +2579,10 @@
           "es-ES": {
             "Text": "Fondo del botón",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Fondo del botón",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2284,6 +2605,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Texto del botón",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Texto del botón",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2310,6 +2635,10 @@
           "es-ES": {
             "Text": "Cancelar",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Cancelar",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2332,6 +2661,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Canvas 2D no disponible.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Canvas 2D no disponible.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2358,6 +2691,10 @@
           "es-ES": {
             "Text": "Precaución",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Precaución",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2380,6 +2717,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Borrar registros",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Borrar registros",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2406,6 +2747,10 @@
           "es-ES": {
             "Text": "Borrar marcadores",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Borrar marcadores",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2428,6 +2773,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Vaciar ranura {n}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Vaciar ranura {n}",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2454,6 +2803,10 @@
           "es-ES": {
             "Text": "Cerrar",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Cerrar",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2476,6 +2829,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Colores",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Colores",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2502,6 +2859,10 @@
           "es-ES": {
             "Text": "Copiar registro",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Copiar registro",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2524,6 +2885,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "No se pudo eliminar: {why}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "No se pudo eliminar: {why}",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2550,6 +2915,10 @@
           "es-ES": {
             "Text": "No se pudieron cargar los datos del aeropuerto: {e}",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "No se pudieron cargar los datos del aeropuerto: {e}",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2572,6 +2941,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "No se pudo guardar.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "No se pudo guardar.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2598,6 +2971,10 @@
           "es-ES": {
             "Text": "Eliminar",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Eliminar",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2620,6 +2997,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Eliminar {name}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Eliminar {name}",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2646,6 +3027,10 @@
           "es-ES": {
             "Text": "Eliminando...",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Eliminando...",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2668,6 +3053,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Cada marcador se dibuja como una aeronave que apunta hacia donde estará el morro en ese punto. Toca un marcador para seleccionarlo: arrástralo para moverlo, arrastra el asa amarilla de detrás para girarlo.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Cada marcador se dibuja como una aeronave que apunta hacia donde estará el morro en ese punto. Toca un marcador para seleccionarlo: arrástralo para moverlo, arrastra el asa amarilla de detrás para girarlo.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2694,6 +3083,10 @@
           "es-ES": {
             "Text": "Antes",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Antes",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2716,6 +3109,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Fin",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Fin",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2742,6 +3139,10 @@
           "es-ES": {
             "Text": "Marcador final",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Marcador final",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2764,6 +3165,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Campos y fondo del mapa",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Campos y fondo del mapa",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2790,6 +3195,10 @@
           "es-ES": {
             "Text": "Módulo de archivos no encontrado: los temas guardados usan el almacenamiento propio de la app",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Módulo de archivos no encontrado: los temas guardados usan el almacenamiento propio de la app",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2812,6 +3221,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Terminar pone el freno de estacionamiento y despide al tractor (tras un buen arranque de motor).",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Terminar pone el freno de estacionamiento y despide al tractor (tras un buen arranque de motor).",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2838,6 +3251,10 @@
           "es-ES": {
             "Text": "Ruta de avance",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Ruta de avance",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2860,6 +3277,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Espacio alrededor de etiquetas",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Espacio alrededor de etiquetas",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2886,6 +3307,10 @@
           "es-ES": {
             "Text": "Bien / activado",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Bien / activado",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2908,6 +3333,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Difícil de leer: {list}.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Difícil de leer: {list}.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2934,6 +3363,10 @@
           "es-ES": {
             "Text": "Cabecera, pestañas y pie",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Cabecera, pestañas y pie",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -2956,6 +3389,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Asa de rumbo",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Asa de rumbo",
             "LocalizationStatus": "TranslationOk"
           }
@@ -2982,6 +3419,10 @@
           "es-ES": {
             "Text": "Resaltado (barra de progreso, sugerencia elegida)",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Resaltado (barra de progreso, sugerencia elegida)",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3004,6 +3445,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Guardado en el almacenamiento propio de la app (ranura {n}); instala PusherFiles.wasm para guardar archivos reales.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Guardado en el almacenamiento propio de la app (ranura {n}); instala PusherFiles.wasm para guardar archivos reales.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3030,6 +3475,10 @@
           "es-ES": {
             "Text": "Tamaño de etiqueta",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Tamaño de etiqueta",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3052,6 +3501,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Después",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Después",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3078,6 +3531,10 @@
           "es-ES": {
             "Text": "Cargando datos del aeropuerto ({why})...",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Cargando datos del aeropuerto ({why})...",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3100,6 +3557,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Cargando datos del aeropuerto...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Cargando datos del aeropuerto...",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3126,6 +3587,10 @@
           "es-ES": {
             "Text": "Texto principal",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Texto principal",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3148,6 +3613,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Fondo del mapa",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Fondo del mapa",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3174,6 +3643,10 @@
           "es-ES": {
             "Text": "Etiquetas del mapa",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Etiquetas del mapa",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3196,6 +3669,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Líneas del mapa (píxeles)",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Líneas del mapa (píxeles)",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3222,6 +3699,10 @@
           "es-ES": {
             "Text": "Mis colores",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Mis colores",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3244,6 +3725,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Calles de rodaje con nombre",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Calles de rodaje con nombre",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3270,6 +3755,10 @@
           "es-ES": {
             "Text": "Cerca de una calle de rodaje, un marcador es atraído a su eje y toma su rumbo (Ajustes: imán). Arrástralo a más de 1,5 veces el alcance del imán para soltarlo.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Cerca de una calle de rodaje, un marcador es atraído a su eje y toma su rumbo (Configuración: imán). Arrástralo a más de 1.5 veces el alcance del imán para soltarlo.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3292,6 +3781,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Aún no se han cargado datos del aeropuerto.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Aún no se han cargado datos del aeropuerto.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3318,6 +3811,10 @@
           "es-ES": {
             "Text": "Sin marcadores.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Sin marcadores.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3340,6 +3837,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Aún no hay ruta. Toca el mapa para colocar marcadores o elige un push sugerido.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Aún no hay ruta. Toca el mapa para colocar marcadores o elige un push sugerido.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3366,6 +3867,10 @@
           "es-ES": {
             "Text": "Sin sugerencias: no hay ninguna calle de rodaje con nombre, enlace o carril al alcance hacia donde apunta la cola, o el módulo de rodaje no suministró caminos ({n} elementos cargados). Aun así puedes colocar marcadores a mano.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Sin sugerencias: no hay ninguna calle de rodaje con nombre, enlace o carril al alcance hacia donde apunta la cola, o el módulo de rodaje no suministró caminos ({n} elementos cargados). Aun así puedes colocar marcadores a mano.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3388,6 +3893,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "El norte está arriba, centrado en la aeronave. Toca el mapa para colocar un marcador; el último marcador es donde acaba la aeronave. Arrastra el mapa vacío para moverlo.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "El norte está arriba, centrado en la aeronave. Toca el mapa para colocar un marcador; el último marcador es donde acaba la aeronave. Arrastra el mapa vacío para moverlo.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3414,6 +3923,10 @@
           "es-ES": {
             "Text": "No mientras hay un push en curso.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "No mientras hay un push en curso.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3436,6 +3949,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Otros caminos",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Otros caminos",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3462,6 +3979,10 @@
           "es-ES": {
             "Text": "Contornos",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Contornos",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3484,6 +4005,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Página",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Página",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3510,6 +4035,10 @@
           "es-ES": {
             "Text": "Fondo de página",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Fondo de página",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3532,6 +4061,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Paneles",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Paneles",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3558,6 +4091,10 @@
           "es-ES": {
             "Text": "Elegir un color",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Elegir un color",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3580,6 +4117,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Marcador {i}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Marcador {i}",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3606,6 +4147,10 @@
           "es-ES": {
             "Text": "Marcadores",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Marcadores",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3628,6 +4173,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Planificar el push",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Planificar el push",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3654,6 +4203,10 @@
           "es-ES": {
             "Text": "Planificar un push",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Planificar un push",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3676,6 +4229,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Ruta de retroceso",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Ruta de retroceso",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3702,6 +4259,10 @@
           "es-ES": {
             "Text": "Pushback",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Pushback",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3724,6 +4285,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Pushback (freno puesto)",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Pushback (freno puesto)",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3750,6 +4315,10 @@
           "es-ES": {
             "Text": "Pushback (en pausa)",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Pushback (en pausa)",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3772,6 +4341,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Leyendo temas guardados...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Leyendo temas guardados...",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3798,6 +4371,10 @@
           "es-ES": {
             "Text": "Centrar",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Centrar",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3820,6 +4397,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Quitarlo por mí",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Quitarlo por mí",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3846,6 +4427,10 @@
           "es-ES": {
             "Text": "Quitar el freno de estacionamiento",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Quitar el freno de estacionamiento",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3868,6 +4453,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Recargar datos del aeropuerto",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Recargar datos del aeropuerto",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3894,6 +4483,10 @@
           "es-ES": {
             "Text": "Restablecer",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Restablecer",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3916,6 +4509,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Restablecer todos mis colores",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Restablecer todos mis colores",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3942,6 +4539,10 @@
           "es-ES": {
             "Text": "Restablecer líneas del mapa",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Restablecer líneas del mapa",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -3964,6 +4565,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Ruta ya recorrida",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Ruta ya recorrida",
             "LocalizationStatus": "TranslationOk"
           }
@@ -3990,6 +4595,10 @@
           "es-ES": {
             "Text": "Ruta que el tractor quizá no consiga",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Ruta que el tractor quizá no consiga",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4012,6 +4621,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Ruta: {d} en {n} tramo|Ruta: {d} en {n} tramos",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Ruta: {d} en {n} tramo|Ruta: {d} en {n} tramos",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4038,6 +4651,10 @@
           "es-ES": {
             "Text": "Pistas",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Pistas",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4060,6 +4677,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Guardar tema",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Guardar tema",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4086,6 +4707,10 @@
           "es-ES": {
             "Text": "Guardar estos colores como tema",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Guardar estos colores como tema",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4108,6 +4733,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Temas guardados",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Temas guardados",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4134,6 +4763,10 @@
           "es-ES": {
             "Text": "Temas guardados: {n} archivo(s) en la carpeta de trabajo del módulo de archivos",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Temas guardados: {n} archivo(s) en la carpeta de trabajo del módulo de archivos",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4156,6 +4789,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Guardando...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Guardando...",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4182,6 +4819,10 @@
           "es-ES": {
             "Text": "Texto secundario",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Texto secundario",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4204,6 +4845,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Seleccionar todo",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Seleccionar todo",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4230,6 +4875,10 @@
           "es-ES": {
             "Text": "Seleccionar marcador {i}",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Seleccionar marcador {i}",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4252,6 +4901,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Ranura {n} vaciada.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Ranura {n} vaciada.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4278,6 +4931,10 @@
           "es-ES": {
             "Text": "Stop",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Stop",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4300,6 +4957,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Los pushes sugeridos provienen del sugeridor de la app original. Elige uno y pasa a ser tu plan; si añades un marcador propio, este toma el relevo.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Los pushes sugeridos provienen del sugeridor de la app original. Elige uno y pasa a ser tu plan; si añades un marcador propio, este toma el relevo.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4326,6 +4987,10 @@
           "es-ES": {
             "Text": "Cambiar a {name} descarta los colores que modificaste. Tócalo de nuevo para cambiar, o guárdalos antes en Mis colores.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Cambiar a {name} descarta los colores que modificaste. Tócalo de nuevo para cambiar, o guárdalos antes en Mis colores.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4348,6 +5013,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Toca Eliminar de nuevo para borrar {name} definitivamente.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Toca Eliminar de nuevo para borrar {name} definitivamente.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4374,6 +5043,10 @@
           "es-ES": {
             "Text": "Calles de rodaje",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Calles de rodaje",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4396,6 +5069,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Texto sobre el acento",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Texto sobre el acento",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4422,6 +5099,10 @@
           "es-ES": {
             "Text": "La aeronave se está moviendo.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "La aeronave se está moviendo.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4444,6 +5125,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "La aeronave no está en tierra.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "La aeronave no está en tierra.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4470,6 +5155,10 @@
           "es-ES": {
             "Text": "No se puede leer la posición de la aeronave.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "No se puede leer la posición de la aeronave.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4492,6 +5181,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Se puso el freno de estacionamiento. Quítalo y el push continúa.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Se puso el freno de estacionamiento. Quítalo y el push continúa.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4518,6 +5211,10 @@
           "es-ES": {
             "Text": "El plan no tiene ruta desde aquí.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "El plan no tiene ruta desde aquí.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4540,6 +5237,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "El push empieza en cuanto se quita el freno.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "El push empieza en cuanto se quita el freno.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4566,6 +5267,10 @@
           "es-ES": {
             "Text": "Tema eliminado",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Tema eliminado",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4588,6 +5293,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Nombre del tema",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Nombre del tema",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4614,6 +5323,10 @@
           "es-ES": {
             "Text": "Tema guardado",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Tema guardado",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4636,6 +5349,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Temas",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Temas",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4662,6 +5379,10 @@
           "es-ES": {
             "Text": "Aún no hay plan: crea uno en la pestaña Plan.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Aún no hay plan: crea uno en la pestaña Plan.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4684,6 +5405,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "No hay ningún push desde el que volver.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "No hay ningún push desde el que volver.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4710,6 +5435,10 @@
           "es-ES": {
             "Text": "Deshacer marcador",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Deshacer marcador",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4732,6 +5461,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Caminos sin nombre",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Caminos sin nombre",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4758,6 +5491,10 @@
           "es-ES": {
             "Text": "Colores sin guardar",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Colores sin guardar",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4780,6 +5517,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Aviso / parada",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Aviso / parada",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4806,6 +5547,10 @@
           "es-ES": {
             "Text": "Dónde se guardan los temas",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Dónde se guardan los temas",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4828,6 +5573,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Ruta blanca = retroceder, azul = avanzar, roja = el tractor quizá no consiga ese tramo.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Ruta blanca = retroceder, azul = avanzar, roja = el tractor quizá no consiga ese tramo.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4854,6 +5603,10 @@
           "es-ES": {
             "Text": "Tu aeronave",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Tu aeronave",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4876,6 +5629,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "archivo: ",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "archivo: ",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4902,6 +5659,10 @@
           "es-ES": {
             "Text": "guardado: ",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "guardado: ",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4924,6 +5685,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "desconocido",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "desconocido",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4950,6 +5715,10 @@
           "es-ES": {
             "Text": "{d} en rumbo {b}°, morro {h}",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "{d} en rumbo {b}°, morro {h}",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -4972,6 +5741,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "{file} está en la carpeta de trabajo de push-planner.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "{file} está en la carpeta de trabajo de push-planner.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -4998,6 +5771,10 @@
           "es-ES": {
             "Text": "{name} (contraste {r}:1)",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "{name} (contraste {r}:1)",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5020,6 +5797,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "{name} se eliminó.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "{name} se eliminó.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5046,6 +5827,10 @@
           "es-ES": {
             "Text": ". Arco más cerrado {r} m (el tractor gira a {t} m)",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": ". Arco más cerrado {r} m (el tractor gira a {t} m)",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5068,6 +5853,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Vía de plataforma",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Vía de plataforma",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5094,6 +5883,10 @@
           "es-ES": {
             "Text": "Final del acceso a la posición, orientado al {dir}",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Final del acceso a la posición, orientado al {dir}",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5116,6 +5909,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Tramo {i}: {w}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Tramo {i}: {w}",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5142,6 +5939,10 @@
           "es-ES": {
             "Text": "Recto hacia atrás hasta la calle de rodaje {name}",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Recto hacia atrás hasta la calle de rodaje {name}",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5164,6 +5965,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Recto hacia atrás hasta la vía de plataforma",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Recto hacia atrás hasta la vía de plataforma",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5190,6 +5995,10 @@
           "es-ES": {
             "Text": "Recto hacia atrás hasta el final del acceso a la posición",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Recto hacia atrás hasta el final del acceso a la posición",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5212,6 +6021,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Recto hacia atrás hasta {name}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Recto hacia atrás hasta {name}",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5238,6 +6051,10 @@
           "es-ES": {
             "Text": "Calle de rodaje {name}",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Calle de rodaje {name}",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5260,6 +6077,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Puede que el tractor no pueda hacer esta maniobra ({kind}): {why}. Aleja un marcador o acorta la recta final con el asa de rumbo.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Puede que el tractor no pueda hacer esta maniobra ({kind}): {why}. Aleja un marcador o acorta la recta final con el asa de rumbo.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5286,6 +6107,10 @@
           "es-ES": {
             "Text": "y",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "y",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5308,6 +6133,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "avanzar",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "avanzar",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5334,6 +6163,10 @@
           "es-ES": {
             "Text": "este",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "este",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5356,6 +6189,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "final del tramo {n}: parada para cambiar de sentido",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "final del tramo {n}: parada para cambiar de sentido",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5382,6 +6219,10 @@
           "es-ES": {
             "Text": "adelante",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "adelante",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5404,6 +6245,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "en una curva (radio {r} m): {v}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "en una curva (radio {r} m): {v}",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5430,6 +6275,10 @@
           "es-ES": {
             "Text": "empieza a {deg}° de la dirección a la que apunta la aeronave",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "empieza a {deg}° de la dirección a la que apunta la aeronave",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5452,6 +6301,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "su trayecto gira {deg}° en total, lo que es un bucle",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "su trayecto gira {deg}° en total, lo que es un bucle",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5478,6 +6331,10 @@
           "es-ES": {
             "Text": "su giro más cerrado tiene unos {r} m de radio, pero el tractor necesita {n} m",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "su giro más cerrado tiene unos {r} m de radio, pero el tractor necesita {n} m",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5500,6 +6357,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "siguiente tramo: {dir}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "siguiente tramo: {dir}",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5526,6 +6387,10 @@
           "es-ES": {
             "Text": "norte",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "norte",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5548,6 +6413,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "noreste",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "noreste",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5574,6 +6443,10 @@
           "es-ES": {
             "Text": "noroeste",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "noroeste",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5596,6 +6469,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "a {x} m fuera del camino: reduciendo",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "a {x} m fuera del camino: reduciendo",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5622,6 +6499,10 @@
           "es-ES": {
             "Text": "retroceder",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "retroceder",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5644,6 +6525,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Frenando",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Frenando",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5670,6 +6555,10 @@
           "es-ES": {
             "Text": "Frenando para detenerse",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Frenando para detenerse",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5692,6 +6581,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "sur",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "sur",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5718,6 +6611,10 @@
           "es-ES": {
             "Text": "sureste",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "sureste",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5740,6 +6637,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "suroeste",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "suroeste",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5766,6 +6667,10 @@
           "es-ES": {
             "Text": "Acelerando",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Acelerando",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5788,6 +6693,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "dirección al límite (el camino exige un giro más cerrado del que el tractor puede hacer a esta velocidad)",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "dirección al límite (el camino exige un giro más cerrado del que el tractor puede hacer a esta velocidad)",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5814,6 +6723,10 @@
           "es-ES": {
             "Text": "recta: velocidad máxima {v}",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "recta: velocidad máxima {v}",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5836,6 +6749,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "calle de rodaje {name}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "calle de rodaje {name}",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5862,6 +6779,10 @@
           "es-ES": {
             "Text": "la vía de plataforma",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "la vía de plataforma",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5884,6 +6805,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "oeste",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "oeste",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5910,6 +6835,10 @@
           "es-ES": {
             "Text": "{g}, orientado al {dir}[, libre de {x}][ (ajustado)]",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "{g}, orientado al {dir}[, libre de {x}][ (ajustado)]",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5932,6 +6861,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "{g}, con el morro hacia el {dir}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "{g}, con el morro hacia el {dir}",
             "LocalizationStatus": "TranslationOk"
           }
@@ -5958,6 +6891,10 @@
           "es-ES": {
             "Text": "{m} m: atrás hasta {w}, terminando en ella con el morro hacia el {dir} ({off}° respecto al morro)[, con marcador de giro]",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "{m} m: atrás hasta {w}, terminando en ella con el morro hacia el {dir} ({off}° respecto al morro)[, con marcador de giro]",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -5980,6 +6917,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "{m} m: recto hacia atrás hasta {w}, luego {d} m por ella[ (rodeando su curva)][ (rodeando sus curvas)][, terminando más allá de {x} para no bloquear el enlace]; termina con rumbo {h}°",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "{m} m: recto hacia atrás hasta {w}, luego {d} m por ella[ (rodeando su curva)][ (rodeando sus curvas)][, terminando más allá de {x} para no bloquear el enlace]; termina con rumbo {h}°",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6006,6 +6947,10 @@
           "es-ES": {
             "Text": "{n} kt",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "{n} kt",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6028,6 +6973,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "{state} (faltan {n} m): {v}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "{state} (faltan {n} m): {v}",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6054,6 +7003,10 @@
           "es-ES": {
             "Text": "{state} para la curva en {n} m: {v}",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "{state} para la curva en {n} m: {v}",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6076,6 +7029,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": ", curvando para alinearse",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": ", curvando para alinearse",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6102,6 +7059,10 @@
           "es-ES": {
             "Text": ", con marcador de giro para alinearse",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": ", con marcador de giro para alinearse",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6124,6 +7085,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Más cerca",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Más cerca",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6150,6 +7115,10 @@
           "es-ES": {
             "Text": "Más rápido",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Más rápido",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6172,6 +7141,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Más lejos",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Más lejos",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6198,6 +7171,10 @@
           "es-ES": {
             "Text": "Más abierto",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Más abierto",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6220,6 +7197,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Más lento",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Más lento",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6246,6 +7227,10 @@
           "es-ES": {
             "Text": "Más cerrado",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Más cerrado",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6268,6 +7253,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Acercar",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Acercar",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6294,6 +7283,10 @@
           "es-ES": {
             "Text": "Alejar",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Alejar",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6316,6 +7309,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "rumbo {h}°[{lineup}]",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "rumbo {h}°[{lineup}]",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6342,6 +7339,10 @@
           "es-ES": {
             "Text": "el morro se mantiene en {h}°",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "el morro se mantiene en {h}°",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6364,6 +7365,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "{m} m de push hasta donde el acceso de la posición se une a la calle de rodaje (aquí no hay calle de rodaje con nombre, así que es una estimación); {tail}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "{m} m de push hasta donde el acceso de la posición se une a la calle de rodaje (aquí no hay calle de rodaje con nombre, así que es una estimación); {tail}",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6390,6 +7395,10 @@
           "es-ES": {
             "Text": "{m} m de push; termina en el eje con rumbo {h}° a lo largo de él[{lineup}][. Puede que el tractor no lo consiga: no se encontró un punto final más limpio]",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "{m} m de push; termina en el eje con rumbo {h}° a lo largo de él[{lineup}][. Puede que el tractor no lo consiga: no se encontró un punto final más limpio]",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6412,6 +7421,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "{m} m recto hacia atrás; {tail}",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "{m} m recto hacia atrás; {tail}",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6438,6 +7451,10 @@
           "es-ES": {
             "Text": "Tráfico IA",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Tráfico IA",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6460,6 +7477,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Aeronave",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Aeronave",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6486,6 +7507,10 @@
           "es-ES": {
             "Text": "¿Puede la app leer la aeronave desde el simulador?",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "¿Puede la app leer la aeronave desde el simulador?",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6508,6 +7533,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Comprueba si se podrían enviar los eventos de tecla. No se envía nada: el simulador no indica si funcionan.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Comprueba si se podrían enviar los eventos de tecla. No se envía nada: el simulador no indica si funcionan.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6534,6 +7563,10 @@
           "es-ES": {
             "Text": "Copiar todos los registros",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Copiar todos los registros",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6556,6 +7589,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Registro detallado",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Registro detallado",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6582,6 +7619,10 @@
           "es-ES": {
             "Text": "¿Responde PusherFiles.wasm y puede listar sus archivos guardados?",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "¿Responde PusherFiles.wasm y puede listar sus archivos guardados?",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6604,6 +7645,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "¿Responde PusherTaxi.wasm? Suministra las calles de rodaje y los estacionamientos.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "¿Responde PusherTaxi.wasm? Suministra las calles de rodaje y los estacionamientos.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6630,6 +7675,10 @@
           "es-ES": {
             "Text": "¿Lista el simulador otras aeronaves y se filtra la propia?",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "¿Lista el simulador otras aeronaves y se filtra la propia?",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6652,6 +7701,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Cada comprobación examina una parte de lo que necesita la app y registra lo que encuentra. Solo leen del simulador: no se acopla, establece ni envía nada. Ejecútalas y copia después los registros para informar de un problema.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Cada comprobación examina una parte de lo que necesita la app y registra lo que encuentra. Solo leen del simulador: no se acopla, establece ni envía nada. Ejecútalas y copia después los registros para informar de un problema.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6678,6 +7731,10 @@
           "es-ES": {
             "Text": "Motores",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Motores",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6700,6 +7757,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "FALLO",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "FALLO",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6726,6 +7787,10 @@
           "es-ES": {
             "Text": "Módulo de archivos",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Módulo de archivos",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6748,6 +7813,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Encuentra el aeropuerto más cercano y carga sus pistas, calles de rodaje y estacionamientos.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Encuentra el aeropuerto más cercano y carga sus pistas, calles de rodaje y estacionamientos.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6774,6 +7843,10 @@
           "es-ES": {
             "Text": "Detección de puerta",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Detección de puerta",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6796,6 +7869,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Servicios en tierra",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Servicios en tierra",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6822,6 +7899,10 @@
           "es-ES": {
             "Text": "¿Está la aeronave en una puerta y cuál es la más cercana?",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "¿Está la aeronave en una puerta y cuál es la más cercana?",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6844,6 +7925,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Aeropuerto más cercano",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Aeropuerto más cercano",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6870,6 +7955,10 @@
           "es-ES": {
             "Text": "Registro normal",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Registro normal",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6894,6 +7983,10 @@
           "es-ES": {
             "Text": "El registro normal guarda lo que ocurrió y lo que falló. El registro detallado guarda además los detalles finos (cada cambio de ajuste, el cálculo de ruta y marcadores, la búsqueda de aeropuerto, el flujo de tráfico). Una comprobación lo activa sola mientras se ejecuta.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "El registro normal guarda lo que ocurrió y lo que falló. El registro detallado guarda además los detalles finos (cada cambio de configuración, el cálculo de ruta y marcadores, la búsqueda de aeropuerto, el flujo de tráfico). Una comprobación lo activa sola mientras se ejecuta.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6916,6 +8009,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "OK",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "OK",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6942,6 +8039,10 @@
           "es-ES": {
             "Text": "Variables de pushback y freno",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Variables de pushback y freno",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -6964,6 +8065,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Lee los motores, que el tractor espera antes de soltarse.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Lee los motores, que el tractor espera antes de soltarse.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -6990,6 +8095,10 @@
           "es-ES": {
             "Text": "Lee las variables que usa el tractor. No se escribe nada.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Lee las variables que usa el tractor. No se escribe nada.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -7012,6 +8121,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Ejecutar",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Ejecutar",
             "LocalizationStatus": "TranslationOk"
           }
@@ -7038,6 +8151,10 @@
           "es-ES": {
             "Text": "Ejecutar todas las comprobaciones",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Ejecutar todas las comprobaciones",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -7060,6 +8177,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Acceso al simulador",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Acceso al simulador",
             "LocalizationStatus": "TranslationOk"
           }
@@ -7086,6 +8207,10 @@
           "es-ES": {
             "Text": "Módulo de rodaje",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Módulo de rodaje",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -7108,6 +8233,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Archivos de tema",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Archivos de tema",
             "LocalizationStatus": "TranslationOk"
           }
@@ -7134,6 +8263,10 @@
           "es-ES": {
             "Text": "AVISO",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "AVISO",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -7156,6 +8289,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "¿Se leyeron los archivos de tema del paquete?",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "¿Se leyeron los archivos de tema del paquete?",
             "LocalizationStatus": "TranslationOk"
           }
@@ -7182,6 +8319,10 @@
           "es-ES": {
             "Text": "Qué aeronave indica el simulador que es. Va al principio de los registros copiados, para poder rastrear un problema hasta ella.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Qué aeronave indica el simulador que es. Va al principio de los registros copiados, para poder rastrear un problema hasta ella.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -7204,6 +8345,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Mientras no se comprueba nada",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Mientras no se comprueba nada",
             "LocalizationStatus": "TranslationOk"
           }
@@ -7230,6 +8375,10 @@
           "es-ES": {
             "Text": "no ejecutado",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "no ejecutado",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -7252,6 +8401,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "en curso",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "en curso",
             "LocalizationStatus": "TranslationOk"
           }
@@ -7278,6 +8431,10 @@
           "es-ES": {
             "Text": "en espera",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "en espera",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -7300,6 +8457,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Antes de llamar al tractor",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Antes de llamar al tractor",
             "LocalizationStatus": "TranslationOk"
           }
@@ -7326,6 +8487,10 @@
           "es-ES": {
             "Text": "Empezar sin la baliza",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Empezar sin la baliza",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -7348,6 +8513,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "El tractor se llama en cuanto la baliza esté encendida.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "El tractor se llama en cuanto la baliza esté encendida.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -7374,6 +8543,10 @@
           "es-ES": {
             "Text": "Enciende la baliza",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Enciende la baliza",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -7396,6 +8569,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Esperar a la baliza",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Esperar a la baliza",
             "LocalizationStatus": "TranslationOk"
           }
@@ -7422,6 +8599,10 @@
           "es-ES": {
             "Text": "Esperando la baliza: enciéndela",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Esperando la baliza: enciéndela",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -7444,6 +8625,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Con «Esperar a la baliza», el push espera, antes de llamar al tractor, a que la baliza esté encendida, como en un pushback real. Hasta entonces, los calzos de FlyByWire frenan la aeronave. No espera si no se puede leer la baliza de la aeronave.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Con «Esperar a la baliza», el push espera, antes de llamar al tractor, a que la baliza esté encendida, como en un pushback real. Hasta entonces, los calzos de FlyByWire frenan la aeronave. No espera si no se puede leer la baliza de la aeronave.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -7470,6 +8655,10 @@
           "es-ES": {
             "Text": "Llamando de nuevo al tractor...",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Llamando de nuevo al tractor...",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -7492,6 +8681,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "El simulador soltó el tractor: se vuelve a llamar...",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "El simulador soltó el tractor: se vuelve a llamar...",
             "LocalizationStatus": "TranslationOk"
           }
@@ -7518,6 +8711,10 @@
           "es-ES": {
             "Text": "Hay una comprobación en curso.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Hay una comprobación en curso.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -7540,6 +8737,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Hay un push en curso: «Terminar» estará disponible cuando acabe.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Hay un push en curso: «Terminar» estará disponible cuando acabe.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -7566,29 +8767,9 @@
           "es-ES": {
             "Text": "Hay un push en curso: páralo primero.",
             "LocalizationStatus": "TranslationOk"
-          }
-        }
-      },
-      "PUSHPLANNER.A_PUSH_IS_WAITING_TO_START_PRESS_STOP_FI_e99c": {
-        "UUID": "b077dcb3-6a22-4b35-af42-37b8ed5cb92c",
-        "LastModifiedBy": "tools/lang.mjs",
-        "LastModifiedDate": "2026-11-09T23:11:19.339Z",
-        "LocalizationStatus": "TranslationNeeded",
-        "Languages": {
-          "en-US": {
-            "Text": "A push is waiting to start: press Stop first.",
-            "LocalizationStatus": "TranslationOk"
           },
-          "fr-FR": {
-            "Text": "Un repoussage attend de démarrer : appuyez d'abord sur Stop.",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "de-DE": {
-            "Text": "Ein Push wartet auf den Start: bitte zuerst „Stopp“ drücken.",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "es-ES": {
-            "Text": "Un push espera para empezar: pulsa primero Stop.",
+          "es-MX": {
+            "Text": "Hay un push en curso: páralo primero.",
             "LocalizationStatus": "TranslationOk"
           }
         }
@@ -7612,6 +8793,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "Ya es el primer marcador.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "Ya es el primer marcador.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -7638,6 +8823,10 @@
           "es-ES": {
             "Text": "Ya es el último marcador.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Ya es el último marcador.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -7660,6 +8849,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "No hay nada en marcha que parar.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "No hay nada en marcha que parar.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -7686,6 +8879,10 @@
           "es-ES": {
             "Text": "Nada que terminar: el tractor ya no está y el freno de estacionamiento ya está puesto.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Nada que terminar: el tractor ya no está y el freno de estacionamiento ya está puesto.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -7708,6 +8905,10 @@
             "LocalizationStatus": "TranslationOk"
           },
           "es-ES": {
+            "Text": "«Pausa» está disponible mientras el tractor avanza.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
             "Text": "«Pausa» está disponible mientras el tractor avanza.",
             "LocalizationStatus": "TranslationOk"
           }
@@ -7734,29 +8935,9 @@
           "es-ES": {
             "Text": "No se puede leer el freno de estacionamiento.",
             "LocalizationStatus": "TranslationOk"
-          }
-        }
-      },
-      "PUSHPLANNER.THE_PUSH_RELEASES_AND_SETS_THE_PARKING_B_8b2a": {
-        "UUID": "ba753bae-fbfd-4563-8040-1385ffb58cdc",
-        "LastModifiedBy": "tools/lang.mjs",
-        "LastModifiedDate": "2026-11-09T23:11:19.339Z",
-        "LocalizationStatus": "TranslationNeeded",
-        "Languages": {
-          "en-US": {
-            "Text": "The push releases and sets the parking brake itself while it runs.",
-            "LocalizationStatus": "TranslationOk"
           },
-          "fr-FR": {
-            "Text": "Le repoussage desserre et serre lui-même le frein de stationnement pendant qu'il se déroule.",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "de-DE": {
-            "Text": "Der Push löst und setzt die Feststellbremse selbst, solange er läuft.",
-            "LocalizationStatus": "TranslationOk"
-          },
-          "es-ES": {
-            "Text": "El push suelta y pone el freno de estacionamiento él solo mientras dura.",
+          "es-MX": {
+            "Text": "No se puede leer el freno de estacionamiento.",
             "LocalizationStatus": "TranslationOk"
           }
         }
@@ -7782,6 +8963,10 @@
           "es-ES": {
             "Text": "Se está llamando al tractor: espera.",
             "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Se está llamando al tractor: espera.",
+            "LocalizationStatus": "TranslationOk"
           }
         }
       },
@@ -7805,6 +8990,318 @@
           },
           "es-ES": {
             "Text": "Este color es el del tema: no hay nada que restablecer.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Este color es el del tema: no hay nada que restablecer.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.BEACON_LIGHT_ON_ca3e": {
+        "UUID": "f56662b1-6815-4d4c-912b-1137fde66936",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T01:10:11.447Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Beacon light on",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Allumer le feu anticollision",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Beacon einschalten",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Encender la baliza",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Encender la baliza",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.PLAN_THE_PUSH_FIRST_2719": {
+        "UUID": "352afaa5-91bc-43c8-a3b9-7b776c01f999",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T01:10:11.448Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Plan the push first",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Planifier d'abord le repoussage",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Erst den Push planen",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Planifica primero el push",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Planifica primero el push",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.START_PUSH_THE_SMALLER_BUTTON_DOES_EVERY_690c": {
+        "UUID": "f202c39b-3de4-48a5-a202-06326117f39b",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T01:10:11.448Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Start push, the smaller button, does every step for you in one press, then drives the plan made on the Plan tab.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Démarrer le repoussage, le plus petit bouton, fait toutes les étapes d'une seule pression, puis exécute le plan fait dans l'onglet Plan.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Push starten, die kleinere Taste, erledigt alle Schritte mit einem Druck und fährt dann den Plan vom Tab „Plan“.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Iniciar push, el botón más pequeño, hace todos los pasos de una sola pulsación y luego recorre el plan hecho en la pestaña Plan.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Iniciar push, el botón más pequeño, hace todos los pasos con una sola presión y luego recorre el plan hecho en la pestaña Plan.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.THE_BIG_BUTTON_IS_THE_NEXT_STEP_CALL_THE_ab08": {
+        "UUID": "331c6f7f-de12-4101-a7b7-033f4607a7d6",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T01:10:11.448Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "The big button is the next step: Call the tug, then Release the brake, then Beacon light on. Do any of them yourself (in the cockpit, or in the sim) and it moves on to the next. When the last one is done and there is a plan, the push starts by itself.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Le grand bouton est l'étape suivante : appeler le tracteur, puis desserrer le frein, puis allumer le feu anticollision. Faites-en une vous-même (dans le cockpit ou dans le simulateur) et il passe à la suivante. Quand la dernière est faite et qu'un plan existe, le repoussage démarre tout seul.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Die große Taste ist der nächste Schritt: Schlepper rufen, dann Bremse lösen, dann Beacon einschalten. Erledige einen davon selbst (im Cockpit oder im Simulator), und sie springt zum nächsten. Ist der letzte erledigt und ein Plan vorhanden, startet der Push von selbst.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "El botón grande es el siguiente paso: llamar al tractor, luego soltar el freno y luego encender la baliza. Haz alguno tú mismo (en la cabina o en el simulador) y pasa al siguiente. Cuando se hace el último y hay un plan, el push empieza solo.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "El botón grande es el siguiente paso: llamar al tractor, luego soltar el freno y luego encender la baliza. Haz alguno tú mismo (en la cabina o en el simulador) y pasa al siguiente. Cuando se hace el último y hay un plan, el push empieza solo.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.WHEN_THE_PUSH_IS_DONE_THE_BIG_BUTTON_BEC_560a": {
+        "UUID": "67276029-f21c-4f1f-8646-4de373f319ec",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T01:10:11.448Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "When the push is done the big button becomes Finish push: it sets the parking brake if it is not set and dismisses the tug if it is on. Return to gate retraces the push (or as far as it got) back to where it started.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Quand le repoussage est terminé, le grand bouton devient « Terminer le repoussage » : il serre le frein de stationnement s'il ne l'est pas et renvoie le tracteur s'il est là. « Retour à la porte » refait le chemin du repoussage (ou ce qui en a été fait) jusqu'au point de départ.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Ist der Push fertig, wird die große Taste zu „Push beenden“: Sie setzt die Feststellbremse, falls sie nicht gesetzt ist, und schickt den Schlepper weg, falls er dran ist. „Zurück zum Gate“ fährt den Push (oder so weit er kam) zurück zum Ausgangspunkt.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Cuando termina el push, el botón grande pasa a ser Terminar push: pone el freno de estacionamiento si no está puesto y despide al tractor si está acoplado. Volver a la puerta repite el push al revés (o hasta donde llegó) hasta el punto de partida.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Cuando termina el push, el botón grande pasa a ser Terminar push: pone el freno de estacionamiento si no está puesto y despide al tractor si está acoplado. Volver a la puerta repite el push al revés (o hasta donde llegó) hasta el punto de partida.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.AUTOMATIC_616a": {
+        "UUID": "b92cae25-0832-4524-a878-a9c22fe9ff4c",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T01:14:17.516Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Automatic",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Automatique",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Automatisch",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Automático",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Automático",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.COMPACT_b89e": {
+        "UUID": "2e5fb17f-672e-4a95-b17b-5d0c72feedfe",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T01:14:17.517Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Compact",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Compact",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Kompakt",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Compacto",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Compacto",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.COMPACT_MAKES_THE_TEXT_AND_BUTTONS_SMALL_7210": {
+        "UUID": "3bd974f4-b151-4e55-a991-85628393c8a4",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T01:14:17.517Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Compact makes the text and buttons smaller, for a small tablet such as the one on the flight deck. Automatic chooses it when the screen is small.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Compact réduit le texte et les boutons, pour une petite tablette comme celle du poste de pilotage. Automatique le choisit quand l'écran est petit.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Kompakt macht Text und Tasten kleiner, für ein kleines Tablet wie das im Cockpit. Automatisch wählt es, wenn der Bildschirm klein ist.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Compacto reduce el texto y los botones, para una tableta pequeña como la de la cabina. Automático lo elige cuando la pantalla es pequeña.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Compacto reduce el texto y los botones, para una tableta pequeña como la de la cabina. Automático lo elige cuando la pantalla es pequeña.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.INTERFACE_SIZE_f3ba": {
+        "UUID": "6bcc4b22-14f7-43bd-bc73-b614302dc0ba",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T01:14:17.517Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Interface size",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Taille de l'interface",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Größe der Oberfläche",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Tamaño de la interfaz",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Tamaño de la interfaz",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.NORMAL_58de": {
+        "UUID": "9f776eab-f8e4-49b2-a6be-c76aa6b7d48f",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T01:14:17.517Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Normal",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Normal",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Normal",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Normal",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Normal",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.TEXT_AND_SPACING_cfec": {
+        "UUID": "2fbd1fd4-a7cb-4343-9e8c-709496952a7b",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T01:14:17.517Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Text and spacing",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Texte et espacement",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Text und Abstände",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Texto y espaciado",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Texto y espaciado",
             "LocalizationStatus": "TranslationOk"
           }
         }

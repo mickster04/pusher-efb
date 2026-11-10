@@ -12,7 +12,8 @@ PS.LANGS = [
   { code: 'en-US', label: 'English' },
   { code: 'de-DE', label: 'Deutsch' },
   { code: 'fr-FR', label: 'Français' },
-  { code: 'es-ES', label: 'Español' }
+  { code: 'es-ES', label: 'Español' },
+  { code: 'es-MX', label: 'Español (México)' }
 ];
 
 PS.i18n = (function () {
@@ -23,9 +24,11 @@ PS.i18n = (function () {
 
   // 'de', 'de-AT', 'fr-CA' -> the supported code with the same language, else English.
   function match(tag) {
-    var base = String(tag || '')
-      .toLowerCase()
-      .split(/[-_]/)[0];
+    var full = String(tag || '')
+        .toLowerCase()
+        .replace('_', '-'),
+      base = full.split('-')[0];
+    for (var j = 0; j < PS.LANGS.length; j++) if (PS.LANGS[j].code.toLowerCase() === full) return PS.LANGS[j].code; // the exact one first (es-MX)
     for (var i = 0; i < PS.LANGS.length; i++) if (PS.LANGS[i].code.toLowerCase().split('-')[0] === base) return PS.LANGS[i].code;
     return 'en-US';
   }
