@@ -33,6 +33,7 @@ PS.pages.push({
     var statusSub = h('div', { class: 'ps-kv', text: '' });
     var tugPill = h('span', { class: 'ps-pill bad', text: PS.t('TUG OFF') });
     var brakePill = h('span', { class: 'ps-pill', text: PS.t('BRAKE ?') });
+    var beaconPill = h('span', { class: 'ps-pill', text: PS.t('BEACON ?') });
     var gatePill = h('span', { class: 'ps-pill', text: PS.t('GATE ?') });
     var engineLine = h('div', { class: 'ps-kv', text: '' });
     var whyLine = h('div', { class: 'ps-kv', text: '' });
@@ -142,6 +143,13 @@ PS.pages.push({
       } else {
         brakePill.className = 'ps-pill ' + (b.set ? 'bad' : 'ok');
         brakePill.textContent = b.set ? PS.t('PARKING BRAKE SET') : PS.t('PARKING BRAKE OFF');
+      }
+      if (!v.beacon || !v.beacon.ok) {
+        beaconPill.className = 'ps-pill';
+        beaconPill.textContent = PS.t('BEACON ?');
+      } else {
+        beaconPill.className = 'ps-pill ' + (v.beacon.on ? 'ok' : 'bad');
+        beaconPill.textContent = v.beacon.on ? PS.t('BEACON ON') : PS.t('BEACON OFF');
       }
       if (!v.gate || !v.gate.known) {
         gatePill.className = 'ps-pill';
@@ -301,7 +309,7 @@ PS.pages.push({
             PS.t('Push'),
             h('div', { class: 'ps-toprow' }, statusBig, h('div', { class: 'ps-spacer' }), h('div', { class: 'ps-right' }, help)),
             statusSub,
-            h('div', { class: 'ps-row' }, tugPill, brakePill, gatePill),
+            h('div', { class: 'ps-row' }, tugPill, brakePill, beaconPill, gatePill),
             engineLine,
             whyLine,
             h('div', { class: 'ps-btnrow' }, stepBtn, returnBtn, pauseBtn, stopBtn),

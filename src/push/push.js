@@ -1232,6 +1232,7 @@ PS.push = (function () {
       canFinish: canFinish(),
       finishWhy: finishWhy(),
       step: nextStep(),
+      beacon: PS.beacon.read(),
       engines: PS.engines.status(),
       engineGate: engineGate(),
       gate: PS.gate.detect(),

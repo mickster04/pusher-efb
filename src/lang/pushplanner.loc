@@ -9305,6 +9305,90 @@
             "LocalizationStatus": "TranslationOk"
           }
         }
+      },
+      "PUSHPLANNER.BEACON_402d": {
+        "UUID": "b32d53e0-65f9-436d-8847-7c8bf139bcc8",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T01:41:53.525Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "BEACON ?",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "FEU ANTICOLL. ?",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "BEACON ?",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "BALIZA ?",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "BALIZA ?",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.BEACON_OFF_144d": {
+        "UUID": "8bdf5a45-8768-4ee9-a234-06b2b4689e66",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T01:41:53.526Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "BEACON OFF",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "FEU ANTICOLL. ÉTEINT",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "BEACON AUS",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "BALIZA APAGADA",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "BALIZA APAGADA",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.BEACON_ON_e9a8": {
+        "UUID": "b832ec8d-7622-4ddb-89e3-d84658ba7a4c",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T01:41:53.526Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "BEACON ON",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "FEU ANTICOLL. ALLUMÉ",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "BEACON AN",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "BALIZA ENCENDIDA",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "BALIZA ENCENDIDA",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
       }
     }
   }
