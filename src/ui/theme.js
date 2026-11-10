@@ -479,7 +479,9 @@ PS.theme = (function () {
         failed.push({ file: it.name, why: 'not valid JSON' });
         return;
       }
-      var why = validateThemeFile(t);
+      var mgs = migrateTheme(t);
+      t = mgs.obj;
+      var why = newerWhy(mgs, validateThemeFile(t));
       if (why) {
         failed.push({ file: it.name, why: why });
         return;
@@ -580,7 +582,7 @@ PS.theme = (function () {
     }
     var fileName = slug + '.json',
       id = 'saved-' + slug;
-    var obj = { id: id, name: nm, note: 'Saved from Push Planner' };
+    var obj = { format: THEME_FORMAT, app: PS.VERSION, id: id, name: nm, note: 'Saved from Push Planner' };
     var nested = nestPalette(palette(), mapStyle());
     obj.page = nested.page;
     obj.map = nested.map;
@@ -664,6 +666,16 @@ PS.theme = (function () {
   var files = { state: 'idle', names: [], base: '', listed: 0, loaded: 0, added: 0, replaced: 0, failed: [], at: 0 };
   var ID_RE = /^[a-z0-9][a-z0-9_-]{0,40}$/i;
 
+  // The format of a theme file (see PS.migrate in core/persist.js). A file with no "format" is format 1. Package files and saved ones both go through this.
+  var THEME_FORMAT = 1;
+  var THEME_STEPS = {}; // THEME_STEPS[n]: (format n theme) -> format n+1 theme. None yet.
+  function migrateTheme(t) {
+    var mg = PS.migrate(t, 'format', THEME_FORMAT, THEME_STEPS);
+    return mg;
+  }
+  function newerWhy(mg, why) {
+    return why && mg.newer ? why + ' (made by a newer version of the app: theme format ' + mg.from + ')' : why;
+  }
   function validateThemeFile(t) {
     if (!t || typeof t !== 'object') return 'not an object';
     if (typeof t.id !== 'string' || !ID_RE.test(t.id)) return 'needs an "id" of letters, digits, - or _';
@@ -689,7 +701,9 @@ PS.theme = (function () {
         res.failed.push({ file: it.file, why: 'not valid JSON' });
         return;
       }
-      var why = validateThemeFile(t);
+      var mgp = migrateTheme(t);
+      t = mgp.obj;
+      var why = newerWhy(mgp, validateThemeFile(t));
       if (why) {
         res.failed.push({ file: it.file, why: why });
         return;

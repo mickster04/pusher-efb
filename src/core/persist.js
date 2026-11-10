@@ -4,15 +4,40 @@
 // there is one request, not two). localStorage stays as the quick first copy and the fallback when the files module is not installed.
 // Nothing is written until the file has been read, so a slow or missing reply can never overwrite a good file with defaults.
 
+// FORMAT VERSIONS. Every file the app writes says which format it is (a whole number, "v" here and "format" in a theme file) and which app version wrote
+// it ("app", for information). A file with no number is format 1, the first one. When the format changes in a way an old file cannot be read as it is, add a
+// step to STEPS (or THEME_STEPS in theme.js) that turns format n into n+1 and raise the current number: a file of any older format is walked up one step at
+// a time when it is read, and rewritten in the new format. A file from a NEWER format than this app knows is read as far as it can be and never
+// overwritten, so an older app cannot destroy what a newer one saved. See docs/data-formats.md.
+PS.migrate = function (o, key, current, steps) {
+  if (!o || typeof o !== 'object') return { obj: o, from: 1, to: 1, newer: false, migrated: false };
+  var from = typeof o[key] === 'number' && o[key] >= 1 ? Math.floor(o[key]) : 1;
+  if (from > current) return { obj: o, from: from, to: from, newer: true, migrated: false };
+  var cur = JSON.parse(JSON.stringify(o)), // the steps may change it freely
+    v = from;
+  while (v < current) {
+    var step = steps && steps[v];
+    if (typeof step !== 'function') return { obj: cur, from: from, to: v, newer: false, migrated: v > from, broken: true }; // no way up from here
+    cur = step(cur) || cur;
+    v++;
+    cur[key] = v;
+  }
+  return { obj: cur, from: from, to: current, newer: false, migrated: from < current };
+};
+
 PS.persist = (function () {
   var FILE = 'pushplanner-settings.json';
+  var SCHEMA = 1; // the format of this file
+  var STEPS = {}; // STEPS[n]: (format n object) -> format n+1 object. None yet: format 1 is the first.
+  var readOnly = false; // the file is from a newer format: not overwritten
   var usable = false, // the files module answered: writing is allowed
     restored = false, // the file has been applied (only the first listing is: a later one must not undo what was changed since)
     timer = null;
 
   function collect() {
     return {
-      v: 1,
+      v: SCHEMA,
+      app: PS.VERSION,
       settings: PS.settings.all(),
       theme: PS.theme && PS.theme.getState ? PS.theme.getState() : null,
       learned: PS.learned.all(),
@@ -21,7 +46,7 @@ PS.persist = (function () {
   }
   function write() {
     timer = null;
-    if (!usable || !PS.wasmFiles || typeof PS.wasmFiles.save !== 'function') return Promise.resolve(false);
+    if (!usable || readOnly || !PS.wasmFiles || typeof PS.wasmFiles.save !== 'function') return Promise.resolve(false);
     var text = JSON.stringify(collect());
     return PS.wasmFiles.save(FILE, text).then(
       function (r) {
@@ -64,11 +89,24 @@ PS.persist = (function () {
       return;
     }
     if (!o || typeof o !== 'object') return;
+    var mg = PS.migrate(o, 'v', SCHEMA, STEPS);
+    o = mg.obj;
+    if (mg.newer) {
+      readOnly = true;
+      PS.log('persist', FILE + ' is format ' + mg.from + ' (written by app ' + (o.app || '?') + '), newer than this app (format ' + SCHEMA + '): read as far as understood, and left as it is');
+    } else if (mg.broken) {
+      readOnly = true;
+      PS.log('persist', FILE + ' is format ' + mg.from + ' and there is no way to bring it to format ' + SCHEMA + ': left as it is');
+      return;
+    } else if (mg.migrated) {
+      PS.log('persist', FILE + ' was format ' + mg.from + ' (app ' + (o.app || '?') + '): brought to format ' + SCHEMA);
+    }
     var n = o.settings ? PS.settings.merge(o.settings) : 0,
       themeId = '';
     if (o.theme && PS.theme && PS.theme.restoreState) themeId = PS.theme.restoreState(o.theme);
     var l = o.learned ? PS.learned.restore(o.learned) : 0;
     if (typeof o.speedPercent === 'number' && PS.push && PS.push.setSpeedPercent) PS.push.setSpeedPercent(o.speedPercent);
+    if (mg.migrated || typeof f.text === 'string' && f.text.indexOf('"v"') < 0) schedule(); // (a file from an older format, or with no format number, is rewritten)
     PS.log('persist', 'restored from ' + FILE + ': ' + n + ' setting(s)' + (themeId ? ', theme "' + themeId + '"' : '') + ', ' + l + ' learned aircraft');
   }
   // The files module did not answer: nothing is written, localStorage alone is used.
@@ -76,5 +114,11 @@ PS.persist = (function () {
     usable = false;
   }
 
-  return { FILE: FILE, ingest: ingest, unavailable: unavailable, schedule: schedule, flush: write };
+  // Test hook: forget that the file was read (a test reads several)
+  function forget() {
+    restored = false;
+    readOnly = false;
+    usable = false;
+  }
+  return { FILE: FILE, SCHEMA: SCHEMA, STEPS: STEPS, _forget: forget, ingest: ingest, unavailable: unavailable, schedule: schedule, flush: write };
 })();
