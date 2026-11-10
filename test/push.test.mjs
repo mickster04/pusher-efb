@@ -625,3 +625,30 @@ test('push: the beacon counts as on when the light or the switch says so, and a 
   PS.plan.clear();
   });
 });
+
+test('push: a flickering beacon does not start a push, and after Stop nothing starts by itself until the pilot presses a step', () => {
+  withClock(58000000, () => {
+  reset(); planBack(80); sim.attached = 1; sim.wait = 0; sim.brake = 0; sim.beacon = 0;
+  PS.push.watchSteps(); run(1);
+  sim.beacon = 1; PS.push.watchSteps(); run(0.3); PS.push.watchSteps();   // on for a moment
+  sim.beacon = 0; run(1); PS.push.watchSteps(); run(3);
+  assert.ok(!PS.push.isActive(), 'a flicker started nothing: ' + PS.push.view().status);
+  sim.beacon = 1; for (let i = 0; i < 8; i++) { run(1); PS.push.watchSteps(); }     // really on: starts by itself after 2 s (the Push tab calls this every half second)
+  assert.ok(PS.push.isActive(), 'steady on starts the push: ' + PS.push.view().status);
+  PS.push.stop('test');
+  run(1);
+  sim.beacon = 0; run(2); PS.push.watchSteps(); sim.beacon = 1; for (let i = 0; i < 8; i++) { run(1); PS.push.watchSteps(); }
+  assert.ok(!PS.push.isActive(), 'after Stop the beacon coming on again does not restart it: ' + PS.push.view().status);
+  PS.push.doNextStep();                                                   // the pilot presses a step: automatic start is back
+  PS.push.emergencyStop('test end'); run(1);
+  });
+});
+
+test('push: the view reads the parking brake fresh, so a brake moved in the cockpit shows without a push running', () => {
+  withClock(59000000, () => {
+  reset(); sim.brake = 1;
+  assert.equal(PS.push.view().brake.set, true);
+  sim.brake = 0;
+  assert.equal(PS.push.view().brake.set, false, 'seen at once');
+  });
+});

@@ -16,6 +16,10 @@ New here? [docs/BUILDING.md](docs/BUILDING.md) takes a fresh checkout to an inst
 
 The log is deliberately short: what happened and what went wrong. Press **Settings > Diagnostics** for a set of read-only checks (sim access, the two WASM modules, the nearest airport, gate detection, AI traffic, the tug and brake variables, engines, ground services, theme files). Each logs the detail relevant to what it checks while it runs. **Detailed logging** keeps that fine print all the time (use it to reproduce a problem), and **Copy all logs** copies the log and page snapshots to report one. In code, `PS.log` is the normal log and `PS.logv` the detail that only shows during a check or in detailed mode.
 
+## Settings between runs
+
+The EFB app's `localStorage` does not survive a sim restart, so the settings, the chosen theme (and your colours), the speed and the learned aircraft pivots are also saved in the files module's work folder as `pushplanner-settings.json` (next to the saved themes) and read back at start. Without the files module (`PusherFiles.wasm`) they fall back to `localStorage`, which may be lost on restart. The log says `persist: restored from pushplanner-settings.json` at start.
+
 ## Safety
 
 This app moves a real aircraft in the simulator by writing velocity and brake variables. Use it parked on the ground at a stand, with the tug attached and brake released. The tug stops at once on Stop, when the sim detaches it, when the app is paused or closed, and when the brake is set. Always watch the aircraft and the map yourself: the app does not see other aircraft, vehicles or obstacles ahead, and it will not stop for them. Pause or Stop if anything is in the way.

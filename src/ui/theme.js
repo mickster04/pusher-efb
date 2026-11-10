@@ -302,9 +302,9 @@ PS.theme = (function () {
   var listeners = [];
   var styleEl = null;
 
-  function load() {
+  function load(from) {
     try {
-      var saved = JSON.parse(window.localStorage.getItem(KEY) || 'null');
+      var saved = from || JSON.parse(window.localStorage.getItem(KEY) || 'null');
       if (saved && typeof saved === 'object') {
         if (typeof saved.id === 'string') state.id = saved.id;
         if (saved.customMap && typeof saved.customMap === 'object') state.customMap = cleanMap(saved.customMap); // kept even if it is not known yet: it may be a theme file still to be read
@@ -324,6 +324,23 @@ PS.theme = (function () {
     } catch (e) {
       /* not saved */
     }
+    if (PS.persist) PS.persist.schedule();
+  }
+  // The choice as a plain object for the settings file, and the way back (the id may be a saved theme that has not been read yet: it is kept, see settle).
+  function getState() {
+    return { id: state.id, custom: state.custom, customMap: state.customMap };
+  }
+  function restoreState(o) {
+    if (!o || typeof o !== 'object' || typeof o.id !== 'string') return '';
+    state.custom = {};
+    state.customMap = {};
+    load(o);
+    try {
+      window.localStorage.setItem(KEY, JSON.stringify(state));
+    } catch (e) {
+      /* not saved */
+    }
+    return state.id;
   }
 
   // The palette (all roles) of the chosen theme with the user's colours over it.
@@ -455,6 +472,7 @@ PS.theme = (function () {
       count = 0;
     list.forEach(function (it) {
       var t;
+      if (PS.persist && it.name === PS.persist.FILE) return; // the settings file, not a theme
       try {
         t = JSON.parse(it.text);
       } catch (e) {
@@ -512,6 +530,7 @@ PS.theme = (function () {
     PS.wasmFiles.list().then(
       function (files) {
         var r = ingestSaved(files);
+        if (PS.persist) PS.persist.ingest(files); // before settle(): the chosen theme may be one of these files
         savedInfo = { state: 'done', module: 'yes', count: r.count, failed: r.failed, at: Date.now() };
         PS.logv(
           'theme',
@@ -533,6 +552,7 @@ PS.theme = (function () {
       },
       function (e) {
         savedInfo = { state: 'failed', module: 'no', count: 0, failed: [], at: Date.now() };
+        if (PS.persist) PS.persist.unavailable();
         PS.log(
           'theme',
           'saved themes: the files module did not answer (' + (PS.errText ? PS.errText(e) : e) + "); saving will use the app's own storage"
@@ -885,6 +905,8 @@ PS.theme = (function () {
     },
     workFolderLines: WORK_FOLDER_LINES,
     loadSaved: loadSaved,
+    getState: getState,
+    restoreState: restoreState,
     saveTheme: saveTheme,
     deleteSaved: deleteSaved,
     savedStatus: function () {

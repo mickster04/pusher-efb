@@ -21,6 +21,7 @@ PS.learned = (function () {
     } catch (e) {
       /* kept in memory for this session */
     }
+    if (PS.persist) PS.persist.schedule();
   }
   // The same airframe under any livery: the ATC model string, else the title.
   function keyOf(info) {
@@ -54,5 +55,25 @@ PS.learned = (function () {
     return next;
   }
 
-  return { get: get, save: save, keyOf: keyOf };
+  // Everything kept, and a merge of what the settings file held: an entry from the file is used unless this machine has a newer one. Returns how many entries.
+  function all() {
+    return load();
+  }
+  function restore(src) {
+    var mine = load(),
+      n = 0,
+      k;
+    if (!src || typeof src !== 'object') return 0;
+    for (k in src) {
+      var v = src[k];
+      if (v && typeof v.pivotM === 'number' && isFinite(v.pivotM) && (!mine[k] || (v.at || 0) > (mine[k].at || 0))) {
+        mine[k] = { pivotM: v.pivotM, pushes: v.pushes || 1, at: v.at || 0 };
+        n++;
+      }
+    }
+    if (n) store(mine);
+    return n;
+  }
+
+  return { get: get, save: save, keyOf: keyOf, all: all, restore: restore };
 })();

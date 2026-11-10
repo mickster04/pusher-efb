@@ -64,6 +64,8 @@ PS.push = (function () {
     stageLogged: '',
     prevReady: null,
     beaconSeen: null,
+    autoBlocked: false,
+    readySince: 0,
     beaconAll: null,
     beaconOnReads: 0,
     brakeSeen: null,
@@ -432,6 +434,7 @@ PS.push = (function () {
 
   // Start: attach the tug if it is not on, wait for the parking brake to be off, settle, then drive the plan.
   function requestStart(opts) {
+    S.autoBlocked = false;
     var isReturn = !!(opts && opts.returnToGate);
     var c = isReturn ? canReturn() : canStart(false);
     if (!c.ok) {
@@ -658,6 +661,7 @@ PS.push = (function () {
   // Do the next step (what the main button does).
   function doNextStep() {
     var step = nextStep();
+    S.autoBlocked = false; // the pilot is going through the steps: the push may start by itself when they are done
     log('next step: ' + step);
     if (step === 'tug') toggleTug();
     else if (step === 'brake') releaseBrake();
@@ -692,13 +696,25 @@ PS.push = (function () {
       S.prevReady = null;
       return;
     }
-    var ready = nextStep() === 'go' && canStart(false).ok;
-    if (S.prevReady === null || S.prevReady === undefined) S.prevReady = ready;
-    else if (ready && !S.prevReady) {
+    var ready = nextStep() === 'go' && canStart(false).ok,
+      now = Date.now();
+    if (S.prevReady === null || S.prevReady === undefined) {
+      S.prevReady = ready; // the first look never starts anything
+      S.readySince = 0;
+      return;
+    }
+    if (!ready) {
+      S.prevReady = false;
+      S.readySince = 0;
+      return;
+    }
+    if (S.prevReady) return; // it was ready already: nothing new
+    if (!S.readySince) S.readySince = now; // just became ready: it has to stay ready for 2 s (a flickering beacon must not start a push)
+    if (now - S.readySince >= 2000 && !S.autoBlocked) {
       S.prevReady = true;
       log('all the steps are done: starting the push');
       requestStart();
-    } else S.prevReady = ready;
+    }
   }
 
   function beginBrakeCheck() {
@@ -766,6 +782,7 @@ PS.push = (function () {
   }
   function stop(why) {
     S.wantRun = false;
+    S.autoBlocked = true; // after a Stop nothing starts by itself until the pilot presses a step or Start again
     if (S.status === 'driving' || S.status === 'paused' || S.status === 'brakeHold') {
       log('stop: ' + why);
       beginStopping(why, 'ready');
@@ -781,6 +798,7 @@ PS.push = (function () {
     var active = { settling: 1, driving: 1, stopping: 1, paused: 1, brakeHold: 1, waitBrake: 1, attaching: 1, waitBeacon: 1, reattach: 1 }[S.status];
     S.wantRun = false;
     if (!active) return;
+    S.autoBlocked = true; // (only when a push was really stopped)
     log('EMERGENCY STOP: ' + why);
     if (/detached/.test(why)) logDetach();
     if (PS.tug.isAttached()) PS.tug.zeroAndHold();
@@ -1232,7 +1250,7 @@ PS.push = (function () {
       status: S.status,
       reason: S.reason,
       attached: S.attached,
-      brake: S.brake,
+      brake: PS.brake.read(false), // fresh, so a brake moved in the cockpit shows at once (S.brake is only refreshed while a push or the tug is on)
       plan: S.plan,
       totalM: S.totalM,
       runLimitMs: S.runLimitMs,
@@ -1276,6 +1294,7 @@ PS.push = (function () {
     S.speedPercent = clamp(Math.round(p), 10, 100);
     try {
       window.localStorage.setItem(SPEED_KEY, String(S.speedPercent));
+      if (PS.persist) PS.persist.schedule();
     } catch (e1) {
       /* not saved */
     }
@@ -1314,6 +1333,9 @@ PS.push = (function () {
     releaseBrake: releaseBrake,
     setBrake: setBrake,
     setSpeedPercent: setSpeedPercent,
+    getSpeedPercent: function () {
+      return S.speedPercent;
+    },
     route: function () {
       return S.plan;
     },

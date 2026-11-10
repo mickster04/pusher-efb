@@ -42,6 +42,7 @@ const ORDER = [
   'planning/planner-texts.js',
   'planning/plan.js',
   'core/settings.js',
+  'core/persist.js',
   'push/tug.js',
   'push/beacon.js',
   'push/aircraft-profiles.js',

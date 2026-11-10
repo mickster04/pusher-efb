@@ -8,7 +8,7 @@ PS.beacon = (function () {
   // { ok: it could be read, on }. On when the light (LIGHT BEACON ON) or the switch (LIGHT BEACON) says on: the ATR's switch can be on with the
   // light still dark (no power yet), and a cockpit switch that is on is what the pilot means. The app never writes LIGHT BEACON (an earlier version did,
   // and the ATR then kept 1 there with the beacon off), so the switch variable follows the cockpit.
-  function read() {
+  function raw() {
     var on = PS.getVar('LIGHT BEACON ON', 'bool'),
       sw = PS.getVar('LIGHT BEACON', 'bool');
     function num(r) {
@@ -16,6 +16,15 @@ PS.beacon = (function () {
     }
     var ok = num(on) || num(sw);
     return { ok: ok, on: (num(on) && on.value > 0.5) || (num(sw) && sw.value > 0.5) };
+  }
+  // The ATR's switch variable flickers for a moment when a key event is sent, so "on" has to hold for 1.2 s before it counts (read is called every half
+  // second or so). A beacon that was on when the app first looked counts at once.
+  var offAt = 0;
+  function read() {
+    var r = raw();
+    if (!r.on) offAt = Date.now();
+    else if (Date.now() - offAt < 1200 && offAt) r = { ok: r.ok, on: false };
+    return r;
   }
 
   // The other ways the sim reports the beacon, for the log only:
@@ -41,7 +50,7 @@ PS.beacon = (function () {
   function watch(on, ms, yes, no) {
     var t0 = Date.now();
     (function look() {
-      if (read().on === on) yes();
+      if (raw().on === on) yes();
       else if (Date.now() - t0 >= ms) no();
       else setTimeout(look, 200);
     })();
@@ -56,7 +65,7 @@ PS.beacon = (function () {
       changingSince = 0;
       cb0(r);
     }
-    if (read().on === on) {
+    if (raw().on === on) {
       cb({ ok: true, how: 'it was already ' + (on ? 'on' : 'off') });
       return;
     }

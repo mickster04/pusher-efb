@@ -46,6 +46,35 @@ PS.settings = (function () {
       /* not saved */
     }
     PS.log('settings', name + ' = ' + v);
+    if (PS.persist) PS.persist.schedule();
   }
-  return { get: get, set: set };
+  function all() {
+    var o = {},
+      n;
+    for (n in values) o[n] = values[n];
+    return o;
+  }
+  // Apply settings read from the settings file: only known names of the right type, with the side effects a change has. Returns how many were applied.
+  function merge(src) {
+    var n = 0,
+      name;
+    if (!src || typeof src !== 'object') return 0;
+    for (name in defaults) {
+      if (src[name] !== undefined && typeof src[name] === typeof defaults[name] && src[name] !== values[name]) {
+        if (name === 'tightest' && (src[name] < 10 || src[name] > 40)) continue;
+        values[name] = src[name];
+        n++;
+      }
+    }
+    PS.plan.setMinRadius(values.tightest);
+    if (PS.applyInsets) PS.applyInsets();
+    if (PS.relayout) PS.relayout();
+    try {
+      window.localStorage.setItem(KEY, JSON.stringify(values));
+    } catch (e) {
+      /* not saved */
+    }
+    return n;
+  }
+  return { get: get, set: set, all: all, merge: merge };
 })();
