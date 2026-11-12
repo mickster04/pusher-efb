@@ -46,4 +46,4 @@ Open the EFB, start the Push Planner app, go to **Settings > Diagnostics** and p
 
 ## Release steps
 
-See [release-checklist.md](release-checklist.md). The version is in three places until that list is done: `package.json`, `PackageDefinitions/push-planner.xml` and `PS.VERSION` in `src/core/core.js`.
+See [release-checklist.md](release-checklist.md). The version lives in `package.json` only: the build copies it into `PackageDefinitions/push-planner.xml` and `PS.VERSION`, and `test/version.test.mjs` fails if they differ. `npm run bump` raises the patch number for a test build.

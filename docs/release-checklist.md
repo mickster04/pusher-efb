@@ -1,6 +1,6 @@
 # Release checklist
 
-Where the first release stands (latest pre-release tag `v0.2.23-pre`; working version in `package.json`). Tick items off here.
+Where the first release stands (latest pre-release tag `v0.2.23-pre`; working version 0.2.35 in `package.json`; release notes draft in [release-notes.md](release-notes.md)). Tick items off here.
 
 ## Done and verified in the sim
 
@@ -16,6 +16,8 @@ Where the first release stands (latest pre-release tag `v0.2.23-pre`; working ve
 - [x] Suggestions at other airports (junction rule: named taxiways and links count, unnamed apron lanes do not): checked in the logs at NZCH and EGLL.
 - [x] Automatic airport reload after a long move, the 3 degree nose-pitch stop, and the straight-back planner fix (owner confirmed in the sim, 2026-11-10).
 - [x] Push tab next-step main button with automatic start, the beacon readings, and the compact layout on the flight-deck tablet (831 x 558); the three-leg 787 push (258 m) ran through both changes of direction.
+- [x] Settings, the chosen theme and the learned pivots are restored after a sim restart (`pushplanner-settings.json`), and the new footer (owner, 2026-11-11).
+- [x] Pushes on the ATR 72-600 (needs the brake binding conflict removed and "Start without the beacon", see the README's known issues) and the Cessna Caravan (single leg, pivot about 0.7 m).
 - [x] Boeing 787-10 push (the 787 profile, pivot 7 m): steering within 0.7 m, pitch steady.
 
 ## Still to confirm: translation only
@@ -25,10 +27,13 @@ Where the first release stands (latest pre-release tag `v0.2.23-pre`; working ve
 
 ## Needs an owner or a tester
 
-- [ ] **A 777 and a smaller jet** (owner), before a full release: tug, tiller, brake, ground services. So far the A330, A320, A380, 787 and Asobo 737 MAX have been pushed.
+- [ ] **A 777 and a business jet** (owner), before a full release: tug, tiller, brake, ground services (a jet gets the 40 m turn radius and the 15 m gate radius, which the Caravan did not exercise). So far the A330, A320, A380, 787, Asobo 737 MAX, ATR 72-600 and Caravan have been pushed.
+- [ ] **ATR profile** (optional): a full ATR push with detailed logging, then add the learned pivot (about 3.5 m) to `src/push/aircraft-profiles.js`.
+- [ ] **0.2.35 in the sim** (owner): the ATR brake with the controller binding removed, the hidden ATR beacon, the Ignore-the-parking-brake setting, the tug pill going to TUG OFF after Finish, the per-leg route log.
 - [ ] **Steam work-folder path** (needs a Steam user).
 - [ ] **Native review** of German, French, Spanish (Spain) and Spanish (Mexico): all machine drafts. Release notes and the README ask the community for corrections.
-- [ ] **Package metadata** (owner): title "Push Planner", Creator "Mike Cleaver", Manufacturer "Tuatara Airlines" and `VisibleInStore` false (Community-folder only) are set; still check the `ContentInfo` thumbnail matches the current icon.
+- [x] **Package metadata** (owner): title "Push Planner", Creator "Mike Cleaver", Manufacturer "Tuatara Airlines" and `VisibleInStore` false (Community-folder only) are set; still check the `ContentInfo` thumbnail matches the current icon.
+- [ ] **Documentation** is up to date as of 0.2.35 (README, app-design, BUILDING, data-formats, release-notes); re-read the README's Known issues before tagging.
 - [ ] **Release step** (last, only then): one version in `package.json` (the build copies it into the package definition and the app; `test/version.test.mjs` fails if they differ), a git tag, and release notes.
 
 ## Decided to leave for now

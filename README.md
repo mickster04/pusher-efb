@@ -2,15 +2,17 @@
 
 An MSFS 2024 EFB app that plans and drives a pushback, ported from the Pusher desktop app. Plain JavaScript, no dependencies, no SDK needed to build the app itself (the two small WASM modules need the MSFS SDK). The internal name is still `PushPlanner` (the sim matches it against file and folder names, so renaming is a separate step).
 
-**Status: pre-release.** Planning, suggestions, pushing, gate detection (by aircraft size), Return to gate, engine-gated tug dismissal, the beacon wait, automatic tug reconnect, translation through the sim, themes and settings have been run in the sim, on the Airbus A330-900neo (Headwind), the A320 (Fenix), the A380 and the Asobo 737 MAX. Not yet verified there: other Boeing aircraft (the 777) and smaller jets (tug, brake, ground services), the Steam work-folder path, and the Spanish (`es-ES`, `es-MX`), French and German wording, which are machine drafts that need community review. The earlier feasibility app is kept on the `spikes-app` branch ([findings](docs/implementation/feasibility-findings.md), [taxi module](docs/implementation/wasm-taxi.md)).
+**Status: pre-release.** Planning, suggestions, pushing, gate detection (by aircraft size), Return to gate, engine-gated tug dismissal, the beacon wait, automatic tug reconnect, translation through the sim, themes, and settings kept between sim runs have been run in the sim. Pushes have been run on the Airbus A330-900neo (Headwind), the A320 (Fenix), the A380, the Boeing 787-10, the Asobo 737 MAX, the ATR 72-600 and the Cessna Caravan. Not yet verified there: the 777, a business jet, the Steam work-folder path, and the Spanish (`es-ES`, `es-MX`), French and German wording, which are machine drafts that need community review. See [Known issues](#known-issues). The earlier feasibility app is kept on the `spikes-app` branch ([findings](docs/implementation/feasibility-findings.md), [taxi module](docs/implementation/wasm-taxi.md)).
 
 New here? [docs/BUILDING.md](docs/BUILDING.md) takes a fresh checkout to an installed package.
 
 ## Tabs
 
 1. **Plan**: a north-up map centred on the aircraft with runways, taxiways, stands and AI aircraft. Tap to drop pins; each pin is drawn as an aircraft pointing the way the nose will be there, with its number in the middle. Drag a pin to move it, drag the yellow handle behind a selected pin to rotate it, drag empty map to move the map. The route is drawn with the tug's turn arcs (white = push back, blue = forward, red = the tug may not manage that leg). Suggested pushes from the original app's suggester can be chosen as the plan.
-2. **Push**: **Start push** does it all in one press: it calls the tug if it is not on, waits for the parking brake to be off (it can release it for you), then drives the plan with a path follower. It shows the distance left, speed and how far off the path it is, a live map, and a popup over every tab with Pause/Resume/Stop. At the end it offers to set the brake and dismiss the tug (by default only after an engine has started). The ground services (jet bridge, fuel, baggage, catering, power) are buttons here. Return to gate retraces the push.
-3. **Settings**: speed, how the tug is dismissed, planning limits, snapping, the map (line widths, range rings) and the colour themes. The **Diagnostics** button at the bottom opens the checks and the log; both are hidden until it is pressed.
+2. **Push**: the big button is always the next step: **Call the tug**, then **Release the brake**, then **Beacon light on**. Each step is read from the sim, so one done by hand (or in the cockpit) is skipped. When all are done and there is a plan, the push **starts by itself** after two seconds (not again after a Stop, until a step or Start is pressed); a small **Start push** button does the whole sequence in one press. The tug follows the plan with a path follower and shows the distance left, speed and how far off the path it is, a live map, and a popup over every tab with Pause/Resume/Stop. Status pills show TUG, BRAKE, BEACON and GATE. Stop is always available while a push is running or the tug is on. At the end it offers to set the brake and dismiss the tug (by default only after an engine has started). The ground services (jet bridge, fuel, baggage, catering, power) are buttons here. Return to gate retraces the push.
+3. **Settings**: speed, how the tug is dismissed, whether to wait for the beacon and for the parking brake, planning limits, snapping, the map (line widths, range rings), the interface size (automatic, normal or compact for small tablets) and the colour themes. The **Diagnostics** button at the bottom opens the checks and the log; both are hidden until it is pressed.
+
+A footer shows the app version, sim access, the two WASM modules, and the theme, aircraft, airport and gate.
 
 ## Diagnostics and logging
 
@@ -19,6 +21,14 @@ The log is deliberately short: what happened and what went wrong. Press **Settin
 ## Settings between runs
 
 The EFB app's `localStorage` does not survive a sim restart, so the settings, the chosen theme (and your colours), the speed and the learned aircraft pivots are also saved in the files module's work folder as `pushplanner-settings.json` (next to the saved themes) and read back at start. Without the files module (`PusherFiles.wasm`) they fall back to `localStorage`, which may be lost on restart. The log says `persist: restored from pushplanner-settings.json` at start.
+
+## Known issues
+
+- **ATR 72-600: beacon.** The ATR's beacon switch does not change any variable the app can read, and the standard key events do nothing, so the app cannot see or set it. The ATR has a profile that marks this: the beacon wait, step and pill are hidden for it and the push does not wait for it.
+- **Parking brake and your own controller.** A joystick, yoke or pedal button bound to the parking brake can flip it on and off during a push, and each flip stops the tug. If a push keeps stopping with "the parking brake was set during the push", check the sim's control bindings. For an aircraft whose brake the app cannot read, **Settings > Parking brake > Ignore the parking brake** skips the check.
+- **FlyByWire aircraft.** The app switches the aircraft's own pushback system off while its tug is on. Its wheel chocks brake the aircraft until the beacon is on, which is why the beacon wait exists.
+- **Planner edge case.** For some end-pin headings the planner adds a short forward leg (a three-point turn) that retraces ground the push just covered. It is rare and harmless; move the end pin or change its heading to avoid it.
+- **Hover text on disabled buttons** does not show in the sim's browser.
 
 ## Safety
 
