@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<AssetPackage Version="0.2.34">
+<AssetPackage Version="0.2.35">
 	<ItemSettings>
 		<ContentType>MISC</ContentType>
-		<Title>Push Planner (EFB)</Title>
+		<Title>Push Planner</Title>
 		<Manufacturer>Tuatara Airlines</Manufacturer>
 		<Creator>Mike Cleaver</Creator>
 	</ItemSettings>

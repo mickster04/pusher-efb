@@ -10,7 +10,7 @@ Where the first release stands (latest pre-release tag `v0.2.23-pre`; working ve
 - [x] Safety note: README "Safety".
 - [x] Files module (saved theme files): works in the sim.
 - [x] Translation through the sim's own `.loc` (Localization asset group, `Coherent.translate`), including accented letters (`'Roboto-Regular'` font).
-- [x] Tug driving on the A330-900neo (Headwind), the A320 (Fenix) and the A380: steering, brake release, beacon wait, FlyByWire pushback switch-off, end of push, gate detection and Return to gate.
+- [x] Tug driving on the A330-900neo (Headwind), the A320 (Fenix), the A380 and the Asobo 737 MAX: steering, brake release, beacon wait, FlyByWire pushback switch-off, end of push, gate detection and Return to gate.
 - [x] Automatic tug reconnect after the sim lets go of the tug: seen in a real push, which carried on without trouble.
 - [x] Reload airport data button (map toolbar, on both Plan sub-tabs): loads the nearest airport after moving (the log shows EGLL loaded after NZCH).
 - [x] Suggestions at other airports (junction rule: named taxiways and links count, unnamed apron lanes do not): checked in the logs at NZCH and EGLL.
@@ -25,10 +25,10 @@ Where the first release stands (latest pre-release tag `v0.2.23-pre`; working ve
 
 ## Needs an owner or a tester
 
-- [ ] **A 737 or 777 and a smaller jet** (owner), before a full release: tug, tiller, brake, ground services. So far the A330, A320, A380 and 787 have been pushed.
+- [ ] **A 777 and a smaller jet** (owner), before a full release: tug, tiller, brake, ground services. So far the A330, A320, A380, 787 and Asobo 737 MAX have been pushed.
 - [ ] **Steam work-folder path** (needs a Steam user).
 - [ ] **Native review** of German, French, Spanish (Spain) and Spanish (Mexico): all machine drafts. Release notes and the README ask the community for corrections.
-- [ ] **Package metadata** (owner): Creator "Mike Cleaver" and Manufacturer "Tuatara Airlines" are set; decide on the title and `VisibleInStore` (false means Community-folder only); check the `ContentInfo` thumbnail matches the current icon.
+- [ ] **Package metadata** (owner): title "Push Planner", Creator "Mike Cleaver", Manufacturer "Tuatara Airlines" and `VisibleInStore` false (Community-folder only) are set; still check the `ContentInfo` thumbnail matches the current icon.
 - [ ] **Release step** (last, only then): one version in `package.json` (the build copies it into the package definition and the app; `test/version.test.mjs` fails if they differ), a git tag, and release notes.
 
 ## Decided to leave for now

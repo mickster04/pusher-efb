@@ -12,6 +12,7 @@ PS.settings = (function () {
     insetBottom: 56,
     requireEngines: true,
     requireBeacon: true,
+    requireBrake: true,
     rings: false,
     uiSize: 'auto' // auto | normal | compact
   };

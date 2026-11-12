@@ -652,3 +652,22 @@ test('push: the view reads the parking brake fresh, so a brake moved in the cock
   assert.equal(PS.push.view().brake.set, false, 'seen at once');
   });
 });
+
+test('push: with the parking brake ignored (Settings) the brake is not a step, does not hold the push, and does not stop it', () => {
+  withClock(60000000, () => {
+  reset(); planBack(80); sim.attached = 1; sim.wait = 0; sim.beacon = 1; sim.brake = 1;
+  PS.settings.set('requireBrake', false);
+  try {
+    assert.notEqual(PS.push.nextStep(), 'brake', 'the brake is not the next step');
+    assert.equal(PS.push.nextStep(), 'go');
+    assert.ok(PS.push.requestStart(), 'start accepted with the brake set');
+    run(6);
+    assert.equal(PS.push.view().status, 'driving', 'driving with the brake reading set: ' + PS.push.view().status);
+    run(3);
+    assert.equal(PS.push.view().status, 'driving', 'and it is not stopped for it');
+  } finally {
+    PS.settings.set('requireBrake', true);
+    PS.push.emergencyStop('test end'); run(1);
+  }
+  });
+});

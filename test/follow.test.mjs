@@ -355,3 +355,10 @@ test('profiles: the 787 family is found from the title or model', () => {
   assert.equal(PS.profiles.find({ title: '787-10', model: 'TT:ATCCOM.AC_MODEL_B78X.0.text', type: '' }).id, 'b787');
   assert.equal(PS.profiles.find({ title: 'Airbus A320', model: 'A320', type: '' }), null);
 });
+
+test('profiles: the ATR is marked as having a beacon the app cannot see', () => {
+  const p = PS.profiles.find({ title: 'ATR 72-600 Passenger', model: '72-600', type: 'ATR' });
+  assert.equal(p.id, 'atr');
+  assert.equal(p.noBeacon, true);
+  assert.equal(PS.profiles.find({ title: 'Fenix A320 CFM', model: '', type: '' }), null);
+});

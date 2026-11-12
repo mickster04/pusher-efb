@@ -8,7 +8,13 @@ PS.beacon = (function () {
   // { ok: it could be read, on }. On when the light (LIGHT BEACON ON) or the switch (LIGHT BEACON) says on: the ATR's switch can be on with the
   // light still dark (no power yet), and a cockpit switch that is on is what the pilot means. The app never writes LIGHT BEACON (an earlier version did,
   // and the ATR then kept 1 there with the beacon off), so the switch variable follows the cockpit.
+  // An aircraft whose profile says its beacon cannot be read (the ATR): no step, no wait, no pill.
+  function hidden() {
+    var p = PS.profiles.find(PS.aircraftInfo());
+    return !!(p && p.noBeacon);
+  }
   function raw() {
+    if (hidden()) return { ok: false, on: false };
     var on = PS.getVar('LIGHT BEACON ON', 'bool'),
       sw = PS.getVar('LIGHT BEACON', 'bool');
     function num(r) {
@@ -24,6 +30,7 @@ PS.beacon = (function () {
     var r = raw();
     if (!r.on) offAt = Date.now();
     else if (Date.now() - offAt < 1200 && offAt) r = { ok: r.ok, on: false };
+    if (!r.ok && hidden()) r.hidden = true;
     return r;
   }
 
@@ -92,5 +99,5 @@ PS.beacon = (function () {
     );
   }
 
-  return { read: read, readings: readings, busy: busy, set: set };
+  return { read: read, readings: readings, busy: busy, set: set, hidden: hidden };
 })();

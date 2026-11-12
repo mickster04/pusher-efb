@@ -529,6 +529,12 @@ PS.push = (function () {
         '%)' +
         (plan.warnings.length ? ', WITH WARNINGS: ' + plan.warnings.join(' | ') : '')
     );
+    plan.legs.forEach(function (lg, i) {
+      var e = plan.segments[i].points;
+      e = e[e.length - 1];
+      var at = e[0].toFixed(5) + ', ' + e[1].toFixed(5);
+      log('route leg ' + (i + 1) + ': ' + (lg.sign < 0 ? 'push back ' : 'forward ') + PS.fmt.dist(lg.lengthM) + ', ends at ' + at + ' facing ' + Math.round(lg.endHdgDeg));
+    });
     PS.fbwPush.hold();
     if (beaconOff()) {
       log('waiting for the beacon: it is off (FlyByWire keeps the wheel chocks, which brake the aircraft, until it is on); turning it on');
@@ -540,7 +546,7 @@ PS.push = (function () {
   // The beacon goes on before a real pushback, and the FlyByWire chocks (which brake the aircraft) only stay while it is off. A beacon that cannot be read
   // does not hold the push up.
   function beaconOff() {
-    if (!PS.settings.get('requireBeacon')) return false;
+    if (!PS.settings.get('requireBeacon') || PS.beacon.hidden()) return false;
     var r = PS.getVar('LIGHT BEACON', 'bool');
     return r.ok && typeof r.value === 'number' && r.value < 0.5;
   }
@@ -651,7 +657,7 @@ PS.push = (function () {
     if (st === 'waitBrake') return 'brake';
     if (!PS.tug.isAttached()) return 'tug';
     var b = PS.brake.read(false);
-    if (b.ok && b.set) return PS.brake.busy() ? 'brakeBusy' : 'brake';
+    if (b.ok && b.set && PS.settings.get('requireBrake')) return PS.brake.busy() ? 'brakeBusy' : 'brake';
     if (PS.settings.get('requireBeacon')) {
       var bc = PS.beacon.read();
       if (bc.ok && !bc.on) return PS.beacon.busy() ? 'beaconBusy' : 'beacon';
@@ -719,7 +725,7 @@ PS.push = (function () {
 
   function beginBrakeCheck() {
     S.brake = PS.brake.read(true);
-    if (S.brake.set) {
+    if (S.brake.set && PS.settings.get('requireBrake')) {
       setStatus('waitBrake', 'the parking brake is set');
       // Start does the rest itself: release the brake (once; if the pilot releases it first, that is just as good).
       if (!S.brakeAsked) {
@@ -927,7 +933,7 @@ PS.push = (function () {
       S.lastBrakeCheck = now;
       S.brake = PS.brake.read(false);
       // Set on two readings in a row (a second): a lever still moving, or a toggle landing late, must not stop a push that has only just begun
-      S.brakeSetReads = S.status === 'driving' && S.brake.set ? (S.brakeSetReads || 0) + 1 : 0;
+      S.brakeSetReads = S.status === 'driving' && S.brake.set && PS.settings.get('requireBrake') ? (S.brakeSetReads || 0) + 1 : 0;
       if (S.brakeSetReads >= 2) {
         S.brakeSetReads = 0;
         log('the parking brake was set during the push');
@@ -1249,7 +1255,7 @@ PS.push = (function () {
     return {
       status: S.status,
       reason: S.reason,
-      attached: S.attached,
+      attached: PS.tug.isAttached(), // fresh, like the brake: the loop that refreshes S.attached stops once the push is idle, so a dismissed tug would still show as on
       brake: PS.brake.read(false), // fresh, so a brake moved in the cockpit shows at once (S.brake is only refreshed while a push or the tug is on)
       plan: S.plan,
       totalM: S.totalM,

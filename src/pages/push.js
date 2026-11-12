@@ -144,6 +144,7 @@ PS.pages.push({
         brakePill.className = 'ps-pill ' + (b.set ? 'bad' : 'ok');
         brakePill.textContent = b.set ? PS.t('PARKING BRAKE SET') : PS.t('PARKING BRAKE OFF');
       }
+      beaconPill.style.display = v.beacon && v.beacon.hidden ? 'none' : '';
       if (!v.beacon || !v.beacon.ok) {
         beaconPill.className = 'ps-pill';
         beaconPill.textContent = PS.t('BEACON ?');

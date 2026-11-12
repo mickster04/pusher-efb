@@ -81,6 +81,16 @@ PS.pages.push({
         PS.settings.set('requireBeacon', v === 'on');
       }
     );
+    var brakeReq = ui.toggle(
+      [
+        { value: 'on', label: PS.t('Wait for the parking brake') },
+        { value: 'off', label: PS.t('Ignore the parking brake') }
+      ],
+      PS.settings.get('requireBrake') ? 'on' : 'off',
+      function (v) {
+        PS.settings.set('requireBrake', v === 'on');
+      }
+    );
     var uiSize = ui.toggle(
       [
         { value: 'auto', label: PS.t('Automatic') },
@@ -146,6 +156,12 @@ PS.pages.push({
           ui.note(
             PS.t(
               'With "Wait for the beacon" the push waits, before it calls the tug, until the beacon is on, as in a real pushback. The FlyByWire wheel chocks brake the aircraft until then. It does not wait if the aircraft\'s beacon cannot be read.'
+            )
+          ),
+          ui.field(PS.t('Parking brake'), brakeReq.el),
+          ui.note(
+            PS.t(
+              'With "Wait for the parking brake" the push waits until the brake is off and stops if it is set during the push. Choose "Ignore the parking brake" for an aircraft whose brake the app cannot read reliably: the push then neither waits for it nor stops for it, so release it yourself.'
             )
           ),
           ui.field(PS.t('Dismissing the tug'), engines.el),

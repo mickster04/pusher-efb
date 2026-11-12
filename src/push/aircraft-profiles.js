@@ -3,6 +3,7 @@
 // of every push so it can be added here. Every entry says where its numbers came from.
 //   pivotM  : how far ahead of the point the aircraft turns about the sim's reported position is (metres, along the nose; negative = behind)
 //   brakeLvar : the L variable that holds the parking brake lever, for an aircraft that leaves BRAKE PARKING POSITION at 0
+//   noBeacon : true when the aircraft's beacon cannot be read or set from outside (the app then ignores the beacon and hides its pill and step)
 //   yawGain : degrees per second the nose turns per unit of commanded turn (the default, from the Fenix A320, is in follow.js)
 
 PS.profiles = (function () {
@@ -16,6 +17,14 @@ PS.profiles = (function () {
       brakeLvar: 'L:A32NX_PARK_BRAKE_LEVER_POS', // read live from this aircraft: 1 with the lever set
       source:
         'fitted from one logged reverse push, 2026-11-08 (A330-900neo): the pivot predicted the logged cross-track error to 0.6 m rms (7 m without it); gain from measured turn rate against command'
+    },
+    {
+      id: 'atr',
+      name: 'ATR 42/72',
+      match: /\bATR\b/i,
+      noBeacon: true,
+      source:
+        'logged 2026-11-10 (ATR 72-600): LIGHT BEACON, LIGHT BEACON ON and LIGHT STATES never changed when the cockpit beacon switch moved, and BEACON_LIGHTS_SET / TOGGLE_BEACON_LIGHTS did nothing, so the beacon is invisible to the app (a known issue)'
     },
     {
       id: 'b787',

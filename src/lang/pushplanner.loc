@@ -9753,6 +9753,118 @@
             "LocalizationStatus": "TranslationOk"
           }
         }
+      },
+      "PUSHPLANNER.IGNORE_THE_PARKING_BRAKE_f281": {
+        "UUID": "b99863c3-dc30-4355-bbaf-87eb38f51675",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T07:13:53.698Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Ignore the parking brake",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Ignorer le frein de stationnement",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Feststellbremse ignorieren",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Ignorar el freno de estacionamiento",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Ignorar el freno de estacionamiento",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.PARKING_BRAKE_dece": {
+        "UUID": "a92d7fdd-d149-4284-b6c6-9072b07b2226",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T07:13:53.699Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Parking brake",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Frein de stationnement",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Feststellbremse",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Freno de estacionamiento",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Freno de estacionamiento",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.WAIT_FOR_THE_PARKING_BRAKE_295f": {
+        "UUID": "a3f36de3-b99c-455b-a57b-42551bfe60d4",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T07:13:53.699Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "Wait for the parking brake",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Attendre le frein de stationnement",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Auf die Feststellbremse warten",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Esperar al freno de estacionamiento",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Esperar al freno de estacionamiento",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.WITH_WAIT_FOR_THE_PARKING_BRAKE_THE_PUSH_6a28": {
+        "UUID": "f933045a-2a85-4f26-bfa5-dba009932f88",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-10T07:13:53.699Z",
+        "LocalizationStatus": "TranslationNeeded",
+        "Languages": {
+          "en-US": {
+            "Text": "With \"Wait for the parking brake\" the push waits until the brake is off and stops if it is set during the push. Choose \"Ignore the parking brake\" for an aircraft whose brake the app cannot read reliably: the push then neither waits for it nor stops for it, so release it yourself.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Avec « Attendre le frein de stationnement », le repoussage attend que le frein soit desserré et s'arrête s'il est serré pendant le repoussage. Choisissez « Ignorer le frein de stationnement » pour un aéronef dont l'application ne peut pas lire le frein de façon fiable : le repoussage ne l'attend alors pas et ne s'arrête pas pour lui, desserrez-le donc vous-même.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Mit „Auf die Feststellbremse warten“ wartet der Push, bis die Bremse gelöst ist, und stoppt, wenn sie während des Push gesetzt wird. Wähle „Feststellbremse ignorieren“ für ein Flugzeug, dessen Bremse die App nicht zuverlässig lesen kann: Der Push wartet dann weder darauf noch stoppt er deswegen, also löse sie selbst.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Con «Esperar al freno de estacionamiento», el push espera a que el freno esté suelto y se detiene si se pone durante el push. Elige «Ignorar el freno de estacionamiento» para una aeronave cuyo freno la app no puede leer de forma fiable: el push entonces ni lo espera ni se detiene por él, así que suéltalo tú mismo.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Con «Esperar al freno de estacionamiento», el push espera a que el freno esté suelto y se detiene si se pone durante el push. Elige «Ignorar el freno de estacionamiento» para una aeronave cuyo freno la app no puede leer de forma fiable: el push entonces ni lo espera ni se detiene por él, así que suéltalo tú mismo.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
       }
     }
   }

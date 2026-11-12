@@ -64,10 +64,10 @@ PS.brake = (function () {
   // Bring the brake to `wantSet` (false = released): write the variables, and if it is still not there, toggle it ONCE with the PARKING_BRAKES key event.
   // cb({ ok, how }) is called once it is known.
   // PARKING_BRAKES is a toggle and some aircraft (the ATR) take seconds to move the lever: a toggle sent while an earlier one has not shown yet flips
-  // the brake straight back. So the key event is sent once, the brake is then watched (every 200 ms, up to 4 s) rather than checked once, and a second
+  // the brake straight back. So the key event is sent once, the brake is then watched (every 200 ms, up to 12 s: the ATR's lever was seen to answer a key event 3 to 12 s late) rather than checked once, and a second
   // change is refused while one is under way. If it still has not moved the pilot is told, and does it by hand.
   var changingSince = 0;
-  var CHANGE_MS = 6000; // the longest a change can take (450 ms + 4 s), after which the flag lapses so one whose timer never ran cannot block the next
+  var CHANGE_MS = 14000; // the longest a change can take (450 ms + 12 s), after which the flag lapses so one whose timer never ran cannot block the next
   function busy() {
     return !!changingSince && Date.now() - changingSince < CHANGE_MS;
   }
@@ -104,14 +104,15 @@ PS.brake = (function () {
       },
       function () {
         PS.keyEvent('PARKING_BRAKES', 1, 'simvar');
+        PS.log('tug', 'parking brake: PARKING_BRAKES key event sent (once), watching for the brake to move');
         watch(
           wantSet,
-          4000,
+          12000,
           function () {
             cb({ ok: true, how: 'with the PARKING_BRAKES key event' });
           },
           function () {
-            cb({ ok: false, how: 'it did not ' + (wantSet ? 'set' : 'release') + ' within 4 s (try the cockpit lever)' });
+            cb({ ok: false, how: 'it did not ' + (wantSet ? 'set' : 'release') + ' within 12 s (try the cockpit lever)' });
           }
         );
       }
