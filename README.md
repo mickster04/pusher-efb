@@ -6,6 +6,8 @@ An MSFS 2024 EFB app that plans and drives a pushback, ported from the Pusher de
 
 New here? [docs/BUILDING.md](docs/BUILDING.md) takes a fresh checkout to an installed package.
 
+Release notes: [first release (draft)](docs/release-notes.md), [0.2.35](docs/releases/0.2.35.md).
+
 ## Tabs
 
 1. **Plan**: a north-up map centred on the aircraft with runways, taxiways, stands and AI aircraft. Tap to drop pins; each pin is drawn as an aircraft pointing the way the nose will be there, with its number in the middle. Drag a pin to move it, drag the yellow handle behind a selected pin to rotate it, drag empty map to move the map. The route is drawn with the tug's turn arcs (white = push back, blue = forward, red = the tug may not manage that leg). Suggested pushes from the original app's suggester can be chosen as the plan.
