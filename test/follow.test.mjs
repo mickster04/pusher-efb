@@ -362,3 +362,16 @@ test('profiles: the ATR is marked as having a beacon the app cannot see', () => 
   assert.equal(p.noBeacon, true);
   assert.equal(PS.profiles.find({ title: 'Fenix A320 CFM', model: '', type: '' }), null);
 });
+
+test('profile: Speed in turns fixes the curve speed as a percent of the straight-line speed (100 = no slowing, 0 = the usual)', () => {
+  const top = 5, path = pathOf(arcPts(20, 90, 80));
+  const min = (p) => Math.min(...p.v.slice(10, p.n - 20));
+  const set = (v) => PS.settings.set('turnSpeed', v);
+  try {
+    set(0); const usual = min(F.buildProfile(path, false, top));
+    set(80); const p80 = min(F.buildProfile(path, false, top));
+    set(100); const p100 = min(F.buildProfile(path, false, top));
+    assert.ok(usual < 3.1, 'usual: slow in a 20 m curve');
+    assert.ok(Math.abs(p80 - 4) < 0.3 && p100 > 4.9, 'a percent of the straight-line speed: ' + p80 + ' and ' + p100);
+  } finally { set(0); }
+});

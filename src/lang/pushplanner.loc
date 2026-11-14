@@ -9865,6 +9865,90 @@
             "LocalizationStatus": "TranslationOk"
           }
         }
+      },
+      "PUSHPLANNER.SPEED_IN_TURNS_6d89": {
+        "UUID": "f5f407cd-aa4c-4848-821c-1b8e9942d237",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-14T21:02:51.537Z",
+        "LocalizationStatus": "TranslationOk",
+        "Languages": {
+          "en-US": {
+            "Text": "Speed in turns",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Vitesse dans les virages",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Geschwindigkeit in Kurven",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Velocidad en las curvas",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Velocidad en las curvas",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.HOW_FAST_THE_TUG_GOES_ROUND_A_CURVE_AS_A_e2f9": {
+        "UUID": "c2cae1ad-4cb5-4faa-b2d8-e0de0d7788a3",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-14T21:11:40.326Z",
+        "LocalizationStatus": "TranslationOk",
+        "Languages": {
+          "en-US": {
+            "Text": "How fast the tug goes round a curve, as a percentage of its straight-line speed. Usual slows it more the tighter the curve is. 100% does not slow it for curves at all. It still slows when it is pointing away from the line, and never goes slower than a crawl. If the tug drifts off the line in turns, lower it.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "La vitesse du tracteur dans un virage, en pourcentage de sa vitesse en ligne droite. « Habituelle » le ralentit d'autant plus que le virage est serré. 100 % ne le ralentit pas du tout dans les virages. Il ralentit toujours quand il n'est pas dirigé vers la ligne et ne va jamais plus lentement qu'au pas. Si le tracteur s'écarte de la ligne dans les virages, diminuez cette valeur.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Wie schnell der Schlepper durch eine Kurve fährt, in Prozent seiner Geschwindigkeit auf der Geraden. „Üblich“ bremst ihn umso stärker, je enger die Kurve ist. 100 % bremst ihn in Kurven gar nicht. Er wird weiterhin langsamer, wenn er von der Linie weg zeigt, und fährt nie langsamer als im Schritttempo. Weicht der Schlepper in Kurven von der Linie ab, verringern Sie den Wert.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "La velocidad del remolcador en una curva, como porcentaje de su velocidad en recta. «Habitual» lo frena más cuanto más cerrada es la curva. Con 100 % no se frena en las curvas. Sigue frenando cuando apunta lejos de la línea y nunca va más despacio que a paso lento. Si el remolcador se sale de la línea en las curvas, bájela.",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "La velocidad del remolcador en una curva, como porcentaje de su velocidad en recta. «Habitual» lo frena más cuanto más cerrada es la curva. Con 100 % no se frena en las curvas. Sigue frenando cuando apunta lejos de la línea y nunca va más despacio que a paso lento. Si el remolcador se sale de la línea en las curvas, bájela.",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
+      },
+      "PUSHPLANNER.USUAL_5591": {
+        "UUID": "7001604a-1ed8-4659-8d5e-de7a0def8ddb",
+        "LastModifiedBy": "tools/lang.mjs",
+        "LastModifiedDate": "2026-11-14T21:11:40.327Z",
+        "LocalizationStatus": "TranslationOk",
+        "Languages": {
+          "en-US": {
+            "Text": "Usual",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "fr-FR": {
+            "Text": "Habituelle",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "de-DE": {
+            "Text": "Üblich",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-ES": {
+            "Text": "Habitual",
+            "LocalizationStatus": "TranslationOk"
+          },
+          "es-MX": {
+            "Text": "Habitual",
+            "LocalizationStatus": "TranslationOk"
+          }
+        }
       }
     }
   }

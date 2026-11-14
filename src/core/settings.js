@@ -13,6 +13,7 @@ PS.settings = (function () {
     requireEngines: true,
     requireBeacon: true,
     requireBrake: true,
+    turnSpeed: 0, // speed in curves as a percent of the straight-line speed (60 to 100); 0 = the usual radius-based slowing
     rings: false,
     uiSize: 'auto' // auto | normal | compact
   };

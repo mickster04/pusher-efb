@@ -81,6 +81,19 @@ PS.pages.push({
         PS.settings.set('requireBeacon', v === 'on');
       }
     );
+    var turnSpeed = ui.stepper(
+      [0, 60, 70, 80, 90, 100],
+      PS.settings.get('turnSpeed'),
+      function (v) {
+        PS.settings.set('turnSpeed', v);
+        PS.push.setSpeedPercent(PS.push.getSpeedPercent()); // rebuilds the speed profile of a push under way
+      },
+      'settings',
+      [PS.t('Slower') + '  -', PS.t('Faster') + '  +'],
+      function (v) {
+        return v ? v + '%' : PS.t('Usual');
+      }
+    );
     var brakeReq = ui.toggle(
       [
         { value: 'on', label: PS.t('Wait for the parking brake') },
@@ -152,6 +165,12 @@ PS.pages.push({
         ui.panel(
           PS.t('Pushing'),
           ui.field(PS.t('Maximum cruise speed'), maxSpeed.el),
+          ui.field(PS.t('Speed in turns'), turnSpeed.el),
+          ui.note(
+            PS.t(
+              'How fast the tug goes round a curve, as a percentage of its straight-line speed. Usual slows it more the tighter the curve is. 100% does not slow it for curves at all. It still slows when it is pointing away from the line, and never goes slower than a crawl. If the tug drifts off the line in turns, lower it.'
+            )
+          ),
           ui.field(PS.t('Before the tug is called'), beacon.el),
           ui.note(
             PS.t(

@@ -200,6 +200,12 @@ PS.follow = (function () {
     return Math.abs(wrap180(b.tangent - a.tangent));
   }
 
+  // Settings > Speed in turns: 0 keeps the usual slowing (by radius); 60 to 100 makes curves that percent of the straight-line speed (100 = no slowing).
+  function turnPercent() {
+    var p = PS.settings ? Number(PS.settings.get('turnSpeed')) : 0;
+    return isFinite(p) && p >= 60 ? Math.min(p, 100) : 0;
+  }
+
   // The speed (ft/s, magnitude) the tug should have at each half metre along a leg, and why. straightFts is the top speed on straights.
   function buildProfile(path, reverse, straightFts) {
     var ds = K.PROFILE_DS_M,
@@ -207,7 +213,8 @@ PS.follow = (function () {
       n = Math.max(2, Math.ceil(total / ds) + 1),
       i;
     var straight = straightFts * (reverse ? K.REVERSE_FRACTION : 1),
-      curveBase = reverse ? K.CURVE_BASE_REV_FTS : K.CURVE_BASE_FWD_FTS;
+      curveBase = reverse ? K.CURVE_BASE_REV_FTS : K.CURVE_BASE_FWD_FTS,
+      fixed = turnPercent();
     var minF = K.MIN_AUTO_UNITS * K.UNITS_TO_FTS,
       cap = [],
       ccap = [],
@@ -220,7 +227,7 @@ PS.follow = (function () {
       var R = k > 1e-6 ? 1 / k : Infinity,
         v = straight;
       if (R < K.STRAIGHT_R_M) {
-        var vc = Math.min(straight, curveBase * clamp(R / K.CURVE_REF_R_M, 0.5, 1));
+        var vc = fixed ? (straight * fixed) / 100 : Math.min(straight, curveBase * clamp(R / K.CURVE_REF_R_M, 0.5, 1));
         v = straight + (vc - straight) * clamp((K.STRAIGHT_R_M - R) / (K.STRAIGHT_R_M - K.CURVE_FULL_R_M), 0, 1);
       }
       ccap.push(Math.max(minF, v));
