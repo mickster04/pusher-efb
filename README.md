@@ -6,7 +6,7 @@ An MSFS 2024 EFB app that plans and drives a pushback, ported from the Pusher de
 
 New here? [docs/BUILDING.md](docs/BUILDING.md) takes a fresh checkout to an installed package.
 
-Release notes: [first release (draft)](docs/release-notes.md), [0.2.35](docs/releases/0.2.35.md).
+Release notes: [first release (draft)](docs/release-notes.md), [0.2.35](docs/releases/0.2.35.md), [0.2.36](docs/releases/0.2.36.md).
 
 ## Tabs
 
